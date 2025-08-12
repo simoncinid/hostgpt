@@ -28,11 +28,11 @@ class Settings(BaseSettings):
     # OpenAI
     OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "sk-your-openai-api-key-here")
     
-    # Stripe
+    # Stripe - Configurazione per abbonamento mensile 29€
     STRIPE_SECRET_KEY: str = os.getenv("STRIPE_SECRET_KEY", "sk_test_your-stripe-secret-key")
     STRIPE_PUBLISHABLE_KEY: str = os.getenv("STRIPE_PUBLISHABLE_KEY", "pk_test_your-stripe-publishable-key")
     STRIPE_WEBHOOK_SECRET: str = os.getenv("STRIPE_WEBHOOK_SECRET", "whsec_your-webhook-secret")
-    STRIPE_PRICE_ID: str = os.getenv("STRIPE_PRICE_ID", "price_your-monthly-price-id")
+    STRIPE_PRICE_ID: str = os.getenv("STRIPE_PRICE_ID", "price_your-monthly-29eur-price-id")  # IMPORTANTE: Deve essere 29€/mese
     
     # Email
     SMTP_HOST: str = os.getenv("SMTP_HOST", "smtp.gmail.com")

@@ -14,10 +14,14 @@ class User(Base):
     phone = Column(String(50))
     is_active = Column(Boolean, default=True)
     is_verified = Column(Boolean, default=False)
+    verification_token = Column(String(255), unique=True)
     stripe_customer_id = Column(String(255))
     stripe_subscription_id = Column(String(255))
     subscription_status = Column(String(50), default="inactive")  # inactive, active, cancelled, past_due
     subscription_end_date = Column(DateTime)
+    messages_limit = Column(Integer, default=1000)  # Limite mensile di messaggi
+    messages_used = Column(Integer, default=0)  # Messaggi utilizzati nel mese corrente
+    messages_reset_date = Column(DateTime)  # Data ultimo reset dei messaggi
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, onupdate=func.now())
     

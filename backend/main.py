@@ -244,7 +244,7 @@ async def root():
 
 # --- Authentication ---
 
-@app.post("/api/auth/register", response_model=Token)
+@app.post("/api/auth/register")
 async def register(user: UserRegister, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     """Registrazione nuovo utente"""
     # Verifica se l'email esiste già
@@ -254,40 +254,60 @@ async def register(user: UserRegister, background_tasks: BackgroundTasks, db: Se
     
     # Crea nuovo utente
     hashed_password = get_password_hash(user.password)
-    temp_password = secrets.token_urlsafe(8)
+    verification_token = secrets.token_urlsafe(32)
     
     db_user = User(
         email=user.email,
         hashed_password=hashed_password,
         full_name=user.full_name,
-        phone=user.phone
+        phone=user.phone,
+        is_verified=False,
+        verification_token=verification_token  # Aggiungeremo questo campo al modello
     )
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
     
-    # Invia email con credenziali
+    # Invia email di verifica
+    verification_link = f"{settings.BACKEND_URL}/api/auth/verify-email?token={verification_token}"
     email_body = f"""
     <h2>Benvenuto su HostGPT!</h2>
     <p>Caro {user.full_name},</p>
-    <p>La tua registrazione è stata completata con successo.</p>
-    <p>Per accedere al tuo account, usa le seguenti credenziali:</p>
-    <ul>
-        <li><strong>Email:</strong> {user.email}</li>
-        <li><strong>Password:</strong> La password che hai scelto</li>
-    </ul>
-    <p>Accedi al portale: <a href="{settings.FRONTEND_URL}/login">Clicca qui</a></p>
-    <p>Ora puoi procedere con l'attivazione del tuo abbonamento per iniziare a creare il tuo chatbot personalizzato!</p>
+    <p>Grazie per esserti registrato! Per completare la registrazione e attivare il tuo abbonamento, clicca sul link qui sotto:</p>
+    <p><a href="{verification_link}" style="background-color: #4CAF50; color: white; padding: 14px 20px; text-align: center; text-decoration: none; display: inline-block; border-radius: 4px;">Verifica Email e Attiva Abbonamento</a></p>
+    <p>Se il pulsante non funziona, copia e incolla questo link nel tuo browser:</p>
+    <p>{verification_link}</p>
+    <p><strong>Importante:</strong> Dopo la verifica dell'email, verrai reindirizzato alla pagina di pagamento per attivare il tuo abbonamento mensile a 29€/mese.</p>
     <br>
     <p>Il team di HostGPT</p>
     """
     
-    background_tasks.add_task(send_email, user.email, "Benvenuto su HostGPT!", email_body)
+    background_tasks.add_task(send_email, user.email, "Conferma la tua email - HostGPT", email_body)
     
-    # Crea token
+    return {"message": "Registrazione completata. Controlla la tua email per verificare l'account e attivare l'abbonamento."}
+
+@app.get("/api/auth/verify-email")
+async def verify_email(token: str, db: Session = Depends(get_db)):
+    """Verifica email e reindirizza al pagamento"""
+    from fastapi.responses import RedirectResponse
+    
+    # Trova utente con questo token
+    user = db.query(User).filter(User.verification_token == token).first()
+    
+    if not user:
+        raise HTTPException(status_code=400, detail="Token di verifica non valido")
+    
+    # Verifica l'email
+    user.is_verified = True
+    user.verification_token = None
+    db.commit()
+    
+    # Crea token di accesso per l'utente
     access_token = create_access_token(data={"sub": user.email})
     
-    return {"access_token": access_token, "token_type": "bearer"}
+    # Reindirizza alla pagina di checkout con il token
+    checkout_url = f"{settings.FRONTEND_URL}/checkout?token={access_token}"
+    return RedirectResponse(url=checkout_url)
 
 @app.post("/api/auth/login", response_model=Token)
 async def login(user: UserLogin, db: Session = Depends(get_db)):
@@ -304,26 +324,50 @@ async def login(user: UserLogin, db: Session = Depends(get_db)):
     if not db_user.is_active:
         raise HTTPException(status_code=400, detail="Account non attivo")
     
+    if not db_user.is_verified:
+        raise HTTPException(status_code=400, detail="Email non verificata. Controlla la tua email per il link di verifica.")
+    
     access_token = create_access_token(data={"sub": db_user.email})
     return {"access_token": access_token, "token_type": "bearer"}
 
 @app.get("/api/auth/me")
 async def get_me(current_user: User = Depends(get_current_user)):
     """Ottieni informazioni utente corrente"""
+    # Controlla se deve essere resettato il conteggio mensile
+    if current_user.messages_reset_date:
+        if datetime.utcnow() > current_user.messages_reset_date + timedelta(days=30):
+            current_user.messages_used = 0
+            current_user.messages_reset_date = datetime.utcnow()
+            # Salva nel DB
+            db = next(get_db())
+            db.commit()
+    
     return {
         "id": current_user.id,
         "email": current_user.email,
         "full_name": current_user.full_name,
         "subscription_status": current_user.subscription_status,
-        "subscription_end_date": current_user.subscription_end_date
+        "subscription_end_date": current_user.subscription_end_date,
+        "messages_limit": current_user.messages_limit,
+        "messages_used": current_user.messages_used,
+        "messages_remaining": current_user.messages_limit - current_user.messages_used,
+        "is_verified": current_user.is_verified
     }
 
 # --- Subscription/Payment ---
 
 @app.post("/api/subscription/create-checkout")
-async def create_checkout_session(current_user: User = Depends(get_current_user)):
-    """Crea sessione di checkout Stripe"""
+async def create_checkout_session(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Crea sessione di checkout Stripe - Solo abbonamento mensile a 29€"""
     try:
+        # Verifica che l'utente abbia verificato l'email
+        if not current_user.is_verified:
+            raise HTTPException(status_code=400, detail="Devi verificare la tua email prima di sottoscrivere un abbonamento")
+        
+        # Se ha già un abbonamento attivo, non permettere un nuovo checkout
+        if current_user.subscription_status == 'active':
+            raise HTTPException(status_code=400, detail="Hai già un abbonamento attivo")
+        
         # Crea o recupera customer Stripe
         if not current_user.stripe_customer_id:
             customer = stripe.Customer.create(
@@ -331,24 +375,28 @@ async def create_checkout_session(current_user: User = Depends(get_current_user)
                 name=current_user.full_name
             )
             current_user.stripe_customer_id = customer.id
-            # Salva nel DB (assumendo che hai accesso al db qui)
+            db.commit()
         
-        # Crea sessione checkout
+        # Crea sessione checkout per abbonamento mensile a 29€
         checkout_session = stripe.checkout.Session.create(
             customer=current_user.stripe_customer_id,
             payment_method_types=['card'],
             line_items=[{
-                'price': settings.STRIPE_PRICE_ID,
+                'price': settings.STRIPE_PRICE_ID,  # Questo dovrà essere configurato per 29€/mese
                 'quantity': 1,
             }],
             mode='subscription',
-            success_url=f"{settings.FRONTEND_URL}/dashboard?session_id={{CHECKOUT_SESSION_ID}}",
-            cancel_url=f"{settings.FRONTEND_URL}/pricing",
+            success_url=f"{settings.FRONTEND_URL}/dashboard?subscription=success",
+            cancel_url=f"{settings.FRONTEND_URL}/checkout?subscription=cancelled",
+            metadata={
+                'user_id': str(current_user.id)
+            }
         )
         
         return {"checkout_url": checkout_session.url}
         
     except Exception as e:
+        logger.error(f"Stripe checkout error: {e}")
         raise HTTPException(status_code=400, detail=str(e))
 
 @app.post("/api/subscription/webhook")
@@ -379,6 +427,8 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
             user.stripe_subscription_id = session['subscription']
             user.subscription_status = 'active'
             user.subscription_end_date = datetime.utcnow() + timedelta(days=30)
+            user.messages_used = 0
+            user.messages_reset_date = datetime.utcnow()
             db.commit()
     
     elif event['type'] == 'customer.subscription.deleted':
@@ -406,7 +456,10 @@ async def create_chatbot(
     """Crea un nuovo chatbot"""
     # Verifica abbonamento attivo
     if current_user.subscription_status != 'active':
-        raise HTTPException(status_code=403, detail="Abbonamento non attivo")
+        raise HTTPException(
+            status_code=403, 
+            detail="Devi attivare un abbonamento per creare un chatbot. Abbonamento mensile: 29€/mese"
+        )
     
     # Crea assistant OpenAI
     assistant_id = await create_openai_assistant(chatbot.dict())
@@ -451,12 +504,43 @@ async def create_chatbot(
         "assistant_id": assistant_id
     }
 
+@app.get("/api/subscription/status")
+async def get_subscription_status(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Ottieni lo stato dell'abbonamento dell'utente"""
+    # Controlla se deve essere resettato il conteggio mensile
+    if current_user.messages_reset_date:
+        if datetime.utcnow() > current_user.messages_reset_date + timedelta(days=30):
+            current_user.messages_used = 0
+            current_user.messages_reset_date = datetime.utcnow()
+            db.commit()
+    
+    return {
+        "subscription_status": current_user.subscription_status,
+        "subscription_end_date": current_user.subscription_end_date,
+        "messages_limit": current_user.messages_limit,
+        "messages_used": current_user.messages_used,
+        "messages_remaining": current_user.messages_limit - current_user.messages_used,
+        "messages_reset_date": current_user.messages_reset_date,
+        "next_reset_date": current_user.messages_reset_date + timedelta(days=30) if current_user.messages_reset_date else None,
+        "is_blocked": current_user.subscription_status != 'active',
+        "monthly_price": "29€"
+    }
+
 @app.get("/api/chatbots")
 async def get_chatbots(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """Ottieni tutti i chatbot dell'utente"""
+    # Blocca accesso senza abbonamento attivo
+    if current_user.subscription_status != 'active':
+        raise HTTPException(
+            status_code=403,
+            detail="Abbonamento non attivo. Sottoscrivi un abbonamento mensile a 29€ per accedere alle funzionalità."
+        )
     chatbots = db.query(Chatbot).filter(Chatbot.user_id == current_user.id).all()
     
     result = []
@@ -485,6 +569,12 @@ async def get_chatbot(
     db: Session = Depends(get_db)
 ):
     """Ottieni dettagli di un chatbot"""
+    # Blocca accesso senza abbonamento attivo
+    if current_user.subscription_status != 'active':
+        raise HTTPException(
+            status_code=403,
+            detail="Abbonamento non attivo. Sottoscrivi un abbonamento mensile a 29€ per accedere alle funzionalità."
+        )
     chatbot = db.query(Chatbot).filter(
         Chatbot.id == chatbot_id,
         Chatbot.user_id == current_user.id
@@ -503,6 +593,12 @@ async def update_chatbot(
     db: Session = Depends(get_db)
 ):
     """Aggiorna un chatbot"""
+    # Blocca accesso senza abbonamento attivo
+    if current_user.subscription_status != 'active':
+        raise HTTPException(
+            status_code=403,
+            detail="Abbonamento non attivo. Sottoscrivi un abbonamento mensile a 29€ per accedere alle funzionalità."
+        )
     chatbot = db.query(Chatbot).filter(
         Chatbot.id == chatbot_id,
         Chatbot.user_id == current_user.id
@@ -587,6 +683,33 @@ async def send_message(
     if not chatbot or not chatbot.is_active:
         raise HTTPException(status_code=404, detail="Chatbot non trovato")
     
+    # Ottieni il proprietario del chatbot
+    owner = db.query(User).filter(User.id == chatbot.user_id).first()
+    
+    if not owner:
+        raise HTTPException(status_code=404, detail="Proprietario del chatbot non trovato")
+    
+    # Verifica abbonamento attivo
+    if owner.subscription_status != 'active':
+        raise HTTPException(
+            status_code=403, 
+            detail="Il proprietario di questo chatbot non ha un abbonamento attivo. Il servizio è temporaneamente non disponibile."
+        )
+    
+    # Controlla se deve essere resettato il conteggio mensile
+    if owner.messages_reset_date:
+        if datetime.utcnow() > owner.messages_reset_date + timedelta(days=30):
+            owner.messages_used = 0
+            owner.messages_reset_date = datetime.utcnow()
+            db.commit()
+    
+    # Verifica limite messaggi
+    if owner.messages_used >= owner.messages_limit:
+        raise HTTPException(
+            status_code=429, 
+            detail=f"Limite mensile di {owner.messages_limit} messaggi raggiunto. Il limite si resetta il {(owner.messages_reset_date + timedelta(days=30)).strftime('%d/%m/%Y')} se la data è definita."
+        )
+    
     try:
         client = openai.OpenAI(api_key=settings.OPENAI_API_KEY)
         
@@ -656,11 +779,15 @@ async def send_message(
         conversation.message_count += 2
         chatbot.total_messages += 2
         
+        # Incrementa il contatore messaggi dell'utente
+        owner.messages_used += 1  # Contiamo solo i messaggi inviati dagli ospiti
+        
         db.commit()
         
         return {
             "thread_id": thread_id,
-            "message": assistant_message
+            "message": assistant_message,
+            "messages_remaining": owner.messages_limit - owner.messages_used
         }
         
     except Exception as e:
@@ -676,6 +803,12 @@ async def get_conversations(
     db: Session = Depends(get_db)
 ):
     """Ottieni tutte le conversazioni di un chatbot"""
+    # Blocca accesso senza abbonamento attivo
+    if current_user.subscription_status != 'active':
+        raise HTTPException(
+            status_code=403,
+            detail="Abbonamento non attivo. Sottoscrivi un abbonamento mensile a 29€ per accedere alle funzionalità."
+        )
     chatbot = db.query(Chatbot).filter(
         Chatbot.id == chatbot_id,
         Chatbot.user_id == current_user.id
