@@ -386,8 +386,8 @@ async def create_checkout_session(current_user: User = Depends(get_current_user)
                 'quantity': 1,
             }],
             mode='subscription',
-            success_url=f"{settings.FRONTEND_URL}/dashboard?subscription=success",
-            cancel_url=f"{settings.FRONTEND_URL}/checkout?subscription=cancelled",
+            success_url=f"{settings.FRONTEND_URL}/login?subscription=success",
+            cancel_url=f"{settings.FRONTEND_URL}/dashboard?subscription=cancelled",
             metadata={
                 'user_id': str(current_user.id)
             }
