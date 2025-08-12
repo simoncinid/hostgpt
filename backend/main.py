@@ -305,8 +305,8 @@ async def verify_email(token: str, db: Session = Depends(get_db)):
     # Crea token di accesso per l'utente
     access_token = create_access_token(data={"sub": user.email})
     
-    # Reindirizza direttamente alla pagina di pagamento con token
-    checkout_url = f"{settings.FRONTEND_URL}/checkout?token={access_token}"
+    # Reindirizza alla dashboard con avvio checkout e token (route sempre presente)
+    checkout_url = f"{settings.FRONTEND_URL}/dashboard?start=checkout&token={access_token}"
     return RedirectResponse(url=checkout_url)
 
 @app.post("/api/auth/login", response_model=Token)
@@ -387,7 +387,7 @@ async def create_checkout_session(current_user: User = Depends(get_current_user)
             }],
             mode='subscription',
             success_url=f"{settings.FRONTEND_URL}/login?subscription=success",
-            cancel_url=f"{settings.FRONTEND_URL}/checkout?subscription=cancelled",
+            cancel_url=f"{settings.FRONTEND_URL}/dashboard?subscription=cancelled",
             metadata={
                 'user_id': str(current_user.id)
             }
