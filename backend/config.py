@@ -17,6 +17,8 @@ class Settings(BaseSettings):
         "MYSQL_SSL_CA",
         str((Path(__file__).parent / "ca-certificate.crt").resolve())
     )
+    # Contenuto PEM del certificato CA passato via env (multi-line). Se presente ha priorità sul path
+    CA_CERTIFICATE: Optional[str] = os.getenv("CA_CERTIFICATE")
     
     # JWT
     SECRET_KEY: str = os.getenv("SECRET_KEY", "your-secret-key-here-change-in-production")
