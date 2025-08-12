@@ -7,7 +7,7 @@ from pathlib import Path
 
 connect_args = {}
 
-# Usa SOLO DATABASE_URL fornita; opzionalmente abilita SSL con CA
+# Usa SOLO DATABASE_URL fornitaaaa; opzionalmente abilita SSL con CA
 if settings.DATABASE_URL.startswith("mysql+pymysql://"):
     ssl_opts = {}
     # Priorità 1: contenuto CA da env (CA_CERTIFICATE)
