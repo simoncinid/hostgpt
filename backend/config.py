@@ -5,12 +5,18 @@ try:
 except ImportError:
     from pydantic import BaseSettings
 from dotenv import load_dotenv
+from pathlib import Path
 
 load_dotenv()
 
 class Settings(BaseSettings):
     # Database
     DATABASE_URL: str = os.getenv("DATABASE_URL", "mysql+pymysql://username:password@localhost:3306/hostgpt?charset=utf8mb4")
+    # Path al certificato CA per MySQL (DigitalOcean richiede SSL). Se esiste, verrà usato automaticamente
+    MYSQL_SSL_CA: str = os.getenv(
+        "MYSQL_SSL_CA",
+        str((Path(__file__).parent / "ca-certificate.crt").resolve())
+    )
     
     # JWT
     SECRET_KEY: str = os.getenv("SECRET_KEY", "your-secret-key-here-change-in-production")
