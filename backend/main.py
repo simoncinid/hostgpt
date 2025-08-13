@@ -17,6 +17,7 @@ from pydantic import BaseModel, EmailStr
 import aiosmtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from email.mime.image import MIMEImage
 import secrets
 import logging
 
@@ -149,8 +150,10 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = De
         raise credentials_exception
     return user
 
-async def send_email(to_email: str, subject: str, body: str):
-    """Invia email async"""
+async def send_email(to_email: str, subject: str, body: str, attachments: Optional[list[tuple[str, bytes, str]]] = None):
+    """Invia email async con eventuali allegati.
+    attachments: lista di tuple (filename, content_bytes, content_type), es. ("qrcode.png", b"...", "image/png")
+    """
     try:
         message = MIMEMultipart()
         message["From"] = settings.FROM_EMAIL
@@ -158,6 +161,18 @@ async def send_email(to_email: str, subject: str, body: str):
         message["Subject"] = subject
         
         message.attach(MIMEText(body, "html"))
+
+        # Allegati opzionali
+        if attachments:
+            for filename, content_bytes, content_type in attachments:
+                if content_type.startswith("image/"):
+                    subtype = content_type.split("/")[1]
+                    img = MIMEImage(content_bytes, _subtype=subtype)
+                    img.add_header('Content-Disposition', 'attachment', filename=filename)
+                    message.attach(img)
+                else:
+                    # Per altri tipi si potrebbe usare MIMEBase (non richiesto ora)
+                    pass
         
         async with aiosmtplib.SMTP(
             hostname=settings.SMTP_HOST,
@@ -549,7 +564,14 @@ async def create_chatbot(
     <p>Il team di HostGPT</p>
     """
     
-    background_tasks.add_task(send_email, current_user.email, "Il tuo Chatbot è pronto!", email_body)
+    # Prepara allegato QR code
+    try:
+        qr_bytes = base64.b64decode(qr_code)
+    except Exception:
+        qr_bytes = None
+    attachments = [("qrcode.png", qr_bytes, "image/png")] if qr_bytes else None
+    
+    background_tasks.add_task(send_email, current_user.email, "Il tuo Chatbot è pronto!", email_body, attachments)
     
     return {
         "id": db_chatbot.id,
