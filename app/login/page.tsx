@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { Home, Mail, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react'
@@ -17,11 +17,23 @@ interface LoginForm {
 
 export default function LoginPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const { setAuth } = useAuthStore()
   
   const { register, handleSubmit, formState: { errors } } = useForm<LoginForm>()
+
+  useEffect(() => {
+    const registered = searchParams.get('registered')
+    const subscriptionSuccess = searchParams.get('subscription') === 'success'
+    if (registered) {
+      toast.success('Controlla la tua email e clicca il link di verifica per procedere al pagamento')
+    }
+    if (subscriptionSuccess) {
+      toast.success('Pagamento effettuato! Ora puoi accedere')
+    }
+  }, [searchParams])
 
   const onSubmit = async (data: LoginForm) => {
     setIsLoading(true)
@@ -33,8 +45,26 @@ export default function LoginPage() {
       localStorage.setItem('token', access_token)
       setAuth(access_token)
       
-      toast.success('Accesso effettuato con successo!')
-      router.push('/dashboard')
+      // Verifica stato abbonamento: se non attivo, porta al checkout
+      try {
+        const me = await api.get('/auth/me')
+        const subscriptionStatus = me.data?.subscription_status
+        const isVerified = me.data?.is_verified
+        if (!isVerified) {
+          toast.error('Devi verificare la tua email. Controlla la posta e clicca il link di verifica.')
+          return
+        }
+        if (subscriptionStatus !== 'active') {
+          toast('Completa il pagamento per continuare', { icon: '💳' })
+          router.push('/checkout')
+        } else {
+          toast.success('Accesso effettuato con successo!')
+          router.push('/dashboard')
+        }
+      } catch {
+        // fallback sicuro
+        router.push('/dashboard')
+      }
     } catch (error: any) {
       toast.error(error.response?.data?.detail || 'Errore durante il login')
     } finally {

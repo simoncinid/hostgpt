@@ -39,14 +39,9 @@ export default function RegisterPage() {
         phone: data.phone
       })
       
-      const { access_token } = response.data
-      
-      // Salva token
-      localStorage.setItem('token', access_token)
-      setAuth(access_token)
-      
-      toast.success('Registrazione completata! Controlla la tua email.')
-      router.push('/dashboard')
+      // Dopo la registrazione, mandiamo l'utente alla pagina che spiega di verificare l'email
+      toast.success('Registrazione completata! Controlla la tua email per il link di verifica.')
+      router.push('/login?registered=1')
     } catch (error: any) {
       toast.error(error.response?.data?.detail || 'Errore durante la registrazione')
     } finally {

@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import {
@@ -22,21 +22,44 @@ import {
   Eye
 } from 'lucide-react'
 import { useAuthStore, useChatbotStore } from '@/lib/store'
-import { chatbots as chatbotsApi } from '@/lib/api'
+import { chatbots as chatbotsApi, subscription, auth } from '@/lib/api'
 import toast from 'react-hot-toast'
 
 export default function DashboardPage() {
   const router = useRouter()
-  const { user, logout } = useAuthStore()
+  const searchParams = useSearchParams()
+  const { user, logout, setAuth, isAuthenticated } = useAuthStore()
   const { chatbots, setChatbots, deleteChatbot } = useChatbotStore()
   const [isLoading, setIsLoading] = useState(true)
   const [selectedBot, setSelectedBot] = useState<number | null>(null)
   const [showQRModal, setShowQRModal] = useState(false)
   const [currentQR, setCurrentQR] = useState<{ url: string; qr: string } | null>(null)
+  const [isInitializing, setIsInitializing] = useState(true)
+  const [isStartingCheckout, setIsStartingCheckout] = useState(false)
+
+  // Solo inizializzazione semplice; il checkout avviene su /checkout
+  useEffect(() => {
+    setIsInitializing(false)
+  }, [])
 
   useEffect(() => {
-    loadChatbots()
-  }, [])
+    const enforceSubscription = async () => {
+      if (isInitializing || isStartingCheckout) return
+      if (!isAuthenticated) return
+      try {
+        const me = await subscriptionStatus()
+        const status = me?.subscription_status
+        if (status !== 'active') {
+          router.replace('/checkout')
+          return
+        }
+        loadChatbots()
+      } catch {
+        loadChatbots()
+      }
+    }
+    enforceSubscription()
+  }, [isInitializing, isStartingCheckout, isAuthenticated])
 
   const loadChatbots = async () => {
     try {
@@ -46,6 +69,16 @@ export default function DashboardPage() {
       toast.error('Errore nel caricamento dei chatbot')
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  // helper per leggere lo stato abbonamento
+  const subscriptionStatus = async (): Promise<{ subscription_status: string } | null> => {
+    try {
+      const me = await auth.me()
+      return { subscription_status: me.data?.subscription_status }
+    } catch {
+      return null
     }
   }
 
