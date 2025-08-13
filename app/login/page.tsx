@@ -8,7 +8,7 @@ import { Home, Mail, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import toast from 'react-hot-toast'
 import { useAuthStore } from '@/lib/store'
-import api from '@/lib/api'
+import api, { subscription } from '@/lib/api'
 
 interface LoginForm {
   email: string
@@ -27,21 +27,12 @@ export default function LoginPage() {
   useEffect(() => {
     const registered = searchParams.get('registered')
     const subscriptionSuccess = searchParams.get('subscription') === 'success'
-    const sessionId = searchParams.get('session_id') || undefined
     if (registered) {
       toast.success('Controlla la tua email e clicca il link di verifica per procedere al pagamento')
     }
     if (subscriptionSuccess) {
-      // tenta una conferma esplicita lato backend
-      (async () => {
-        try {
-          const { subscription } = await import('@/lib/api')
-          await subscription.confirm(sessionId)
-          toast.success('Pagamento effettuato! Ora puoi accedere')
-        } catch {
-          toast.success('Pagamento effettuato! Ora puoi accedere')
-        }
-      })()
+      // Messaggio informativo; la conferma avverrà dopo il login con token
+      toast.success('Pagamento effettuato! Ora puoi accedere')
     }
   }, [searchParams])
 
@@ -55,6 +46,15 @@ export default function LoginPage() {
       localStorage.setItem('token', access_token)
       setAuth(access_token)
       
+      // Se ritorno da Stripe con successo, prova a confermare la sottoscrizione ora che siamo autenticati
+      const subscriptionSuccess = searchParams.get('subscription') === 'success'
+      const sessionId = searchParams.get('session_id') || undefined
+      if (subscriptionSuccess) {
+        try {
+          await subscription.confirm(sessionId)
+        } catch {}
+      }
+
       // Verifica stato abbonamento: se non attivo, porta al checkout
       try {
         const me = await api.get('/auth/me')

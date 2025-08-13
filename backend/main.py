@@ -116,6 +116,9 @@ class MessageCreate(BaseModel):
 class SubscriptionCreate(BaseModel):
     payment_method_id: str
 
+class SubscriptionConfirm(BaseModel):
+    session_id: Optional[str] = None
+
 # ============= Utility Functions =============
 
 def verify_password(plain_password, hashed_password):
@@ -464,6 +467,19 @@ async def create_checkout_session(current_user: User = Depends(get_current_user)
             )
             current_user.stripe_customer_id = customer.id
             db.commit()
+
+        # Evita doppie sottoscrizioni creando una nuova sessione se c'è già una subscription in corso/attiva
+        if current_user.stripe_customer_id:
+            subs = stripe.Subscription.list(customer=current_user.stripe_customer_id, status='all', limit=1)
+            if subs.data:
+                sub = subs.data[0]
+                if sub.status in ['active', 'trialing', 'incomplete', 'incomplete_expired', 'past_due', 'unpaid']:
+                    raise HTTPException(
+                        status_code=400,
+                        detail=(
+                            "Hai già una sottoscrizione attiva o in corso. Completa o verifica il pagamento senza crearne un'altra."
+                        ),
+                    )
         
         # Crea sessione checkout per abbonamento mensile a 29€
         checkout_session = stripe.checkout.Session.create(
@@ -533,9 +549,10 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
     return {"status": "success"}
 
 @app.post("/api/subscription/confirm")
-async def confirm_subscription(session_id: Optional[str] = None, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+async def confirm_subscription(payload: SubscriptionConfirm, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     """Conferma lato backend lo stato dell'abbonamento dopo il redirect di successo da Stripe."""
     try:
+        session_id = payload.session_id
         # Se viene passato un session_id, recupera i dettagli della sessione
         if session_id:
             session = stripe.checkout.Session.retrieve(session_id)

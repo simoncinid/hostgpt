@@ -49,6 +49,16 @@ export default function DashboardPage() {
       try {
         const me = await subscriptionStatus()
         const status = me?.subscription_status
+        // Se arriviamo da checkout riuscito, prova una conferma e ri-verifica
+        const urlParams = new URLSearchParams(window.location.search)
+        const subscriptionSuccess = urlParams.get('subscription') === 'success'
+        const sessionId = urlParams.get('session_id') || undefined
+        if (subscriptionSuccess) {
+          try {
+            const { subscription } = await import('@/lib/api')
+            await subscription.confirm(sessionId)
+          } catch {}
+        }
         if (status !== 'active') {
           router.replace('/checkout')
           return
