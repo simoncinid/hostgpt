@@ -48,6 +48,13 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 stripe.api_key = settings.STRIPE_SECRET_KEY
 openai.api_key = settings.OPENAI_API_KEY
 
+def get_openai_client():
+    """Restituisce un client OpenAI configurato per Assistants v2."""
+    return openai.OpenAI(
+        api_key=settings.OPENAI_API_KEY,
+        default_headers={"OpenAI-Beta": "assistants=v2"}
+    )
+
 # OAuth2 bearer per estrarre il token dall'header Authorization
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
 
@@ -179,7 +186,7 @@ def generate_qr_code(url: str) -> str:
 async def create_openai_assistant(chatbot_data: dict) -> str:
     """Crea un OpenAI Assistant con le informazioni fornite"""
     try:
-        client = openai.OpenAI(api_key=settings.OPENAI_API_KEY)
+        client = get_openai_client()
         
         # Prepara le istruzioni per l'assistant
         instructions = f"""
@@ -222,12 +229,12 @@ async def create_openai_assistant(chatbot_data: dict) -> str:
         Se non hai informazioni su qualcosa, suggerisci di contattare direttamente l'host.
         """
         
-        # Crea l'assistant
+        # Crea l'assistant (Assistants v2)
         assistant = client.beta.assistants.create(
             name=f"HostGPT - {chatbot_data['property_name']}",
             instructions=instructions,
-            model="gpt-4-turbo-preview",
-            tools=[{"type": "retrieval"}]
+            model="gpt-4o-mini",
+            tools=[]
         )
         
         return assistant.id
@@ -663,7 +670,7 @@ async def update_chatbot(
     
     # Aggiorna anche l'assistant OpenAI
     try:
-        client = openai.OpenAI(api_key=settings.OPENAI_API_KEY)
+        client = get_openai_client()
         # Ricostruisci le istruzioni con i dati aggiornati
         # (codice simile a create_openai_assistant)
         client.beta.assistants.update(
@@ -692,7 +699,7 @@ async def delete_chatbot(
     
     # Elimina assistant OpenAI
     try:
-        client = openai.OpenAI(api_key=settings.OPENAI_API_KEY)
+        client = get_openai_client()
         client.beta.assistants.delete(chatbot.assistant_id)
     except Exception as e:
         logger.error(f"Error deleting OpenAI assistant: {e}")
@@ -759,7 +766,7 @@ async def send_message(
         )
     
     try:
-        client = openai.OpenAI(api_key=settings.OPENAI_API_KEY)
+        client = get_openai_client()
         
         # Crea o recupera thread
         if not message.thread_id:

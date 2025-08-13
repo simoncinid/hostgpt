@@ -80,7 +80,7 @@ def test_openai():
         print_info("API Key OpenAI configurata")
         
         try:
-            client = openai.OpenAI(api_key=settings.OPENAI_API_KEY)
+            client = openai.OpenAI(api_key=settings.OPENAI_API_KEY, default_headers={"OpenAI-Beta": "assistants=v2"})
             # Test con una semplice richiesta
             response = client.models.list()
             models = [m.id for m in response.data if 'gpt' in m.id]
