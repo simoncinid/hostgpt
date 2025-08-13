@@ -617,14 +617,14 @@ export default function CreateChatbotPage() {
 
       {/* Progress Bar */}
       <div className="bg-white border-b">
-        <div className="max-w-6xl mx-auto px-4 py-6">
-          <div className="flex items-center justify-between">
+        <div className="max-w-6xl mx-auto px-4 py-4 md:py-6">
+          <div className="flex items-center justify-between overflow-x-auto no-scrollbar -mx-4 px-4">
             {steps.map((step, index) => {
               const Icon = step.icon
               return (
                 <div
                   key={step.id}
-                  className={`flex items-center ${index < steps.length - 1 ? 'flex-1' : ''}`}
+                  className={`flex items-center ${index < steps.length - 1 ? 'flex-1 min-w-[160px]' : 'min-w-[140px]'}`}
                 >
                   <div className="flex items-center">
                     <div
@@ -641,7 +641,7 @@ export default function CreateChatbotPage() {
                       )}
                     </div>
                     <span
-                      className={`ml-2 text-sm hidden md:block ${
+                      className={`ml-2 text-sm hidden sm:block ${
                         currentStep >= step.id ? 'text-primary font-semibold' : 'text-gray-400'
                       }`}
                     >
@@ -650,7 +650,7 @@ export default function CreateChatbotPage() {
                   </div>
                   {index < steps.length - 1 && (
                     <div
-                      className={`flex-1 h-0.5 mx-4 ${
+                      className={`flex-1 h-0.5 mx-4 hidden md:block ${
                         currentStep > step.id ? 'bg-primary' : 'bg-gray-200'
                       }`}
                     />
@@ -663,19 +663,19 @@ export default function CreateChatbotPage() {
       </div>
 
       {/* Form Content */}
-      <div className="max-w-4xl mx-auto px-4 py-8">
+      <div className="max-w-4xl mx-auto px-4 py-6 md:py-8">
         <motion.div
           key={currentStep}
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.3 }}
-          className="bg-white rounded-2xl shadow-lg p-8"
+          className="bg-white rounded-2xl shadow-lg p-4 md:p-8"
         >
           <form onSubmit={handleSubmit(onSubmit)}>
             {renderStepContent()}
 
             {/* Navigation Buttons */}
-            <div className="flex justify-between mt-8 pt-6 border-t">
+            <div className="flex flex-col sm:flex-row gap-3 sm:justify-between mt-8 pt-6 border-t">
               {currentStep > 1 && (
                 <button
                   type="button"
@@ -691,7 +691,7 @@ export default function CreateChatbotPage() {
                 <button
                   type="button"
                   onClick={nextStep}
-                  className="btn-primary flex items-center ml-auto"
+                  className="btn-primary flex items-center sm:ml-auto"
                 >
                   Avanti
                   <ArrowRight className="w-5 h-5 ml-2" />
@@ -700,7 +700,7 @@ export default function CreateChatbotPage() {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="btn-primary flex items-center ml-auto"
+                  className="btn-primary flex items-center sm:ml-auto"
                 >
                   {isSubmitting ? (
                     <>

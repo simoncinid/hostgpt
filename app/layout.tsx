@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
 import '@/styles/globals.css'
 import { Toaster } from 'react-hot-toast'
@@ -9,6 +9,13 @@ export const metadata: Metadata = {
   title: 'HostGPT - Chatbot Intelligenti per Host',
   description: 'Crea chatbot personalizzati per i tuoi affitti vacanza. Offri ai tuoi ospiti assistenza 24/7 con informazioni sulla casa e sulla zona.',
   keywords: 'chatbot, host, affitti, vacanze, assistente virtuale, AI, intelligenza artificiale',
+}
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  viewportFit: 'cover',
 }
 
 export default function RootLayout({

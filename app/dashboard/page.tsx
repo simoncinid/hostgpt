@@ -19,7 +19,9 @@ import {
   MoreVertical,
   Edit,
   Trash2,
-  Eye
+  Eye,
+  Menu,
+  X
 } from 'lucide-react'
 import { useAuthStore, useChatbotStore } from '@/lib/store'
 import { chatbots as chatbotsApi, subscription, auth } from '@/lib/api'
@@ -122,11 +124,16 @@ export default function DashboardPage() {
     activeBots: chatbots.filter(bot => bot.is_active).length
   }
 
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
+
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Sidebar */}
-      <div className="fixed left-0 top-0 h-full w-64 bg-white shadow-lg z-40">
-        <div className="p-6">
+      {/* Sidebar / Drawer */}
+      <div className={`fixed left-0 top-0 h-full w-64 bg-white shadow-lg z-40 transform transition-transform duration-200 md:translate-x-0 ${isMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
+        <div className="p-6 relative">
+          <button onClick={() => setIsMenuOpen(false)} className="md:hidden absolute right-3 top-3 p-2 rounded-lg hover:bg-gray-100" aria-label="Chiudi menu">
+            <X className="w-5 h-5" />
+          </button>
           <Link href="/" className="flex items-center space-x-2">
             <Home className="w-8 h-8 text-primary" />
             <span className="text-2xl font-bold text-dark">HostGPT</span>
@@ -170,8 +177,29 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      {/* Mobile Topbar */}
+      <div className="md:hidden sticky top-0 z-30 bg-white shadow-sm flex items-center justify-between px-4 py-3">
+        <button onClick={() => setIsMenuOpen(true)} className="p-2 rounded-lg hover:bg-gray-100" aria-label="Apri menu">
+          <Menu />
+        </button>
+        <Link href="/" className="flex items-center space-x-2">
+          <Home className="w-7 h-7 text-primary" />
+          <span className="text-xl font-bold text-dark">HostGPT</span>
+        </Link>
+        <div className="w-9" />
+      </div>
+
+      {/* Drawer overlay on mobile */}
+      {isMenuOpen && (
+        <button
+          aria-label="Chiudi menu"
+          onClick={() => setIsMenuOpen(false)}
+          className="md:hidden fixed inset-0 bg-black/40 z-20"
+        />
+      )}
+
       {/* Main Content */}
-      <div className="ml-64 p-8">
+      <div className="md:ml-64 p-4 md:p-8">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-dark mb-2">
@@ -183,7 +211,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid md:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -243,7 +271,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Box informativo: limite 1 chatbot + CTA WhatsApp */}
-        <div className="bg-gradient-to-r from-primary to-accent rounded-2xl p-8 mb-8 text-white">
+        <div className="bg-gradient-to-r from-primary to-accent rounded-2xl p-6 md:p-8 mb-8 text-white">
           <h2 className="text-2xl font-bold mb-4">Hai più strutture?</h2>
           <p className="mb-6 text-white/90">
             Ogni account può avere un solo chatbot. Se ti servono più chatbot perché gestisci più strutture, contattami al <strong>3391797616</strong>.
@@ -260,8 +288,8 @@ export default function DashboardPage() {
         </div>
 
         {/* Chatbots List */}
-        <div className="bg-white rounded-2xl shadow-lg p-6">
-          <div className="flex items-center justify-between mb-6">
+        <div className="bg-white rounded-2xl shadow-lg p-4 md:p-6">
+          <div className="flex items-center justify-between mb-4 md:mb-6">
             <h2 className="text-xl font-bold text-dark">I Tuoi Chatbot</h2>
             <Link href="/dashboard/chatbots" className="text-primary hover:text-secondary">
               Vedi tutti →
@@ -281,7 +309,7 @@ export default function DashboardPage() {
               </Link>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-3 md:space-y-4">
               {chatbots.slice(0, 5).map((bot) => (
                 <motion.div
                   key={bot.id}
@@ -289,9 +317,9 @@ export default function DashboardPage() {
                   animate={{ opacity: 1, x: 0 }}
                   className="border rounded-lg p-4 hover:shadow-md transition"
                 >
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between gap-3">
                     <div className="flex-1">
-                      <div className="flex items-center">
+                      <div className="flex items-center flex-wrap gap-2">
                         <h3 className="font-semibold text-lg">{bot.property_name}</h3>
                         {bot.is_active ? (
                           <span className="ml-2 px-2 py-1 bg-green-100 text-green-600 text-xs rounded-full">
@@ -304,7 +332,7 @@ export default function DashboardPage() {
                         )}
                       </div>
                       <p className="text-sm text-gray-500 mt-1">{bot.property_city}</p>
-                      <div className="flex items-center gap-4 mt-2 text-sm text-gray-600">
+                      <div className="flex items-center gap-4 mt-2 text-sm text-gray-600 flex-wrap">
                         <span className="flex items-center">
                           <Users className="w-4 h-4 mr-1" />
                           {bot.total_conversations} conversazioni
@@ -316,7 +344,7 @@ export default function DashboardPage() {
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1 sm:gap-2">
                       <button
                         onClick={() => showQRCode(bot.chat_url, bot.qr_code)}
                         className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition"
@@ -365,11 +393,11 @@ export default function DashboardPage() {
 
       {/* QR Code Modal */}
       {showQRModal && currentQR && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-white rounded-2xl p-8 max-w-md w-full mx-4"
+            className="bg-white rounded-2xl p-6 md:p-8 max-w-md w-full"
           >
             <h3 className="text-xl font-bold mb-4">QR Code Chatbot</h3>
             <div className="bg-gray-100 p-4 rounded-lg mb-4">

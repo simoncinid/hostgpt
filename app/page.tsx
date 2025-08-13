@@ -132,7 +132,7 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-white">
       {/* Navbar - glass, staccata dai bordi con angoli arrotondati */}
-      <nav className="fixed top-4 left-0 right-0 z-50">
+      <nav className="fixed top-2 md:top-4 left-0 right-0 z-50 safe-top">
         <div className="container-max px-4">
           <div className="flex justify-between items-center py-3 px-4 bg-white/60 backdrop-blur-lg border border-white/30 shadow-lg rounded-2xl">
             <Link href="/" className="flex items-center space-x-2">
@@ -184,12 +184,12 @@ export default function LandingPage() {
           >
             <div className="container-max px-4">
               <div className="px-4 py-4 space-y-4 bg-white/70 backdrop-blur-lg border border-white/30 shadow-lg rounded-2xl">
-                <Link href="#features" className="block text-gray-600">Funzionalità</Link>
-                <Link href="#demo" className="block text-gray-600">Demo</Link>
-                <Link href="#how-it-works" className="block text-gray-600">Come Funziona</Link>
-                <Link href="#pricing" className="block text-gray-600">Prezzi</Link>
-                <Link href="/login" className="block text-gray-600">Accedi</Link>
-                <Link href="/register" className="btn-primary block text-center">
+                <Link href="#features" onClick={() => setIsMenuOpen(false)} className="block text-gray-600">Funzionalità</Link>
+                <Link href="#demo" onClick={() => setIsMenuOpen(false)} className="block text-gray-600">Demo</Link>
+                <Link href="#how-it-works" onClick={() => setIsMenuOpen(false)} className="block text-gray-600">Come Funziona</Link>
+                <Link href="#pricing" onClick={() => setIsMenuOpen(false)} className="block text-gray-600">Prezzi</Link>
+                <Link href="/login" onClick={() => setIsMenuOpen(false)} className="block text-gray-600">Accedi</Link>
+                <Link href="/register" onClick={() => setIsMenuOpen(false)} className="btn-primary block text-center">
                   Registrati
                 </Link>
               </div>
@@ -199,7 +199,7 @@ export default function LandingPage() {
       </nav>
 
       {/* Hero Section */}
-      <section className="pt-36 pb-20 px-4">
+      <section className="pt-32 md:pt-36 pb-16 md:pb-20 px-4">
         <div className="container-max">
           <motion.div
             initial={{ opacity: 0, y: 30 }}

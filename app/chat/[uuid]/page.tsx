@@ -192,7 +192,7 @@ export default function ChatWidgetPage() {
       )}
 
       {/* Main Chat Area */}
-      <div className="max-w-4xl mx-auto px-4 py-6">
+      <div className="max-w-4xl mx-auto px-4 py-4 md:py-6">
         <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
           {/* Welcome Screen */}
           {showWelcome && messages.length <= 1 && (
@@ -230,7 +230,7 @@ export default function ChatWidgetPage() {
           {/* Messages Area */}
           {(!showWelcome || messages.length > 1) && (
             <>
-              <div className="h-[500px] overflow-y-auto p-6 space-y-4">
+              <div className="max-h-[calc(100svh-260px)] md:h-[500px] overflow-y-auto p-4 md:p-6 space-y-4">
                 {messages.map((message, index) => (
                   <motion.div
                     key={message.id}
@@ -289,8 +289,8 @@ export default function ChatWidgetPage() {
               </div>
 
               {/* Input Area */}
-              <div className="border-t p-4">
-                <form onSubmit={handleSendMessage} className="flex items-center gap-3">
+              <div className="border-t p-3 md:p-4 safe-bottom">
+                <form onSubmit={handleSendMessage} className="flex items-center gap-2 md:gap-3">
                   <input
                     ref={inputRef}
                     type="text"
@@ -303,7 +303,7 @@ export default function ChatWidgetPage() {
                   <button
                     type="submit"
                     disabled={isLoading || !inputMessage.trim()}
-                    className="w-12 h-12 bg-primary text-white rounded-full flex items-center justify-center hover:bg-secondary transition disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-11 h-11 md:w-12 md:h-12 bg-primary text-white rounded-full flex items-center justify-center hover:bg-secondary transition disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <Send className="w-5 h-5" />
                   </button>
