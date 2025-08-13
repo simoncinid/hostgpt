@@ -259,6 +259,58 @@ async def create_openai_assistant(chatbot_data: dict) -> str:
         logger.error(f"Error creating OpenAI assistant: {e}")
         raise HTTPException(status_code=500, detail="Failed to create assistant")
 
+def build_assistant_instructions_from_model(chatbot: Chatbot) -> str:
+    """Costruisce le system instructions complete a partire dal modello Chatbot (SQLAlchemy)."""
+    try:
+        amenities = chatbot.amenities or []
+        wifi_info = chatbot.wifi_info or {}
+        emergency_contacts = chatbot.emergency_contacts or []
+        nearby_attractions = chatbot.nearby_attractions or []
+        restaurants_bars = chatbot.restaurants_bars or []
+        faq = chatbot.faq or []
+        return f"""
+        Sei l'assistente virtuale per {chatbot.property_name}.
+
+        INFORMAZIONI SULLA PROPRIETÀ:
+        - Nome: {chatbot.property_name}
+        - Tipo: {chatbot.property_type}
+        - Indirizzo: {chatbot.property_address}, {chatbot.property_city}
+        - Descrizione: {chatbot.property_description}
+        - Check-in: {chatbot.check_in_time}
+        - Check-out: {chatbot.check_out_time}
+        - Regole della casa: {chatbot.house_rules}
+        - Servizi: {', '.join(amenities)}
+
+        INFORMAZIONI SULLA ZONA:
+        - Descrizione quartiere: {chatbot.neighborhood_description}
+        - Trasporti: {chatbot.transportation_info}
+        - Shopping: {chatbot.shopping_info}
+        - Parcheggio: {chatbot.parking_info}
+
+        INFORMAZIONI PRATICHE:
+        - WiFi: {json.dumps(wifi_info, ensure_ascii=False)}
+        - Istruzioni speciali: {chatbot.special_instructions}
+        - Contatti emergenza: {json.dumps(emergency_contacts, ensure_ascii=False)}
+
+        ATTRAZIONI VICINE:
+        {json.dumps(nearby_attractions, ensure_ascii=False)}
+
+        RISTORANTI E BAR:
+        {json.dumps(restaurants_bars, ensure_ascii=False)}
+
+        FAQ:
+        {json.dumps(faq, ensure_ascii=False)}
+
+        Messaggio di benvenuto: {chatbot.welcome_message}
+
+        Rispondi sempre in {chatbot.language}.
+        Sii cordiale, utile e fornisci informazioni accurate basate sui dati forniti.
+        Se non hai informazioni su qualcosa, suggerisci di contattare direttamente l'host.
+        """
+    except Exception as e:
+        logger.error(f"Error building instructions: {e}")
+        return ""
+
 # ============= API Endpoints =============
 
 @app.get("/")
@@ -694,11 +746,11 @@ async def update_chatbot(
     # Aggiorna anche l'assistant OpenAI
     try:
         client = get_openai_client()
-        # Ricostruisci le istruzioni con i dati aggiornati
-        # (codice simile a create_openai_assistant)
+        # Ricostruisci le istruzioni con i dati aggiornati del chatbot
+        new_instructions = build_assistant_instructions_from_model(chatbot)
         client.beta.assistants.update(
             chatbot.assistant_id,
-            instructions="[Istruzioni aggiornate]",
+            instructions=new_instructions,
             extra_headers={"OpenAI-Beta": "assistants=v2"}
         )
     except Exception as e:
