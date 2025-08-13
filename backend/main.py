@@ -234,7 +234,8 @@ async def create_openai_assistant(chatbot_data: dict) -> str:
             name=f"HostGPT - {chatbot_data['property_name']}",
             instructions=instructions,
             model="gpt-4o-mini",
-            tools=[]
+            tools=[],
+            extra_headers={"OpenAI-Beta": "assistants=v2"}
         )
         
         return assistant.id
@@ -675,7 +676,8 @@ async def update_chatbot(
         # (codice simile a create_openai_assistant)
         client.beta.assistants.update(
             chatbot.assistant_id,
-            instructions="[Istruzioni aggiornate]"
+            instructions="[Istruzioni aggiornate]",
+            extra_headers={"OpenAI-Beta": "assistants=v2"}
         )
     except Exception as e:
         logger.error(f"Error updating OpenAI assistant: {e}")
@@ -700,7 +702,7 @@ async def delete_chatbot(
     # Elimina assistant OpenAI
     try:
         client = get_openai_client()
-        client.beta.assistants.delete(chatbot.assistant_id)
+        client.beta.assistants.delete(chatbot.assistant_id, extra_headers={"OpenAI-Beta": "assistants=v2"})
     except Exception as e:
         logger.error(f"Error deleting OpenAI assistant: {e}")
     
@@ -770,7 +772,7 @@ async def send_message(
         
         # Crea o recupera thread
         if not message.thread_id:
-            thread = client.beta.threads.create()
+            thread = client.beta.threads.create(extra_headers={"OpenAI-Beta": "assistants=v2"})
             thread_id = thread.id
             
             # Crea nuova conversazione nel DB
@@ -794,13 +796,15 @@ async def send_message(
         client.beta.threads.messages.create(
             thread_id=thread_id,
             role="user",
-            content=message.content
+            content=message.content,
+            extra_headers={"OpenAI-Beta": "assistants=v2"}
         )
         
         # Esegui assistant
         run = client.beta.threads.runs.create(
             thread_id=thread_id,
-            assistant_id=chatbot.assistant_id
+            assistant_id=chatbot.assistant_id,
+            extra_headers={"OpenAI-Beta": "assistants=v2"}
         )
         
         # Attendi risposta
@@ -809,11 +813,12 @@ async def send_message(
             time.sleep(1)
             run = client.beta.threads.runs.retrieve(
                 thread_id=thread_id,
-                run_id=run.id
+                run_id=run.id,
+                extra_headers={"OpenAI-Beta": "assistants=v2"}
             )
         
         # Ottieni risposta
-        messages = client.beta.threads.messages.list(thread_id=thread_id)
+        messages = client.beta.threads.messages.list(thread_id=thread_id, extra_headers={"OpenAI-Beta": "assistants=v2"})
         assistant_message = messages.data[0].content[0].text.value
         
         # Salva messaggi nel DB
