@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { motion } from 'framer-motion'
@@ -37,6 +37,7 @@ export default function LandingPage() {
   ]
   const [demoVisible, setDemoVisible] = useState<typeof demoMessages>([])
   const [demoRunId, setDemoRunId] = useState(0)
+  const demoScrollRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
     setDemoVisible([])
@@ -50,6 +51,13 @@ export default function LandingPage() {
     }, 1400)
     return () => clearInterval(interval)
   }, [demoRunId])
+
+  useEffect(() => {
+    const el = demoScrollRef.current
+    if (el) {
+      el.scrollTop = el.scrollHeight
+    }
+  }, [demoVisible])
 
   const features = [
     {
@@ -212,8 +220,8 @@ export default function LandingPage() {
                 Registrati per iniziare
                 <ArrowRight className="inline ml-2 w-5 h-5" />
               </Link>
-              <Link href="#demo" className="btn-outline text-lg px-8 py-4">
-                Guarda Demo
+              <Link href="#features" className="btn-outline text-lg px-8 py-4">
+                Scopri Funzionalità
               </Link>
             </div>
           </motion.div>
@@ -233,58 +241,28 @@ export default function LandingPage() {
                   </div>
                   <span className="ml-3 font-semibold">Casa Bella Vista Bot</span>
                 </div>
-                <div className="space-y-4">
-                  <div className="chat-bubble-user">
-                    Ciao! A che ora è il check-in?
-                  </div>
-                  <div className="chat-bubble-assistant">
-                    Benvenuto! Il check-in è dalle 15:00 alle 20:00. 
-                    Ti invierò il codice della cassetta delle chiavi il giorno dell'arrivo. 
-                    Posso aiutarti con altro?
+                <div
+                  ref={demoScrollRef}
+                  className="space-y-4 h-64 overflow-y-auto pr-2"
+                  style={{ direction: 'rtl' }}
+                >
+                  <div style={{ direction: 'ltr' }}>
+                    {demoVisible.map((m, idx) => (
+                      <motion.div
+                        key={idx}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3 }}
+                        className={m.role === 'user' ? 'chat-bubble-user' : 'chat-bubble-assistant'}
+                      >
+                        {m.text}
+                      </motion.div>
+                    ))}
                   </div>
                 </div>
               </div>
             </div>
           </motion.div>
-        </div>
-      </section>
-
-      {/* Demo Section - conversazione dinamica */}
-      <section id="demo" className="section-padding">
-        <div className="container-max">
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            className="text-center mb-10"
-          >
-            <h2 className="text-4xl font-bold text-dark mb-4">Demo in Azione</h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">Guarda come HostGPT gestisce una conversazione reale con i tuoi ospiti</p>
-          </motion.div>
-
-          <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-3xl mx-auto">
-            <div className="flex items-center mb-4">
-              <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center">
-                <MessageSquare className="w-6 h-6 text-white" />
-              </div>
-              <span className="ml-3 font-semibold">HostGPT Demo</span>
-            </div>
-            <div className="space-y-4 min-h-[220px]">
-              {demoVisible.map((m, idx) => (
-                <motion.div
-                  key={idx}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3 }}
-                  className={m.role === 'user' ? 'chat-bubble-user' : 'chat-bubble-assistant'}
-                >
-                  {m.text}
-                </motion.div>
-              ))}
-            </div>
-            <div className="mt-6 text-center">
-              <button onClick={() => setDemoRunId((v) => v + 1)} className="btn-outline px-6 py-3">Riprova la demo</button>
-            </div>
-          </div>
         </div>
       </section>
 
