@@ -36,6 +36,10 @@ export default function ChatbotsListPage() {
     try {
       const response = await chatbotsApi.list()
       setChatbots(response.data)
+      if ((response.data || []).length >= 1) {
+        router.replace(`/dashboard/chatbots/${response.data[0].id}`)
+        return
+      }
     } catch {
       toast.error('Errore nel caricamento dei chatbot')
     } finally {
@@ -62,7 +66,7 @@ export default function ChatbotsListPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="bg-white shadow-sm">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+          <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Link href="/dashboard" className="text-gray-600 hover:text-primary flex items-center">
               <ArrowLeft className="w-5 h-5 mr-2" />
@@ -70,7 +74,10 @@ export default function ChatbotsListPage() {
             </Link>
             <h1 className="text-xl font-semibold">I Miei Chatbot</h1>
           </div>
-          <Link href="/dashboard/chatbots/create" className="btn-primary">Crea Nuovo</Link>
+            {/* Nasconde il pulsante Crea se esiste già un chatbot */}
+            {chatbots.length === 0 ? (
+              <Link href="/dashboard/chatbots/create" className="btn-primary">Crea Nuovo</Link>
+            ) : null}
         </div>
       </div>
 

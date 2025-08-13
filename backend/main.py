@@ -583,6 +583,16 @@ async def create_chatbot(
             status_code=403, 
             detail="Devi attivare un abbonamento per creare un chatbot. Abbonamento mensile: 29€/mese"
         )
+    # Impone limite di 1 chatbot per utente
+    existing_count = db.query(Chatbot).filter(Chatbot.user_id == current_user.id).count()
+    if existing_count >= 1:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Ogni account può avere un solo chatbot. Se ti servono più chatbot perché gestisci più strutture, "
+                "contattami su WhatsApp al 3391797616."
+            )
+        )
     
     # Crea assistant OpenAI
     assistant_id = await create_openai_assistant(chatbot.dict())

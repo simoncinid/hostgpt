@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
@@ -73,6 +73,20 @@ export default function CreateChatbotPage() {
   const [currentStep, setCurrentStep] = useState(1)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const { addChatbot } = useChatbotStore()
+  
+  // Se esiste già un chatbot, reindirizza ai dettagli (limite 1 per account)
+  useEffect(() => {
+    const checkExisting = async () => {
+      try {
+        const res = await chatbots.list()
+        const bots = res.data || []
+        if (bots.length >= 1) {
+          router.replace(`/dashboard/chatbots/${bots[0].id}`)
+        }
+      } catch {}
+    }
+    checkExisting()
+  }, [])
   
   const { register, control, handleSubmit, watch, formState: { errors }, setValue } = useForm<ChatbotFormData>({
     defaultValues: {
