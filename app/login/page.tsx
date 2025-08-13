@@ -27,11 +27,21 @@ export default function LoginPage() {
   useEffect(() => {
     const registered = searchParams.get('registered')
     const subscriptionSuccess = searchParams.get('subscription') === 'success'
+    const sessionId = searchParams.get('session_id') || undefined
     if (registered) {
       toast.success('Controlla la tua email e clicca il link di verifica per procedere al pagamento')
     }
     if (subscriptionSuccess) {
-      toast.success('Pagamento effettuato! Ora puoi accedere')
+      // tenta una conferma esplicita lato backend
+      (async () => {
+        try {
+          const { subscription } = await import('@/lib/api')
+          await subscription.confirm(sessionId)
+          toast.success('Pagamento effettuato! Ora puoi accedere')
+        } catch {
+          toast.success('Pagamento effettuato! Ora puoi accedere')
+        }
+      })()
     }
   }, [searchParams])
 

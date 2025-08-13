@@ -53,6 +53,8 @@ export const auth = {
 export const subscription = {
   createCheckout: () =>
     api.post('/subscription/create-checkout'),
+  confirm: (session_id?: string) =>
+    api.post('/subscription/confirm', { session_id }),
 }
 
 export const chatbots = {

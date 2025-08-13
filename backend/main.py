@@ -291,6 +291,9 @@ async def verify_email(token: str, db: Session = Depends(get_db)):
     """Verifica email e reindirizza al pagamento"""
     from fastapi.responses import RedirectResponse
     
+    # Normalizza il token (rimuove spazi accidentali da email client)
+    token = (token or "").strip()
+
     # Trova utente con questo token
     user = db.query(User).filter(User.verification_token == token).first()
     
@@ -360,6 +363,16 @@ async def get_me(current_user: User = Depends(get_current_user)):
 async def create_checkout_session(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     """Crea sessione di checkout Stripe - Solo abbonamento mensile a 29€"""
     try:
+        # Validazione configurazione STRIPE_PRICE_ID
+        if not settings.STRIPE_PRICE_ID or not settings.STRIPE_PRICE_ID.startswith("price_") or "your-monthly" in settings.STRIPE_PRICE_ID:
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "Configurazione Stripe mancante o non valida: STRIPE_PRICE_ID. "
+                    "Imposta un Price ID ricorrente (mensile 29€) nelle variabili d'ambiente del backend."
+                ),
+            )
+
         # Verifica che l'utente abbia verificato l'email
         if not current_user.is_verified:
             raise HTTPException(status_code=400, detail="Devi verificare la tua email prima di sottoscrivere un abbonamento")
@@ -386,7 +399,7 @@ async def create_checkout_session(current_user: User = Depends(get_current_user)
                 'quantity': 1,
             }],
             mode='subscription',
-            success_url=f"{settings.FRONTEND_URL}/login?subscription=success",
+            success_url=f"{settings.FRONTEND_URL}/login?subscription=success&session_id={{CHECKOUT_SESSION_ID}}",
             cancel_url=f"{settings.FRONTEND_URL}/dashboard?subscription=cancelled",
             metadata={
                 'user_id': str(current_user.id)
@@ -443,6 +456,41 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
             db.commit()
     
     return {"status": "success"}
+
+@app.post("/api/subscription/confirm")
+async def confirm_subscription(session_id: Optional[str] = None, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Conferma lato backend lo stato dell'abbonamento dopo il redirect di successo da Stripe."""
+    try:
+        # Se viene passato un session_id, recupera i dettagli della sessione
+        if session_id:
+            session = stripe.checkout.Session.retrieve(session_id)
+            if session and session.get('customer') == current_user.stripe_customer_id and session.get('subscription'):
+                current_user.stripe_subscription_id = session['subscription']
+                current_user.subscription_status = 'active'
+                current_user.subscription_end_date = datetime.utcnow() + timedelta(days=30)
+                current_user.messages_used = 0
+                current_user.messages_reset_date = datetime.utcnow()
+                db.commit()
+                return {"status": "active"}
+
+        # Fallback: controlla lo stato su Stripe dal customer
+        if current_user.stripe_customer_id:
+            subs = stripe.Subscription.list(customer=current_user.stripe_customer_id, status='all', limit=1)
+            if subs.data:
+                sub = subs.data[0]
+                if sub.status in ['active', 'trialing']:
+                    current_user.stripe_subscription_id = sub.id
+                    current_user.subscription_status = 'active'
+                    current_user.subscription_end_date = datetime.utcfromtimestamp(sub.current_period_end)
+                    current_user.messages_used = 0
+                    current_user.messages_reset_date = datetime.utcnow()
+                    db.commit()
+                    return {"status": "active"}
+
+        return {"status": current_user.subscription_status or 'inactive'}
+    except Exception as e:
+        logger.error(f"Subscription confirm error: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
 
 # --- Chatbot Management ---
 
