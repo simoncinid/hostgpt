@@ -243,22 +243,22 @@ export default function LandingPage() {
                 </div>
                 <div
                   ref={demoScrollRef}
-                  className="space-y-4 h-64 overflow-y-auto pr-2"
-                  style={{ direction: 'rtl' }}
+                  className="space-y-4 h-64 overflow-y-auto pr-2 scrollbar-left"
                 >
-                  <div style={{ direction: 'ltr' }}>
-                    {demoVisible.map((m, idx) => (
-                      <motion.div
-                        key={idx}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.3 }}
-                        className={m.role === 'user' ? 'chat-bubble-user' : 'chat-bubble-assistant'}
-                      >
-                        {m.text}
-                      </motion.div>
-                    ))}
-                  </div>
+                  {demoVisible.map((m, idx) => (
+                    <motion.div
+                      key={idx}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.3 }}
+                      className={m.role === 'user' ? 'chat-bubble-user' : 'chat-bubble-assistant'}
+                    >
+                      {m.text}
+                    </motion.div>
+                  ))}
+                </div>
+                <div className="mt-6 text-center">
+                  <button onClick={() => setDemoRunId((v) => v + 1)} className="btn-outline px-6 py-3">Replica demo</button>
                 </div>
               </div>
             </div>
