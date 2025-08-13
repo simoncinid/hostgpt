@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { motion } from 'framer-motion'
@@ -23,6 +23,33 @@ import {
 
 export default function LandingPage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+
+  // Messaggi demo dinamici
+  const demoMessages: { role: 'user' | 'assistant'; text: string }[] = [
+    { role: 'user', text: 'Ciao! A che ora è il check-in?' },
+    { role: 'assistant', text: 'Ciao! Il check-in è dalle 15:00 alle 20:00. Ti invieremo il codice della cassetta di sicurezza il giorno dell’arrivo.' },
+    { role: 'user', text: 'Posso fare check-in dopo le 22?' },
+    { role: 'assistant', text: 'Certo! È previsto un self check-in 24/7. Facci sapere l’orario stimato e ti assistiamo noi.' },
+    { role: 'user', text: 'Com’è il parcheggio in zona?' },
+    { role: 'assistant', text: 'C’è parcheggio gratuito in strada nei dintorni. In alternativa, a 300m trovi il Garage Verdi a 15€/giorno.' },
+    { role: 'user', text: 'Wifi e ristoranti consigliati?' },
+    { role: 'assistant', text: 'Wifi fibra 200Mbps, password: CASA2024. Per cenare ti consiglio Trattoria Roma (5 min a piedi) e Osteria Bella Vista.' }
+  ]
+  const [demoVisible, setDemoVisible] = useState<typeof demoMessages>([])
+  const [demoRunId, setDemoRunId] = useState(0)
+
+  useEffect(() => {
+    setDemoVisible([])
+    let i = 0
+    const interval = setInterval(() => {
+      i += 1
+      setDemoVisible(demoMessages.slice(0, i))
+      if (i >= demoMessages.length) {
+        clearInterval(interval)
+      }
+    }, 1400)
+    return () => clearInterval(interval)
+  }, [demoRunId])
 
   const features = [
     {
@@ -80,90 +107,64 @@ export default function LandingPage() {
 
   const pricingPlans = [
     {
-      name: "Starter",
+      name: "Abbonamento",
       price: "€29",
       period: "/mese",
       features: [
-        "1 Chatbot",
+        "1 Chatbot personalizzato",
         "Conversazioni illimitate",
-        "Statistiche base",
-        "Supporto email",
-        "QR Code personalizzato"
-      ],
-      highlighted: false
-    },
-    {
-      name: "Professional",
-      price: "€59",
-      period: "/mese",
-      features: [
-        "3 Chatbot",
-        "Conversazioni illimitate",
-        "Statistiche avanzate",
-        "Supporto prioritario",
-        "QR Code personalizzato",
-        "Personalizzazione completa",
-        "Export dati"
+        "Assistenza 24/7",
+        "Statistiche essenziali",
+        "QR Code e link di condivisione"
       ],
       highlighted: true
-    },
-    {
-      name: "Business",
-      price: "€99",
-      period: "/mese",
-      features: [
-        "Chatbot illimitati",
-        "Conversazioni illimitate",
-        "Analytics completi",
-        "Supporto dedicato",
-        "QR Code personalizzato",
-        "White label",
-        "API access",
-        "Training personalizzato"
-      ],
-      highlighted: false
     }
   ]
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Navbar */}
-      <nav className="fixed top-0 w-full bg-white navbar-shadow z-50">
-        <div className="container-max flex justify-between items-center py-4 px-4">
-          <Link href="/" className="flex items-center space-x-2">
-            <Home className="w-8 h-8 text-primary" />
-            <span className="text-2xl font-bold text-dark">HostGPT</span>
-          </Link>
+      {/* Navbar - glass, staccata dai bordi con angoli arrotondati */}
+      <nav className="fixed top-4 left-0 right-0 z-50">
+        <div className="container-max px-4">
+          <div className="flex justify-between items-center py-3 px-4 bg-white/60 backdrop-blur-lg border border-white/30 shadow-lg rounded-2xl">
+            <Link href="/" className="flex items-center space-x-2">
+              <Home className="w-8 h-8 text-primary" />
+              <span className="text-2xl font-bold text-dark">HostGPT</span>
+            </Link>
 
-          {/* Desktop Menu */}
-          <div className="hidden md:flex items-center space-x-8">
-            <Link href="#features" className="text-gray-600 hover:text-primary transition">
-              Funzionalità
-            </Link>
-            <Link href="#how-it-works" className="text-gray-600 hover:text-primary transition">
-              Come Funziona
-            </Link>
-            <Link href="#pricing" className="text-gray-600 hover:text-primary transition">
-              Prezzi
-            </Link>
-            <Link href="#testimonials" className="text-gray-600 hover:text-primary transition">
-              Testimonianze
-            </Link>
-            <Link href="/login" className="text-gray-600 hover:text-primary transition">
-              Accedi
-            </Link>
-            <Link href="/register" className="btn-primary">
-              Inizia Gratis
-            </Link>
+            {/* Desktop Menu */}
+            <div className="hidden md:flex items-center space-x-8">
+              <Link href="#features" className="text-gray-600 hover:text-primary transition">
+                Funzionalità
+              </Link>
+              <Link href="#demo" className="text-gray-600 hover:text-primary transition">
+                Demo
+              </Link>
+              <Link href="#how-it-works" className="text-gray-600 hover:text-primary transition">
+                Come Funziona
+              </Link>
+              <Link href="#pricing" className="text-gray-600 hover:text-primary transition">
+                Prezzi
+              </Link>
+              <Link href="#testimonials" className="text-gray-600 hover:text-primary transition">
+                Testimonianze
+              </Link>
+              <Link href="/login" className="text-gray-600 hover:text-primary transition">
+                Accedi
+              </Link>
+              <Link href="/register" className="btn-primary">
+                Registrati
+              </Link>
+            </div>
+
+            {/* Mobile Menu Button */}
+            <button
+              className="md:hidden"
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+            >
+              {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
           </div>
-
-          {/* Mobile Menu Button */}
-          <button
-            className="md:hidden"
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-          >
-            {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </button>
         </div>
 
         {/* Mobile Menu */}
@@ -171,23 +172,26 @@ export default function LandingPage() {
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="md:hidden bg-white border-t"
+            className="md:hidden mt-2"
           >
-            <div className="px-4 py-4 space-y-4">
-              <Link href="#features" className="block text-gray-600">Funzionalità</Link>
-              <Link href="#how-it-works" className="block text-gray-600">Come Funziona</Link>
-              <Link href="#pricing" className="block text-gray-600">Prezzi</Link>
-              <Link href="/login" className="block text-gray-600">Accedi</Link>
-              <Link href="/register" className="btn-primary block text-center">
-                Inizia Gratis
-              </Link>
+            <div className="container-max px-4">
+              <div className="px-4 py-4 space-y-4 bg-white/70 backdrop-blur-lg border border-white/30 shadow-lg rounded-2xl">
+                <Link href="#features" className="block text-gray-600">Funzionalità</Link>
+                <Link href="#demo" className="block text-gray-600">Demo</Link>
+                <Link href="#how-it-works" className="block text-gray-600">Come Funziona</Link>
+                <Link href="#pricing" className="block text-gray-600">Prezzi</Link>
+                <Link href="/login" className="block text-gray-600">Accedi</Link>
+                <Link href="/register" className="btn-primary block text-center">
+                  Registrati
+                </Link>
+              </div>
             </div>
           </motion.div>
         )}
       </nav>
 
       {/* Hero Section */}
-      <section className="pt-32 pb-20 px-4">
+      <section className="pt-36 pb-20 px-4">
         <div className="container-max">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -196,25 +200,22 @@ export default function LandingPage() {
             className="text-center"
           >
             <h1 className="text-5xl md:text-6xl font-bold text-dark mb-6">
-              Il Tuo Assistente Virtuale<br />
-              <span className="text-gradient">per Affitti Vacanza</span>
+              Risparmia Tempo con <span className="text-gradient">HostGPT</span><br />
+              L’assistente H24 per i tuoi ospiti
             </h1>
             <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-              Crea un chatbot intelligente che risponde alle domande dei tuoi ospiti 24/7. 
-              Informazioni sulla casa, consigli locali e assistenza immediata.
+              Rispondi automaticamente, in modo completo e immediato, alle richieste dei guest 24/7. 
+              Meno messaggi per te, più soddisfazione per loro.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link href="/register" className="btn-primary text-lg px-8 py-4">
-                Prova Gratis per 14 Giorni
+                Registrati per iniziare
                 <ArrowRight className="inline ml-2 w-5 h-5" />
               </Link>
               <Link href="#demo" className="btn-outline text-lg px-8 py-4">
                 Guarda Demo
               </Link>
             </div>
-            <p className="mt-4 text-sm text-gray-500">
-              Nessuna carta di credito richiesta • Setup in 10 minuti
-            </p>
           </motion.div>
 
           {/* Hero Image/Animation */}
@@ -245,6 +246,45 @@ export default function LandingPage() {
               </div>
             </div>
           </motion.div>
+        </div>
+      </section>
+
+      {/* Demo Section - conversazione dinamica */}
+      <section id="demo" className="section-padding">
+        <div className="container-max">
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            className="text-center mb-10"
+          >
+            <h2 className="text-4xl font-bold text-dark mb-4">Demo in Azione</h2>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto">Guarda come HostGPT gestisce una conversazione reale con i tuoi ospiti</p>
+          </motion.div>
+
+          <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-3xl mx-auto">
+            <div className="flex items-center mb-4">
+              <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center">
+                <MessageSquare className="w-6 h-6 text-white" />
+              </div>
+              <span className="ml-3 font-semibold">HostGPT Demo</span>
+            </div>
+            <div className="space-y-4 min-h-[220px]">
+              {demoVisible.map((m, idx) => (
+                <motion.div
+                  key={idx}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className={m.role === 'user' ? 'chat-bubble-user' : 'chat-bubble-assistant'}
+                >
+                  {m.text}
+                </motion.div>
+              ))}
+            </div>
+            <div className="mt-6 text-center">
+              <button onClick={() => setDemoRunId((v) => v + 1)} className="btn-outline px-6 py-3">Riprova la demo</button>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -356,15 +396,11 @@ export default function LandingPage() {
             whileInView={{ opacity: 1 }}
             className="text-center mb-16"
           >
-            <h2 className="text-4xl font-bold text-dark mb-4">
-              Prezzi Trasparenti
-            </h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Scegli il piano perfetto per le tue esigenze
-            </p>
+            <h2 className="text-4xl font-bold text-dark mb-4">Un Solo Abbonamento</h2>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto">Tutto ciò che ti serve a <span className="font-semibold">€29/mese</span></p>
           </motion.div>
 
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-1 gap-8 max-w-xl mx-auto">
             {pricingPlans.map((plan, index) => (
               <motion.div
                 key={index}
@@ -401,7 +437,7 @@ export default function LandingPage() {
                       : 'bg-gray-100 text-dark hover:bg-gray-200'
                   }`}
                 >
-                  Inizia Ora
+                  Registrati ora
                 </Link>
               </motion.div>
             ))}
@@ -490,7 +526,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* CTA Section */}
+      {/* CTA Section */
       <section className="section-padding">
         <div className="container-max text-center">
           <motion.div
@@ -506,12 +542,9 @@ export default function LandingPage() {
               Unisciti a centinaia di host che hanno già migliorato il loro servizio con HostGPT
             </p>
             <Link href="/register" className="btn-primary text-lg px-10 py-4">
-              Inizia la Prova Gratuita
+              Registrati per iniziare
               <ArrowRight className="inline ml-2 w-5 h-5" />
             </Link>
-            <p className="mt-4 text-sm text-gray-500">
-              14 giorni gratis • Nessuna carta richiesta • Cancella quando vuoi
-            </p>
           </motion.div>
         </div>
       </section>
