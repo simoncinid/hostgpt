@@ -526,7 +526,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* CTA Section */
+      {/* CTA Section */}
       <section className="section-padding">
         <div className="container-max text-center">
           <motion.div
