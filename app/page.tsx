@@ -196,7 +196,7 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-white">
       {/* Navbar - Fix per mobile: rimuovo padding/margin problematici */}
-      <nav className="fixed top-0 left-0 right-0 z-50 safe-top">
+      <nav className="fixed top-4 left-0 right-0 z-50 safe-top">
         <div className="px-4">
           <div className="flex justify-between items-center py-3 px-4 bg-white/60 backdrop-blur-lg border border-white/30 shadow-lg rounded-2xl mx-2">
             <Link href="/" className="flex items-center space-x-2">
@@ -277,15 +277,15 @@ export default function LandingPage() {
               Rispondi automaticamente, in modo completo e immediato, alle richieste dei guest 24/7. 
               Meno messaggi per te, più soddisfazione per loro.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link href="/register" className="btn-primary text-lg px-8 py-4">
-                Registrati per iniziare
-                <ArrowRight className="inline ml-2 w-5 h-5" />
-              </Link>
-              <Link href="#features" className="btn-outline text-lg px-8 py-4">
-                Scopri Funzionalità
-              </Link>
-            </div>
+                         <div className="flex flex-col sm:flex-row gap-4 justify-center">
+               <Link href="/register" className="btn-primary text-lg px-8 py-4 inline-flex items-center">
+                 Registrati per iniziare
+                 <ArrowRight className="ml-2 w-5 h-5" />
+               </Link>
+               <Link href="#features" className="btn-outline text-lg px-8 py-4">
+                 Scopri Funzionalità
+               </Link>
+             </div>
           </motion.div>
 
           {/* Hero Image/Animation */}
@@ -345,30 +345,30 @@ export default function LandingPage() {
             </p>
           </motion.div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {features.map((feature, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-                className="bg-white rounded-2xl p-8 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-100"
-              >
-                <div className={`w-16 h-16 rounded-xl bg-gradient-to-r ${feature.bgGradient} flex items-center justify-center mb-6`}>
-                  {feature.icon}
-                </div>
-                <h3 className="text-xl font-semibold mb-3 text-dark">{feature.title}</h3>
-                <p className="text-gray-600 mb-6">{feature.description}</p>
-                <ul className="space-y-2">
-                  {feature.features.map((item, i) => (
-                    <li key={i} className="flex items-center text-sm text-gray-600">
-                      <Check className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" />
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-              </motion.div>
-            ))}
+                     <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+             {features.map((feature, index) => (
+               <motion.div
+                 key={index}
+                 initial={{ opacity: 0, y: 30 }}
+                 whileInView={{ opacity: 1, y: 0 }}
+                 transition={{ duration: 0.5, delay: index * 0.1 }}
+                 className="bg-white rounded-2xl p-8 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-100 text-center"
+               >
+                 <div className={`w-16 h-16 rounded-xl bg-gradient-to-r ${feature.bgGradient} flex items-center justify-center mb-6 mx-auto`}>
+                   {feature.icon}
+                 </div>
+                 <h3 className="text-xl font-semibold mb-3 text-dark">{feature.title}</h3>
+                 <p className="text-gray-600 mb-6">{feature.description}</p>
+                 <ul className="space-y-2">
+                   {feature.features.map((item, i) => (
+                     <li key={i} className="flex items-center justify-center text-sm text-gray-600">
+                       <Check className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" />
+                       {item}
+                     </li>
+                   ))}
+                 </ul>
+               </motion.div>
+             ))}
           </div>
         </div>
       </section>
@@ -389,38 +389,38 @@ export default function LandingPage() {
             </p>
           </motion.div>
 
-          {/* Timeline moderna */}
-          <div className="relative">
-            {/* Linea di connessione */}
-            <div className="timeline-connector"></div>
-            
-            <div className="grid md:grid-cols-3 gap-8 relative z-10">
-              {howItWorksSteps.map((step, index) => (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: index * 0.2 }}
-                  className="timeline-step"
-                >
-                  {/* Numero del passo */}
-                  <div className="timeline-step-number animate-timeline-glow">
-                    <span className="text-3xl font-bold text-white">{step.step}</span>
-                  </div>
-                  
-                  {/* Icona */}
-                  <div className={`timeline-step-icon ${step.bgColor}`}>
-                    {step.icon}
-                  </div>
-                  
-                  <h3 className="text-xl font-semibold mb-3 text-dark">{step.title}</h3>
-                  <p className="text-gray-600">
-                    {step.description}
-                  </p>
-                </motion.div>
-              ))}
-            </div>
-          </div>
+                     {/* Timeline moderna */}
+           <div className="relative">
+             {/* Linea di connessione */}
+             <div className="timeline-connector"></div>
+             
+             <div className="grid md:grid-cols-3 gap-8 relative z-10">
+               {howItWorksSteps.map((step, index) => (
+                 <motion.div
+                   key={index}
+                   initial={{ opacity: 0, y: 30 }}
+                   whileInView={{ opacity: 1, y: 0 }}
+                   transition={{ duration: 0.5, delay: index * 0.2 }}
+                   className="timeline-step text-center"
+                 >
+                   {/* Numero del passo */}
+                   <div className="timeline-step-number-small animate-timeline-glow">
+                     <span className="text-xl font-bold text-white">{step.step}</span>
+                   </div>
+                   
+                   {/* Icona */}
+                   <div className={`timeline-step-icon ${step.bgColor}`}>
+                     {step.icon}
+                   </div>
+                   
+                   <h3 className="text-xl font-semibold mb-3 text-dark">{step.title}</h3>
+                   <p className="text-gray-600">
+                     {step.description}
+                   </p>
+                 </motion.div>
+               ))}
+             </div>
+           </div>
         </div>
       </section>
 
@@ -613,32 +613,32 @@ export default function LandingPage() {
             <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
               Unisciti a centinaia di host che hanno già migliorato il loro servizio con HostGPT
             </p>
-            <Link href="/register" className="btn-primary text-lg px-10 py-4">
-              Registrati per iniziare
-              <ArrowRight className="inline ml-2 w-5 h-5" />
-            </Link>
+                         <Link href="/register" className="btn-primary text-lg px-10 py-4 inline-flex items-center">
+               Registrati per iniziare
+               <ArrowRight className="ml-2 w-5 h-5" />
+             </Link>
           </motion.div>
         </div>
       </section>
 
       {/* Footer - Ripensato per mobile */}
-      <footer className="bg-dark text-white py-12">
+      <footer className="bg-dark text-white py-8">
         <div className="container-max px-4">
           <div className="mobile-footer-grid">
             {/* Logo e descrizione */}
             <div className="mobile-footer-section">
-              <div className="flex items-center justify-center md:justify-start space-x-2 mb-4">
-                <Home className="w-8 h-8 text-primary" />
-                <span className="text-2xl font-bold">HostGPT</span>
+              <div className="flex items-center justify-center md:justify-start space-x-2 mb-3">
+                <Home className="w-6 h-6 text-primary" />
+                <span className="text-xl font-bold">HostGPT</span>
               </div>
-              <p className="text-gray-400 text-sm md:text-base">
+              <p className="text-gray-400 text-sm">
                 Il tuo assistente virtuale per affitti vacanza
               </p>
             </div>
             
             {/* Prodotto */}
             <div className="mobile-footer-section">
-              <h4 className="mobile-footer-title">Prodotto</h4>
+              <h4 className="mobile-footer-title text-base">Prodotto</h4>
               <ul className="mobile-footer-links">
                 <li><Link href="#features" className="hover:text-white transition">Funzionalità</Link></li>
                 <li><Link href="#pricing" className="hover:text-white transition">Prezzi</Link></li>
@@ -648,7 +648,7 @@ export default function LandingPage() {
             
             {/* Azienda */}
             <div className="mobile-footer-section">
-              <h4 className="mobile-footer-title">Azienda</h4>
+              <h4 className="mobile-footer-title text-base">Azienda</h4>
               <ul className="mobile-footer-links">
                 <li><Link href="#" className="hover:text-white transition">Chi Siamo</Link></li>
                 <li><Link href="#" className="hover:text-white transition">Blog</Link></li>
@@ -658,7 +658,7 @@ export default function LandingPage() {
             
             {/* Legale */}
             <div className="mobile-footer-section">
-              <h4 className="mobile-footer-title">Legale</h4>
+              <h4 className="mobile-footer-title text-base">Legale</h4>
               <ul className="mobile-footer-links">
                 <li><Link href="#" className="hover:text-white transition">Privacy</Link></li>
                 <li><Link href="#" className="hover:text-white transition">Termini</Link></li>
@@ -668,8 +668,8 @@ export default function LandingPage() {
           </div>
           
           {/* Separatore */}
-          <div className="border-t border-gray-800 pt-8 text-center">
-            <p className="text-gray-400 text-sm md:text-base">&copy; 2024 HostGPT. Tutti i diritti riservati.</p>
+          <div className="border-t border-gray-800 pt-6 text-center">
+            <p className="text-gray-400 text-sm">&copy; 2024 HostGPT. Tutti i diritti riservati.</p>
           </div>
         </div>
       </footer>

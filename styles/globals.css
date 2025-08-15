@@ -116,11 +116,11 @@
   }
 
   .testimonial-card {
-    @apply bg-white rounded-2xl p-8 shadow-lg text-center;
+    @apply bg-white rounded-2xl p-8 shadow-lg text-center min-h-[300px] flex flex-col justify-between;
   }
 
   .testimonial-nav-button {
-    @apply absolute top-1/2 transform -translate-y-1/2 w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-gray-50 transition-colors;
+    @apply absolute top-1/2 transform -translate-y-1/2 w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-gray-50 transition-colors z-10;
   }
 
   .testimonial-indicator {
@@ -157,6 +157,42 @@
 
   .mobile-footer-links {
     @apply space-y-2 text-gray-400 text-sm md:text-base;
+  }
+
+  /* Timeline mobile improvements */
+  .timeline-step-number-small {
+    @apply w-12 h-12 bg-gradient-to-r from-primary to-accent rounded-full flex items-center justify-center mx-auto mb-6 relative z-10 shadow-lg;
+  }
+
+  .timeline-step-number {
+    @apply w-20 h-20 bg-gradient-to-r from-primary to-accent rounded-full flex items-center justify-center mx-auto mb-6 relative z-10 shadow-lg;
+  }
+
+  .timeline-step-icon {
+    @apply w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg;
+  }
+
+  /* Mobile timeline specific */
+  @media (max-width: 768px) {
+    .timeline-step {
+      @apply text-center mb-8;
+    }
+    
+    .timeline-step-number-small {
+      @apply w-10 h-10;
+    }
+    
+    .timeline-step-number-small span {
+      @apply text-lg;
+    }
+    
+    .timeline-step-icon {
+      @apply w-12 h-12;
+    }
+    
+    .timeline-step-icon svg {
+      @apply w-6 h-6;
+    }
   }
 }
 
