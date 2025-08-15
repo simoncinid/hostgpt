@@ -105,6 +105,59 @@
   .loading-spinner {
     @apply animate-spin rounded-full h-12 w-12 border-b-2 border-primary;
   }
+
+  /* Nuove classi per le modifiche mobile */
+  .timeline-connector {
+    @apply hidden md:block absolute top-1/2 left-0 right-0 h-1 bg-gradient-to-r from-primary to-accent transform -translate-y-1/2 z-0;
+  }
+
+  .testimonial-gallery {
+    @apply relative max-w-4xl mx-auto;
+  }
+
+  .testimonial-card {
+    @apply bg-white rounded-2xl p-8 shadow-lg text-center;
+  }
+
+  .testimonial-nav-button {
+    @apply absolute top-1/2 transform -translate-y-1/2 w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-gray-50 transition-colors;
+  }
+
+  .testimonial-indicator {
+    @apply w-3 h-3 rounded-full transition-colors;
+  }
+
+  .testimonial-indicator.active {
+    @apply bg-primary;
+  }
+
+  .testimonial-indicator.inactive {
+    @apply bg-gray-300;
+  }
+
+  .feature-icon-container {
+    @apply w-16 h-16 rounded-xl flex items-center justify-center mb-6;
+  }
+
+  .mobile-stats-grid {
+    @apply grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 text-center;
+  }
+
+  .mobile-footer-grid {
+    @apply grid grid-cols-1 md:grid-cols-4 gap-8 mb-8;
+  }
+
+  .mobile-footer-section {
+    @apply text-center md:text-left;
+  }
+
+  .mobile-footer-title {
+    @apply font-semibold mb-4 text-lg;
+  }
+
+  .mobile-footer-links {
+    @apply space-y-2 text-gray-400 text-sm md:text-base;
+  }
 }
 
 @layer utilities {
@@ -153,6 +206,42 @@
   }
   .scrollbar-left > * {
     direction: ltr;
+  }
+
+  /* Animazioni per la timeline */
+  .timeline-step {
+    @apply relative z-10;
+  }
+
+  .timeline-step-number {
+    @apply w-20 h-20 bg-gradient-to-r from-primary to-accent rounded-full flex items-center justify-center mx-auto mb-6 relative z-10 shadow-lg;
+  }
+
+  .timeline-step-icon {
+    @apply w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg;
+  }
+
+  /* Animazioni per i testimonial */
+  .testimonial-slide-enter {
+    opacity: 0;
+    transform: translateX(50px);
+  }
+
+  .testimonial-slide-enter-active {
+    opacity: 1;
+    transform: translateX(0);
+    transition: opacity 0.5s, transform 0.5s;
+  }
+
+  .testimonial-slide-exit {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  .testimonial-slide-exit-active {
+    opacity: 0;
+    transform: translateX(-50px);
+    transition: opacity 0.5s, transform 0.5s;
   }
 }
 
@@ -206,6 +295,15 @@
   }
 }
 
+@keyframes timelineGlow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(255, 90, 95, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(255, 90, 95, 0.6);
+  }
+}
+
 .animate-fadeIn {
   animation: fadeIn 0.6s ease-out;
 }
@@ -216,4 +314,27 @@
 
 .animate-pulse-slow {
   animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.animate-timeline-glow {
+  animation: timelineGlow 2s ease-in-out infinite;
+}
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+  .mobile-navbar {
+    @apply px-2;
+  }
+  
+  .mobile-navbar-content {
+    @apply mx-2;
+  }
+  
+  .mobile-menu-container {
+    @apply px-4;
+  }
+  
+  .mobile-menu-content {
+    @apply mx-2;
+  }
 }

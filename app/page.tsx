@@ -18,20 +18,37 @@ import {
   X,
   Star,
   Users,
-  Smartphone
+  Smartphone,
+  ChevronLeft,
+  ChevronRight,
+  Wifi,
+  MapPin,
+  Car,
+  Utensils,
+  Heart,
+  Sparkles,
+  Target,
+  Award,
+  TrendingUp,
+  UserCheck,
+  Settings,
+  Smartphone as PhoneIcon,
+  QrCode,
+  Share2
 } from 'lucide-react'
 
 export default function LandingPage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [currentTestimonial, setCurrentTestimonial] = useState(0)
 
   // Messaggi demo dinamici
   const demoMessages: { role: 'user' | 'assistant'; text: string }[] = [
     { role: 'user', text: 'Ciao! A che ora è il check-in?' },
-    { role: 'assistant', text: 'Ciao! Il check-in è dalle 15:00 alle 20:00. Ti invieremo il codice della cassetta di sicurezza il giorno dell’arrivo.' },
+    { role: 'assistant', text: 'Ciao! Il check-in è dalle 15:00 alle 20:00. Ti invieremo il codice della cassetta di sicurezza il giorno dell\'arrivo.' },
     { role: 'user', text: 'Posso fare check-in dopo le 22?' },
-    { role: 'assistant', text: 'Certo! È previsto un self check-in 24/7. Facci sapere l’orario stimato e ti assistiamo noi.' },
-    { role: 'user', text: 'Com’è il parcheggio in zona?' },
-    { role: 'assistant', text: 'C’è parcheggio gratuito in strada nei dintorni. In alternativa, a 300m trovi il Garage Verdi a 15€/giorno.' },
+    { role: 'assistant', text: 'Certo! È previsto un self check-in 24/7. Facci sapere l\'orario stimato e ti assistiamo noi.' },
+    { role: 'user', text: 'Com\'è il parcheggio in zona?' },
+    { role: 'assistant', text: 'C\'è parcheggio gratuito in strada nei dintorni. In alternativa, a 300m trovi il Garage Verdi a 15€/giorno.' },
     { role: 'user', text: 'Wifi e ristoranti consigliati?' },
     { role: 'assistant', text: 'Wifi fibra 200Mbps, password: CASA2024. Per cenare ti consiglio Trattoria Roma (5 min a piedi) e Osteria Bella Vista.' }
   ]
@@ -61,34 +78,46 @@ export default function LandingPage() {
 
   const features = [
     {
-      icon: <MessageSquare className="w-8 h-8 text-primary" />,
+      icon: <MessageSquare className="w-10 h-10 text-white" />,
+      bgGradient: "from-blue-500 to-blue-600",
       title: "Chatbot Personalizzato",
-      description: "Crea un assistente virtuale su misura per la tua proprietà con pochi click"
+      description: "Crea un assistente virtuale su misura per la tua proprietà con pochi click",
+      features: ["Risposte personalizzate", "Lingua italiana", "Conoscenza locale"]
     },
     {
-      icon: <Clock className="w-8 h-8 text-primary" />,
+      icon: <Clock className="w-10 h-10 text-white" />,
+      bgGradient: "from-green-500 to-green-600",
       title: "Assistenza 24/7",
-      description: "I tuoi ospiti ricevono risposte immediate a qualsiasi ora del giorno e della notte"
+      description: "I tuoi ospiti ricevono risposte immediate a qualsiasi ora del giorno e della notte",
+      features: ["Disponibilità continua", "Risposte istantanee", "Nessun ritardo"]
     },
     {
-      icon: <Globe className="w-8 h-8 text-primary" />,
+      icon: <Globe className="w-10 h-10 text-white" />,
+      bgGradient: "from-purple-500 to-purple-600",
       title: "Informazioni Locali",
-      description: "Fornisci consigli su ristoranti, attrazioni e servizi della zona"
+      description: "Fornisci consigli su ristoranti, attrazioni e servizi della zona",
+      features: ["Ristoranti consigliati", "Attrazioni turistiche", "Trasporti locali"]
     },
     {
-      icon: <BarChart3 className="w-8 h-8 text-primary" />,
+      icon: <BarChart3 className="w-10 h-10 text-white" />,
+      bgGradient: "from-orange-500 to-orange-600",
       title: "Statistiche Dettagliate",
-      description: "Monitora le conversazioni e ottieni insights sui bisogni dei tuoi ospiti"
+      description: "Monitora le conversazioni e ottieni insights sui bisogni dei tuoi ospiti",
+      features: ["Analisi conversazioni", "Metriche performance", "Report dettagliati"]
     },
     {
-      icon: <Shield className="w-8 h-8 text-primary" />,
+      icon: <Shield className="w-10 h-10 text-white" />,
+      bgGradient: "from-red-500 to-red-600",
       title: "Sicuro e Affidabile",
-      description: "Tecnologia OpenAI all'avanguardia per risposte accurate e sicure"
+      description: "Tecnologia OpenAI all'avanguardia per risposte accurate e sicure",
+      features: ["Tecnologia avanzata", "Sicurezza garantita", "Risposte accurate"]
     },
     {
-      icon: <Zap className="w-8 h-8 text-primary" />,
+      icon: <Zap className="w-10 h-10 text-white" />,
+      bgGradient: "from-yellow-500 to-yellow-600",
       title: "Setup Veloce",
-      description: "Attiva il tuo chatbot in meno di 10 minuti con la nostra procedura guidata"
+      description: "Attiva il tuo chatbot in meno di 10 minuti con la nostra procedura guidata",
+      features: ["Configurazione rapida", "Setup guidato", "Pronto in 10 minuti"]
     }
   ]
 
@@ -97,19 +126,46 @@ export default function LandingPage() {
       name: "Marco Rossi",
       role: "Host a Roma",
       content: "HostGPT ha rivoluzionato il modo in cui gestisco gli ospiti. Risparmio ore ogni settimana!",
-      rating: 5
+      rating: 5,
+      avatar: "MR"
     },
     {
       name: "Laura Bianchi",
       role: "Host a Firenze",
       content: "I miei ospiti adorano avere risposte immediate. Le recensioni sono migliorate notevolmente.",
-      rating: 5
+      rating: 5,
+      avatar: "LB"
     },
     {
       name: "Giuseppe Verdi",
       role: "Host a Milano",
       content: "Facile da configurare e utilissimo. Non posso più farne a meno!",
-      rating: 5
+      rating: 5,
+      avatar: "GV"
+    }
+  ]
+
+  const howItWorksSteps = [
+    {
+      step: 1,
+      title: "Registrati",
+      description: "Crea il tuo account e scegli il piano più adatto alle tue esigenze",
+      icon: <UserCheck className="w-8 h-8 text-white" />,
+      bgColor: "bg-blue-500"
+    },
+    {
+      step: 2,
+      title: "Personalizza",
+      description: "Rispondi alle domande guidate per creare la knowledge base del tuo chatbot",
+      icon: <Settings className="w-8 h-8 text-white" />,
+      bgColor: "bg-green-500"
+    },
+    {
+      step: 3,
+      title: "Condividi",
+      description: "Ricevi il QR code e il link da condividere con i tuoi ospiti",
+      icon: <Share2 className="w-8 h-8 text-white" />,
+      bgColor: "bg-purple-500"
     }
   ]
 
@@ -129,12 +185,20 @@ export default function LandingPage() {
     }
   ]
 
+  const nextTestimonial = () => {
+    setCurrentTestimonial((prev) => (prev + 1) % testimonials.length)
+  }
+
+  const prevTestimonial = () => {
+    setCurrentTestimonial((prev) => (prev - 1 + testimonials.length) % testimonials.length)
+  }
+
   return (
     <div className="min-h-screen bg-white">
-      {/* Navbar - glass, staccata dai bordi con angoli arrotondati */}
-      <nav className="fixed top-2 md:top-4 left-0 right-0 z-50 safe-top">
-        <div className="container-max px-4">
-          <div className="flex justify-between items-center py-3 px-4 bg-white/60 backdrop-blur-lg border border-white/30 shadow-lg rounded-2xl">
+      {/* Navbar - Fix per mobile: rimuovo padding/margin problematici */}
+      <nav className="fixed top-0 left-0 right-0 z-50 safe-top">
+        <div className="px-4">
+          <div className="flex justify-between items-center py-3 px-4 bg-white/60 backdrop-blur-lg border border-white/30 shadow-lg rounded-2xl mx-2">
             <Link href="/" className="flex items-center space-x-2">
               <Home className="w-8 h-8 text-primary" />
               <span className="text-2xl font-bold text-dark">HostGPT</span>
@@ -180,19 +244,17 @@ export default function LandingPage() {
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="md:hidden mt-2"
+            className="md:hidden mt-2 px-4"
           >
-            <div className="container-max px-4">
-              <div className="px-4 py-4 space-y-4 bg-white/70 backdrop-blur-lg border border-white/30 shadow-lg rounded-2xl">
-                <Link href="#features" onClick={() => setIsMenuOpen(false)} className="block text-gray-600">Funzionalità</Link>
-                <Link href="#demo" onClick={() => setIsMenuOpen(false)} className="block text-gray-600">Demo</Link>
-                <Link href="#how-it-works" onClick={() => setIsMenuOpen(false)} className="block text-gray-600">Come Funziona</Link>
-                <Link href="#pricing" onClick={() => setIsMenuOpen(false)} className="block text-gray-600">Prezzi</Link>
-                <Link href="/login" onClick={() => setIsMenuOpen(false)} className="block text-gray-600">Accedi</Link>
-                <Link href="/register" onClick={() => setIsMenuOpen(false)} className="btn-primary block text-center">
-                  Registrati
-                </Link>
-              </div>
+            <div className="px-4 py-4 space-y-4 bg-white/70 backdrop-blur-lg border border-white/30 shadow-lg rounded-2xl mx-2">
+              <Link href="#features" onClick={() => setIsMenuOpen(false)} className="block text-gray-600">Funzionalità</Link>
+              <Link href="#demo" onClick={() => setIsMenuOpen(false)} className="block text-gray-600">Demo</Link>
+              <Link href="#how-it-works" onClick={() => setIsMenuOpen(false)} className="block text-gray-600">Come Funziona</Link>
+              <Link href="#pricing" onClick={() => setIsMenuOpen(false)} className="block text-gray-600">Prezzi</Link>
+              <Link href="/login" onClick={() => setIsMenuOpen(false)} className="block text-gray-600">Accedi</Link>
+              <Link href="/register" onClick={() => setIsMenuOpen(false)} className="btn-primary block text-center">
+                Registrati
+              </Link>
             </div>
           </motion.div>
         )}
@@ -209,7 +271,7 @@ export default function LandingPage() {
           >
             <h1 className="text-5xl md:text-6xl font-bold text-dark mb-6">
               Risparmia Tempo con <span className="text-gradient">HostGPT</span><br />
-              L’assistente H24 per i tuoi ospiti
+              L'assistente H24 per i tuoi ospiti
             </h1>
             <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
               Rispondi automaticamente, in modo completo e immediato, alle richieste dei guest 24/7. 
@@ -266,7 +328,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Features Section */}
+      {/* Features Section - Migliorata con più elementi e colori */}
       <section id="features" className="section-padding bg-gray-50">
         <div className="container-max">
           <motion.div
@@ -290,18 +352,28 @@ export default function LandingPage() {
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
-                className="feature-card"
+                className="bg-white rounded-2xl p-8 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-100"
               >
-                <div className="mb-4">{feature.icon}</div>
-                <h3 className="text-xl font-semibold mb-3">{feature.title}</h3>
-                <p className="text-gray-600">{feature.description}</p>
+                <div className={`w-16 h-16 rounded-xl bg-gradient-to-r ${feature.bgGradient} flex items-center justify-center mb-6`}>
+                  {feature.icon}
+                </div>
+                <h3 className="text-xl font-semibold mb-3 text-dark">{feature.title}</h3>
+                <p className="text-gray-600 mb-6">{feature.description}</p>
+                <ul className="space-y-2">
+                  {feature.features.map((item, i) => (
+                    <li key={i} className="flex items-center text-sm text-gray-600">
+                      <Check className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" />
+                      {item}
+                    </li>
+                  ))}
+                </ul>
               </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* How It Works */}
+      {/* How It Works - Timeline moderna */}
       <section id="how-it-works" className="section-padding">
         <div className="container-max">
           <motion.div
@@ -317,51 +389,37 @@ export default function LandingPage() {
             </p>
           </motion.div>
 
-          <div className="grid md:grid-cols-3 gap-8">
-            <motion.div
-              initial={{ opacity: 0, x: -30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5 }}
-              className="text-center"
-            >
-              <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-3xl font-bold text-primary">1</span>
-              </div>
-              <h3 className="text-xl font-semibold mb-3">Registrati</h3>
-              <p className="text-gray-600">
-                Crea il tuo account e scegli il piano più adatto alle tue esigenze
-              </p>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-              className="text-center"
-            >
-              <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-3xl font-bold text-primary">2</span>
-              </div>
-              <h3 className="text-xl font-semibold mb-3">Personalizza</h3>
-              <p className="text-gray-600">
-                Rispondi alle domande guidate per creare la knowledge base del tuo chatbot
-              </p>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, x: 30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-              className="text-center"
-            >
-              <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-3xl font-bold text-primary">3</span>
-              </div>
-              <h3 className="text-xl font-semibold mb-3">Condividi</h3>
-              <p className="text-gray-600">
-                Ricevi il QR code e il link da condividere con i tuoi ospiti
-              </p>
-            </motion.div>
+          {/* Timeline moderna */}
+          <div className="relative">
+            {/* Linea di connessione */}
+            <div className="timeline-connector"></div>
+            
+            <div className="grid md:grid-cols-3 gap-8 relative z-10">
+              {howItWorksSteps.map((step, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: index * 0.2 }}
+                  className="timeline-step"
+                >
+                  {/* Numero del passo */}
+                  <div className="timeline-step-number animate-timeline-glow">
+                    <span className="text-3xl font-bold text-white">{step.step}</span>
+                  </div>
+                  
+                  {/* Icona */}
+                  <div className={`timeline-step-icon ${step.bgColor}`}>
+                    {step.icon}
+                  </div>
+                  
+                  <h3 className="text-xl font-semibold mb-3 text-dark">{step.title}</h3>
+                  <p className="text-gray-600">
+                    {step.description}
+                  </p>
+                </motion.div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
@@ -423,7 +481,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Testimonials */}
+      {/* Testimonials - Gallery con frecce */}
       <section id="testimonials" className="section-padding">
         <div className="container-max">
           <motion.div
@@ -439,66 +497,102 @@ export default function LandingPage() {
             </p>
           </motion.div>
 
-          <div className="grid md:grid-cols-3 gap-8">
-            {testimonials.map((testimonial, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, scale: 0.9 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-                className="bg-white rounded-2xl p-8 shadow-lg"
-              >
-                <div className="flex mb-4">
-                  {[...Array(testimonial.rating)].map((_, i) => (
-                    <Star key={i} className="w-5 h-5 text-yellow-400 fill-current" />
-                  ))}
+          {/* Gallery di testimonianze */}
+          <div className="testimonial-gallery">
+            <motion.div
+              key={currentTestimonial}
+              initial={{ opacity: 0, x: 50 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -50 }}
+              transition={{ duration: 0.5 }}
+              className="testimonial-card"
+            >
+              <div className="flex justify-center mb-6">
+                {[...Array(testimonials[currentTestimonial].rating)].map((_, i) => (
+                  <Star key={i} className="w-6 h-6 text-yellow-400 fill-current" />
+                ))}
+              </div>
+              <p className="text-gray-600 mb-8 italic text-lg">"{testimonials[currentTestimonial].content}"</p>
+              <div className="flex items-center justify-center space-x-4">
+                <div className="w-12 h-12 bg-gradient-to-r from-primary to-accent rounded-full flex items-center justify-center text-white font-bold">
+                  {testimonials[currentTestimonial].avatar}
                 </div>
-                <p className="text-gray-600 mb-6 italic">"{testimonial.content}"</p>
                 <div>
-                  <p className="font-semibold">{testimonial.name}</p>
-                  <p className="text-sm text-gray-500">{testimonial.role}</p>
+                  <p className="font-semibold text-lg">{testimonials[currentTestimonial].name}</p>
+                  <p className="text-sm text-gray-500">{testimonials[currentTestimonial].role}</p>
                 </div>
-              </motion.div>
-            ))}
+              </div>
+            </motion.div>
+
+            {/* Frecce di navigazione */}
+            <button
+              onClick={prevTestimonial}
+              className="testimonial-nav-button left-4"
+            >
+              <ChevronLeft className="w-6 h-6 text-gray-600" />
+            </button>
+            <button
+              onClick={nextTestimonial}
+              className="testimonial-nav-button right-4"
+            >
+              <ChevronRight className="w-6 h-6 text-gray-600" />
+            </button>
+
+            {/* Indicatori */}
+            <div className="flex justify-center mt-6 space-x-2">
+              {testimonials.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => setCurrentTestimonial(index)}
+                  className={`testimonial-indicator ${
+                    index === currentTestimonial ? 'active' : 'inactive'
+                  }`}
+                />
+              ))}
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Stats Section */}
+      {/* Stats Section - Organizzata in orizzontale su mobile */}
       <section className="section-padding bg-gradient-to-r from-primary to-accent text-white">
         <div className="container-max">
-          <div className="grid md:grid-cols-4 gap-8 text-center">
+          <div className="mobile-stats-grid">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
+              className="flex flex-col items-center"
             >
-              <div className="text-4xl font-bold mb-2">500+</div>
-              <div className="text-white/80">Host Attivi</div>
+              <div className="text-3xl md:text-4xl font-bold mb-2">500+</div>
+              <div className="text-white/80 text-sm md:text-base">Host Attivi</div>
             </motion.div>
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.1 }}
+              className="flex flex-col items-center"
             >
-              <div className="text-4xl font-bold mb-2">50K+</div>
-              <div className="text-white/80">Conversazioni</div>
+              <div className="text-3xl md:text-4xl font-bold mb-2">50K+</div>
+              <div className="text-white/80 text-sm md:text-base">Conversazioni</div>
             </motion.div>
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
+              className="flex flex-col items-center"
             >
-              <div className="text-4xl font-bold mb-2">99%</div>
-              <div className="text-white/80">Uptime</div>
+              <div className="text-3xl md:text-4xl font-bold mb-2">99%</div>
+              <div className="text-white/80 text-sm md:text-base">Uptime</div>
             </motion.div>
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.3 }}
+              className="flex flex-col items-center"
             >
-              <div className="text-4xl font-bold mb-2">4.9</div>
-              <div className="text-white/80">Valutazione</div>
+              <div className="text-3xl md:text-4xl font-bold mb-2">4.9</div>
+              <div className="text-white/80 text-sm md:text-base">Valutazione</div>
             </motion.div>
           </div>
         </div>
@@ -527,46 +621,55 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Footer */}
+      {/* Footer - Ripensato per mobile */}
       <footer className="bg-dark text-white py-12">
-        <div className="container-max">
-          <div className="grid md:grid-cols-4 gap-8 mb-8">
-            <div>
-              <div className="flex items-center space-x-2 mb-4">
+        <div className="container-max px-4">
+          <div className="mobile-footer-grid">
+            {/* Logo e descrizione */}
+            <div className="mobile-footer-section">
+              <div className="flex items-center justify-center md:justify-start space-x-2 mb-4">
                 <Home className="w-8 h-8 text-primary" />
                 <span className="text-2xl font-bold">HostGPT</span>
               </div>
-              <p className="text-gray-400">
+              <p className="text-gray-400 text-sm md:text-base">
                 Il tuo assistente virtuale per affitti vacanza
               </p>
             </div>
-            <div>
-              <h4 className="font-semibold mb-4">Prodotto</h4>
-              <ul className="space-y-2 text-gray-400">
+            
+            {/* Prodotto */}
+            <div className="mobile-footer-section">
+              <h4 className="mobile-footer-title">Prodotto</h4>
+              <ul className="mobile-footer-links">
                 <li><Link href="#features" className="hover:text-white transition">Funzionalità</Link></li>
                 <li><Link href="#pricing" className="hover:text-white transition">Prezzi</Link></li>
                 <li><Link href="#" className="hover:text-white transition">API</Link></li>
               </ul>
             </div>
-            <div>
-              <h4 className="font-semibold mb-4">Azienda</h4>
-              <ul className="space-y-2 text-gray-400">
+            
+            {/* Azienda */}
+            <div className="mobile-footer-section">
+              <h4 className="mobile-footer-title">Azienda</h4>
+              <ul className="mobile-footer-links">
                 <li><Link href="#" className="hover:text-white transition">Chi Siamo</Link></li>
                 <li><Link href="#" className="hover:text-white transition">Blog</Link></li>
                 <li><Link href="#" className="hover:text-white transition">Contatti</Link></li>
               </ul>
             </div>
-            <div>
-              <h4 className="font-semibold mb-4">Legale</h4>
-              <ul className="space-y-2 text-gray-400">
+            
+            {/* Legale */}
+            <div className="mobile-footer-section">
+              <h4 className="mobile-footer-title">Legale</h4>
+              <ul className="mobile-footer-links">
                 <li><Link href="#" className="hover:text-white transition">Privacy</Link></li>
                 <li><Link href="#" className="hover:text-white transition">Termini</Link></li>
                 <li><Link href="#" className="hover:text-white transition">Cookie</Link></li>
               </ul>
             </div>
           </div>
-          <div className="border-t border-gray-800 pt-8 text-center text-gray-400">
-            <p>&copy; 2024 HostGPT. Tutti i diritti riservati.</p>
+          
+          {/* Separatore */}
+          <div className="border-t border-gray-800 pt-8 text-center">
+            <p className="text-gray-400 text-sm md:text-base">&copy; 2024 HostGPT. Tutti i diritti riservati.</p>
           </div>
         </div>
       </footer>
