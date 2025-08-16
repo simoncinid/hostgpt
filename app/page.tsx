@@ -186,24 +186,27 @@ export default function LandingPage() {
     if (pricingAnimationTriggered && !pricingAnimationPhase) {
       const sequence = [
         () => setPricingAnimationPhase(1), // Inizia spin
-        () => setShowChatDemo(true), // Mostra chat
-        () => setPricingAnimationPhase(2), // Chat conversation
+        () => {
+          setShowChatDemo(true)
+          setPricingAnimationPhase(2) // Mostra chat e inizia conversazione
+        },
         () => setPricingAnimationPhase(3), // Blur effect con frase
         () => {
           setPricingAnimationPhase(4) // Spin finale
           setTimeout(() => {
             setShowChatDemo(false)
-            setPricingAnimationPhase(0)
-          }, 1000)
+            setTimeout(() => {
+              setPricingAnimationPhase(0)
+            }, 800)
+          }, 800)
         }
       ]
 
       const timers = [
-        setTimeout(sequence[0], 500),
-        setTimeout(sequence[1], 1500),
-        setTimeout(sequence[2], 2000),
-        setTimeout(sequence[3], 6000),
-        setTimeout(sequence[4], 8000)
+        setTimeout(sequence[0], 800),
+        setTimeout(sequence[1], 1600),
+        setTimeout(sequence[2], 6500),
+        setTimeout(sequence[3], 9000)
       ]
 
       return () => timers.forEach(timer => clearTimeout(timer))
@@ -608,7 +611,7 @@ export default function LandingPage() {
           } else {
             clearInterval(interval)
           }
-        }, 800)
+        }, 1000)
         return () => clearInterval(interval)
       }
     }, [showChatDemo, pricingAnimationPhase])
@@ -617,45 +620,69 @@ export default function LandingPage() {
 
     return (
       <motion.div
-        initial={{ opacity: 0, scale: 0.8 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.8 }}
-        className="absolute inset-0 bg-white rounded-2xl p-4 flex flex-col"
+        initial={{ opacity: 0, scale: 0.9, rotateY: -180 }}
+        animate={{ 
+          opacity: 1, 
+          scale: 1,
+          rotateY: 0
+        }}
+        exit={{ opacity: 0, scale: 0.9, rotateY: 180 }}
+        transition={{ duration: 0.8, ease: "easeInOut" }}
+        className="absolute inset-0 bg-gradient-to-br from-blue-50 to-indigo-100 rounded-2xl p-4 flex flex-col shadow-lg"
       >
-        {/* Header chat */}
-        <div className="flex items-center mb-4 pb-3 border-b">
-          <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
-            <MessageSquare className="w-5 h-5 text-white" />
-          </div>
-          <div className="ml-3">
-            <div className="font-semibold text-dark">HostGPT Assistant</div>
-            <div className="text-sm text-green-500 flex items-center">
-              <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
-              Online
+        {/* Loading indicator prima che inizino i messaggi */}
+        {pricingAnimationPhase === 2 && chatMessages.length === 0 && (
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-center">
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                className="w-8 h-8 border-3 border-primary border-t-transparent rounded-full mx-auto mb-3"
+              />
+              <p className="text-gray-600 text-sm">Connessione a HostGPT...</p>
             </div>
           </div>
-        </div>
+        )}
 
-        {/* Messaggi chat */}
-        <div className="flex-1 space-y-3 overflow-y-auto">
-          {chatMessages.map((msg, idx) => (
-            <motion.div
-              key={idx}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-              className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-            >
-              <div className={`max-w-[80%] p-3 rounded-2xl text-sm ${
-                msg.role === 'user' 
-                  ? 'bg-primary text-white' 
-                  : 'bg-gray-100 text-gray-800'
-              }`}>
-                {msg.text}
+        {/* Chat interface quando ci sono messaggi */}
+        {chatMessages.length > 0 && (
+          <>
+            {/* Header chat */}
+            <div className="flex items-center mb-4 pb-3 border-b">
+              <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
+                <MessageSquare className="w-5 h-5 text-white" />
               </div>
-            </motion.div>
-          ))}
-        </div>
+              <div className="ml-3">
+                <div className="font-semibold text-dark">HostGPT Assistant</div>
+                <div className="text-sm text-green-500 flex items-center">
+                  <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
+                  Online
+                </div>
+              </div>
+            </div>
+
+            {/* Messaggi chat */}
+            <div className="flex-1 space-y-3 overflow-y-auto">
+              {chatMessages.map((msg, idx) => (
+                <motion.div
+                  key={idx}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                >
+                  <div className={`max-w-[80%] p-3 rounded-2xl text-sm ${
+                    msg.role === 'user' 
+                      ? 'bg-primary text-white' 
+                      : 'bg-gray-100 text-gray-800'
+                  }`}>
+                    {msg.text}
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </>
+        )}
 
         {/* Blur overlay con frase accattivante */}
         {pricingAnimationPhase >= 3 && (
@@ -966,8 +993,7 @@ export default function LandingPage() {
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ 
                   opacity: 1, 
-                  y: 0,
-                  rotateY: pricingAnimationPhase === 1 || pricingAnimationPhase === 4 ? 180 : 0
+                  y: 0
                 }}
                 onViewportEnter={() => {
                   if (!pricingAnimationTriggered && plan.highlighted) {
@@ -976,42 +1002,50 @@ export default function LandingPage() {
                 }}
                 transition={{ 
                   duration: 0.5, 
-                  delay: index * 0.1,
-                  rotateY: { duration: 0.8, ease: "easeInOut" }
+                  delay: index * 0.1
                 }}
                 className={`${plan.highlighted ? 'ring-2 ring-primary transform scale-105' : ''} bg-white rounded-2xl p-8 relative overflow-hidden`}
-                style={{ perspective: "1000px" }}
               >
-                {plan.highlighted && (
-                  <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                    <span className="bg-primary text-white px-4 py-1 rounded-full text-sm">
-                      Più Popolare
-                    </span>
-                  </div>
-                )}
-                <h3 className="text-2xl font-bold mb-2">{plan.name}</h3>
-                <div className="mb-6">
-                  <span className="text-4xl font-bold">{plan.price}</span>
-                  <span className="text-gray-600">{plan.period}</span>
-                </div>
-                <ul className="space-y-3 mb-8">
-                  {plan.features.map((feature, i) => (
-                    <li key={i} className="flex items-start">
-                      <Check className="w-5 h-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
-                      <span className="text-gray-600">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-                <Link
-                  href="/register"
-                  className={`block text-center py-3 px-6 rounded-lg font-semibold transition ${
-                    plan.highlighted
-                      ? 'bg-primary text-white hover:bg-secondary'
-                      : 'bg-gray-100 text-dark hover:bg-gray-200'
-                  }`}
+                {/* Contenuto originale della card */}
+                <motion.div
+                  animate={{
+                    opacity: showChatDemo && plan.highlighted ? 0 : 1,
+                    scale: showChatDemo && plan.highlighted ? 0.8 : 1,
+                    rotateY: pricingAnimationPhase === 1 || pricingAnimationPhase === 4 ? 180 : 0
+                  }}
+                  transition={{ duration: 0.6, ease: "easeInOut" }}
                 >
-                  Registrati ora
-                </Link>
+                  {plan.highlighted && (
+                    <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                      <span className="bg-primary text-white px-4 py-1 rounded-full text-sm">
+                        Più Popolare
+                      </span>
+                    </div>
+                  )}
+                  <h3 className="text-2xl font-bold mb-2">{plan.name}</h3>
+                  <div className="mb-6">
+                    <span className="text-4xl font-bold">{plan.price}</span>
+                    <span className="text-gray-600">{plan.period}</span>
+                  </div>
+                  <ul className="space-y-3 mb-8">
+                    {plan.features.map((feature, i) => (
+                      <li key={i} className="flex items-start">
+                        <Check className="w-5 h-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
+                        <span className="text-gray-600">{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <Link
+                    href="/register"
+                    className={`block text-center py-3 px-6 rounded-lg font-semibold transition ${
+                      plan.highlighted
+                        ? 'bg-primary text-white hover:bg-secondary'
+                        : 'bg-gray-100 text-dark hover:bg-gray-200'
+                    }`}
+                  >
+                    Registrati ora
+                  </Link>
+                </motion.div>
                 
                 {/* Animazione chat demo solo per il piano highlighted */}
                 {plan.highlighted && <PricingChatAnimation />}
