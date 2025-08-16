@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { motion } from 'framer-motion'
+import CookieBanner from '../components/CookieBanner'
 import { 
   MessageSquare, 
   Home, 
@@ -40,6 +41,8 @@ import {
 export default function LandingPage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [currentTestimonial, setCurrentTestimonial] = useState(0)
+  const [touchStart, setTouchStart] = useState<number | null>(null)
+  const [touchEnd, setTouchEnd] = useState<number | null>(null)
 
   // Messaggi demo dinamici
   const demoMessages: { role: 'user' | 'assistant'; text: string }[] = [
@@ -191,6 +194,30 @@ export default function LandingPage() {
 
   const prevTestimonial = () => {
     setCurrentTestimonial((prev) => (prev - 1 + testimonials.length) % testimonials.length)
+  }
+
+  // Gestori per il swipe
+  const minSwipeDistance = 50
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null)
+    setTouchStart(e.targetTouches[0].clientX)
+  }
+
+  const onTouchMove = (e: React.TouchEvent) => setTouchEnd(e.targetTouches[0].clientX)
+
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return
+    const distance = touchStart - touchEnd
+    const isLeftSwipe = distance > minSwipeDistance
+    const isRightSwipe = distance < -minSwipeDistance
+    
+    if (isLeftSwipe) {
+      nextTestimonial()
+    }
+    if (isRightSwipe) {
+      prevTestimonial()
+    }
   }
 
   return (
@@ -345,8 +372,8 @@ export default function LandingPage() {
             </p>
           </motion.div>
 
-                     <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-             {features.map((feature, index) => (
+                               <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8">
+            {features.map((feature, index) => (
                <motion.div
                  key={index}
                  initial={{ opacity: 0, y: 30 }}
@@ -498,7 +525,12 @@ export default function LandingPage() {
           </motion.div>
 
           {/* Gallery di testimonianze */}
-          <div className="testimonial-gallery">
+          <div 
+            className="testimonial-gallery"
+            onTouchStart={onTouchStart}
+            onTouchMove={onTouchMove}
+            onTouchEnd={onTouchEnd}
+          >
             <motion.div
               key={currentTestimonial}
               initial={{ opacity: 0, x: 50 }}
@@ -524,16 +556,16 @@ export default function LandingPage() {
               </div>
             </motion.div>
 
-            {/* Frecce di navigazione */}
+            {/* Frecce di navigazione - Solo desktop */}
             <button
               onClick={prevTestimonial}
-              className="testimonial-nav-button left-4"
+              className="testimonial-nav-button left-4 hidden md:flex"
             >
               <ChevronLeft className="w-6 h-6 text-gray-600" />
             </button>
             <button
               onClick={nextTestimonial}
-              className="testimonial-nav-button right-4"
+              className="testimonial-nav-button right-4 hidden md:flex"
             >
               <ChevronRight className="w-6 h-6 text-gray-600" />
             </button>
@@ -624,44 +656,54 @@ export default function LandingPage() {
       {/* Footer - Ripensato per mobile */}
       <footer className="bg-dark text-white py-8">
         <div className="container-max px-4">
-          <div className="mobile-footer-grid">
-            {/* Logo e descrizione */}
-            <div className="mobile-footer-section">
-              <div className="flex items-center justify-center md:justify-start space-x-2 mb-3">
+          {/* Logo e descrizione - Solo desktop */}
+          <div className="hidden md:block text-center md:text-left mb-8">
+            <div className="flex items-center justify-center md:justify-start space-x-2 mb-3">
+              <Home className="w-6 h-6 text-primary" />
+              <span className="text-xl font-bold">HostGPT</span>
+            </div>
+            <p className="text-gray-400 text-sm">
+              Il tuo assistente virtuale per affitti vacanza
+            </p>
+          </div>
+
+          {/* Footer compatto su mobile, normale su desktop */}
+          <div className="grid grid-cols-3 md:grid-cols-4 gap-4 md:gap-8 mb-8">
+            {/* Logo su mobile */}
+            <div className="md:hidden col-span-3 text-center mb-4">
+              <div className="flex items-center justify-center space-x-2 mb-2">
                 <Home className="w-6 h-6 text-primary" />
-                <span className="text-xl font-bold">HostGPT</span>
+                <span className="text-lg font-bold">HostGPT</span>
               </div>
-              <p className="text-gray-400 text-sm">
+              <p className="text-gray-400 text-xs">
                 Il tuo assistente virtuale per affitti vacanza
               </p>
             </div>
-            
-            {/* Prodotto */}
-            <div className="mobile-footer-section">
-              <h4 className="mobile-footer-title text-base">Prodotto</h4>
-              <ul className="mobile-footer-links">
+
+            {/* Sezioni compatte */}
+            <div className="text-center md:text-left">
+              <h4 className="font-semibold mb-3 text-sm md:text-base">Prodotto</h4>
+              <ul className="space-y-1 md:space-y-2 text-gray-400 text-xs md:text-sm">
                 <li><Link href="#features" className="hover:text-white transition">Funzionalità</Link></li>
                 <li><Link href="#pricing" className="hover:text-white transition">Prezzi</Link></li>
                 <li><Link href="#" className="hover:text-white transition">API</Link></li>
               </ul>
             </div>
             
-            {/* Azienda */}
-            <div className="mobile-footer-section">
-              <h4 className="mobile-footer-title text-base">Azienda</h4>
-              <ul className="mobile-footer-links">
+            <div className="text-center md:text-left">
+              <h4 className="font-semibold mb-3 text-sm md:text-base">Azienda</h4>
+              <ul className="space-y-1 md:space-y-2 text-gray-400 text-xs md:text-sm">
                 <li><Link href="#" className="hover:text-white transition">Chi Siamo</Link></li>
                 <li><Link href="#" className="hover:text-white transition">Blog</Link></li>
                 <li><Link href="#" className="hover:text-white transition">Contatti</Link></li>
               </ul>
             </div>
             
-            {/* Legale */}
-            <div className="mobile-footer-section">
-              <h4 className="mobile-footer-title text-base">Legale</h4>
-              <ul className="mobile-footer-links">
-                <li><Link href="#" className="hover:text-white transition">Privacy</Link></li>
-                <li><Link href="#" className="hover:text-white transition">Termini</Link></li>
+            <div className="text-center md:text-left">
+              <h4 className="font-semibold mb-3 text-sm md:text-base">Legale</h4>
+              <ul className="space-y-1 md:space-y-2 text-gray-400 text-xs md:text-sm">
+                <li><Link href="/privacy" className="hover:text-white transition">Privacy</Link></li>
+                <li><Link href="/terms" className="hover:text-white transition">Termini</Link></li>
                 <li><Link href="#" className="hover:text-white transition">Cookie</Link></li>
               </ul>
             </div>
@@ -673,6 +715,9 @@ export default function LandingPage() {
           </div>
         </div>
       </footer>
+
+      {/* Cookie Banner */}
+      <CookieBanner />
     </div>
   )
 }
