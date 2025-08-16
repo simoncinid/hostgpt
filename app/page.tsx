@@ -148,27 +148,49 @@ export default function LandingPage() {
     }
   ]
 
+  // Stati per le animazioni degli step
+  const [step1Animation, setStep1Animation] = useState(0)
+  const [step2Animation, setStep2Animation] = useState(0)
+  const [step3Animation, setStep3Animation] = useState(0)
+  const [visibleSteps, setVisibleSteps] = useState<boolean[]>([false, false, false])
+
+  // Gestione animazioni step quando entrano in vista
+  useEffect(() => {
+    const timers: NodeJS.Timeout[] = []
+    
+    visibleSteps.forEach((isVisible, index) => {
+      if (isVisible) {
+        const stepAnimationTimer = setInterval(() => {
+          if (index === 0) {
+            setStep1Animation(prev => (prev + 1) % 4) // 4 fasi dell'animazione
+          } else if (index === 1) {
+            setStep2Animation(prev => (prev + 1) % 5) // 5 fasi dell'animazione
+          } else if (index === 2) {
+            setStep3Animation(prev => (prev + 1) % 4) // 4 fasi dell'animazione
+          }
+        }, 1500)
+        timers.push(stepAnimationTimer)
+      }
+    })
+
+    return () => timers.forEach(timer => clearInterval(timer))
+  }, [visibleSteps])
+
   const howItWorksSteps = [
     {
       step: 1,
       title: "Registrati",
-      description: "Crea il tuo account e scegli il piano più adatto alle tue esigenze",
-      icon: <UserCheck className="w-8 h-8 text-white" />,
-      bgColor: "bg-blue-500"
+      description: "Crea il tuo account e scegli il piano più adatto alle tue esigenze"
     },
     {
       step: 2,
       title: "Personalizza",
-      description: "Rispondi alle domande guidate per creare la knowledge base del tuo chatbot",
-      icon: <Settings className="w-8 h-8 text-white" />,
-      bgColor: "bg-green-500"
+      description: "Rispondi alle domande guidate per creare la knowledge base del tuo chatbot"
     },
     {
       step: 3,
       title: "Condividi",
-      description: "Ricevi il QR code e il link da condividere con i tuoi ospiti",
-      icon: <Share2 className="w-8 h-8 text-white" />,
-      bgColor: "bg-purple-500"
+      description: "Ricevi il QR code e il link da condividere con i tuoi ospiti"
     }
   ]
 
@@ -218,6 +240,324 @@ export default function LandingPage() {
     if (isRightSwipe) {
       prevTestimonial()
     }
+  }
+
+  // Componente animazione Step 1 - Form Registrazione
+  const Step1Animation = ({ phase }: { phase: number }) => {
+    return (
+      <div className="w-full h-48 md:h-64 bg-gradient-to-br from-blue-50 to-indigo-100 rounded-xl p-4 md:p-6 relative overflow-hidden">
+        {/* Mini browser window */}
+        <div className="bg-white rounded-lg shadow-lg h-full relative">
+          {/* Browser header */}
+          <div className="flex items-center justify-between px-3 py-2 bg-gray-100 rounded-t-lg border-b">
+            <div className="flex space-x-1">
+              <div className="w-2 h-2 bg-red-400 rounded-full"></div>
+              <div className="w-2 h-2 bg-yellow-400 rounded-full"></div>
+              <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+            </div>
+            <div className="text-xs text-gray-600 font-mono">hostgpt.it/register</div>
+            <div className="w-4"></div>
+          </div>
+          
+          {/* Form content */}
+          <div className="p-4 space-y-3">
+            <div className="text-center mb-4">
+              <div className="w-6 h-6 bg-primary rounded mx-auto mb-2 flex items-center justify-center">
+                <Home className="w-3 h-3 text-white" />
+              </div>
+              <h3 className="text-sm font-bold text-dark">Registrati su HostGPT</h3>
+            </div>
+            
+            {/* Email field */}
+            <div className="space-y-1">
+              <label className="text-xs text-gray-600">Email</label>
+              <div className="h-6 bg-gray-100 rounded border relative overflow-hidden">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ 
+                    width: phase >= 1 ? '100%' : '0%'
+                  }}
+                  transition={{ duration: 0.8 }}
+                  className="h-full bg-blue-50 absolute"
+                />
+                <div className="absolute left-2 top-1 text-xs text-gray-700">
+                  {phase >= 1 ? 'mario.rossi@email.com' : ''}
+                </div>
+                {phase >= 1 && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.5 }}
+                    className="absolute right-1 top-1 w-4 h-4 bg-primary rounded text-white flex items-center justify-center"
+                  >
+                    <span className="text-xs">|</span>
+                  </motion.div>
+                )}
+              </div>
+            </div>
+            
+            {/* Password field */}
+            <div className="space-y-1">
+              <label className="text-xs text-gray-600">Password</label>
+              <div className="h-6 bg-gray-100 rounded border relative overflow-hidden">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ 
+                    width: phase >= 2 ? '100%' : '0%'
+                  }}
+                  transition={{ duration: 0.8, delay: 0.3 }}
+                  className="h-full bg-blue-50 absolute"
+                />
+                <div className="absolute left-2 top-1 text-xs text-gray-700">
+                  {phase >= 2 ? '••••••••' : ''}
+                </div>
+              </div>
+            </div>
+            
+            {/* Submit button */}
+            <motion.button
+              initial={{ scale: 1, backgroundColor: '#e5e7eb' }}
+              animate={{ 
+                scale: phase >= 3 ? 1.05 : 1,
+                backgroundColor: phase >= 3 ? '#FF5A5F' : '#e5e7eb'
+              }}
+              transition={{ duration: 0.3, delay: 1 }}
+              className="w-full h-7 rounded text-xs font-semibold text-white relative overflow-hidden"
+            >
+              {phase >= 3 && (
+                <motion.div
+                  initial={{ x: '-100%' }}
+                  animate={{ x: '100%' }}
+                  transition={{ duration: 1, delay: 1.2 }}
+                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
+                />
+              )}
+              Registrati
+            </motion.button>
+            
+            {/* Success message */}
+            {phase >= 3 && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 2 }}
+                className="text-center"
+              >
+                <div className="w-4 h-4 bg-green-500 rounded-full mx-auto mb-1 flex items-center justify-center">
+                  <Check className="w-2 h-2 text-white" />
+                </div>
+                <p className="text-xs text-green-600">Account creato!</p>
+              </motion.div>
+            )}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Componente animazione Step 2 - Creazione Chatbot
+  const Step2Animation = ({ phase }: { phase: number }) => {
+    return (
+      <div className="w-full h-48 md:h-64 bg-gradient-to-br from-green-50 to-emerald-100 rounded-xl p-4 md:p-6 relative overflow-hidden">
+        {/* Mini dashboard */}
+        <div className="bg-white rounded-lg shadow-lg h-full relative">
+          {/* Dashboard header */}
+          <div className="flex items-center justify-between px-3 py-2 bg-gray-900 rounded-t-lg text-white">
+            <div className="flex items-center space-x-2">
+              <Home className="w-3 h-3 text-primary" />
+              <span className="text-xs font-bold">HostGPT Dashboard</span>
+            </div>
+            <div className="w-4 h-4 bg-primary rounded-full"></div>
+          </div>
+          
+          {/* Dashboard content */}
+          <div className="p-3 space-y-3">
+            <div className="text-center">
+              <h3 className="text-xs font-bold text-dark mb-2">Crea il tuo Chatbot</h3>
+            </div>
+            
+            {/* Form steps */}
+            <div className="space-y-2">
+              {/* Step 1 - Nome proprietà */}
+              <div className={`p-2 rounded border-2 transition-all ${phase >= 1 ? 'border-green-400 bg-green-50' : 'border-gray-200'}`}>
+                <div className="text-xs text-gray-600 mb-1">Nome della proprietà</div>
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: phase >= 1 ? 1 : 0.3 }}
+                  className="text-xs font-medium"
+                >
+                  {phase >= 1 ? 'Casa Bella Vista' : 'Inserisci nome...'}
+                </motion.div>
+              </div>
+              
+              {/* Step 2 - Informazioni */}
+              <div className={`p-2 rounded border-2 transition-all ${phase >= 2 ? 'border-green-400 bg-green-50' : 'border-gray-200'}`}>
+                <div className="text-xs text-gray-600 mb-1">Informazioni check-in</div>
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: phase >= 2 ? 1 : 0.3 }}
+                  className="text-xs font-medium"
+                >
+                  {phase >= 2 ? 'Check-in: 15:00-20:00' : 'Inserisci orari...'}
+                </motion.div>
+              </div>
+              
+              {/* Step 3 - Consigli locali */}
+              <div className={`p-2 rounded border-2 transition-all ${phase >= 3 ? 'border-green-400 bg-green-50' : 'border-gray-200'}`}>
+                <div className="text-xs text-gray-600 mb-1">Consigli locali</div>
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: phase >= 3 ? 1 : 0.3 }}
+                  className="text-xs font-medium"
+                >
+                  {phase >= 3 ? 'Ristorante Roma, Osteria...' : 'Aggiungi ristoranti...'}
+                </motion.div>
+              </div>
+            </div>
+            
+            {/* Create button */}
+            {phase >= 4 && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.5 }}
+                className="text-center"
+              >
+                <motion.button
+                  initial={{ backgroundColor: '#FF5A5F' }}
+                  animate={{ backgroundColor: '#10b981' }}
+                  transition={{ duration: 0.5, delay: 0.5 }}
+                  className="w-full h-6 rounded text-xs font-semibold text-white relative overflow-hidden"
+                >
+                  <motion.div
+                    initial={{ x: '-100%' }}
+                    animate={{ x: '100%' }}
+                    transition={{ duration: 1, delay: 0.7 }}
+                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
+                  />
+                  Chatbot Creato!
+                </motion.button>
+              </motion.div>
+            )}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Componente animazione Step 3 - QR Code
+  const Step3Animation = ({ phase }: { phase: number }) => {
+    return (
+      <div className="w-full h-48 md:h-64 bg-gradient-to-br from-purple-50 to-violet-100 rounded-xl p-4 md:p-6 relative overflow-hidden">
+        {/* Mini result screen */}
+        <div className="bg-white rounded-lg shadow-lg h-full relative">
+          {/* Header */}
+          <div className="flex items-center justify-center px-3 py-2 bg-gradient-to-r from-primary to-accent rounded-t-lg text-white">
+            <span className="text-xs font-bold">Il tuo Chatbot è pronto!</span>
+          </div>
+          
+          {/* Content */}
+          <div className="p-3 space-y-3 text-center">
+            {/* QR Code */}
+            <div className="flex justify-center">
+              <motion.div
+                initial={{ scale: 0, rotate: -180 }}
+                animate={{ 
+                  scale: phase >= 1 ? 1 : 0,
+                  rotate: phase >= 1 ? 0 : -180
+                }}
+                transition={{ duration: 0.8, type: "spring" }}
+                className="w-16 h-16 md:w-20 md:h-20 bg-white border-2 border-gray-300 rounded relative overflow-hidden"
+              >
+                {/* QR Code pattern */}
+                <div className="absolute inset-1 grid grid-cols-6 gap-px">
+                  {[...Array(36)].map((_, i) => (
+                    <motion.div
+                      key={i}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: phase >= 1 ? (Math.random() > 0.3 ? 1 : 0) : 0 }}
+                      transition={{ delay: 0.5 + (i * 0.02) }}
+                      className="bg-gray-900 rounded-sm"
+                    />
+                  ))}
+                </div>
+                
+                {/* Center logo */}
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: phase >= 2 ? 1 : 0 }}
+                  transition={{ delay: 1, duration: 0.3 }}
+                  className="absolute inset-0 flex items-center justify-center"
+                >
+                  <div className="w-4 h-4 bg-primary rounded flex items-center justify-center">
+                    <Home className="w-2 h-2 text-white" />
+                  </div>
+                </motion.div>
+              </motion.div>
+            </div>
+            
+            {/* Link */}
+            {phase >= 2 && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 1.2 }}
+                className="space-y-2"
+              >
+                <div className="text-xs text-gray-600">Link diretto:</div>
+                <div className="bg-gray-100 rounded px-2 py-1 text-xs font-mono text-primary">
+                  hostgpt.it/chat/abc123
+                </div>
+              </motion.div>
+            )}
+            
+            {/* Share buttons */}
+            {phase >= 3 && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 1.8 }}
+                className="flex justify-center space-x-2"
+              >
+                <motion.button
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  className="w-6 h-6 bg-blue-500 rounded text-white flex items-center justify-center"
+                >
+                  <Share2 className="w-3 h-3" />
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  className="w-6 h-6 bg-green-500 rounded text-white flex items-center justify-center"
+                >
+                  <MessageSquare className="w-3 h-3" />
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  className="w-6 h-6 bg-purple-500 rounded text-white flex items-center justify-center"
+                >
+                  <QrCode className="w-3 h-3" />
+                </motion.button>
+              </motion.div>
+            )}
+            
+            {/* Success message */}
+            {phase >= 3 && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 2.2 }}
+                className="text-xs text-green-600 font-medium"
+              >
+                ✅ Condividi con i tuoi ospiti!
+              </motion.div>
+            )}
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -401,7 +741,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* How It Works - Timeline moderna */}
+      {/* How It Works - Animazioni Interactive */}
       <section id="how-it-works" className="section-padding">
         <div className="container-max">
           <motion.div
@@ -417,38 +757,71 @@ export default function LandingPage() {
             </p>
           </motion.div>
 
-                     {/* Timeline moderna */}
-           <div className="relative">
-             {/* Linea di connessione */}
-             <div className="timeline-connector"></div>
-             
-             <div className="grid md:grid-cols-3 gap-8 relative z-10">
-               {howItWorksSteps.map((step, index) => (
-                 <motion.div
-                   key={index}
-                   initial={{ opacity: 0, y: 30 }}
-                   whileInView={{ opacity: 1, y: 0 }}
-                   transition={{ duration: 0.5, delay: index * 0.2 }}
-                   className="timeline-step text-center"
-                 >
-                   {/* Numero del passo */}
-                   <div className="timeline-step-number-small animate-timeline-glow">
-                     <span className="text-xl font-bold text-white">{step.step}</span>
-                   </div>
-                   
-                   {/* Icona */}
-                   <div className={`timeline-step-icon ${step.bgColor}`}>
-                     {step.icon}
-                   </div>
-                   
-                   <h3 className="text-xl font-semibold mb-3 text-dark">{step.title}</h3>
-                   <p className="text-gray-600">
-                     {step.description}
-                   </p>
-                 </motion.div>
-               ))}
-             </div>
-           </div>
+          {/* Steps con animazioni */}
+          <div className="grid md:grid-cols-3 gap-8 lg:gap-12">
+            {howItWorksSteps.map((step, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ 
+                  opacity: 1, 
+                  y: 0,
+                  transition: {
+                    duration: 0.6,
+                    delay: index * 0.2,
+                    onComplete: () => {
+                      setVisibleSteps(prev => {
+                        const newVisible = [...prev]
+                        newVisible[index] = true
+                        return newVisible
+                      })
+                    }
+                  }
+                }}
+                className="relative"
+              >
+                {/* Numero del passo - floating */}
+                <div className="absolute -top-4 left-4 md:left-1/2 md:transform md:-translate-x-1/2 z-20">
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: visibleSteps[index] ? 1 : 0 }}
+                    transition={{ delay: 0.3, type: "spring" }}
+                    className="w-8 h-8 bg-gradient-to-r from-primary to-accent rounded-full flex items-center justify-center shadow-lg"
+                  >
+                    <span className="text-sm font-bold text-white">{step.step}</span>
+                  </motion.div>
+                </div>
+
+                {/* Card contenente l'animazione */}
+                <div className="bg-white rounded-2xl p-4 md:p-6 shadow-xl hover:shadow-2xl transition-all duration-300 relative overflow-hidden">
+                  {/* Animazione specifica per ogni step */}
+                  {index === 0 && <Step1Animation phase={step1Animation} />}
+                  {index === 1 && <Step2Animation phase={step2Animation} />}
+                  {index === 2 && <Step3Animation phase={step3Animation} />}
+                  
+                  {/* Contenuto testuale */}
+                  <div className="mt-4 text-center">
+                    <h3 className="text-xl font-semibold mb-2 text-dark">{step.title}</h3>
+                    <p className="text-gray-600 text-sm">
+                      {step.description}
+                    </p>
+                  </div>
+                  
+                  {/* Gradiente decorativo */}
+                  <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${
+                    index === 0 ? 'from-blue-400 to-blue-600' :
+                    index === 1 ? 'from-green-400 to-green-600' :
+                    'from-purple-400 to-purple-600'
+                  }`}></div>
+                </div>
+                
+                {/* Linea di connessione solo desktop */}
+                {index < howItWorksSteps.length - 1 && (
+                  <div className="hidden md:block absolute top-1/2 -right-4 lg:-right-6 w-8 lg:w-12 h-0.5 bg-gradient-to-r from-gray-300 to-transparent transform -translate-y-1/2 z-10"></div>
+                )}
+              </motion.div>
+            ))}
+          </div>
         </div>
       </section>
 
