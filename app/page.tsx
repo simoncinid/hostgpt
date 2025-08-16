@@ -183,20 +183,31 @@ export default function LandingPage() {
 
   // Gestione animazione pricing
   useEffect(() => {
+    console.log('Animation effect triggered:', pricingAnimationTriggered, 'phase:', pricingAnimationPhase)
     if (pricingAnimationTriggered && !pricingAnimationPhase) {
+      console.log('Starting animation sequence!')
       const sequence = [
-        () => setPricingAnimationPhase(1), // Inizia spin
         () => {
+          console.log('Phase 1: Spin start')
+          setPricingAnimationPhase(1)
+        }, // Inizia spin
+        () => {
+          console.log('Phase 2: Show chat')
           setShowChatDemo(true)
-          setPricingAnimationPhase(2) // Mostra chat e inizia conversazione
-        },
-        () => setPricingAnimationPhase(3), // Blur effect con frase
+          setPricingAnimationPhase(2)
+        }, // Mostra chat e inizia conversazione
         () => {
+          console.log('Phase 3: Blur effect')
+          setPricingAnimationPhase(3)
+        }, // Blur effect con frase
+        () => {
+          console.log('Phase 4: Final spin')
           setPricingAnimationPhase(4) // Spin finale
           setTimeout(() => {
             setShowChatDemo(false)
             setTimeout(() => {
               setPricingAnimationPhase(0)
+              console.log('Animation completed')
             }, 800)
           }, 800)
         }
@@ -601,11 +612,14 @@ export default function LandingPage() {
     const [chatMessages, setChatMessages] = useState<typeof demoMessages>([])
     
     useEffect(() => {
+      console.log('PricingChatAnimation effect:', showChatDemo, 'phase:', pricingAnimationPhase)
       if (showChatDemo && pricingAnimationPhase >= 2) {
+        console.log('Starting chat messages animation')
         setChatMessages([])
         let i = 0
         const interval = setInterval(() => {
           if (i < demoMessages.length) {
+            console.log('Adding message', i, demoMessages[i])
             setChatMessages(prev => [...prev, demoMessages[i]])
             i++
           } else {
@@ -616,6 +630,8 @@ export default function LandingPage() {
       }
     }, [showChatDemo, pricingAnimationPhase])
 
+    console.log('PricingChatAnimation render:', showChatDemo, 'messages:', chatMessages.length)
+    
     if (!showChatDemo) return null
 
     return (
@@ -996,7 +1012,9 @@ export default function LandingPage() {
                   y: 0
                 }}
                 onViewportEnter={() => {
+                  console.log('Viewport entered for plan:', plan.name, 'highlighted:', plan.highlighted, 'already triggered:', pricingAnimationTriggered)
                   if (!pricingAnimationTriggered && plan.highlighted) {
+                    console.log('TRIGGERING ANIMATION!')
                     setPricingAnimationTriggered(true)
                   }
                 }}
@@ -1045,6 +1063,19 @@ export default function LandingPage() {
                   >
                     Registrati ora
                   </Link>
+                  
+                  {/* DEBUG BUTTON - RIMUOVI DOPO */}
+                  {plan.highlighted && (
+                    <button 
+                      onClick={() => {
+                        console.log('Manual trigger clicked!')
+                        setPricingAnimationTriggered(true)
+                      }}
+                      className="mt-2 bg-red-500 text-white px-4 py-2 rounded text-sm"
+                    >
+                      🔧 TRIGGER ANIMAZIONE (DEBUG)
+                    </button>
+                  )}
                 </motion.div>
                 
                 {/* Animazione chat demo solo per il piano highlighted */}
