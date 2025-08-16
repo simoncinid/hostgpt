@@ -184,45 +184,42 @@ export default function LandingPage() {
   // Gestione animazione pricing
   useEffect(() => {
     console.log('Animation effect triggered:', pricingAnimationTriggered, 'phase:', pricingAnimationPhase)
-    if (pricingAnimationTriggered && !pricingAnimationPhase) {
+    if (pricingAnimationTriggered && pricingAnimationPhase === 0) {
       console.log('Starting animation sequence!')
-      const sequence = [
-        () => {
-          console.log('Phase 1: Spin start')
-          setPricingAnimationPhase(1)
-        }, // Inizia spin
-        () => {
-          console.log('Phase 2: Show chat')
-          setShowChatDemo(true)
-          setPricingAnimationPhase(2)
-        }, // Mostra chat e inizia conversazione
-        () => {
-          console.log('Phase 3: Blur effect')
-          setPricingAnimationPhase(3)
-        }, // Blur effect con frase
-        () => {
-          console.log('Phase 4: Final spin')
-          setPricingAnimationPhase(4) // Spin finale
+      
+      // Fase 1: Spin start
+      setTimeout(() => {
+        console.log('Phase 1: Spin start')
+        setPricingAnimationPhase(1)
+      }, 800)
+      
+      // Fase 2: Show chat
+      setTimeout(() => {
+        console.log('Phase 2: Show chat - SETTING showChatDemo to TRUE')
+        setShowChatDemo(true)
+        setPricingAnimationPhase(2)
+      }, 1600)
+      
+      // Fase 3: Blur effect
+      setTimeout(() => {
+        console.log('Phase 3: Blur effect')
+        setPricingAnimationPhase(3)
+      }, 6500)
+      
+      // Fase 4: Final spin e reset
+      setTimeout(() => {
+        console.log('Phase 4: Final spin')
+        setPricingAnimationPhase(4)
+        setTimeout(() => {
+          setShowChatDemo(false)
           setTimeout(() => {
-            setShowChatDemo(false)
-            setTimeout(() => {
-              setPricingAnimationPhase(0)
-              console.log('Animation completed')
-            }, 800)
+            setPricingAnimationPhase(0)
+            console.log('Animation completed')
           }, 800)
-        }
-      ]
-
-      const timers = [
-        setTimeout(sequence[0], 800),
-        setTimeout(sequence[1], 1600),
-        setTimeout(sequence[2], 6500),
-        setTimeout(sequence[3], 9000)
-      ]
-
-      return () => timers.forEach(timer => clearTimeout(timer))
+        }, 800)
+      }, 9000)
     }
-  }, [pricingAnimationTriggered, pricingAnimationPhase])
+  }, [pricingAnimationTriggered])
 
 
 
