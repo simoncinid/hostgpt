@@ -153,6 +153,8 @@ export default function LandingPage() {
   const [step2Animation, setStep2Animation] = useState(0)
   const [step3Animation, setStep3Animation] = useState(0)
   const [visibleSteps, setVisibleSteps] = useState<boolean[]>([false, false, false])
+  const [pricingAnimation, setPricingAnimation] = useState(0)
+  const [pricingVisible, setPricingVisible] = useState(false)
 
   // Gestione animazioni step quando entrano in vista
   useEffect(() => {
@@ -168,13 +170,23 @@ export default function LandingPage() {
           } else if (index === 2) {
             setStep3Animation(prev => (prev + 1) % 4) // 4 fasi dell'animazione
           }
-        }, 1500)
+        }, 4000)
         timers.push(stepAnimationTimer)
       }
     })
 
     return () => timers.forEach(timer => clearInterval(timer))
   }, [visibleSteps])
+
+  // Gestione animazione pricing
+  useEffect(() => {
+    if (pricingVisible) {
+      const pricingTimer = setInterval(() => {
+        setPricingAnimation(prev => (prev + 1) % 6) // 6 fasi dell'animazione
+      }, 3000)
+      return () => clearInterval(pricingTimer)
+    }
+  }, [pricingVisible])
 
   const howItWorksSteps = [
     {
@@ -245,7 +257,7 @@ export default function LandingPage() {
   // Componente animazione Step 1 - Form Registrazione
   const Step1Animation = ({ phase }: { phase: number }) => {
     return (
-      <div className="w-full h-48 md:h-64 bg-gradient-to-br from-blue-50 to-indigo-100 rounded-xl p-4 md:p-6 relative overflow-hidden">
+      <div className="w-full h-56 md:h-72 bg-gradient-to-br from-blue-50 to-indigo-100 rounded-xl p-4 md:p-6 relative overflow-hidden">
         {/* Mini browser window */}
         <div className="bg-white rounded-lg shadow-lg h-full relative">
           {/* Browser header */}
@@ -277,7 +289,7 @@ export default function LandingPage() {
                   animate={{ 
                     width: phase >= 1 ? '100%' : '0%'
                   }}
-                  transition={{ duration: 0.8 }}
+                  transition={{ duration: 1.5 }}
                   className="h-full bg-blue-50 absolute"
                 />
                 <div className="absolute left-2 top-1 text-xs text-gray-700">
@@ -305,7 +317,7 @@ export default function LandingPage() {
                   animate={{ 
                     width: phase >= 2 ? '100%' : '0%'
                   }}
-                  transition={{ duration: 0.8, delay: 0.3 }}
+                  transition={{ duration: 1.5, delay: 0.8 }}
                   className="h-full bg-blue-50 absolute"
                 />
                 <div className="absolute left-2 top-1 text-xs text-gray-700">
@@ -321,14 +333,14 @@ export default function LandingPage() {
                 scale: phase >= 3 ? 1.05 : 1,
                 backgroundColor: phase >= 3 ? '#FF5A5F' : '#e5e7eb'
               }}
-              transition={{ duration: 0.3, delay: 1 }}
+              transition={{ duration: 0.5, delay: 2 }}
               className="w-full h-7 rounded text-xs font-semibold text-white relative overflow-hidden"
             >
               {phase >= 3 && (
                 <motion.div
                   initial={{ x: '-100%' }}
                   animate={{ x: '100%' }}
-                  transition={{ duration: 1, delay: 1.2 }}
+                  transition={{ duration: 1.5, delay: 2.5 }}
                   className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
                 />
               )}
@@ -340,7 +352,7 @@ export default function LandingPage() {
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 2 }}
+                transition={{ delay: 3.5 }}
                 className="text-center"
               >
                 <div className="w-4 h-4 bg-green-500 rounded-full mx-auto mb-1 flex items-center justify-center">
@@ -358,7 +370,7 @@ export default function LandingPage() {
   // Componente animazione Step 2 - Creazione Chatbot
   const Step2Animation = ({ phase }: { phase: number }) => {
     return (
-      <div className="w-full h-48 md:h-64 bg-gradient-to-br from-green-50 to-emerald-100 rounded-xl p-4 md:p-6 relative overflow-hidden">
+      <div className="w-full h-56 md:h-72 bg-gradient-to-br from-green-50 to-emerald-100 rounded-xl p-4 md:p-6 relative overflow-hidden">
         {/* Mini dashboard */}
         <div className="bg-white rounded-lg shadow-lg h-full relative">
           {/* Dashboard header */}
@@ -448,7 +460,7 @@ export default function LandingPage() {
   // Componente animazione Step 3 - QR Code
   const Step3Animation = ({ phase }: { phase: number }) => {
     return (
-      <div className="w-full h-48 md:h-64 bg-gradient-to-br from-purple-50 to-violet-100 rounded-xl p-4 md:p-6 relative overflow-hidden">
+      <div className="w-full h-56 md:h-72 bg-gradient-to-br from-purple-50 to-violet-100 rounded-xl p-4 md:p-6 relative overflow-hidden">
         {/* Mini result screen */}
         <div className="bg-white rounded-lg shadow-lg h-full relative">
           {/* Header */}
@@ -555,6 +567,163 @@ export default function LandingPage() {
               </motion.div>
             )}
           </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Componente animazione Ospite + Host per pricing
+  const PricingAnimation = ({ phase }: { phase: number }) => {
+    return (
+      <div className="w-full h-64 md:h-80 bg-gradient-to-br from-primary/5 to-accent/10 rounded-2xl p-6 relative overflow-hidden">
+        {/* Scenario: Ospite scannerizza QR e chatta */}
+        <div className="h-full flex flex-col justify-between">
+          
+          {/* Fase 1-2: Ospite arriva e scannerizza QR */}
+          <div className="flex-1 relative">
+            <h4 className="text-center text-sm font-bold text-dark mb-4">L'esperienza del tuo ospite</h4>
+            
+            {/* Ospite con telefono */}
+            <div className="absolute left-4 top-6">
+              <motion.div
+                initial={{ x: -50, opacity: 0 }}
+                animate={{ 
+                  x: phase >= 1 ? 0 : -50,
+                  opacity: phase >= 1 ? 1 : 0
+                }}
+                transition={{ duration: 1 }}
+                className="flex flex-col items-center"
+              >
+                {/* Avatar ospite */}
+                <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center mb-2">
+                  <span className="text-white font-bold text-sm">👤</span>
+                </div>
+                <span className="text-xs text-gray-600">Ospite</span>
+                
+                {/* Telefono dell'ospite */}
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: phase >= 1 ? 1 : 0 }}
+                  transition={{ delay: 0.5, duration: 0.5 }}
+                  className="mt-2 w-6 h-10 bg-gray-800 rounded-lg relative"
+                >
+                  <div className="w-full h-full bg-white rounded-lg m-0.5">
+                    {phase >= 2 && (
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="p-1 text-center"
+                      >
+                        <div className="w-3 h-3 bg-gray-300 rounded mx-auto mb-1"></div>
+                        <div className="text-xs leading-none">📱</div>
+                      </motion.div>
+                    )}
+                  </div>
+                </motion.div>
+              </motion.div>
+            </div>
+
+            {/* QR Code sulla parete */}
+            <div className="absolute right-4 top-6">
+              <motion.div
+                initial={{ scale: 0, rotate: -90 }}
+                animate={{ 
+                  scale: phase >= 1 ? 1 : 0,
+                  rotate: phase >= 1 ? 0 : -90
+                }}
+                transition={{ duration: 0.8 }}
+                className="bg-white p-2 rounded-lg shadow-lg"
+              >
+                <div className="w-8 h-8 bg-gray-900 rounded grid grid-cols-4 gap-px p-1">
+                  {[...Array(16)].map((_, i) => (
+                    <div key={i} className={`bg-white rounded-sm ${Math.random() > 0.3 ? 'bg-gray-900' : ''}`}></div>
+                  ))}
+                </div>
+                <div className="text-xs text-center mt-1">HostGPT</div>
+              </motion.div>
+            </div>
+
+            {/* Linea di scanning */}
+            {phase >= 2 && (
+              <motion.div
+                initial={{ x: -20, opacity: 0 }}
+                animate={{ x: 50, opacity: [0, 1, 0] }}
+                transition={{ duration: 1.5, delay: 1 }}
+                className="absolute top-10 left-8 w-8 h-0.5 bg-red-500"
+              />
+            )}
+          </div>
+
+          {/* Fase 3-4: Chat conversation */}
+          {phase >= 3 && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8 }}
+              className="bg-white rounded-lg p-3 shadow-lg mb-4"
+            >
+              <div className="space-y-2">
+                <div className="flex justify-end">
+                  <div className="bg-primary text-white text-xs p-2 rounded-lg rounded-br-sm max-w-32">
+                    Ciao! A che ora è il check-in?
+                  </div>
+                </div>
+                {phase >= 4 && (
+                  <motion.div
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 1 }}
+                    className="flex justify-start"
+                  >
+                    <div className="bg-gray-100 text-gray-800 text-xs p-2 rounded-lg rounded-bl-sm max-w-32">
+                      Il check-in è dalle 15:00 alle 20:00! 😊
+                    </div>
+                  </motion.div>
+                )}
+              </div>
+            </motion.div>
+          )}
+
+          {/* Fase 5-6: Host rilassato */}
+          {phase >= 5 && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.8 }}
+              className="absolute bottom-4 right-4 text-center"
+            >
+              <div className="bg-green-100 rounded-xl p-3 relative">
+                {/* Host avatar */}
+                <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center mb-2 mx-auto">
+                  <span className="text-white font-bold text-sm">👨‍💼</span>
+                </div>
+                <span className="text-xs text-green-700 font-medium">Host</span>
+                
+                {/* Thinking bubble */}
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: phase >= 6 ? 1 : 0 }}
+                  transition={{ delay: 1, type: "spring" }}
+                  className="absolute -top-8 -left-2 bg-white rounded-lg p-2 shadow-lg"
+                >
+                  <div className="text-xs text-center">😌<br/>Relax!</div>
+                  <div className="absolute bottom-0 left-3 w-0 h-0 border-l-2 border-r-2 border-t-4 border-transparent border-t-white"></div>
+                </motion.div>
+                
+                {/* No notifications icon */}
+                {phase >= 6 && (
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ delay: 1.5 }}
+                    className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center"
+                  >
+                    <span className="text-white text-xs">✓</span>
+                  </motion.div>
+                )}
+              </div>
+            </motion.div>
+          )}
         </div>
       </div>
     )
@@ -837,47 +1006,69 @@ export default function LandingPage() {
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">Tutto ciò che ti serve a <span className="font-semibold">€29/mese</span></p>
           </motion.div>
 
-          <div className="grid md:grid-cols-1 gap-8 max-w-xl mx-auto">
-            {pricingPlans.map((plan, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-                className={`${plan.highlighted ? 'ring-2 ring-primary transform scale-105' : ''} bg-white rounded-2xl p-8 relative`}
-              >
-                {plan.highlighted && (
-                  <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                    <span className="bg-primary text-white px-4 py-1 rounded-full text-sm">
-                      Più Popolare
-                    </span>
-                  </div>
-                )}
-                <h3 className="text-2xl font-bold mb-2">{plan.name}</h3>
-                <div className="mb-6">
-                  <span className="text-4xl font-bold">{plan.price}</span>
-                  <span className="text-gray-600">{plan.period}</span>
-                </div>
-                <ul className="space-y-3 mb-8">
-                  {plan.features.map((feature, i) => (
-                    <li key={i} className="flex items-start">
-                      <Check className="w-5 h-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
-                      <span className="text-gray-600">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-                <Link
-                  href="/register"
-                  className={`block text-center py-3 px-6 rounded-lg font-semibold transition ${
-                    plan.highlighted
-                      ? 'bg-primary text-white hover:bg-secondary'
-                      : 'bg-gray-100 text-dark hover:bg-gray-200'
-                  }`}
+          {/* Layout responsive: desktop affiancato, mobile stack */}
+          <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 max-w-6xl mx-auto items-center">
+            {/* Card del prezzo */}
+            <div className="order-2 lg:order-1">
+              {pricingPlans.map((plan, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: index * 0.1 }}
+                  className={`${plan.highlighted ? 'ring-2 ring-primary transform scale-105' : ''} bg-white rounded-2xl p-8 relative max-w-lg mx-auto lg:mx-0`}
                 >
-                  Registrati ora
-                </Link>
+                  {plan.highlighted && (
+                    <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                      <span className="bg-primary text-white px-4 py-1 rounded-full text-sm">
+                        Più Popolare
+                      </span>
+                    </div>
+                  )}
+                  <h3 className="text-2xl font-bold mb-2">{plan.name}</h3>
+                  <div className="mb-6">
+                    <span className="text-4xl font-bold">{plan.price}</span>
+                    <span className="text-gray-600">{plan.period}</span>
+                  </div>
+                  <ul className="space-y-3 mb-8">
+                    {plan.features.map((feature, i) => (
+                      <li key={i} className="flex items-start">
+                        <Check className="w-5 h-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
+                        <span className="text-gray-600">{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <Link
+                    href="/register"
+                    className={`block text-center py-3 px-6 rounded-lg font-semibold transition ${
+                      plan.highlighted
+                        ? 'bg-primary text-white hover:bg-secondary'
+                        : 'bg-gray-100 text-dark hover:bg-gray-200'
+                    }`}
+                  >
+                    Registrati ora
+                  </Link>
+                </motion.div>
+              ))}
+            </div>
+
+            {/* Animazione ospite + host */}
+            <div className="order-1 lg:order-2">
+              <motion.div
+                initial={{ opacity: 0, x: 50 }}
+                whileInView={{ 
+                  opacity: 1, 
+                  x: 0,
+                  transition: {
+                    duration: 0.6,
+                    onComplete: () => setPricingVisible(true)
+                  }
+                }}
+                className="w-full"
+              >
+                <PricingAnimation phase={pricingAnimation} />
               </motion.div>
-            ))}
+            </div>
           </div>
         </div>
       </section>
