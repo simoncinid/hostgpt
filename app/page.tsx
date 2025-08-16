@@ -153,7 +153,11 @@ export default function LandingPage() {
   const [step2Animation, setStep2Animation] = useState(0)
   const [step3Animation, setStep3Animation] = useState(0)
   const [visibleSteps, setVisibleSteps] = useState<boolean[]>([false, false, false])
-
+  
+  // Stati per l'animazione della sezione pricing
+  const [pricingAnimationTriggered, setPricingAnimationTriggered] = useState(false)
+  const [pricingAnimationPhase, setPricingAnimationPhase] = useState(0)
+  const [showChatDemo, setShowChatDemo] = useState(false)
 
   // Gestione animazioni step quando entrano in vista
   useEffect(() => {
@@ -176,6 +180,35 @@ export default function LandingPage() {
 
     return () => timers.forEach(timer => clearInterval(timer))
   }, [visibleSteps])
+
+  // Gestione animazione pricing
+  useEffect(() => {
+    if (pricingAnimationTriggered && !pricingAnimationPhase) {
+      const sequence = [
+        () => setPricingAnimationPhase(1), // Inizia spin
+        () => setShowChatDemo(true), // Mostra chat
+        () => setPricingAnimationPhase(2), // Chat conversation
+        () => setPricingAnimationPhase(3), // Blur effect con frase
+        () => {
+          setPricingAnimationPhase(4) // Spin finale
+          setTimeout(() => {
+            setShowChatDemo(false)
+            setPricingAnimationPhase(0)
+          }, 1000)
+        }
+      ]
+
+      const timers = [
+        setTimeout(sequence[0], 500),
+        setTimeout(sequence[1], 1500),
+        setTimeout(sequence[2], 2000),
+        setTimeout(sequence[3], 6000),
+        setTimeout(sequence[4], 8000)
+      ]
+
+      return () => timers.forEach(timer => clearTimeout(timer))
+    }
+  }, [pricingAnimationTriggered, pricingAnimationPhase])
 
 
 
@@ -560,7 +593,97 @@ export default function LandingPage() {
     )
   }
 
+  // Componente per l'animazione della chat nella sezione pricing
+  const PricingChatAnimation = () => {
+    const [chatMessages, setChatMessages] = useState<typeof demoMessages>([])
+    
+    useEffect(() => {
+      if (showChatDemo && pricingAnimationPhase >= 2) {
+        setChatMessages([])
+        let i = 0
+        const interval = setInterval(() => {
+          if (i < demoMessages.length) {
+            setChatMessages(prev => [...prev, demoMessages[i]])
+            i++
+          } else {
+            clearInterval(interval)
+          }
+        }, 800)
+        return () => clearInterval(interval)
+      }
+    }, [showChatDemo, pricingAnimationPhase])
 
+    if (!showChatDemo) return null
+
+    return (
+      <motion.div
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.8 }}
+        className="absolute inset-0 bg-white rounded-2xl p-4 flex flex-col"
+      >
+        {/* Header chat */}
+        <div className="flex items-center mb-4 pb-3 border-b">
+          <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
+            <MessageSquare className="w-5 h-5 text-white" />
+          </div>
+          <div className="ml-3">
+            <div className="font-semibold text-dark">HostGPT Assistant</div>
+            <div className="text-sm text-green-500 flex items-center">
+              <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
+              Online
+            </div>
+          </div>
+        </div>
+
+        {/* Messaggi chat */}
+        <div className="flex-1 space-y-3 overflow-y-auto">
+          {chatMessages.map((msg, idx) => (
+            <motion.div
+              key={idx}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+              className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+            >
+              <div className={`max-w-[80%] p-3 rounded-2xl text-sm ${
+                msg.role === 'user' 
+                  ? 'bg-primary text-white' 
+                  : 'bg-gray-100 text-gray-800'
+              }`}>
+                {msg.text}
+              </div>
+            </motion.div>
+          ))}
+        </div>
+
+        {/* Blur overlay con frase accattivante */}
+        {pricingAnimationPhase >= 3 && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="absolute inset-0 bg-white/90 backdrop-blur-sm rounded-2xl flex items-center justify-center p-6"
+          >
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.3 }}
+              className="text-center"
+            >
+              <div className="text-2xl font-bold text-primary mb-2">🎯</div>
+              <h3 className="text-xl font-bold text-dark mb-2">
+                Mentre tu ti rilassi...
+              </h3>
+              <p className="text-gray-600 text-sm leading-relaxed">
+                HostGPT si occupa dei tuoi ospiti H24<br />
+                <span className="font-semibold text-primary">Più tempo per te, più soddisfazione per loro!</span>
+              </p>
+            </motion.div>
+          </motion.div>
+        )}
+      </motion.div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-white">
@@ -841,9 +964,23 @@ export default function LandingPage() {
               <motion.div
                 key={index}
                 initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-                className={`${plan.highlighted ? 'ring-2 ring-primary transform scale-105' : ''} bg-white rounded-2xl p-8 relative`}
+                whileInView={{ 
+                  opacity: 1, 
+                  y: 0,
+                  rotateY: pricingAnimationPhase === 1 || pricingAnimationPhase === 4 ? 180 : 0
+                }}
+                onViewportEnter={() => {
+                  if (!pricingAnimationTriggered && plan.highlighted) {
+                    setPricingAnimationTriggered(true)
+                  }
+                }}
+                transition={{ 
+                  duration: 0.5, 
+                  delay: index * 0.1,
+                  rotateY: { duration: 0.8, ease: "easeInOut" }
+                }}
+                className={`${plan.highlighted ? 'ring-2 ring-primary transform scale-105' : ''} bg-white rounded-2xl p-8 relative overflow-hidden`}
+                style={{ perspective: "1000px" }}
               >
                 {plan.highlighted && (
                   <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
@@ -875,6 +1012,9 @@ export default function LandingPage() {
                 >
                   Registrati ora
                 </Link>
+                
+                {/* Animazione chat demo solo per il piano highlighted */}
+                {plan.highlighted && <PricingChatAnimation />}
               </motion.div>
             ))}
           </div>
