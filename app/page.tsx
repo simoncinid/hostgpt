@@ -81,42 +81,42 @@ export default function LandingPage() {
 
   const features = [
     {
-      icon: <MessageSquare className="w-10 h-10 text-white" />,
+      icon: <MessageSquare className="w-6 h-6 md:w-10 md:h-10 text-white" />,
       bgGradient: "from-blue-500 to-blue-600",
       title: "Chatbot Personalizzato",
       description: "Crea un assistente virtuale su misura per la tua proprietà con pochi click",
       features: ["Risposte personalizzate", "Lingua italiana", "Conoscenza locale"]
     },
     {
-      icon: <Clock className="w-10 h-10 text-white" />,
+      icon: <Clock className="w-6 h-6 md:w-10 md:h-10 text-white" />,
       bgGradient: "from-green-500 to-green-600",
       title: "Assistenza 24/7",
       description: "I tuoi ospiti ricevono risposte immediate a qualsiasi ora del giorno e della notte",
       features: ["Disponibilità continua", "Risposte istantanee", "Nessun ritardo"]
     },
     {
-      icon: <Globe className="w-10 h-10 text-white" />,
+      icon: <Globe className="w-6 h-6 md:w-10 md:h-10 text-white" />,
       bgGradient: "from-purple-500 to-purple-600",
       title: "Informazioni Locali",
       description: "Fornisci consigli su ristoranti, attrazioni e servizi della zona",
       features: ["Ristoranti consigliati", "Attrazioni turistiche", "Trasporti locali"]
     },
     {
-      icon: <BarChart3 className="w-10 h-10 text-white" />,
+      icon: <BarChart3 className="w-6 h-6 md:w-10 md:h-10 text-white" />,
       bgGradient: "from-orange-500 to-orange-600",
       title: "Statistiche Dettagliate",
       description: "Monitora le conversazioni e ottieni insights sui bisogni dei tuoi ospiti",
       features: ["Analisi conversazioni", "Metriche performance", "Report dettagliati"]
     },
     {
-      icon: <Shield className="w-10 h-10 text-white" />,
+      icon: <Shield className="w-6 h-6 md:w-10 md:h-10 text-white" />,
       bgGradient: "from-red-500 to-red-600",
       title: "Sicuro e Affidabile",
       description: "Tecnologia OpenAI all'avanguardia per risposte accurate e sicure",
       features: ["Tecnologia avanzata", "Sicurezza garantita", "Risposte accurate"]
     },
     {
-      icon: <Zap className="w-10 h-10 text-white" />,
+      icon: <Zap className="w-6 h-6 md:w-10 md:h-10 text-white" />,
       bgGradient: "from-yellow-500 to-yellow-600",
       title: "Setup Veloce",
       description: "Attiva il tuo chatbot in meno di 10 minuti con la nostra procedura guidata",
@@ -379,18 +379,19 @@ export default function LandingPage() {
                  initial={{ opacity: 0, y: 30 }}
                  whileInView={{ opacity: 1, y: 0 }}
                  transition={{ duration: 0.5, delay: index * 0.1 }}
-                 className="bg-white rounded-2xl p-8 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-100 text-center"
+                 className="bg-white rounded-2xl p-4 md:p-8 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-100 text-center"
                >
-                 <div className={`w-16 h-16 rounded-xl bg-gradient-to-r ${feature.bgGradient} flex items-center justify-center mb-6 mx-auto`}>
+                 <div className={`w-12 h-12 md:w-16 md:h-16 rounded-xl bg-gradient-to-r ${feature.bgGradient} flex items-center justify-center mb-4 md:mb-6 mx-auto`}>
                    {feature.icon}
                  </div>
-                 <h3 className="text-xl font-semibold mb-3 text-dark">{feature.title}</h3>
-                 <p className="text-gray-600 mb-6">{feature.description}</p>
+                 <h3 className="text-xl font-semibold mb-4 md:mb-3 text-dark">{feature.title}</h3>
+                 {/* Descrizione solo su desktop */}
+                 <p className="hidden md:block text-gray-600 mb-6">{feature.description}</p>
                  <ul className="space-y-2">
                    {feature.features.map((item, i) => (
                      <li key={i} className="flex items-center justify-center text-sm text-gray-600">
                        <Check className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" />
-                       {item}
+                       <span className="text-center md:text-left">{item}</span>
                      </li>
                    ))}
                  </ul>
@@ -656,56 +657,61 @@ export default function LandingPage() {
       {/* Footer - Ripensato per mobile */}
       <footer className="bg-dark text-white py-8">
         <div className="container-max px-4">
-          {/* Logo e descrizione - Solo desktop */}
-          <div className="hidden md:block text-center md:text-left mb-8">
-            <div className="flex items-center justify-center md:justify-start space-x-2 mb-3">
-              <Home className="w-6 h-6 text-primary" />
-              <span className="text-xl font-bold">HostGPT</span>
-            </div>
-            <p className="text-gray-400 text-sm">
-              Il tuo assistente virtuale per affitti vacanza
-            </p>
-          </div>
-
-          {/* Footer compatto su mobile, normale su desktop */}
-          <div className="grid grid-cols-3 md:grid-cols-4 gap-4 md:gap-8 mb-8">
-            {/* Logo su mobile */}
-            <div className="md:hidden col-span-3 text-center mb-4">
-              <div className="flex items-center justify-center space-x-2 mb-2">
-                <Home className="w-6 h-6 text-primary" />
-                <span className="text-lg font-bold">HostGPT</span>
+          {/* Footer layout: mobile compatto, desktop normale */}
+          <div className="md:grid md:grid-cols-4 md:gap-8 mb-8">
+            {/* Logo e descrizione - Layout differente per mobile/desktop */}
+            <div className="md:col-span-1">
+              {/* Logo desktop */}
+              <div className="hidden md:block text-left mb-8">
+                <div className="flex items-center space-x-2 mb-3">
+                  <Home className="w-6 h-6 text-primary" />
+                  <span className="text-xl font-bold">HostGPT</span>
+                </div>
+                <p className="text-gray-400 text-sm">
+                  Il tuo assistente virtuale per affitti vacanza
+                </p>
               </div>
-              <p className="text-gray-400 text-xs">
-                Il tuo assistente virtuale per affitti vacanza
-              </p>
+              
+              {/* Logo mobile */}
+              <div className="md:hidden text-center mb-6">
+                <div className="flex items-center justify-center space-x-2 mb-2">
+                  <Home className="w-6 h-6 text-primary" />
+                  <span className="text-lg font-bold">HostGPT</span>
+                </div>
+                <p className="text-gray-400 text-xs">
+                  Il tuo assistente virtuale per affitti vacanza
+                </p>
+              </div>
             </div>
 
-            {/* Sezioni compatte */}
-            <div className="text-center md:text-left">
-              <h4 className="font-semibold mb-3 text-sm md:text-base">Prodotto</h4>
-              <ul className="space-y-1 md:space-y-2 text-gray-400 text-xs md:text-sm">
-                <li><Link href="#features" className="hover:text-white transition">Funzionalità</Link></li>
-                <li><Link href="#pricing" className="hover:text-white transition">Prezzi</Link></li>
-                <li><Link href="#" className="hover:text-white transition">API</Link></li>
-              </ul>
-            </div>
-            
-            <div className="text-center md:text-left">
-              <h4 className="font-semibold mb-3 text-sm md:text-base">Azienda</h4>
-              <ul className="space-y-1 md:space-y-2 text-gray-400 text-xs md:text-sm">
-                <li><Link href="#" className="hover:text-white transition">Chi Siamo</Link></li>
-                <li><Link href="#" className="hover:text-white transition">Blog</Link></li>
-                <li><Link href="#" className="hover:text-white transition">Contatti</Link></li>
-              </ul>
-            </div>
-            
-            <div className="text-center md:text-left">
-              <h4 className="font-semibold mb-3 text-sm md:text-base">Legale</h4>
-              <ul className="space-y-1 md:space-y-2 text-gray-400 text-xs md:text-sm">
-                <li><Link href="/privacy" className="hover:text-white transition">Privacy</Link></li>
-                <li><Link href="/terms" className="hover:text-white transition">Termini</Link></li>
-                <li><Link href="#" className="hover:text-white transition">Cookie</Link></li>
-              </ul>
+            {/* Sezioni - Layout diverso per mobile/desktop */}
+            <div className="grid grid-cols-3 gap-4 md:col-span-3 md:grid-cols-3 md:gap-8">
+              <div className="text-center md:text-left">
+                <h4 className="font-semibold mb-3 text-sm md:text-base">Prodotto</h4>
+                <ul className="space-y-1 md:space-y-2 text-gray-400 text-xs md:text-sm">
+                  <li><Link href="#features" className="hover:text-white transition">Funzionalità</Link></li>
+                  <li><Link href="#pricing" className="hover:text-white transition">Prezzi</Link></li>
+                  <li><Link href="#" className="hover:text-white transition">API</Link></li>
+                </ul>
+              </div>
+              
+              <div className="text-center md:text-left">
+                <h4 className="font-semibold mb-3 text-sm md:text-base">Azienda</h4>
+                <ul className="space-y-1 md:space-y-2 text-gray-400 text-xs md:text-sm">
+                  <li><Link href="#" className="hover:text-white transition">Chi Siamo</Link></li>
+                  <li><Link href="#" className="hover:text-white transition">Blog</Link></li>
+                  <li><Link href="#" className="hover:text-white transition">Contatti</Link></li>
+                </ul>
+              </div>
+              
+              <div className="text-center md:text-left">
+                <h4 className="font-semibold mb-3 text-sm md:text-base">Legale</h4>
+                <ul className="space-y-1 md:space-y-2 text-gray-400 text-xs md:text-sm">
+                  <li><Link href="/privacy" className="hover:text-white transition">Privacy</Link></li>
+                  <li><Link href="/terms" className="hover:text-white transition">Termini</Link></li>
+                  <li><Link href="#" className="hover:text-white transition">Cookie</Link></li>
+                </ul>
+              </div>
             </div>
           </div>
           
