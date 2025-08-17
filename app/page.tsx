@@ -148,78 +148,49 @@ export default function LandingPage() {
     }
   ]
 
-  // Stati per le animazioni degli step
-  const [step1Animation, setStep1Animation] = useState(0)
-  const [step2Animation, setStep2Animation] = useState(0)
-  const [step3Animation, setStep3Animation] = useState(0)
-  const [visibleSteps, setVisibleSteps] = useState<boolean[]>([false, false, false])
-  
-  // Stati per l'animazione della sezione pricing
-  const [pricingAnimationTriggered, setPricingAnimationTriggered] = useState(false)
-  const [pricingAnimationPhase, setPricingAnimationPhase] = useState(0)
-  const [showChatDemo, setShowChatDemo] = useState(false)
+  // Stati per le animazioni flip - molto più semplice
+  const [flippedCards, setFlippedCards] = useState<boolean[]>([false, false, false])
+  const [animationsStarted, setAnimationsStarted] = useState<boolean[]>([false, false, false])
+  const [animationsComplete, setAnimationsComplete] = useState<boolean[]>([false, false, false])
 
-  // Gestione animazioni step quando entrano in vista
-  useEffect(() => {
-    const timers: NodeJS.Timeout[] = []
-    
-    visibleSteps.forEach((isVisible, index) => {
-      if (isVisible) {
-        const stepAnimationTimer = setInterval(() => {
-          if (index === 0) {
-            setStep1Animation(prev => (prev + 1) % 4) // 4 fasi dell'animazione
-          } else if (index === 1) {
-            setStep2Animation(prev => (prev + 1) % 5) // 5 fasi dell'animazione
-          } else if (index === 2) {
-            setStep3Animation(prev => (prev + 1) % 4) // 4 fasi dell'animazione
-          }
-        }, 4000)
-        timers.push(stepAnimationTimer)
-      }
-    })
-
-    return () => timers.forEach(timer => clearInterval(timer))
-  }, [visibleSteps])
-
-  // Gestione animazione pricing
-  useEffect(() => {
-    console.log('Animation effect triggered:', pricingAnimationTriggered, 'phase:', pricingAnimationPhase)
-    if (pricingAnimationTriggered && pricingAnimationPhase === 0) {
-      console.log('Starting animation sequence!')
+  // Gestione flip delle card - una sola volta per card
+  const handleCardFlip = (index: number) => {
+    if (!animationsStarted[index] && !animationsComplete[index]) {
+      // Flippa la card
+      setFlippedCards(prev => {
+        const newFlipped = [...prev]
+        newFlipped[index] = true
+        return newFlipped
+      })
       
-      // Fase 1: Spin start
+      // Avvia animazione dopo 600ms (tempo del flip)
       setTimeout(() => {
-        console.log('Phase 1: Spin start')
-        setPricingAnimationPhase(1)
-      }, 800)
+        setAnimationsStarted(prev => {
+          const newStarted = [...prev]
+          newStarted[index] = true
+          return newStarted
+        })
+      }, 600)
       
-      // Fase 2: Show chat
+      // Completa animazione dopo 8 secondi
       setTimeout(() => {
-        console.log('Phase 2: Show chat - SETTING showChatDemo to TRUE')
-        setShowChatDemo(true)
-        setPricingAnimationPhase(2)
-      }, 1600)
-      
-      // Fase 3: Blur effect
-      setTimeout(() => {
-        console.log('Phase 3: Blur effect')
-        setPricingAnimationPhase(3)
-      }, 6500)
-      
-      // Fase 4: Final spin e reset
-      setTimeout(() => {
-        console.log('Phase 4: Final spin')
-        setPricingAnimationPhase(4)
+        setAnimationsComplete(prev => {
+          const newComplete = [...prev]
+          newComplete[index] = true
+          return newComplete
+        })
+        
+        // Riflippa la card dopo che l'animazione è finita
         setTimeout(() => {
-          setShowChatDemo(false)
-          setTimeout(() => {
-            setPricingAnimationPhase(0)
-            console.log('Animation completed')
-          }, 800)
-        }, 800)
-      }, 9000)
+          setFlippedCards(prev => {
+            const newFlipped = [...prev]
+            newFlipped[index] = false
+            return newFlipped
+          })
+        }, 600)
+      }, 8600)
     }
-  }, [pricingAnimationTriggered])
+  }
 
 
 
@@ -290,7 +261,7 @@ export default function LandingPage() {
   }
 
   // Componente animazione Step 1 - Form Registrazione
-  const Step1Animation = ({ phase }: { phase: number }) => {
+  const Step1Animation = ({ isActive }: { isActive: boolean }) => {
     return (
       <div className="w-full h-64 md:h-80 bg-gradient-to-br from-blue-50 to-indigo-100 rounded-xl p-3 md:p-4 relative overflow-hidden">
         {/* Mini browser window */}
@@ -322,15 +293,18 @@ export default function LandingPage() {
                 <div className="h-5 bg-gray-100 rounded border relative overflow-hidden">
                   <motion.div
                     initial={{ width: 0 }}
-                    animate={{ 
-                      width: phase >= 1 ? '100%' : '0%'
-                    }}
-                    transition={{ duration: 1.5 }}
+                    animate={isActive ? { width: '100%' } : { width: 0 }}
+                    transition={{ duration: 2, delay: isActive ? 0.5 : 0 }}
                     className="h-full bg-blue-50 absolute"
                   />
-                  <div className="absolute left-1 top-0.5 text-xs text-gray-700 leading-none">
-                    {phase >= 1 ? 'mario.rossi@email.com' : ''}
-                  </div>
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={isActive ? { opacity: 1 } : { opacity: 0 }}
+                    transition={{ delay: isActive ? 1 : 0 }}
+                    className="absolute left-1 top-0.5 text-xs text-gray-700 leading-none"
+                  >
+                    mario.rossi@email.com
+                  </motion.div>
                 </div>
               </div>
               
@@ -340,53 +314,49 @@ export default function LandingPage() {
                 <div className="h-5 bg-gray-100 rounded border relative overflow-hidden">
                   <motion.div
                     initial={{ width: 0 }}
-                    animate={{ 
-                      width: phase >= 2 ? '100%' : '0%'
-                    }}
-                    transition={{ duration: 1.5, delay: 0.8 }}
+                    animate={isActive ? { width: '100%' } : { width: 0 }}
+                    transition={{ duration: 2, delay: isActive ? 2.5 : 0 }}
                     className="h-full bg-blue-50 absolute"
                   />
-                  <div className="absolute left-1 top-0.5 text-xs text-gray-700 leading-none">
-                    {phase >= 2 ? '••••••••' : ''}
-                  </div>
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={isActive ? { opacity: 1 } : { opacity: 0 }}
+                    transition={{ delay: isActive ? 3 : 0 }}
+                    className="absolute left-1 top-0.5 text-xs text-gray-700 leading-none"
+                  >
+                    ••••••••
+                  </motion.div>
                 </div>
               </div>
               
               {/* Submit button */}
               <motion.button
-                initial={{ scale: 1, backgroundColor: '#e5e7eb' }}
-                animate={{ 
-                  scale: phase >= 3 ? 1.02 : 1,
-                  backgroundColor: phase >= 3 ? '#FF5A5F' : '#e5e7eb'
-                }}
-                transition={{ duration: 0.5, delay: 2 }}
+                initial={{ backgroundColor: '#e5e7eb' }}
+                animate={isActive ? { backgroundColor: '#FF5A5F' } : { backgroundColor: '#e5e7eb' }}
+                transition={{ duration: 0.5, delay: isActive ? 4.5 : 0 }}
                 className="w-full h-6 rounded text-xs font-semibold text-white relative overflow-hidden mt-2"
               >
-                {phase >= 3 && (
-                  <motion.div
-                    initial={{ x: '-100%' }}
-                    animate={{ x: '100%' }}
-                    transition={{ duration: 1.5, delay: 2.5 }}
-                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
-                  />
-                )}
+                <motion.div
+                  initial={{ x: '-100%' }}
+                  animate={isActive ? { x: '100%' } : { x: '-100%' }}
+                  transition={{ duration: 1, delay: isActive ? 5 : 0 }}
+                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
+                />
                 Registrati
               </motion.button>
               
               {/* Success message */}
-              {phase >= 3 && (
-                <motion.div
-                  initial={{ opacity: 0, y: 5 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 3.5 }}
-                  className="text-center mt-2"
-                >
-                  <div className="w-3 h-3 bg-green-500 rounded-full mx-auto mb-1 flex items-center justify-center">
-                    <Check className="w-1.5 h-1.5 text-white" />
-                  </div>
-                  <p className="text-xs text-green-600">Account creato!</p>
-                </motion.div>
-              )}
+              <motion.div
+                initial={{ opacity: 0, y: 5 }}
+                animate={isActive ? { opacity: 1, y: 0 } : { opacity: 0, y: 5 }}
+                transition={{ delay: isActive ? 6 : 0 }}
+                className="text-center mt-2"
+              >
+                <div className="w-3 h-3 bg-green-500 rounded-full mx-auto mb-1 flex items-center justify-center">
+                  <Check className="w-1.5 h-1.5 text-white" />
+                </div>
+                <p className="text-xs text-green-600">Account creato!</p>
+              </motion.div>
             </div>
           </div>
         </div>
@@ -395,7 +365,7 @@ export default function LandingPage() {
   }
 
   // Componente animazione Step 2 - Creazione Chatbot
-  const Step2Animation = ({ phase }: { phase: number }) => {
+  const Step2Animation = ({ isActive }: { isActive: boolean }) => {
     return (
       <div className="w-full h-64 md:h-80 bg-gradient-to-br from-green-50 to-emerald-100 rounded-xl p-3 md:p-4 relative overflow-hidden">
         {/* Mini dashboard */}
@@ -419,66 +389,82 @@ export default function LandingPage() {
               {/* Form steps */}
               <div className="space-y-1.5">
                 {/* Step 1 - Nome proprietà */}
-                <div className={`p-1.5 rounded border-2 transition-all ${phase >= 1 ? 'border-green-400 bg-green-50' : 'border-gray-200'}`}>
+                <motion.div
+                  initial={{ borderColor: '#d1d5db', backgroundColor: '#ffffff' }}
+                  animate={isActive ? { borderColor: '#4ade80', backgroundColor: '#f0fdf4' } : { borderColor: '#d1d5db', backgroundColor: '#ffffff' }}
+                  transition={{ delay: isActive ? 1 : 0 }}
+                  className="p-1.5 rounded border-2"
+                >
                   <div className="text-xs text-gray-600 mb-0.5">Nome proprietà</div>
                   <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: phase >= 1 ? 1 : 0.3 }}
+                    initial={{ opacity: 0.3 }}
+                    animate={isActive ? { opacity: 1 } : { opacity: 0.3 }}
+                    transition={{ delay: isActive ? 1.5 : 0 }}
                     className="text-xs font-medium leading-none"
                   >
-                    {phase >= 1 ? 'Casa Bella Vista' : 'Inserisci nome...'}
+                    Casa Bella Vista
                   </motion.div>
-                </div>
+                </motion.div>
                 
                 {/* Step 2 - Informazioni */}
-                <div className={`p-1.5 rounded border-2 transition-all ${phase >= 2 ? 'border-green-400 bg-green-50' : 'border-gray-200'}`}>
+                <motion.div
+                  initial={{ borderColor: '#d1d5db', backgroundColor: '#ffffff' }}
+                  animate={isActive ? { borderColor: '#4ade80', backgroundColor: '#f0fdf4' } : { borderColor: '#d1d5db', backgroundColor: '#ffffff' }}
+                  transition={{ delay: isActive ? 3 : 0 }}
+                  className="p-1.5 rounded border-2"
+                >
                   <div className="text-xs text-gray-600 mb-0.5">Check-in</div>
                   <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: phase >= 2 ? 1 : 0.3 }}
+                    initial={{ opacity: 0.3 }}
+                    animate={isActive ? { opacity: 1 } : { opacity: 0.3 }}
+                    transition={{ delay: isActive ? 3.5 : 0 }}
                     className="text-xs font-medium leading-none"
                   >
-                    {phase >= 2 ? '15:00-20:00' : 'Inserisci orari...'}
+                    15:00-20:00
                   </motion.div>
-                </div>
+                </motion.div>
                 
                 {/* Step 3 - Consigli locali */}
-                <div className={`p-1.5 rounded border-2 transition-all ${phase >= 3 ? 'border-green-400 bg-green-50' : 'border-gray-200'}`}>
+                <motion.div
+                  initial={{ borderColor: '#d1d5db', backgroundColor: '#ffffff' }}
+                  animate={isActive ? { borderColor: '#4ade80', backgroundColor: '#f0fdf4' } : { borderColor: '#d1d5db', backgroundColor: '#ffffff' }}
+                  transition={{ delay: isActive ? 5 : 0 }}
+                  className="p-1.5 rounded border-2"
+                >
                   <div className="text-xs text-gray-600 mb-0.5">Consigli locali</div>
                   <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: phase >= 3 ? 1 : 0.3 }}
+                    initial={{ opacity: 0.3 }}
+                    animate={isActive ? { opacity: 1 } : { opacity: 0.3 }}
+                    transition={{ delay: isActive ? 5.5 : 0 }}
                     className="text-xs font-medium leading-none"
                   >
-                    {phase >= 3 ? 'Ristorante Roma...' : 'Aggiungi ristoranti...'}
+                    Ristorante Roma...
                   </motion.div>
-                </div>
+                </motion.div>
               </div>
               
               {/* Create button */}
               <div className="mt-2">
-                {phase >= 4 && (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.5 }}
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={isActive ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.9 }}
+                  transition={{ delay: isActive ? 6.5 : 0 }}
+                >
+                  <motion.button
+                    initial={{ backgroundColor: '#FF5A5F' }}
+                    animate={isActive ? { backgroundColor: '#10b981' } : { backgroundColor: '#FF5A5F' }}
+                    transition={{ duration: 0.5, delay: isActive ? 7 : 0 }}
+                    className="w-full h-5 rounded text-xs font-semibold text-white relative overflow-hidden"
                   >
-                    <motion.button
-                      initial={{ backgroundColor: '#FF5A5F' }}
-                      animate={{ backgroundColor: '#10b981' }}
-                      transition={{ duration: 0.5, delay: 0.5 }}
-                      className="w-full h-5 rounded text-xs font-semibold text-white relative overflow-hidden"
-                    >
-                      <motion.div
-                        initial={{ x: '-100%' }}
-                        animate={{ x: '100%' }}
-                        transition={{ duration: 1, delay: 0.7 }}
-                        className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
-                      />
-                      <span className="text-xs">Chatbot Creato!</span>
-                    </motion.button>
-                  </motion.div>
-                )}
+                    <motion.div
+                      initial={{ x: '-100%' }}
+                      animate={isActive ? { x: '100%' } : { x: '-100%' }}
+                      transition={{ duration: 1, delay: isActive ? 7.2 : 0 }}
+                      className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
+                    />
+                    <span className="text-xs">Chatbot Creato!</span>
+                  </motion.button>
+                </motion.div>
               </div>
             </div>
           </div>
@@ -488,7 +474,7 @@ export default function LandingPage() {
   }
 
   // Componente animazione Step 3 - QR Code
-  const Step3Animation = ({ phase }: { phase: number }) => {
+  const Step3Animation = ({ isActive }: { isActive: boolean }) => {
     return (
       <div className="w-full h-64 md:h-80 bg-gradient-to-br from-purple-50 to-violet-100 rounded-xl p-3 md:p-4 relative overflow-hidden">
         {/* Mini result screen */}
@@ -504,11 +490,8 @@ export default function LandingPage() {
             <div className="flex justify-center mb-2">
               <motion.div
                 initial={{ scale: 0, rotate: -180 }}
-                animate={{ 
-                  scale: phase >= 1 ? 1 : 0,
-                  rotate: phase >= 1 ? 0 : -180
-                }}
-                transition={{ duration: 0.8, type: "spring" }}
+                animate={isActive ? { scale: 1, rotate: 0 } : { scale: 0, rotate: -180 }}
+                transition={{ duration: 0.8, type: "spring", delay: isActive ? 0.5 : 0 }}
                 className="w-12 h-12 md:w-16 md:h-16 bg-white border-2 border-gray-300 rounded relative overflow-hidden"
               >
                 {/* QR Code pattern */}
@@ -517,8 +500,8 @@ export default function LandingPage() {
                     <motion.div
                       key={i}
                       initial={{ opacity: 0 }}
-                      animate={{ opacity: phase >= 1 ? (Math.random() > 0.3 ? 1 : 0) : 0 }}
-                      transition={{ delay: 0.5 + (i * 0.02) }}
+                      animate={isActive ? { opacity: Math.random() > 0.3 ? 1 : 0 } : { opacity: 0 }}
+                      transition={{ delay: isActive ? 1 + (i * 0.02) : 0 }}
                       className="bg-gray-900 rounded-sm"
                     />
                   ))}
@@ -527,8 +510,8 @@ export default function LandingPage() {
                 {/* Center logo */}
                 <motion.div
                   initial={{ scale: 0 }}
-                  animate={{ scale: phase >= 2 ? 1 : 0 }}
-                  transition={{ delay: 1, duration: 0.3 }}
+                  animate={isActive ? { scale: 1 } : { scale: 0 }}
+                  transition={{ delay: isActive ? 2.5 : 0, duration: 0.3 }}
                   className="absolute inset-0 flex items-center justify-center"
                 >
                   <div className="w-3 h-3 bg-primary rounded flex items-center justify-center">
@@ -540,63 +523,57 @@ export default function LandingPage() {
             
             <div className="flex-1 space-y-1.5">
               {/* Link */}
-              {phase >= 2 && (
-                <motion.div
-                  initial={{ opacity: 0, y: 5 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 1.2 }}
-                  className="space-y-1"
-                >
-                  <div className="text-xs text-gray-600">Link diretto:</div>
-                  <div className="bg-gray-100 rounded px-1.5 py-0.5 text-xs font-mono text-primary">
-                    hostgpt.it/chat/abc123
-                  </div>
-                </motion.div>
-              )}
+              <motion.div
+                initial={{ opacity: 0, y: 5 }}
+                animate={isActive ? { opacity: 1, y: 0 } : { opacity: 0, y: 5 }}
+                transition={{ delay: isActive ? 3.5 : 0 }}
+                className="space-y-1"
+              >
+                <div className="text-xs text-gray-600">Link diretto:</div>
+                <div className="bg-gray-100 rounded px-1.5 py-0.5 text-xs font-mono text-primary">
+                  hostgpt.it/chat/abc123
+                </div>
+              </motion.div>
               
               {/* Share buttons */}
-              {phase >= 3 && (
-                <motion.div
-                  initial={{ opacity: 0, y: 5 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 1.8 }}
-                  className="flex justify-center space-x-1.5"
+              <motion.div
+                initial={{ opacity: 0, y: 5 }}
+                animate={isActive ? { opacity: 1, y: 0 } : { opacity: 0, y: 5 }}
+                transition={{ delay: isActive ? 5 : 0 }}
+                className="flex justify-center space-x-1.5"
+              >
+                <motion.button
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  className="w-5 h-5 bg-blue-500 rounded text-white flex items-center justify-center"
                 >
-                  <motion.button
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                    className="w-5 h-5 bg-blue-500 rounded text-white flex items-center justify-center"
-                  >
-                    <Share2 className="w-2.5 h-2.5" />
-                  </motion.button>
-                  <motion.button
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                    className="w-5 h-5 bg-green-500 rounded text-white flex items-center justify-center"
-                  >
-                    <MessageSquare className="w-2.5 h-2.5" />
-                  </motion.button>
-                  <motion.button
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                    className="w-5 h-5 bg-purple-500 rounded text-white flex items-center justify-center"
-                  >
-                    <QrCode className="w-2.5 h-2.5" />
-                  </motion.button>
-                </motion.div>
-              )}
+                  <Share2 className="w-2.5 h-2.5" />
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  className="w-5 h-5 bg-green-500 rounded text-white flex items-center justify-center"
+                >
+                  <MessageSquare className="w-2.5 h-2.5" />
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  className="w-5 h-5 bg-purple-500 rounded text-white flex items-center justify-center"
+                >
+                  <QrCode className="w-2.5 h-2.5" />
+                </motion.button>
+              </motion.div>
               
               {/* Success message */}
-              {phase >= 3 && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 2.2 }}
-                  className="text-xs text-green-600 font-medium"
-                >
-                  ✅ Condividi con i tuoi ospiti!
-                </motion.div>
-              )}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={isActive ? { opacity: 1 } : { opacity: 0 }}
+                transition={{ delay: isActive ? 6.5 : 0 }}
+                className="text-xs text-green-600 font-medium"
+              >
+                ✅ Condividi con i tuoi ospiti!
+              </motion.div>
             </div>
           </div>
         </div>
@@ -928,17 +905,8 @@ export default function LandingPage() {
               <motion.div
                 key={index}
                 initial={{ opacity: 0, y: 30 }}
-                whileInView={{ 
-                  opacity: 1, 
-                  y: 0
-                }}
-                onViewportEnter={() => {
-                  setVisibleSteps(prev => {
-                    const newVisible = [...prev]
-                    newVisible[index] = true
-                    return newVisible
-                  })
-                }}
+                whileInView={{ opacity: 1, y: 0 }}
+                onViewportEnter={() => handleCardFlip(index)}
                 transition={{ duration: 0.6, delay: index * 0.1 }}
                 className="relative"
               >
@@ -954,27 +922,55 @@ export default function LandingPage() {
                   </motion.div>
                 </div>
 
-                {/* Card contenente l'animazione */}
-                <div className="bg-white rounded-2xl p-4 md:p-6 shadow-xl hover:shadow-2xl transition-all duration-300 relative overflow-hidden">
-                  {/* Animazione specifica per ogni step */}
-                  {index === 0 && <Step1Animation phase={step1Animation} />}
-                  {index === 1 && <Step2Animation phase={step2Animation} />}
-                  {index === 2 && <Step3Animation phase={step3Animation} />}
-                  
-                  {/* Contenuto testuale */}
-                  <div className="mt-4 text-center">
-                    <h3 className="text-xl font-semibold mb-2 text-dark">{step.title}</h3>
-                    <p className="text-gray-600 text-sm">
-                      {step.description}
-                    </p>
-                  </div>
+                {/* Card con flip animation */}
+                <div className="relative w-full h-96 md:h-[28rem]" style={{ perspective: '1000px' }}>
+                  <motion.div
+                    initial={false}
+                    animate={{ rotateY: flippedCards[index] ? 180 : 0 }}
+                    transition={{ duration: 0.6, ease: "easeInOut" }}
+                    className="relative w-full h-full"
+                    style={{ transformStyle: 'preserve-3d' }}
+                  >
+                    {/* Fronte della card - contenuto statico */}
+                    <div 
+                      className="absolute inset-0 bg-white rounded-2xl p-6 shadow-xl border border-gray-100"
+                      style={{ backfaceVisibility: 'hidden' }}
+                    >
+                      <div className="h-full flex flex-col justify-center text-center">
+                        <div className={`w-16 h-16 rounded-xl bg-gradient-to-r ${
+                          index === 0 ? 'from-blue-500 to-blue-600' :
+                          index === 1 ? 'from-green-500 to-green-600' :
+                          'from-purple-500 to-purple-600'
+                        } flex items-center justify-center mb-6 mx-auto`}>
+                          {index === 0 && <Home className="w-8 h-8 text-white" />}
+                          {index === 1 && <Settings className="w-8 h-8 text-white" />}
+                          {index === 2 && <Share2 className="w-8 h-8 text-white" />}
+                        </div>
+                        <h3 className="text-2xl font-semibold mb-4 text-dark">{step.title}</h3>
+                        <p className="text-gray-600 text-lg leading-relaxed">
+                          {step.description}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Retro della card - animazione */}
+                    <div 
+                      className="absolute inset-0 bg-white rounded-2xl shadow-xl border border-gray-100"
+                      style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
+                    >
+                      {/* Animazione specifica per ogni step */}
+                      {index === 0 && <Step1Animation isActive={animationsStarted[index]} />}
+                      {index === 1 && <Step2Animation isActive={animationsStarted[index]} />}
+                      {index === 2 && <Step3Animation isActive={animationsStarted[index]} />}
+                    </div>
+                  </motion.div>
                   
                   {/* Gradiente decorativo */}
                   <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${
                     index === 0 ? 'from-blue-400 to-blue-600' :
                     index === 1 ? 'from-green-400 to-green-600' :
                     'from-purple-400 to-purple-600'
-                  }`}></div>
+                  } rounded-t-2xl z-10`}></div>
                 </div>
                 
                 {/* Linea di connessione solo desktop */}
