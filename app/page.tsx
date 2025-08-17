@@ -148,47 +148,30 @@ export default function LandingPage() {
     }
   ]
 
-  // Stati per le animazioni flip - molto più semplice
-  const [flippedCards, setFlippedCards] = useState<boolean[]>([false, false, false])
-  const [animationsStarted, setAnimationsStarted] = useState<boolean[]>([false, false, false])
-  const [animationsComplete, setAnimationsComplete] = useState<boolean[]>([false, false, false])
+  // Stati per l'animazione flip della card pricing
+  const [pricingFlipped, setPricingFlipped] = useState(false)
+  const [pricingAnimationStarted, setPricingAnimationStarted] = useState(false)
+  const [pricingAnimationComplete, setPricingAnimationComplete] = useState(false)
+  const [pricingTriggered, setPricingTriggered] = useState(false)
 
-  // Gestione flip delle card - una sola volta per card
-  const handleCardFlip = (index: number) => {
-    if (!animationsStarted[index] && !animationsComplete[index]) {
+  // Gestione flip della card pricing - una sola volta
+  const handlePricingFlip = () => {
+    if (!pricingTriggered) {
+      setPricingTriggered(true)
       // Flippa la card
-      setFlippedCards(prev => {
-        const newFlipped = [...prev]
-        newFlipped[index] = true
-        return newFlipped
-      })
+      setPricingFlipped(true)
       
       // Avvia animazione dopo 600ms (tempo del flip)
       setTimeout(() => {
-        setAnimationsStarted(prev => {
-          const newStarted = [...prev]
-          newStarted[index] = true
-          return newStarted
-        })
+        setPricingAnimationStarted(true)
       }, 600)
       
-      // Completa animazione dopo 8 secondi
+      // L'animazione dura 5 secondi totali (include i 3 secondi di blur finale)
+      // Dopo questi 5 secondi, flip immediato
       setTimeout(() => {
-        setAnimationsComplete(prev => {
-          const newComplete = [...prev]
-          newComplete[index] = true
-          return newComplete
-        })
-        
-        // Riflippa la card dopo che l'animazione è finita
-        setTimeout(() => {
-          setFlippedCards(prev => {
-            const newFlipped = [...prev]
-            newFlipped[index] = false
-            return newFlipped
-          })
-        }, 600)
-      }, 8600)
+        setPricingAnimationComplete(true)
+        setPricingFlipped(false) // Flip immediato dopo l'animazione
+      }, 5600) // 600ms flip + 5000ms animazione
     }
   }
 
@@ -260,445 +243,79 @@ export default function LandingPage() {
     }
   }
 
-  // Componente animazione Step 1 - Form Registrazione
-  const Step1Animation = ({ isActive }: { isActive: boolean }) => {
-    return (
-      <div className="w-full h-64 md:h-80 bg-gradient-to-br from-blue-50 to-indigo-100 rounded-xl p-3 md:p-4 relative overflow-hidden">
-        {/* Mini browser window */}
-        <div className="bg-white rounded-lg shadow-lg h-full relative">
-          {/* Browser header */}
-          <div className="flex items-center justify-between px-3 py-2 bg-gray-100 rounded-t-lg border-b">
-            <div className="flex space-x-1">
-              <div className="w-2 h-2 bg-red-400 rounded-full"></div>
-              <div className="w-2 h-2 bg-yellow-400 rounded-full"></div>
-              <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-            </div>
-            <div className="text-xs text-gray-600 font-mono">hostgpt.it/register</div>
-            <div className="w-4"></div>
-          </div>
-          
-          {/* Form content */}
-          <div className="p-3 space-y-2 h-full flex flex-col">
-            <div className="text-center mb-3">
-              <div className="w-5 h-5 bg-primary rounded mx-auto mb-1 flex items-center justify-center">
-                <Home className="w-2 h-2 text-white" />
-              </div>
-              <h3 className="text-xs font-bold text-dark">Registrati su HostGPT</h3>
-            </div>
-            
-            <div className="flex-1 space-y-2">
-              {/* Email field */}
-              <div className="space-y-1">
-                <label className="text-xs text-gray-600">Email</label>
-                <div className="h-5 bg-gray-100 rounded border relative overflow-hidden">
-                  <motion.div
-                    initial={{ width: 0 }}
-                    animate={isActive ? { width: '100%' } : { width: 0 }}
-                    transition={{ duration: 2, delay: isActive ? 0.5 : 0 }}
-                    className="h-full bg-blue-50 absolute"
-                  />
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={isActive ? { opacity: 1 } : { opacity: 0 }}
-                    transition={{ delay: isActive ? 1 : 0 }}
-                    className="absolute left-1 top-0.5 text-xs text-gray-700 leading-none"
-                  >
-                    mario.rossi@email.com
-                  </motion.div>
-                </div>
-              </div>
-              
-              {/* Password field */}
-              <div className="space-y-1">
-                <label className="text-xs text-gray-600">Password</label>
-                <div className="h-5 bg-gray-100 rounded border relative overflow-hidden">
-                  <motion.div
-                    initial={{ width: 0 }}
-                    animate={isActive ? { width: '100%' } : { width: 0 }}
-                    transition={{ duration: 2, delay: isActive ? 2.5 : 0 }}
-                    className="h-full bg-blue-50 absolute"
-                  />
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={isActive ? { opacity: 1 } : { opacity: 0 }}
-                    transition={{ delay: isActive ? 3 : 0 }}
-                    className="absolute left-1 top-0.5 text-xs text-gray-700 leading-none"
-                  >
-                    ••••••••
-                  </motion.div>
-                </div>
-              </div>
-              
-              {/* Submit button */}
-              <motion.button
-                initial={{ backgroundColor: '#e5e7eb' }}
-                animate={isActive ? { backgroundColor: '#FF5A5F' } : { backgroundColor: '#e5e7eb' }}
-                transition={{ duration: 0.5, delay: isActive ? 4.5 : 0 }}
-                className="w-full h-6 rounded text-xs font-semibold text-white relative overflow-hidden mt-2"
-              >
-                <motion.div
-                  initial={{ x: '-100%' }}
-                  animate={isActive ? { x: '100%' } : { x: '-100%' }}
-                  transition={{ duration: 1, delay: isActive ? 5 : 0 }}
-                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
-                />
-                Registrati
-              </motion.button>
-              
-              {/* Success message */}
-              <motion.div
-                initial={{ opacity: 0, y: 5 }}
-                animate={isActive ? { opacity: 1, y: 0 } : { opacity: 0, y: 5 }}
-                transition={{ delay: isActive ? 6 : 0 }}
-                className="text-center mt-2"
-              >
-                <div className="w-3 h-3 bg-green-500 rounded-full mx-auto mb-1 flex items-center justify-center">
-                  <Check className="w-1.5 h-1.5 text-white" />
-                </div>
-                <p className="text-xs text-green-600">Account creato!</p>
-              </motion.div>
-            </div>
-          </div>
-        </div>
-      </div>
-    )
-  }
 
-  // Componente animazione Step 2 - Creazione Chatbot
-  const Step2Animation = ({ isActive }: { isActive: boolean }) => {
-    return (
-      <div className="w-full h-64 md:h-80 bg-gradient-to-br from-green-50 to-emerald-100 rounded-xl p-3 md:p-4 relative overflow-hidden">
-        {/* Mini dashboard */}
-        <div className="bg-white rounded-lg shadow-lg h-full relative">
-          {/* Dashboard header */}
-          <div className="flex items-center justify-between px-3 py-2 bg-gray-900 rounded-t-lg text-white">
-            <div className="flex items-center space-x-2">
-              <Home className="w-3 h-3 text-primary" />
-              <span className="text-xs font-bold">HostGPT Dashboard</span>
-            </div>
-            <div className="w-4 h-4 bg-primary rounded-full"></div>
-          </div>
-          
-          {/* Dashboard content */}
-          <div className="p-2 h-full flex flex-col">
-            <div className="text-center mb-2">
-              <h3 className="text-xs font-bold text-dark">Crea il tuo Chatbot</h3>
-            </div>
-            
-            <div className="flex-1 space-y-1.5">
-              {/* Form steps */}
-              <div className="space-y-1.5">
-                {/* Step 1 - Nome proprietà */}
-                <motion.div
-                  initial={{ borderColor: '#d1d5db', backgroundColor: '#ffffff' }}
-                  animate={isActive ? { borderColor: '#4ade80', backgroundColor: '#f0fdf4' } : { borderColor: '#d1d5db', backgroundColor: '#ffffff' }}
-                  transition={{ delay: isActive ? 1 : 0 }}
-                  className="p-1.5 rounded border-2"
-                >
-                  <div className="text-xs text-gray-600 mb-0.5">Nome proprietà</div>
-                  <motion.div
-                    initial={{ opacity: 0.3 }}
-                    animate={isActive ? { opacity: 1 } : { opacity: 0.3 }}
-                    transition={{ delay: isActive ? 1.5 : 0 }}
-                    className="text-xs font-medium leading-none"
-                  >
-                    Casa Bella Vista
-                  </motion.div>
-                </motion.div>
-                
-                {/* Step 2 - Informazioni */}
-                <motion.div
-                  initial={{ borderColor: '#d1d5db', backgroundColor: '#ffffff' }}
-                  animate={isActive ? { borderColor: '#4ade80', backgroundColor: '#f0fdf4' } : { borderColor: '#d1d5db', backgroundColor: '#ffffff' }}
-                  transition={{ delay: isActive ? 3 : 0 }}
-                  className="p-1.5 rounded border-2"
-                >
-                  <div className="text-xs text-gray-600 mb-0.5">Check-in</div>
-                  <motion.div
-                    initial={{ opacity: 0.3 }}
-                    animate={isActive ? { opacity: 1 } : { opacity: 0.3 }}
-                    transition={{ delay: isActive ? 3.5 : 0 }}
-                    className="text-xs font-medium leading-none"
-                  >
-                    15:00-20:00
-                  </motion.div>
-                </motion.div>
-                
-                {/* Step 3 - Consigli locali */}
-                <motion.div
-                  initial={{ borderColor: '#d1d5db', backgroundColor: '#ffffff' }}
-                  animate={isActive ? { borderColor: '#4ade80', backgroundColor: '#f0fdf4' } : { borderColor: '#d1d5db', backgroundColor: '#ffffff' }}
-                  transition={{ delay: isActive ? 5 : 0 }}
-                  className="p-1.5 rounded border-2"
-                >
-                  <div className="text-xs text-gray-600 mb-0.5">Consigli locali</div>
-                  <motion.div
-                    initial={{ opacity: 0.3 }}
-                    animate={isActive ? { opacity: 1 } : { opacity: 0.3 }}
-                    transition={{ delay: isActive ? 5.5 : 0 }}
-                    className="text-xs font-medium leading-none"
-                  >
-                    Ristorante Roma...
-                  </motion.div>
-                </motion.div>
-              </div>
-              
-              {/* Create button */}
-              <div className="mt-2">
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={isActive ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.9 }}
-                  transition={{ delay: isActive ? 6.5 : 0 }}
-                >
-                  <motion.button
-                    initial={{ backgroundColor: '#FF5A5F' }}
-                    animate={isActive ? { backgroundColor: '#10b981' } : { backgroundColor: '#FF5A5F' }}
-                    transition={{ duration: 0.5, delay: isActive ? 7 : 0 }}
-                    className="w-full h-5 rounded text-xs font-semibold text-white relative overflow-hidden"
-                  >
-                    <motion.div
-                      initial={{ x: '-100%' }}
-                      animate={isActive ? { x: '100%' } : { x: '-100%' }}
-                      transition={{ duration: 1, delay: isActive ? 7.2 : 0 }}
-                      className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
-                    />
-                    <span className="text-xs">Chatbot Creato!</span>
-                  </motion.button>
-                </motion.div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    )
-  }
 
-  // Componente animazione Step 3 - QR Code
-  const Step3Animation = ({ isActive }: { isActive: boolean }) => {
-    return (
-      <div className="w-full h-64 md:h-80 bg-gradient-to-br from-purple-50 to-violet-100 rounded-xl p-3 md:p-4 relative overflow-hidden">
-        {/* Mini result screen */}
-        <div className="bg-white rounded-lg shadow-lg h-full relative">
-          {/* Header */}
-          <div className="flex items-center justify-center px-3 py-2 bg-gradient-to-r from-primary to-accent rounded-t-lg text-white">
-            <span className="text-xs font-bold">Il tuo Chatbot è pronto!</span>
-          </div>
-          
-          {/* Content */}
-          <div className="p-2 h-full flex flex-col text-center">
-            {/* QR Code */}
-            <div className="flex justify-center mb-2">
-              <motion.div
-                initial={{ scale: 0, rotate: -180 }}
-                animate={isActive ? { scale: 1, rotate: 0 } : { scale: 0, rotate: -180 }}
-                transition={{ duration: 0.8, type: "spring", delay: isActive ? 0.5 : 0 }}
-                className="w-12 h-12 md:w-16 md:h-16 bg-white border-2 border-gray-300 rounded relative overflow-hidden"
-              >
-                {/* QR Code pattern */}
-                <div className="absolute inset-0.5 grid grid-cols-5 gap-px">
-                  {[...Array(25)].map((_, i) => (
-                    <motion.div
-                      key={i}
-                      initial={{ opacity: 0 }}
-                      animate={isActive ? { opacity: Math.random() > 0.3 ? 1 : 0 } : { opacity: 0 }}
-                      transition={{ delay: isActive ? 1 + (i * 0.02) : 0 }}
-                      className="bg-gray-900 rounded-sm"
-                    />
-                  ))}
-                </div>
-                
-                {/* Center logo */}
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={isActive ? { scale: 1 } : { scale: 0 }}
-                  transition={{ delay: isActive ? 2.5 : 0, duration: 0.3 }}
-                  className="absolute inset-0 flex items-center justify-center"
-                >
-                  <div className="w-3 h-3 bg-primary rounded flex items-center justify-center">
-                    <Home className="w-1.5 h-1.5 text-white" />
-                  </div>
-                </motion.div>
-              </motion.div>
-            </div>
-            
-            <div className="flex-1 space-y-1.5">
-              {/* Link */}
-              <motion.div
-                initial={{ opacity: 0, y: 5 }}
-                animate={isActive ? { opacity: 1, y: 0 } : { opacity: 0, y: 5 }}
-                transition={{ delay: isActive ? 3.5 : 0 }}
-                className="space-y-1"
-              >
-                <div className="text-xs text-gray-600">Link diretto:</div>
-                <div className="bg-gray-100 rounded px-1.5 py-0.5 text-xs font-mono text-primary">
-                  hostgpt.it/chat/abc123
-                </div>
-              </motion.div>
-              
-              {/* Share buttons */}
-              <motion.div
-                initial={{ opacity: 0, y: 5 }}
-                animate={isActive ? { opacity: 1, y: 0 } : { opacity: 0, y: 5 }}
-                transition={{ delay: isActive ? 5 : 0 }}
-                className="flex justify-center space-x-1.5"
-              >
-                <motion.button
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  className="w-5 h-5 bg-blue-500 rounded text-white flex items-center justify-center"
-                >
-                  <Share2 className="w-2.5 h-2.5" />
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  className="w-5 h-5 bg-green-500 rounded text-white flex items-center justify-center"
-                >
-                  <MessageSquare className="w-2.5 h-2.5" />
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  className="w-5 h-5 bg-purple-500 rounded text-white flex items-center justify-center"
-                >
-                  <QrCode className="w-2.5 h-2.5" />
-                </motion.button>
-              </motion.div>
-              
-              {/* Success message */}
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={isActive ? { opacity: 1 } : { opacity: 0 }}
-                transition={{ delay: isActive ? 6.5 : 0 }}
-                className="text-xs text-green-600 font-medium"
-              >
-                ✅ Condividi con i tuoi ospiti!
-              </motion.div>
-            </div>
-          </div>
-        </div>
-      </div>
-    )
-  }
+
 
   // Componente per l'animazione della chat nella sezione pricing
-  const PricingChatAnimation = () => {
-    const [chatMessages, setChatMessages] = useState<typeof demoMessages>([])
-    
-    useEffect(() => {
-      console.log('PricingChatAnimation effect:', showChatDemo, 'phase:', pricingAnimationPhase)
-      if (showChatDemo && pricingAnimationPhase >= 2) {
-        console.log('Starting chat messages animation')
-        setChatMessages([])
-        let i = 0
-        const interval = setInterval(() => {
-          if (i < demoMessages.length) {
-            console.log('Adding message', i, demoMessages[i])
-            setChatMessages(prev => [...prev, demoMessages[i]])
-            i++
-          } else {
-            clearInterval(interval)
-          }
-        }, 1000)
-        return () => clearInterval(interval)
-      }
-    }, [showChatDemo, pricingAnimationPhase])
-
-    console.log('PricingChatAnimation render:', showChatDemo, 'messages:', chatMessages.length)
-    
-    if (!showChatDemo) return null
-
+  const PricingChatAnimation = ({ isActive }: { isActive: boolean }) => {
     return (
-      <motion.div
-        initial={{ opacity: 0, scale: 0.9, rotateY: -180 }}
-        animate={{ 
-          opacity: 1, 
-          scale: 1,
-          rotateY: 0
-        }}
-        exit={{ opacity: 0, scale: 0.9, rotateY: 180 }}
-        transition={{ duration: 0.8, ease: "easeInOut" }}
-        className="absolute inset-0 bg-gradient-to-br from-blue-50 to-indigo-100 rounded-2xl p-4 flex flex-col shadow-lg"
-      >
-        {/* Loading indicator prima che inizino i messaggi */}
-        {pricingAnimationPhase === 2 && chatMessages.length === 0 && (
-          <div className="flex-1 flex items-center justify-center">
-            <div className="text-center">
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                className="w-8 h-8 border-3 border-primary border-t-transparent rounded-full mx-auto mb-3"
-              />
-              <p className="text-gray-600 text-sm">Connessione a HostGPT...</p>
-            </div>
+      <div className="h-full flex flex-col relative">
+        <div className="text-center mb-4">
+          <h3 className="text-xl font-bold text-primary mb-2">Demo Chat Live</h3>
+          <p className="text-sm text-gray-600">Vedi HostGPT in azione!</p>
+        </div>
+        
+        <div className="flex-1 bg-gray-50 rounded-xl p-4 relative">
+          <div className="space-y-3">
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={isActive ? { opacity: 1, x: 0 } : { opacity: 0, x: -20 }}
+              transition={{ delay: isActive ? 0.2 : 0, duration: 0.5 }}
+              className="flex justify-start"
+            >
+              <div className="bg-white p-2 rounded-lg shadow-sm max-w-xs">
+                <p className="text-sm">Ciao! A che ora è il check-in?</p>
+              </div>
+            </motion.div>
+            
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={isActive ? { opacity: 1, x: 0 } : { opacity: 0, x: 20 }}
+              transition={{ delay: isActive ? 1 : 0, duration: 0.5 }}
+              className="flex justify-end"
+            >
+              <div className="bg-primary text-white p-2 rounded-lg shadow-sm max-w-xs">
+                <p className="text-sm">Il check-in è dalle 15:00 alle 20:00. Ti invio il codice!</p>
+              </div>
+            </motion.div>
+            
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={isActive ? { opacity: 1, x: 0 } : { opacity: 0, x: -20 }}
+              transition={{ delay: isActive ? 1.8 : 0, duration: 0.5 }}
+              className="flex justify-start"
+            >
+              <div className="bg-white p-2 rounded-lg shadow-sm max-w-xs">
+                <p className="text-sm">Perfetto! Grazie mille! 🙏</p>
+              </div>
+            </motion.div>
           </div>
-        )}
-
-        {/* Chat interface quando ci sono messaggi */}
-        {chatMessages.length > 0 && (
-          <>
-            {/* Header chat */}
-            <div className="flex items-center mb-4 pb-3 border-b">
-              <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
-                <MessageSquare className="w-5 h-5 text-white" />
-              </div>
-              <div className="ml-3">
-                <div className="font-semibold text-dark">HostGPT Assistant</div>
-                <div className="text-sm text-green-500 flex items-center">
-                  <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
-                  Online
-                </div>
-              </div>
-            </div>
-
-            {/* Messaggi chat */}
-            <div className="flex-1 space-y-3 overflow-y-auto">
-              {chatMessages.map((msg, idx) => (
-                <motion.div
-                  key={idx}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3 }}
-                  className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                >
-                  <div className={`max-w-[80%] p-3 rounded-2xl text-sm ${
-                    msg.role === 'user' 
-                      ? 'bg-primary text-white' 
-                      : 'bg-gray-100 text-gray-800'
-                  }`}>
-                    {msg.text}
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </>
-        )}
-
-        {/* Blur overlay con frase accattivante */}
-        {pricingAnimationPhase >= 3 && (
+          
+          {/* Effetto blur che appare alla fine - dura 3 secondi */}
           <motion.div
             initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="absolute inset-0 bg-white/90 backdrop-blur-sm rounded-2xl flex items-center justify-center p-6"
+            animate={isActive ? { opacity: 1 } : { opacity: 0 }}
+            transition={{ delay: isActive ? 2 : 0, duration: 0.8 }}
+            className="absolute inset-x-0 bottom-0 top-0 bg-white/80 backdrop-blur-sm rounded-xl flex items-center justify-center"
           >
             <motion.div
               initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ delay: 0.3 }}
+              animate={isActive ? { scale: 1, opacity: 1 } : { scale: 0.8, opacity: 0 }}
+              transition={{ delay: isActive ? 2.2 : 0, duration: 0.6 }}
               className="text-center"
             >
-              <div className="text-2xl font-bold text-primary mb-2">🎯</div>
-              <h3 className="text-xl font-bold text-dark mb-2">
-                Mentre tu ti rilassi...
-              </h3>
-              <p className="text-gray-600 text-sm leading-relaxed">
-                HostGPT si occupa dei tuoi ospiti H24<br />
-                <span className="font-semibold text-primary">Più tempo per te, più soddisfazione per loro!</span>
+              <div className="text-2xl mb-2">🎯</div>
+              <div className="text-lg font-bold text-green-600 mb-1">
+                Più bella di così!
+              </div>
+              <p className="text-sm text-gray-600">
+                Host rilassato, ospite felice
               </p>
             </motion.div>
           </motion.div>
-        )}
-      </motion.div>
+        </div>
+      </div>
     )
   }
 
@@ -855,7 +472,7 @@ export default function LandingPage() {
           </motion.div>
 
                                <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8">
-            {features.map((feature, index) => (
+             {features.map((feature, index) => (
                <motion.div
                  key={index}
                  initial={{ opacity: 0, y: 30 }}
@@ -901,12 +518,11 @@ export default function LandingPage() {
 
           {/* Steps con animazioni */}
           <div className="grid md:grid-cols-3 gap-8 lg:gap-12">
-            {howItWorksSteps.map((step, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                onViewportEnter={() => handleCardFlip(index)}
+               {howItWorksSteps.map((step, index) => (
+                 <motion.div
+                   key={index}
+                   initial={{ opacity: 0, y: 30 }}
+                   whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: index * 0.1 }}
                 className="relative"
               >
@@ -914,56 +530,155 @@ export default function LandingPage() {
                 <div className="absolute -top-4 left-4 md:left-1/2 md:transform md:-translate-x-1/2 z-20">
                   <motion.div
                     initial={{ scale: 0 }}
-                    animate={{ scale: visibleSteps[index] ? 1 : 0 }}
+                    whileInView={{ scale: 1 }}
                     transition={{ delay: 0.3, type: "spring" }}
                     className="w-8 h-8 bg-gradient-to-r from-primary to-accent rounded-full flex items-center justify-center shadow-lg"
                   >
                     <span className="text-sm font-bold text-white">{step.step}</span>
                   </motion.div>
-                </div>
-
-                {/* Card con flip animation */}
-                <div className="relative w-full h-96 md:h-[28rem]" style={{ perspective: '1000px' }}>
-                  <motion.div
-                    initial={false}
-                    animate={{ rotateY: flippedCards[index] ? 180 : 0 }}
-                    transition={{ duration: 0.6, ease: "easeInOut" }}
-                    className="relative w-full h-full"
-                    style={{ transformStyle: 'preserve-3d' }}
-                  >
-                    {/* Fronte della card - contenuto statico */}
-                    <div 
-                      className="absolute inset-0 bg-white rounded-2xl p-6 shadow-xl border border-gray-100"
-                      style={{ backfaceVisibility: 'hidden' }}
-                    >
-                      <div className="h-full flex flex-col justify-center text-center">
-                        <div className={`w-16 h-16 rounded-xl bg-gradient-to-r ${
-                          index === 0 ? 'from-blue-500 to-blue-600' :
-                          index === 1 ? 'from-green-500 to-green-600' :
-                          'from-purple-500 to-purple-600'
-                        } flex items-center justify-center mb-6 mx-auto`}>
-                          {index === 0 && <Home className="w-8 h-8 text-white" />}
-                          {index === 1 && <Settings className="w-8 h-8 text-white" />}
-                          {index === 2 && <Share2 className="w-8 h-8 text-white" />}
+                   </div>
+                   
+                                {/* Card con animazione statica */}
+                <div className="bg-white rounded-2xl p-6 shadow-xl border border-gray-100 h-auto md:h-[32rem] relative overflow-hidden flex flex-col">
+                  
+                  {/* Titolo e descrizione con spazio bilanciato */}
+                  <div className="text-center mb-6">
+                    <div className={`w-14 h-14 rounded-xl bg-gradient-to-r ${
+                      index === 0 ? 'from-blue-500 to-blue-600' :
+                      index === 1 ? 'from-green-500 to-green-600' :
+                      'from-purple-500 to-purple-600'
+                    } flex items-center justify-center mb-4 mx-auto`}>
+                      {index === 0 && <Home className="w-7 h-7 text-white" />}
+                      {index === 1 && <Settings className="w-7 h-7 text-white" />}
+                      {index === 2 && <Share2 className="w-7 h-7 text-white" />}
+                    </div>
+                    <h3 className="text-xl font-bold mb-2 text-dark">{step.title}</h3>
+                    <p className="text-gray-600 text-sm leading-relaxed px-2">
+                      {step.description}
+                    </p>
+                  </div>
+                  
+                  {/* Animazione statica - con altezza fissa per evitare troppo spazio vuoto */}
+                  <div className="flex-1 flex items-center justify-center">
+                    {index === 0 && (
+                      <div className="w-full max-w-sm bg-gradient-to-br from-blue-50 to-indigo-100 rounded-xl p-4 relative overflow-hidden">
+                        <div className="bg-white rounded-lg shadow-lg p-3">
+                          <div className="flex items-center justify-between px-2 py-1 bg-gray-100 rounded-t-lg border-b">
+                            <div className="flex space-x-1">
+                              <div className="w-1.5 h-1.5 bg-red-400 rounded-full"></div>
+                              <div className="w-1.5 h-1.5 bg-yellow-400 rounded-full"></div>
+                              <div className="w-1.5 h-1.5 bg-green-400 rounded-full"></div>
+                            </div>
+                            <div className="text-xs text-gray-600">hostgpt.it/register</div>
+                          </div>
+                          <div className="p-2 space-y-2">
+                            <div className="text-center mb-2">
+                              <div className="w-4 h-4 bg-primary rounded mx-auto mb-1 flex items-center justify-center">
+                                <Home className="w-2 h-2 text-white" />
+                              </div>
+                              <h3 className="text-xs font-bold">Registrati</h3>
+                            </div>
+                            <div className="space-y-1">
+                              <div className="h-3 bg-blue-50 rounded border">
+                                <div className="text-xs px-1 text-gray-700">mario.rossi@email.com</div>
+                              </div>
+                              <div className="h-3 bg-blue-50 rounded border">
+                                <div className="text-xs px-1 text-gray-700">••••••••</div>
+                              </div>
+                              <button className="w-full h-4 rounded text-xs font-semibold text-white bg-primary">
+                                Registrati
+                              </button>
+                              <div className="text-center">
+                                <div className="w-2 h-2 bg-green-500 rounded-full mx-auto mb-0.5"></div>
+                                <p className="text-xs text-green-600">Account creato!</p>
+                              </div>
+                            </div>
+                          </div>
                         </div>
-                        <h3 className="text-2xl font-semibold mb-4 text-dark">{step.title}</h3>
-                        <p className="text-gray-600 text-lg leading-relaxed">
-                          {step.description}
-                        </p>
                       </div>
-                    </div>
-
-                    {/* Retro della card - animazione */}
-                    <div 
-                      className="absolute inset-0 bg-white rounded-2xl shadow-xl border border-gray-100"
-                      style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
-                    >
-                      {/* Animazione specifica per ogni step */}
-                      {index === 0 && <Step1Animation isActive={animationsStarted[index]} />}
-                      {index === 1 && <Step2Animation isActive={animationsStarted[index]} />}
-                      {index === 2 && <Step3Animation isActive={animationsStarted[index]} />}
-                    </div>
-                  </motion.div>
+                    )}
+                    
+                    {index === 1 && (
+                      <div className="w-full max-w-sm bg-gradient-to-br from-green-50 to-emerald-100 rounded-xl p-4 relative overflow-hidden">
+                        <div className="bg-white rounded-lg shadow-lg p-3">
+                          <div className="flex items-center justify-between px-2 py-1 bg-gray-900 rounded-t-lg text-white">
+                            <div className="flex items-center space-x-1">
+                              <Home className="w-2 h-2 text-primary" />
+                              <span className="text-xs font-bold">Dashboard</span>
+                            </div>
+                          </div>
+                          <div className="p-2">
+                            <div className="text-center mb-2">
+                              <h3 className="text-xs font-bold">Crea Chatbot</h3>
+                            </div>
+                            <div className="space-y-1">
+                              <div className="p-1 rounded border-2 border-green-400 bg-green-50">
+                                <div className="text-xs text-gray-600">Nome proprietà</div>
+                                <div className="text-xs font-medium">Casa Bella Vista</div>
+                              </div>
+                              <div className="p-1 rounded border-2 border-green-400 bg-green-50">
+                                <div className="text-xs text-gray-600">Check-in</div>
+                                <div className="text-xs font-medium">15:00-20:00</div>
+                              </div>
+                              <div className="p-1 rounded border-2 border-green-400 bg-green-50">
+                                <div className="text-xs text-gray-600">Consigli</div>
+                                <div className="text-xs font-medium">Ristorante Roma...</div>
+                              </div>
+                              <button className="w-full h-4 rounded text-xs font-semibold text-white bg-green-500">
+                                Chatbot Creato!
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {index === 2 && (
+                      <div className="w-full max-w-sm bg-gradient-to-br from-purple-50 to-violet-100 rounded-xl p-4 relative overflow-hidden">
+                        <div className="bg-white rounded-lg shadow-lg p-3">
+                          <div className="flex items-center justify-center px-2 py-1 bg-gradient-to-r from-primary to-accent rounded-t-lg text-white">
+                            <span className="text-xs font-bold">Chatbot Pronto!</span>
+                          </div>
+                          <div className="p-2 text-center">
+                            <div className="flex justify-center mb-2">
+                              <div className="w-12 h-12 bg-white border-2 border-gray-300 rounded relative">
+                                <div className="absolute inset-0.5 grid grid-cols-4 gap-px">
+                                  {[...Array(16)].map((_, i) => (
+                                    <div key={i} className={`${Math.random() > 0.3 ? 'bg-gray-900' : 'bg-transparent'} rounded-sm`} />
+                                  ))}
+                                </div>
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                  <div className="w-2 h-2 bg-primary rounded flex items-center justify-center">
+                                    <Home className="w-1 h-1 text-white" />
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="space-y-1">
+                              <div className="text-xs text-gray-600">Link:</div>
+                              <div className="bg-gray-100 rounded px-1 py-0.5 text-xs text-primary">
+                                hostgpt.it/chat/abc123
+                              </div>
+                              <div className="flex justify-center space-x-1">
+                                <div className="w-3 h-3 bg-blue-500 rounded flex items-center justify-center">
+                                  <Share2 className="w-1.5 h-1.5 text-white" />
+                                </div>
+                                <div className="w-3 h-3 bg-green-500 rounded flex items-center justify-center">
+                                  <MessageSquare className="w-1.5 h-1.5 text-white" />
+                                </div>
+                                <div className="w-3 h-3 bg-purple-500 rounded flex items-center justify-center">
+                                  <QrCode className="w-1.5 h-1.5 text-white" />
+                                </div>
+                              </div>
+                              <div className="text-xs text-green-600 font-medium">
+                                ✅ Condividi con gli ospiti!
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                   
                   {/* Gradiente decorativo */}
                   <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${
@@ -977,9 +692,9 @@ export default function LandingPage() {
                 {index < howItWorksSteps.length - 1 && (
                   <div className="hidden md:block absolute top-1/2 -right-4 lg:-right-6 w-8 lg:w-12 h-0.5 bg-gradient-to-r from-gray-300 to-transparent transform -translate-y-1/2 z-10"></div>
                 )}
-              </motion.div>
-            ))}
-          </div>
+                 </motion.div>
+               ))}
+           </div>
         </div>
       </section>
 
@@ -997,42 +712,75 @@ export default function LandingPage() {
 
           <div className="grid md:grid-cols-1 gap-8 max-w-xl mx-auto">
             {pricingPlans.map((plan, index) => (
+              /* Card con flip animation solo se highlighted */
+              plan.highlighted ? (
+                <div key={index} className="relative w-full h-auto" style={{ perspective: '1000px' }}>
               <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ 
-                  opacity: 1, 
-                  y: 0
-                }}
-                onViewportEnter={() => {
-                  console.log('Viewport entered for plan:', plan.name, 'highlighted:', plan.highlighted, 'already triggered:', pricingAnimationTriggered)
-                  if (!pricingAnimationTriggered && plan.highlighted) {
-                    console.log('TRIGGERING ANIMATION!')
-                    setPricingAnimationTriggered(true)
-                  }
-                }}
-                transition={{ 
-                  duration: 0.5, 
-                  delay: index * 0.1
-                }}
-                className={`${plan.highlighted ? 'ring-2 ring-primary transform scale-105' : ''} bg-white rounded-2xl p-8 relative overflow-hidden`}
-              >
-                {/* Contenuto originale della card */}
-                <motion.div
-                  animate={{
-                    opacity: showChatDemo && plan.highlighted ? 0 : 1,
-                    scale: showChatDemo && plan.highlighted ? 0.8 : 1,
-                    rotateY: pricingAnimationPhase === 1 || pricingAnimationPhase === 4 ? 180 : 0
-                  }}
-                  transition={{ duration: 0.6, ease: "easeInOut" }}
+                    initial={false}
+                    animate={{ rotateY: pricingFlipped ? 180 : 0 }}
+                    transition={{ duration: 0.6, ease: "easeInOut" }}
+                    className="relative w-full"
+                    style={{ transformStyle: 'preserve-3d' }}
+                  >
+                    {/* Fronte della card - contenuto prezzo */}
+                                        <motion.div 
+                      initial={{ opacity: 0, y: 30 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      onViewportEnter={() => handlePricingFlip()}
+                      transition={{ duration: 0.5, delay: index * 0.1 }}
+                      viewport={{ once: true }}
+                      className="ring-2 ring-primary transform scale-105 bg-white rounded-2xl p-8 relative overflow-hidden"
+                      style={{ backfaceVisibility: 'hidden' }}
+                    >
+                                        <div className="absolute -top-4 left-1/2 transform -translate-x-1/2" style={{ zIndex: 100 }}>
+                    <span className="bg-primary text-white px-4 py-1 rounded-full text-sm font-semibold shadow-lg">
+                      Più Popolare
+                    </span>
+                  </div>
+                <h3 className="text-2xl font-bold mb-2">{plan.name}</h3>
+                <div className="mb-6">
+                  <span className="text-4xl font-bold">{plan.price}</span>
+                  <span className="text-gray-600">{plan.period}</span>
+                </div>
+                <ul className="space-y-3 mb-8">
+                  {plan.features.map((feature, i) => (
+                    <li key={i} className="flex items-start">
+                      <Check className="w-5 h-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
+                      <span className="text-gray-600">{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+                <Link
+                  href="/register"
+                        className="block text-center py-3 px-6 rounded-lg font-semibold transition bg-primary text-white hover:bg-secondary"
                 >
-                  {plan.highlighted && (
-                    <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                      <span className="bg-primary text-white px-4 py-1 rounded-full text-sm">
-                        Più Popolare
-                      </span>
+                  Registrati ora
+                </Link>
+              </motion.div>
+
+                    {/* Retro della card - demo chat */}
+                    <div 
+                      className="absolute inset-0 bg-white rounded-2xl shadow-xl border border-gray-100 ring-2 ring-primary transform scale-105 p-8"
+                      style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
+                    >
+                      {/* Badge "Più Popolare" anche sul retro */}
+                      <div className="absolute -top-4 left-1/2 transform -translate-x-1/2" style={{ zIndex: 100 }}>
+                        <span className="bg-primary text-white px-4 py-1 rounded-full text-sm font-semibold shadow-lg">
+                          Più Popolare
+                        </span>
+                      </div>
+                      <PricingChatAnimation isActive={pricingAnimationStarted} />
                     </div>
-                  )}
+                  </motion.div>
+                </div>
+              ) : (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: index * 0.1 }}
+                  className="bg-white rounded-2xl p-8 relative overflow-hidden"
+                >
                   <h3 className="text-2xl font-bold mb-2">{plan.name}</h3>
                   <div className="mb-6">
                     <span className="text-4xl font-bold">{plan.price}</span>
@@ -1048,32 +796,12 @@ export default function LandingPage() {
                   </ul>
                   <Link
                     href="/register"
-                    className={`block text-center py-3 px-6 rounded-lg font-semibold transition ${
-                      plan.highlighted
-                        ? 'bg-primary text-white hover:bg-secondary'
-                        : 'bg-gray-100 text-dark hover:bg-gray-200'
-                    }`}
+                    className="block text-center py-3 px-6 rounded-lg font-semibold transition bg-gray-100 text-dark hover:bg-gray-200"
                   >
                     Registrati ora
                   </Link>
-                  
-                  {/* DEBUG BUTTON - RIMUOVI DOPO */}
-                  {plan.highlighted && (
-                    <button 
-                      onClick={() => {
-                        console.log('Manual trigger clicked!')
-                        setPricingAnimationTriggered(true)
-                      }}
-                      className="mt-2 bg-red-500 text-white px-4 py-2 rounded text-sm"
-                    >
-                      🔧 TRIGGER ANIMAZIONE (DEBUG)
-                    </button>
-                  )}
                 </motion.div>
-                
-                {/* Animazione chat demo solo per il piano highlighted */}
-                {plan.highlighted && <PricingChatAnimation />}
-              </motion.div>
+              )
             ))}
           </div>
         </div>
@@ -1234,14 +962,14 @@ export default function LandingPage() {
               {/* Logo desktop */}
               <div className="hidden md:block text-left mb-8">
                 <div className="flex items-center space-x-2 mb-3">
-                  <Home className="w-6 h-6 text-primary" />
-                  <span className="text-xl font-bold">HostGPT</span>
-                </div>
-                <p className="text-gray-400 text-sm">
-                  Il tuo assistente virtuale per affitti vacanza
-                </p>
+                <Home className="w-6 h-6 text-primary" />
+                <span className="text-xl font-bold">HostGPT</span>
               </div>
-              
+              <p className="text-gray-400 text-sm">
+                Il tuo assistente virtuale per affitti vacanza
+              </p>
+            </div>
+            
               {/* Logo mobile */}
               <div className="md:hidden text-center mb-6">
                 <div className="flex items-center justify-center space-x-2 mb-2">
@@ -1259,28 +987,28 @@ export default function LandingPage() {
               <div className="text-center md:text-left">
                 <h4 className="font-semibold mb-3 text-sm md:text-base">Prodotto</h4>
                 <ul className="space-y-1 md:space-y-2 text-gray-400 text-xs md:text-sm">
-                  <li><Link href="#features" className="hover:text-white transition">Funzionalità</Link></li>
-                  <li><Link href="#pricing" className="hover:text-white transition">Prezzi</Link></li>
-                  <li><Link href="#" className="hover:text-white transition">API</Link></li>
-                </ul>
-              </div>
-              
+                <li><Link href="#features" className="hover:text-white transition">Funzionalità</Link></li>
+                <li><Link href="#pricing" className="hover:text-white transition">Prezzi</Link></li>
+                <li><Link href="#" className="hover:text-white transition">API</Link></li>
+              </ul>
+            </div>
+            
               <div className="text-center md:text-left">
                 <h4 className="font-semibold mb-3 text-sm md:text-base">Azienda</h4>
                 <ul className="space-y-1 md:space-y-2 text-gray-400 text-xs md:text-sm">
-                  <li><Link href="#" className="hover:text-white transition">Chi Siamo</Link></li>
-                  <li><Link href="#" className="hover:text-white transition">Blog</Link></li>
-                  <li><Link href="#" className="hover:text-white transition">Contatti</Link></li>
-                </ul>
-              </div>
-              
+                <li><Link href="#" className="hover:text-white transition">Chi Siamo</Link></li>
+                <li><Link href="#" className="hover:text-white transition">Blog</Link></li>
+                <li><Link href="#" className="hover:text-white transition">Contatti</Link></li>
+              </ul>
+            </div>
+            
               <div className="text-center md:text-left">
                 <h4 className="font-semibold mb-3 text-sm md:text-base">Legale</h4>
                 <ul className="space-y-1 md:space-y-2 text-gray-400 text-xs md:text-sm">
                   <li><Link href="/privacy" className="hover:text-white transition">Privacy</Link></li>
                   <li><Link href="/terms" className="hover:text-white transition">Termini</Link></li>
-                  <li><Link href="#" className="hover:text-white transition">Cookie</Link></li>
-                </ul>
+                <li><Link href="#" className="hover:text-white transition">Cookie</Link></li>
+              </ul>
               </div>
             </div>
           </div>
