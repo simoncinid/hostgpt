@@ -588,152 +588,613 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Navbar - Fix per mobile: rimuovo padding/margin problematici */}
+      {/* NAVBAR - Ultra Luxurious Liquid Glass */}
       <nav className="fixed top-4 left-0 right-0 z-50 safe-top">
         <div className="px-4">
-          <div className="flex justify-between items-center py-3 px-4 bg-white/60 backdrop-blur-lg border border-white/30 shadow-lg rounded-2xl mx-2">
-            <Link href="/" className="flex items-center space-x-2">
-              <Home className="w-8 h-8 text-primary" />
-              <span className="text-2xl font-bold text-dark">HostGPT</span>
-            </Link>
-
-            {/* Desktop Menu */}
-            <div className="hidden md:flex items-center space-x-8">
-              <Link href="#features" className="text-gray-600 hover:text-primary transition">
-                Funzionalità
-              </Link>
-              <Link href="#demo" className="text-gray-600 hover:text-primary transition">
-                Demo
-              </Link>
-              <Link href="#how-it-works" className="text-gray-600 hover:text-primary transition">
-                Come Funziona
-              </Link>
-              <Link href="#pricing" className="text-gray-600 hover:text-primary transition">
-                Prezzi
-              </Link>
-              <Link href="#feedback" className="text-gray-600 hover:text-primary transition">
-                Feedback
-              </Link>
-              <Link href="/login" className="text-gray-600 hover:text-primary transition">
-                Accedi
-              </Link>
-              <Link href="/register" className="btn-primary">
-                Registrati
-              </Link>
-            </div>
-
-            {/* Mobile Menu Button */}
-            <button
-              className="md:hidden"
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-            >
-              {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-            </button>
-          </div>
-        </div>
-
-        {/* Mobile Menu */}
-        {isMenuOpen && (
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="md:hidden mt-2 px-4"
+            transition={{ duration: 0.6, ease: "easeOut" }}
+            className="relative"
           >
-            <div className="px-4 py-4 space-y-4 bg-white/70 backdrop-blur-lg border border-white/30 shadow-lg rounded-2xl mx-2">
-              <Link href="#features" onClick={() => setIsMenuOpen(false)} className="block text-gray-600">Funzionalità</Link>
-              <Link href="#demo" onClick={() => setIsMenuOpen(false)} className="block text-gray-600">Demo</Link>
-              <Link href="#how-it-works" onClick={() => setIsMenuOpen(false)} className="block text-gray-600">Come Funziona</Link>
-              <Link href="#pricing" onClick={() => setIsMenuOpen(false)} className="block text-gray-600">Prezzi</Link>
-              <Link href="#feedback" onClick={() => setIsMenuOpen(false)} className="block text-gray-600">Feedback</Link>
-              <Link href="/login" onClick={() => setIsMenuOpen(false)} className="block text-gray-600">Accedi</Link>
-              <Link href="/register" onClick={() => setIsMenuOpen(false)} className="btn-primary block text-center">
-                Registrati
-              </Link>
+            {/* Glow esterno sottile */}
+            <div className="absolute -inset-1 bg-gradient-to-r from-rose-200/20 via-pink-200/30 to-rose-200/20 rounded-3xl blur-xl opacity-60"></div>
+            
+            {/* Container principale con liquid glass premium */}
+            <div className="relative flex justify-between items-center py-4 px-6 bg-white/40 backdrop-blur-2xl border border-white/50 shadow-2xl rounded-3xl mx-2">
+              {/* Pattern decorativo interno */}
+              <div className="absolute inset-0 rounded-3xl overflow-hidden pointer-events-none">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-rose-100/20 to-transparent rounded-full blur-2xl"></div>
+                <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-pink-100/30 to-transparent rounded-full blur-xl"></div>
+              </div>
+
+              {/* Logo premium */}
+              <motion.div
+                whileHover={{ scale: 1.02 }}
+                transition={{ type: "spring", stiffness: 400 }}
+                className="relative z-10"
+              >
+                <Link href="/" className="flex items-center space-x-3">
+                  <motion.div
+                    className="relative"
+                    whileHover={{ rotate: 5 }}
+                    transition={{ type: "spring", stiffness: 300 }}
+                  >
+                    <div className="absolute -inset-1 bg-gradient-to-r from-rose-400 to-pink-500 rounded-xl blur opacity-30"></div>
+                    <div className="relative w-10 h-10 bg-gradient-to-r from-rose-500 to-pink-600 rounded-xl flex items-center justify-center shadow-lg">
+                      <Home className="w-5 h-5 text-white" />
+                    </div>
+                  </motion.div>
+                  <span className="text-2xl font-black text-gray-900 tracking-tight">HostGPT</span>
+                </Link>
+              </motion.div>
+
+              {/* Desktop Menu premium */}
+              <div className="hidden md:flex items-center space-x-1 relative z-10">
+                {[
+                  { href: "#features", label: "Funzionalità" },
+                  { href: "#demo", label: "Demo" },
+                  { href: "#how-it-works", label: "Come Funziona" },
+                  { href: "#pricing", label: "Prezzi" },
+                  { href: "#feedback", label: "Feedback" },
+                  { href: "/login", label: "Accedi" }
+                ].map((item, index) => (
+                  <motion.div
+                    key={item.href}
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: index * 0.1 }}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <Link 
+                      href={item.href} 
+                      className="relative px-4 py-2 text-gray-700 font-semibold hover:text-gray-900 transition-all duration-300 rounded-xl hover:bg-white/30 group"
+                    >
+                      <span className="relative z-10">{item.label}</span>
+                      <motion.div
+                        className="absolute inset-0 bg-gradient-to-r from-rose-100/50 to-pink-100/50 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                        layoutId="navbar-hover"
+                      />
+                    </Link>
+                  </motion.div>
+                ))}
+                
+                {/* Bottone CTA premium */}
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.5, delay: 0.8 }}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="ml-4"
+                >
+                  <div className="relative group">
+                    <motion.div
+                      className="absolute -inset-1 bg-gradient-to-r from-rose-400 to-pink-500 rounded-2xl blur opacity-0 group-hover:opacity-40 transition-opacity duration-300"
+                      whileHover={{ scale: 1.1 }}
+                    />
+                    <Link
+                      href="/register"
+                      className="relative inline-flex items-center gap-2 px-6 py-3 text-white font-bold bg-gradient-to-r from-rose-500 to-pink-600 rounded-2xl shadow-lg transition-all duration-300 group-hover:shadow-xl overflow-hidden"
+                    >
+                      {/* Effetto shimmer */}
+                      <motion.div
+                        className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12"
+                        animate={{
+                          x: ['-100%', '100%'],
+                        }}
+                        transition={{
+                          duration: 2,
+                          repeat: Infinity,
+                          repeatDelay: 3,
+                          ease: "easeInOut",
+                        }}
+                      />
+                      <span className="relative z-10">Registrati</span>
+                      <motion.div
+                        animate={{ rotate: [0, 5, 0] }}
+                        transition={{
+                          duration: 2,
+                          repeat: Infinity,
+                          repeatDelay: 1,
+                          ease: "easeInOut",
+                        }}
+                        className="relative z-10"
+                      >
+                        <Sparkles className="w-4 h-4" />
+                      </motion.div>
+                    </Link>
+                  </div>
+                </motion.div>
+              </div>
+
+              {/* Mobile Menu Button premium */}
+              <motion.button
+                className="md:hidden relative z-10 p-2 rounded-xl hover:bg-white/30 transition-colors duration-300"
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <motion.div
+                  animate={{ rotate: isMenuOpen ? 180 : 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  {isMenuOpen ? (
+                    <X className="w-6 h-6 text-gray-700" />
+                  ) : (
+                    <Menu className="w-6 h-6 text-gray-700" />
+                  )}
+                </motion.div>
+              </motion.button>
+            </div>
+          </motion.div>
+        </div>
+
+        {/* Mobile Menu premium */}
+        {isMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -20, scale: 0.95 }}
+            transition={{ duration: 0.3, ease: "easeOut" }}
+            className="md:hidden mt-3 px-4"
+          >
+            <div className="relative">
+              {/* Glow esterno mobile */}
+              <div className="absolute -inset-1 bg-gradient-to-r from-rose-200/20 via-pink-200/30 to-rose-200/20 rounded-3xl blur-xl opacity-60"></div>
+              
+              {/* Container mobile con liquid glass */}
+              <div className="relative bg-white/40 backdrop-blur-2xl border border-white/50 shadow-2xl rounded-3xl mx-2 p-6">
+                {/* Pattern decorativo mobile */}
+                <div className="absolute inset-0 rounded-3xl overflow-hidden pointer-events-none">
+                  <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-bl from-rose-100/30 to-transparent rounded-full blur-xl"></div>
+                  <div className="absolute bottom-0 left-0 w-16 h-16 bg-gradient-to-tr from-pink-100/40 to-transparent rounded-full blur-lg"></div>
+                </div>
+
+                <div className="space-y-3 relative z-10">
+                  {[
+                    { href: "#features", label: "Funzionalità" },
+                    { href: "#demo", label: "Demo" },
+                    { href: "#how-it-works", label: "Come Funziona" },
+                    { href: "#pricing", label: "Prezzi" },
+                    { href: "#feedback", label: "Feedback" },
+                    { href: "/login", label: "Accedi" }
+                  ].map((item, index) => (
+                    <motion.div
+                      key={item.href}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.3, delay: index * 0.05 }}
+                    >
+                      <Link 
+                        href={item.href} 
+                        onClick={() => setIsMenuOpen(false)} 
+                        className="block px-4 py-3 text-gray-700 font-semibold hover:text-gray-900 hover:bg-white/30 rounded-xl transition-all duration-300"
+                      >
+                        {item.label}
+                      </Link>
+                    </motion.div>
+                  ))}
+                  
+                  {/* Bottone mobile CTA */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: 0.3 }}
+                    className="pt-3 border-t border-white/20"
+                  >
+                    <Link 
+                      href="/register" 
+                      onClick={() => setIsMenuOpen(false)} 
+                      className="block w-full text-center px-6 py-4 text-white font-bold bg-gradient-to-r from-rose-500 to-pink-600 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300"
+                    >
+                      Registrati
+                    </Link>
+                  </motion.div>
+                </div>
+              </div>
             </div>
           </motion.div>
         )}
       </nav>
 
-      {/* Hero Section */}
-      <section className="pt-32 md:pt-36 pb-16 md:pb-20 px-4">
-        <div className="container-max">
+      {/* HERO SECTION - Ultra Luxurious Airbnb Style */}
+      <section className="relative pt-32 md:pt-36 pb-16 md:pb-20 px-4 overflow-hidden">
+        {/* Background ultra-elegante bianco e rosa */}
+        <div className="absolute inset-0 bg-gradient-to-br from-white via-rose-25/30 to-pink-25/40"></div>
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(251,207,232,0.15),transparent_50%)] opacity-80"></div>
+        <div className="absolute inset-0 bg-[conic-gradient(from_0deg_at_50%_50%,rgba(255,255,255,0.8)_0deg,rgba(251,207,232,0.1)_120deg,rgba(255,255,255,0.9)_240deg,rgba(251,207,232,0.05)_360deg)]"></div>
+
+        {/* Particelle fluttuanti eleganti */}
+        <div className="absolute inset-0 pointer-events-none">
+          {/* Particelle rosa */}
           <motion.div
+            className="absolute top-20 left-10 w-2 h-2 bg-gradient-to-r from-rose-400 to-pink-500 rounded-full opacity-30"
+            animate={{
+              y: [0, -20, 0],
+              x: [0, 10, 0],
+              scale: [1, 1.2, 1],
+            }}
+            transition={{
+              duration: 8,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+          />
+          <motion.div
+            className="absolute top-40 right-20 w-3 h-3 bg-gradient-to-r from-pink-400 to-rose-500 rounded-full opacity-25"
+            animate={{
+              y: [0, 15, 0],
+              x: [0, -15, 0],
+              scale: [1, 0.8, 1],
+            }}
+            transition={{
+              duration: 10,
+              repeat: Infinity,
+              ease: "easeInOut",
+              delay: 2,
+            }}
+          />
+          <motion.div
+            className="absolute bottom-40 left-1/4 w-1.5 h-1.5 bg-gradient-to-r from-rose-300 to-pink-400 rounded-full opacity-40"
+            animate={{
+              y: [0, -25, 0],
+              x: [0, 20, 0],
+              scale: [1, 1.5, 1],
+            }}
+            transition={{
+              duration: 12,
+              repeat: Infinity,
+              ease: "easeInOut",
+              delay: 4,
+            }}
+          />
+          <motion.div
+            className="absolute top-60 right-1/3 w-2.5 h-2.5 bg-gradient-to-r from-pink-300 to-rose-400 rounded-full opacity-20"
+            animate={{
+              y: [0, 30, 0],
+              x: [0, -25, 0],
+              scale: [1, 0.6, 1],
+            }}
+            transition={{
+              duration: 15,
+              repeat: Infinity,
+              ease: "easeInOut",
+              delay: 6,
+            }}
+          />
+        </div>
+
+        {/* Pattern geometrici sottili */}
+        <div className="absolute inset-0 opacity-5 pointer-events-none">
+          <svg width="100%" height="100%" className="absolute inset-0">
+            <defs>
+              <pattern id="hero-dots" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse">
+                <circle cx="20" cy="20" r="1.5" fill="url(#hero-gradient)" />
+              </pattern>
+              <linearGradient id="hero-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#f43f5e" />
+                <stop offset="100%" stopColor="#ec4899" />
+              </linearGradient>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#hero-dots)" />
+          </svg>
+        </div>
+
+        <div className="container-max relative z-10">
+          {/* Header ultra-cinematico */}
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1, ease: [0.23, 1, 0.320, 1] }}
+            className="text-center mb-20"
+          >
+            {/* Badge premium */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.8, delay: 0.2, type: "spring", stiffness: 100 }}
+              className="inline-flex items-center gap-2 px-6 py-3 bg-white/40 backdrop-blur-xl border border-white/20 rounded-full shadow-lg mb-8"
+            >
+              <motion.div
+                className="w-2 h-2 bg-gradient-to-r from-rose-500 to-pink-600 rounded-full"
+                animate={{
+                  scale: [1, 1.2, 1],
+                  opacity: [0.7, 1, 0.7],
+                }}
+                transition={{
+                  duration: 2,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                }}
+              />
+              <span className="text-sm font-semibold text-gray-700">
+                Assistente AI #1 per Host Airbnb
+              </span>
+              <Sparkles className="w-4 h-4 text-rose-500" />
+            </motion.div>
+
+            {/* Titolo principale spettacolare */}
+            <motion.h1
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="text-center"
-          >
-            <h1 className="text-5xl md:text-6xl font-bold text-dark mb-6">
-              Risparmia Tempo con <span className="text-gradient">HostGPT</span><br />
+              transition={{ duration: 0.9, delay: 0.4, ease: "easeOut" }}
+              className="text-6xl md:text-8xl font-black mb-8 leading-tight tracking-tight"
+            >
+              <span className="text-gray-900 block">Risparmia Tempo con</span>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-600 via-pink-600 to-rose-700 block relative">
+                HostGPT
+                {/* Effetto shimmer */}
+                <motion.div
+                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -skew-x-12"
+                  animate={{
+                    x: ['-100%', '100%'],
+                  }}
+                  transition={{
+                    duration: 3,
+                    repeat: Infinity,
+                    repeatDelay: 2,
+                    ease: "easeInOut",
+                  }}
+                />
+              </span>
+              <span className="text-gray-900 block text-5xl md:text-6xl mt-4">
               L'assistente H24 per i tuoi ospiti
-            </h1>
-            <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+              </span>
+            </motion.h1>
+
+            {/* Sottotitolo elegante */}
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.6 }}
+              className="text-2xl text-gray-700 mb-12 max-w-4xl mx-auto leading-relaxed font-light"
+            >
               Rispondi automaticamente, in modo completo e immediato, alle richieste dei guest 24/7. 
+              <br />
+              <span className="font-semibold text-transparent bg-clip-text bg-gradient-to-r from-rose-600 to-pink-600">
               Meno messaggi per te, più soddisfazione per loro.
-            </p>
-                         <div className="flex flex-col sm:flex-row gap-4 justify-center">
-               <Link href="/register" className="btn-primary text-lg px-8 py-4 inline-flex items-center">
-                 Registrati per iniziare
-                 <ArrowRight className="ml-2 w-5 h-5" />
+              </span>
+            </motion.p>
+
+            {/* Bottoni CTA spettacolari */}
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.8 }}
+              className="flex flex-col sm:flex-row gap-6 justify-center items-center"
+            >
+              {/* Bottone principale */}
+              <motion.div
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="relative group"
+              >
+                <motion.div
+                  className="absolute -inset-2 bg-gradient-to-r from-rose-400 to-pink-500 rounded-2xl blur-xl opacity-0 group-hover:opacity-30 transition-opacity duration-300"
+                  whileHover={{ scale: 1.1 }}
+                />
+                <Link
+                  href="/register"
+                  className="relative inline-flex items-center gap-3 px-10 py-5 text-lg font-bold text-white bg-gradient-to-r from-rose-500 via-pink-500 to-rose-600 rounded-2xl shadow-2xl transition-all duration-300 group-hover:shadow-rose-500/25 overflow-hidden"
+                >
+                  {/* Effetto shimmer interno */}
+                  <motion.div
+                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12"
+                    animate={{
+                      x: ['-100%', '100%'],
+                    }}
+                    transition={{
+                      duration: 2,
+                      repeat: Infinity,
+                      repeatDelay: 3,
+                      ease: "easeInOut",
+                    }}
+                  />
+                  <span className="relative z-10">Registrati per iniziare</span>
+                  <motion.div
+                    whileHover={{ x: 5 }}
+                    transition={{ type: "spring", stiffness: 400 }}
+                    className="relative z-10"
+                  >
+                    <ArrowRight className="w-6 h-6" />
+                  </motion.div>
                </Link>
-               <Link href="#features" className="btn-outline text-lg px-8 py-4">
-                 Scopri Funzionalità
+              </motion.div>
+
+              {/* Bottone secondario */}
+              <motion.div
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="relative group"
+              >
+                <Link
+                  href="#features"
+                  className="inline-flex items-center gap-3 px-10 py-5 text-lg font-semibold text-gray-700 bg-white/60 backdrop-blur-xl border border-white/30 rounded-2xl shadow-lg hover:bg-white/80 hover:shadow-xl transition-all duration-300"
+                >
+                  <span>Scopri Funzionalità</span>
+                  <motion.div
+                    animate={{ rotate: [0, 10, 0] }}
+                    transition={{
+                      duration: 2,
+                      repeat: Infinity,
+                      repeatDelay: 1,
+                      ease: "easeInOut",
+                    }}
+                  >
+                    <Sparkles className="w-5 h-5 text-rose-500" />
+                  </motion.div>
                </Link>
-             </div>
+              </motion.div>
+            </motion.div>
           </motion.div>
 
-          {/* Hero Image/Animation */}
+          {/* Demo Section Ultra-Elegante */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-            className="mt-16 relative"
+            initial={{ opacity: 0, scale: 0.95, y: 50 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ duration: 1.2, delay: 1, ease: [0.23, 1, 0.320, 1] }}
+            className="relative"
           >
-            <div className="bg-gradient-to-r from-primary/10 to-accent/10 rounded-2xl p-8">
-              <div className="bg-white rounded-xl shadow-2xl p-6">
-                <div className="flex items-center mb-4">
-                  <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center">
-                    <MessageSquare className="w-6 h-6 text-white" />
+            {/* Glow esterno spettacolare */}
+            <div className="absolute -inset-8 bg-gradient-to-r from-rose-400/20 via-pink-500/30 to-rose-600/20 rounded-[3rem] blur-3xl opacity-60"></div>
+            
+            {/* Container principale con glassmorphism */}
+            <div className="relative bg-white/30 backdrop-blur-2xl border border-white/40 rounded-[2rem] p-8 md:p-12 shadow-2xl">
+              {/* Pattern decorativo interno */}
+              <div className="absolute inset-0 rounded-[2rem] overflow-hidden pointer-events-none">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-rose-100/20 to-transparent rounded-full blur-3xl"></div>
+                <div className="absolute bottom-0 left-0 w-48 h-48 bg-gradient-to-tr from-pink-100/30 to-transparent rounded-full blur-2xl"></div>
                   </div>
-                  <span className="ml-3 font-semibold">Casa Bella Vista Bot</span>
+
+              {/* Demo chat ultra-stilizzata */}
+              <div className="relative bg-white/70 backdrop-blur-xl border border-white/50 rounded-3xl p-8 shadow-xl">
+                {/* Header della chat spettacolare */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.8, delay: 1.2 }}
+                  className="flex items-center mb-8 pb-6 border-b border-gray-200/50"
+                >
+                  <motion.div
+                    className="relative"
+                    whileHover={{ scale: 1.05 }}
+                    transition={{ type: "spring", stiffness: 400 }}
+                  >
+                    <div className="absolute -inset-2 bg-gradient-to-r from-rose-400 to-pink-500 rounded-2xl blur-lg opacity-30"></div>
+                    <div className="relative w-16 h-16 bg-gradient-to-r from-rose-500 to-pink-600 rounded-2xl flex items-center justify-center shadow-lg">
+                      <MessageSquare className="w-8 h-8 text-white" />
                 </div>
-                <div
+                  </motion.div>
+                  <div className="ml-6">
+                    <h3 className="text-2xl font-bold text-gray-900">Casa Bella Vista Bot</h3>
+                    <p className="text-gray-600 font-medium">Assistente AI sempre attivo</p>
+                  </div>
+                  <motion.div
+                    className="ml-auto flex items-center gap-2"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 1.4 }}
+                  >
+                    <div className="w-3 h-3 bg-green-400 rounded-full"></div>
+                    <span className="text-sm text-gray-600 font-semibold">Online</span>
+                  </motion.div>
+                </motion.div>
+
+                {/* Area messaggi con effetti premium */}
+                <motion.div
                   ref={demoScrollRef}
-                  className="space-y-4 h-64 overflow-y-auto pr-2 scrollbar-left"
+                  className="space-y-6 h-80 overflow-y-auto pr-4 scrollbar-custom"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.8, delay: 1.4 }}
                 >
                   {demoVisible.map((m, idx) => (
                     <motion.div
                       key={idx}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.3 }}
-                      className={m.role === 'user' ? 'chat-bubble-user' : 'chat-bubble-assistant'}
+                      initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      transition={{ duration: 0.5, type: "spring", stiffness: 200 }}
+                      className={`relative ${m.role === 'user' ? 'flex justify-end' : 'flex justify-start'}`}
                     >
+                      <div
+                        className={`max-w-sm px-6 py-4 rounded-2xl shadow-lg ${
+                          m.role === 'user'
+                            ? 'bg-gradient-to-r from-rose-500 to-pink-600 text-white'
+                            : 'bg-white/80 backdrop-blur-xl border border-white/50 text-gray-800'
+                        }`}
+                      >
+                        <div className="relative font-medium leading-relaxed">
                       {m.text}
+                        </div>
+                      </div>
                     </motion.div>
                   ))}
+                </motion.div>
+
+                {/* Bottone replica demo spettacolare */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.8, delay: 1.6 }}
+                  className="mt-8 pt-6 border-t border-gray-200/50 text-center"
+                >
+                  <motion.button
+                    onClick={() => setDemoRunId((v) => v + 1)}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="relative group inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-rose-500 to-pink-600 text-white font-bold rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden"
+                  >
+                    {/* Effetto shimmer */}
+                    <motion.div
+                      className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12"
+                      animate={{
+                        x: ['-100%', '100%'],
+                      }}
+                      transition={{
+                        duration: 2,
+                        repeat: Infinity,
+                        repeatDelay: 4,
+                        ease: "easeInOut",
+                      }}
+                    />
+                    <motion.div
+                      animate={{ rotate: [0, 360] }}
+                      transition={{
+                        duration: 2,
+                        repeat: Infinity,
+                        ease: "linear",
+                      }}
+                      className="relative z-10"
+                    >
+                      <ArrowRight className="w-5 h-5" />
+                    </motion.div>
+                    <span className="relative z-10">Replica Demo</span>
+                  </motion.button>
+                </motion.div>
                 </div>
-                <div className="mt-6 text-center">
-                  <button onClick={() => setDemoRunId((v) => v + 1)} className="btn-outline px-6 py-3">Replica demo</button>
                 </div>
-              </div>
-            </div>
+
+            {/* Decorazioni angolari eleganti */}
+            <div className="absolute top-4 left-4 w-8 h-8 border-l-2 border-t-2 border-rose-300/40 rounded-tl-lg"></div>
+            <div className="absolute top-4 right-4 w-8 h-8 border-r-2 border-t-2 border-pink-300/40 rounded-tr-lg"></div>
+            <div className="absolute bottom-4 left-4 w-8 h-8 border-l-2 border-b-2 border-rose-300/40 rounded-bl-lg"></div>
+            <div className="absolute bottom-4 right-4 w-8 h-8 border-r-2 border-b-2 border-pink-300/40 rounded-br-lg"></div>
           </motion.div>
         </div>
+
+        {/* Stile personalizzato per scrollbar */}
+        <style jsx>{`
+          .scrollbar-custom::-webkit-scrollbar {
+            width: 6px;
+          }
+          .scrollbar-custom::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+          }
+          .scrollbar-custom::-webkit-scrollbar-thumb {
+            background: linear-gradient(to bottom, #f43f5e, #ec4899);
+            border-radius: 10px;
+          }
+          .scrollbar-custom::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(to bottom, #e11d48, #db2777);
+          }
+        `}</style>
       </section>
 
-      {/* FEATURES SECTION - Ultra Luxurious Airbnb Style */}
+      {/* FEATURES SECTION - Ultra Luxurious Purple/Blue Style */}
       <section id="features" className="relative overflow-hidden section-padding">
-        {/* Background ultra-elegante bianco e rosa */}
-        <div className="absolute inset-0 bg-gradient-to-br from-white via-rose-25/20 to-pink-25/30"></div>
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(251,207,232,0.12),transparent_60%)] opacity-70"></div>
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,rgba(244,63,94,0.06),transparent_70%)] opacity-60"></div>
-        <div className="absolute inset-0 bg-[conic-gradient(from_135deg_at_20%_80%,transparent_0deg,rgba(251,207,232,0.08)_120deg,transparent_240deg)] opacity-50"></div>
+        {/* Background ultra-elegante viola e blu */}
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-purple-900/90 to-indigo-900"></div>
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(139,69,219,0.15),transparent_60%)] opacity-70"></div>
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,rgba(79,70,229,0.1),transparent_70%)] opacity-60"></div>
+        <div className="absolute inset-0 bg-[conic-gradient(from_135deg_at_20%_80%,transparent_0deg,rgba(139,69,219,0.08)_120deg,transparent_240deg)] opacity-50"></div>
 
         {/* Particelle fluttuanti eleganti */}
         <div className="absolute inset-0 overflow-hidden">
           <motion.div
-            className="absolute top-[12%] left-[8%] w-3 h-3 bg-rose-200/30 rounded-full"
+            className="absolute top-[12%] left-[8%] w-3 h-3 bg-purple-200/30 rounded-full"
             animate={{
               y: [0, -50, 0],
               x: [0, 25, 0],
@@ -747,7 +1208,7 @@ export default function LandingPage() {
             }}
           />
           <motion.div 
-            className="absolute top-[20%] right-[12%] w-2.5 h-2.5 bg-pink-300/25 rounded-full"
+            className="absolute top-[20%] right-[12%] w-2.5 h-2.5 bg-indigo-300/25 rounded-full"
             animate={{
               y: [0, -40, 0],
               x: [0, -20, 0],
@@ -762,7 +1223,7 @@ export default function LandingPage() {
             }}
           />
           <motion.div 
-            className="absolute top-[75%] left-[85%] w-2 h-2 bg-rose-400/20 rounded-full"
+            className="absolute top-[75%] left-[85%] w-2 h-2 bg-purple-400/20 rounded-full"
             animate={{
               y: [0, -30, 0],
               opacity: [0.2, 0.5, 0.2],
@@ -793,7 +1254,7 @@ export default function LandingPage() {
 
         {/* Pattern geometrici sottili */}
         <div className="absolute inset-0 opacity-15">
-          <svg className="absolute top-16 left-16 w-28 h-28 text-rose-300" viewBox="0 0 100 100">
+          <svg className="absolute top-16 left-16 w-28 h-28 text-purple-300" viewBox="0 0 100 100">
             <motion.circle
               cx="50" cy="50" r="18" fill="none" stroke="currentColor" strokeWidth="0.4"
               animate={{ rotate: 360 }}
@@ -805,7 +1266,7 @@ export default function LandingPage() {
               transition={{ duration: 50, repeat: Infinity, ease: "linear" }}
             />
           </svg>
-          <svg className="absolute bottom-24 right-24 w-20 h-20 text-pink-200" viewBox="0 0 100 100">
+          <svg className="absolute bottom-24 right-24 w-20 h-20 text-indigo-200" viewBox="0 0 100 100">
             <motion.rect
               x="25" y="25" width="50" height="50" fill="none" stroke="currentColor" strokeWidth="0.4"
               animate={{ rotate: 360 }}
@@ -831,8 +1292,8 @@ export default function LandingPage() {
               className="inline-block"
             >
               <h2 className="text-5xl md:text-6xl font-black mb-6 leading-tight">
-                <span className="text-gray-900 block mb-2">Tutto Quello</span>
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-500 via-pink-500 to-rose-600 block">
+                <span className="text-white block mb-2">Tutto Quello</span>
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-indigo-400 to-purple-500 block">
                   che Ti Serve
                 </span>
             </h2>
@@ -843,11 +1304,11 @@ export default function LandingPage() {
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.5 }}
               viewport={{ once: true }}
-              className="text-xl md:text-2xl text-gray-700 max-w-4xl mx-auto"
+              className="text-xl md:text-2xl text-gray-300 max-w-4xl mx-auto"
             >
               Funzionalità potenti e raffinate per trasformare completamente
               <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-600 to-pink-600 font-semibold">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-indigo-400 font-semibold">
                 l'esperienza dei tuoi ospiti
               </span>
             </motion.p>
@@ -876,7 +1337,7 @@ export default function LandingPage() {
               >
                 {/* Glow effect esterno */}
                 <motion.div
-                  className="absolute -inset-3 bg-gradient-to-r from-rose-200/20 via-pink-200/25 to-rose-300/20 rounded-3xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                  className="absolute -inset-3 bg-gradient-to-r from-purple-200/20 via-indigo-200/25 to-purple-300/20 rounded-3xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"
                   animate={{
                     opacity: [0, 0.3, 0],
                     scale: [0.9, 1.05, 0.9]
@@ -916,7 +1377,7 @@ export default function LandingPage() {
                       rotate: 5,
                       boxShadow: "0 15px 30px rgba(244, 63, 94, 0.2)"
                     }}
-                    className="relative w-16 h-16 lg:w-20 lg:h-20 rounded-2xl bg-gradient-to-r from-rose-500 to-pink-600 flex items-center justify-center mb-6 mx-auto shadow-lg overflow-hidden"
+                    className="relative w-16 h-16 lg:w-20 lg:h-20 rounded-2xl bg-gradient-to-r from-purple-500 to-indigo-600 flex items-center justify-center mb-6 mx-auto shadow-lg overflow-hidden"
                   >
                     {/* Shimmer effect sull'icona */}
                     <motion.div
@@ -980,7 +1441,7 @@ export default function LandingPage() {
                         className="flex items-center justify-center lg:justify-start text-sm text-gray-600 group"
                       >
                         <motion.div
-                          className="flex-shrink-0 w-5 h-5 bg-gradient-to-r from-rose-500 to-pink-600 rounded-full flex items-center justify-center mr-3 shadow-sm"
+                          className="flex-shrink-0 w-5 h-5 bg-gradient-to-r from-purple-500 to-indigo-600 rounded-full flex items-center justify-center mr-3 shadow-sm"
                           whileHover={{ scale: 1.1, rotate: 5 }}
                           transition={{ type: "spring", stiffness: 400 }}
                         >
@@ -1001,7 +1462,7 @@ export default function LandingPage() {
 
                   {/* Linea decorativa bottom */}
                   <motion.div
-                    className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-16 h-0.5 bg-gradient-to-r from-rose-400 to-pink-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                    className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-16 h-0.5 bg-gradient-to-r from-purple-400 to-indigo-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"
                     initial={{ scaleX: 0 }}
                     whileInView={{ scaleX: 1 }}
                     transition={{ delay: 1.2 + (index * 0.1), duration: 0.8 }}
@@ -1027,10 +1488,10 @@ export default function LandingPage() {
             viewport={{ once: true }}
             className="text-center mb-16"
           >
-            <h2 className="text-4xl font-bold text-dark mb-4">
+            <h2 className="text-5xl md:text-6xl font-black text-dark mb-6 leading-tight">
               Come Funziona
             </h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            <p className="text-xl md:text-2xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
               Tre semplici passi per attivare il tuo assistente virtuale
             </p>
           </motion.div>
@@ -1064,9 +1525,9 @@ export default function LandingPage() {
                 <div className="bg-white rounded-2xl p-6 shadow-xl border border-gray-100 h-auto md:h-[36rem] relative overflow-hidden flex flex-col">
                   
                   {/* Titolo e descrizione con spazio ridotto */}
-                  <div className="text-center mb-3">
-                    <h3 className="text-xl font-bold mb-2 text-dark">{step.title}</h3>
-                    <p className="text-gray-600 text-sm leading-relaxed px-2">
+                  <div className="text-center mb-6">
+                    <h3 className="text-2xl font-black mb-4 text-dark leading-tight">{step.title}</h3>
+                    <p className="text-gray-600 text-base leading-relaxed font-medium">
                       {step.description}
                     </p>
                   </div>
@@ -1309,44 +1770,7 @@ export default function LandingPage() {
                       <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-rose-100/40 to-transparent rounded-full blur-3xl"></div>
                       <div className="absolute bottom-0 left-0 w-32 h-32 bg-gradient-to-tr from-pink-100/30 to-transparent rounded-full blur-2xl"></div>
 
-                      {/* Badge "Più Popolare" ultra-stilizzato */}
-                      <motion.div 
-                        className="absolute -top-6 left-1/2 transform -translate-x-1/2 z-20"
-                        initial={{ y: -20, opacity: 0 }}
-                        whileInView={{ y: 0, opacity: 1 }}
-                        transition={{ delay: 0.8, type: "spring", stiffness: 200 }}
-                        viewport={{ once: true }}
-                      >
-                        <div className="relative">
-                          <motion.div
-                            className="absolute inset-0 bg-gradient-to-r from-rose-400 to-pink-500 rounded-full blur-md opacity-60"
-                            animate={{
-                              scale: [1, 1.1, 1],
-                              opacity: [0.6, 0.8, 0.6]
-                            }}
-                            transition={{
-                              duration: 2,
-                              repeat: Infinity,
-                              ease: "easeInOut"
-                            }}
-                          />
-                          <span className="relative bg-gradient-to-r from-rose-500 to-pink-600 text-white px-6 py-2 rounded-full text-sm font-bold shadow-lg flex items-center">
-                            <motion.div
-                              className="w-2 h-2 bg-white rounded-full mr-2"
-                              animate={{
-                                scale: [1, 1.3, 1],
-                                opacity: [1, 0.7, 1]
-                              }}
-                              transition={{
-                                duration: 1.5,
-                                repeat: Infinity,
-                                ease: "easeInOut"
-                              }}
-                            />
-                      Più Popolare
-                    </span>
-                  </div>
-                      </motion.div>
+
 
                       {/* Header del piano */}
                       <div className="relative text-center mb-8">
@@ -1477,13 +1901,7 @@ export default function LandingPage() {
                       <div className="absolute inset-0 bg-gradient-to-bl from-rose-50/30 via-transparent to-pink-50/20"></div>
                       <div className="absolute top-0 left-0 w-40 h-40 bg-gradient-to-br from-rose-100/40 to-transparent rounded-full blur-3xl"></div>
 
-                      {/* Badge "Più Popolare" anche sul retro */}
-                      <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 z-20">
-                        <span className="bg-gradient-to-r from-rose-500 to-pink-600 text-white px-6 py-2 rounded-full text-sm font-bold shadow-lg flex items-center">
-                          <div className="w-2 h-2 bg-white rounded-full mr-2"></div>
-                          Più Popolare
-                        </span>
-                      </div>
+
 
                       {/* Demo chat potenziata */}
                       <div className="relative h-full">
@@ -1517,8 +1935,8 @@ export default function LandingPage() {
                   { icon: Zap, text: "Setup istantaneo", subtext: "Attivo in 5 minuti" },
                   { icon: Heart, text: "Supporto dedicato", subtext: "Sempre al tuo fianco" }
                 ].map((item, index) => (
-                                  <motion.div
-                    key={index}
+                <motion.div
+                  key={index}
                     initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.6 + (index * 0.1), duration: 0.5 }}
@@ -1640,7 +2058,7 @@ export default function LandingPage() {
             <div className="grid lg:grid-cols-2 gap-16 lg:gap-24 items-start">
               
               {/* Colonna sinistra - Form di feedback ultra-moderno */}
-                          <motion.div
+            <motion.div
                 initial={{ opacity: 0, x: -50 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.8, delay: 0.2 }}
@@ -1895,6 +2313,47 @@ export default function LandingPage() {
                 viewport={{ once: true }}
                 className="space-y-8"
               >
+                {/* Card video testimonianze */}
+                <div className="relative">
+                  <div className="absolute -inset-4 bg-gradient-to-r from-yellow-600/20 via-orange-600/20 to-red-600/20 rounded-3xl blur-xl opacity-50"></div>
+                  <div className="relative bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-8 shadow-2xl">
+                    <div className="text-center">
+                      <motion.div
+                        initial={{ scale: 0 }}
+                        whileInView={{ scale: 1 }}
+                        transition={{ duration: 0.6, delay: 0.6, type: "spring", stiffness: 200 }}
+                        className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-2xl mb-4 shadow-lg"
+                      >
+                        <Sparkles className="w-8 h-8 text-white" />
+                      </motion.div>
+                      <h3 className="text-2xl font-bold text-white mb-4">Video Testimonianze</h3>
+                      
+                      {/* Placeholder per video */}
+                      <div className="relative aspect-video bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl border border-white/10 overflow-hidden group cursor-pointer">
+                        <div className="absolute inset-0 bg-gradient-to-br from-purple-600/20 to-pink-600/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <motion.div
+                            whileHover={{ scale: 1.1 }}
+                            className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/30"
+                          >
+                            <div className="w-0 h-0 border-l-[12px] border-l-white border-y-[8px] border-y-transparent ml-1"></div>
+                          </motion.div>
+                        </div>
+                        <div className="absolute bottom-4 left-4 right-4">
+                          <div className="bg-black/50 backdrop-blur-sm rounded-lg p-3">
+                            <div className="text-white text-sm font-semibold">Marco ci racconta la sua esperienza</div>
+                            <div className="text-gray-300 text-xs">Host da Roma • 2:34</div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <p className="text-gray-300 text-sm mt-4">
+                        Guarda come i nostri host utilizzano HostGPT nella vita reale
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Card statistiche feedback */}
                 <div className="relative">
                   <div className="absolute -inset-4 bg-gradient-to-r from-blue-600/20 via-purple-600/20 to-pink-600/20 rounded-3xl blur-xl opacity-50"></div>
@@ -1988,47 +2447,6 @@ export default function LandingPage() {
                         </motion.div>
                         <div className="text-gray-300 text-sm">Nuove Feature</div>
                       </motion.div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Card video testimonianze */}
-                <div className="relative">
-                  <div className="absolute -inset-4 bg-gradient-to-r from-yellow-600/20 via-orange-600/20 to-red-600/20 rounded-3xl blur-xl opacity-50"></div>
-                  <div className="relative bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-8 shadow-2xl">
-                    <div className="text-center">
-                      <motion.div
-                        initial={{ scale: 0 }}
-                        whileInView={{ scale: 1 }}
-                        transition={{ duration: 0.6, delay: 0.6, type: "spring", stiffness: 200 }}
-                        className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-2xl mb-4 shadow-lg"
-                      >
-                        <Sparkles className="w-8 h-8 text-white" />
-                      </motion.div>
-                      <h3 className="text-2xl font-bold text-white mb-4">Video Testimonianze</h3>
-                      
-                      {/* Placeholder per video */}
-                      <div className="relative aspect-video bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl border border-white/10 overflow-hidden group cursor-pointer">
-                        <div className="absolute inset-0 bg-gradient-to-br from-purple-600/20 to-pink-600/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <motion.div
-                            whileHover={{ scale: 1.1 }}
-                            className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/30"
-                          >
-                            <div className="w-0 h-0 border-l-[12px] border-l-white border-y-[8px] border-y-transparent ml-1"></div>
-                          </motion.div>
-                        </div>
-                        <div className="absolute bottom-4 left-4 right-4">
-                          <div className="bg-black/50 backdrop-blur-sm rounded-lg p-3">
-                            <div className="text-white text-sm font-semibold">Marco ci racconta la sua esperienza</div>
-                            <div className="text-gray-300 text-xs">Host da Roma • 2:34</div>
-                          </div>
-                        </div>
-                      </div>
-
-                      <p className="text-gray-300 text-sm mt-4">
-                        Guarda come i nostri host utilizzano HostGPT nella vita reale
-                      </p>
                     </div>
                   </div>
                 </div>
@@ -2352,25 +2770,204 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="section-padding">
-        <div className="container-max text-center">
+      {/* CTA SECTION - Ultra Luxurious Final Call */}
+      <section className="relative section-padding overflow-hidden">
+        {/* Background ultra-elegante con gradienti multipli */}
+        <div className="absolute inset-0 bg-gradient-to-br from-white via-rose-25/20 to-pink-25/30"></div>
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(251,207,232,0.12),transparent_70%)] opacity-80"></div>
+        <div className="absolute inset-0 bg-[conic-gradient(from_180deg_at_50%_50%,rgba(255,255,255,0.9)_0deg,rgba(251,207,232,0.08)_120deg,rgba(255,255,255,0.95)_240deg,rgba(251,207,232,0.05)_360deg)]"></div>
+
+        {/* Particelle fluttuanti finali */}
+        <div className="absolute inset-0 pointer-events-none">
           <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.6 }}
-            className="bg-gradient-to-r from-primary/10 to-accent/10 rounded-3xl p-12"
+            className="absolute top-20 left-1/4 w-2 h-2 bg-gradient-to-r from-rose-400 to-pink-500 rounded-full opacity-40"
+            animate={{
+              y: [0, -30, 0],
+              x: [0, 15, 0],
+              scale: [1, 1.3, 1],
+            }}
+            transition={{
+              duration: 8,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+          />
+          <motion.div
+            className="absolute bottom-32 right-1/3 w-1.5 h-1.5 bg-gradient-to-r from-pink-300 to-rose-400 rounded-full opacity-30"
+            animate={{
+              y: [0, 20, 0],
+              x: [0, -10, 0],
+              scale: [1, 1.6, 1],
+            }}
+            transition={{
+              duration: 10,
+              repeat: Infinity,
+              ease: "easeInOut",
+              delay: 3,
+            }}
+          />
+        </div>
+
+        <div className="container-max text-center relative z-10">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 30 }}
+            whileInView={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ duration: 0.8, ease: [0.23, 1, 0.320, 1] }}
+            viewport={{ once: true }}
+            className="relative"
           >
-            <h2 className="text-4xl font-bold text-dark mb-4">
-              Pronto a Rivoluzionare l'Esperienza dei Tuoi Ospiti?
-            </h2>
-            <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-              Unisciti a centinaia di host che hanno già migliorato il loro servizio con HostGPT
-            </p>
-                         <Link href="/register" className="btn-primary text-lg px-10 py-4 inline-flex items-center">
-               Registrati per iniziare
-               <ArrowRight className="ml-2 w-5 h-5" />
-             </Link>
+            {/* Glow esterno spettacolare */}
+            <div className="absolute -inset-8 bg-gradient-to-r from-rose-200/20 via-pink-300/30 to-rose-200/20 rounded-[3rem] blur-2xl opacity-60"></div>
+            
+            {/* Container principale con glassmorphism premium */}
+            <div className="relative bg-white/40 backdrop-blur-2xl border border-white/50 rounded-[2.5rem] p-12 md:p-16 shadow-2xl">
+              {/* Pattern decorativo interno */}
+              <div className="absolute inset-0 rounded-[2.5rem] overflow-hidden pointer-events-none">
+                <div className="absolute top-0 right-0 w-48 h-48 bg-gradient-to-bl from-rose-100/30 to-transparent rounded-full blur-3xl"></div>
+                <div className="absolute bottom-0 left-0 w-32 h-32 bg-gradient-to-tr from-pink-100/40 to-transparent rounded-full blur-2xl"></div>
+              </div>
+
+              {/* Badge premium */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.6, delay: 0.2, type: "spring", stiffness: 100 }}
+                viewport={{ once: true }}
+                className="inline-flex items-center gap-2 px-6 py-3 bg-white/50 backdrop-blur-xl border border-white/30 rounded-full shadow-lg mb-8"
+              >
+                <motion.div
+                  className="w-2 h-2 bg-gradient-to-r from-rose-500 to-pink-600 rounded-full"
+                  animate={{
+                    scale: [1, 1.2, 1],
+                    opacity: [0.7, 1, 0.7],
+                  }}
+                  transition={{
+                    duration: 2,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                  }}
+                />
+                <span className="text-sm font-bold text-gray-700">
+                  Inizia la Rivoluzione Oggi
+                </span>
+                <Sparkles className="w-4 h-4 text-rose-500" />
+              </motion.div>
+
+              {/* Titolo principale spettacolare */}
+              <motion.h2
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.3 }}
+                viewport={{ once: true }}
+                className="text-5xl md:text-6xl font-black mb-8 leading-tight"
+              >
+                <span className="text-gray-900 block mb-2">Pronto a Rivoluzionare</span>
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-600 via-pink-600 to-rose-700 block relative">
+                  l'Esperienza dei Tuoi Ospiti?
+                  {/* Effetto shimmer */}
+                  <motion.div
+                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent -skew-x-12"
+                    animate={{
+                      x: ['-100%', '100%'],
+                    }}
+                    transition={{
+                      duration: 3,
+                      repeat: Infinity,
+                      repeatDelay: 4,
+                      ease: "easeInOut",
+                    }}
+                  />
+                </span>
+              </motion.h2>
+
+              {/* Sottotitolo elegante */}
+              <motion.p
+                initial={{ opacity: 0, y: 15 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.5 }}
+                viewport={{ once: true }}
+                className="text-2xl text-gray-700 mb-12 max-w-3xl mx-auto leading-relaxed font-light"
+              >
+                Unisciti a <span className="font-bold text-transparent bg-clip-text bg-gradient-to-r from-rose-600 to-pink-600">centinaia di host</span> che hanno già migliorato il loro servizio con HostGPT
+              </motion.p>
+
+              {/* Bottone CTA finale spettacolare */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.7 }}
+                viewport={{ once: true }}
+                className="relative"
+              >
+                <motion.div
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="relative group inline-block"
+                >
+                  {/* Glow esterno del bottone */}
+                  <motion.div
+                    className="absolute -inset-3 bg-gradient-to-r from-rose-400 to-pink-500 rounded-3xl blur-xl opacity-0 group-hover:opacity-40 transition-opacity duration-300"
+                    whileHover={{ scale: 1.1 }}
+                  />
+                  
+                  <Link
+                    href="/register"
+                    className="relative inline-flex items-center gap-4 px-12 py-6 text-xl font-black text-white bg-gradient-to-r from-rose-500 via-pink-500 to-rose-600 rounded-3xl shadow-2xl transition-all duration-300 group-hover:shadow-rose-500/30 overflow-hidden"
+                  >
+                    {/* Effetto shimmer interno */}
+                    <motion.div
+                      className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12"
+                      animate={{
+                        x: ['-100%', '100%'],
+                      }}
+                      transition={{
+                        duration: 2,
+                        repeat: Infinity,
+                        repeatDelay: 3,
+                        ease: "easeInOut",
+                      }}
+                    />
+                    
+                    <span className="relative z-10">Registrati per iniziare</span>
+                    <motion.div
+                      whileHover={{ x: 8 }}
+                      transition={{ type: "spring", stiffness: 400 }}
+                      className="relative z-10"
+                    >
+                      <ArrowRight className="w-6 h-6" />
+                    </motion.div>
+                  </Link>
+                </motion.div>
+              </motion.div>
+
+              {/* Indicatori di fiducia */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                whileInView={{ opacity: 1 }}
+                transition={{ duration: 0.6, delay: 0.9 }}
+                viewport={{ once: true }}
+                className="flex items-center justify-center gap-8 mt-8 text-sm text-gray-600"
+              >
+                <div className="flex items-center gap-2">
+                  <Shield className="w-4 h-4 text-rose-500" />
+                  <span className="font-semibold">Sicuro al 100%</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Zap className="w-4 h-4 text-rose-500" />
+                  <span className="font-semibold">Setup in 5 minuti</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Heart className="w-4 h-4 text-rose-500" />
+                  <span className="font-semibold">Garanzia 30 giorni</span>
+                </div>
+              </motion.div>
+            </div>
+
+            {/* Decorazioni angolari eleganti */}
+            <div className="absolute top-6 left-6 w-6 h-6 border-l-2 border-t-2 border-rose-300/50 rounded-tl-lg"></div>
+            <div className="absolute top-6 right-6 w-6 h-6 border-r-2 border-t-2 border-pink-300/50 rounded-tr-lg"></div>
+            <div className="absolute bottom-6 left-6 w-6 h-6 border-l-2 border-b-2 border-rose-300/50 rounded-bl-lg"></div>
+            <div className="absolute bottom-6 right-6 w-6 h-6 border-r-2 border-b-2 border-pink-300/50 rounded-br-lg"></div>
           </motion.div>
         </div>
       </section>
