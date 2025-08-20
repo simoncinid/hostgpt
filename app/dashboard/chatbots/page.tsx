@@ -150,7 +150,21 @@ export default function ChatbotsListPage() {
               <input type="text" value={currentQR.url} readOnly className="flex-1 bg-transparent text-sm" />
               <button onClick={() => { navigator.clipboard.writeText(currentQR.url); toast.success('Link copiato!') }} className="text-primary hover:text-secondary">Copia</button>
             </div>
-            <button onClick={() => setShowQRModal(false)} className="w-full btn-primary">Chiudi</button>
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  const link = document.createElement('a')
+                  link.download = 'qr-code-chatbot.png'
+                  link.href = `data:image/png;base64,${currentQR.qr}`
+                  link.click()
+                  toast.success('QR Code scaricato!')
+                }}
+                className="flex-1 btn-secondary"
+              >
+                Scarica QR
+              </button>
+              <button onClick={() => setShowQRModal(false)} className="flex-1 btn-primary">Chiudi</button>
+            </div>
           </motion.div>
         </div>
       )}

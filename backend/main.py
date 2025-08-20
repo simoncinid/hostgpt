@@ -948,22 +948,24 @@ async def send_message(
             thread = client.beta.threads.create(extra_headers={"OpenAI-Beta": "assistants=v2"})
             thread_id = thread.id
             
-            # Crea nuova conversazione nel DB
-            guest_identifier = request.client.host
-            conversation = Conversation(
-                chatbot_id=chatbot.id,
-                thread_id=thread_id,
-                guest_name=message.guest_name,
-                guest_identifier=guest_identifier
-            )
-            db.add(conversation)
-            db.commit()
-            db.refresh(conversation)
-        else:
-            thread_id = message.thread_id
-            conversation = db.query(Conversation).filter(
-                Conversation.thread_id == thread_id
-            ).first()
+                    # Crea nuova conversazione nel DB
+        guest_identifier = request.client.host
+        conversation = Conversation(
+            chatbot_id=chatbot.id,
+            thread_id=thread_id,
+            guest_name=message.guest_name,
+            guest_identifier=guest_identifier
+        )
+        db.add(conversation)
+        db.commit()
+        db.refresh(conversation)
+        is_new_conversation = True
+    else:
+        thread_id = message.thread_id
+        conversation = db.query(Conversation).filter(
+            Conversation.thread_id == thread_id
+        ).first()
+        is_new_conversation = False
         
         # Invia messaggio a OpenAI
         client.beta.threads.messages.create(
@@ -1011,6 +1013,10 @@ async def send_message(
         # Aggiorna statistiche
         conversation.message_count += 2
         chatbot.total_messages += 2
+        
+        # Incrementa il contatore conversazioni se è una nuova conversazione
+        if is_new_conversation:
+            chatbot.total_conversations += 1
         
         # Incrementa il contatore messaggi dell'utente
         owner.messages_used += 1  # Contiamo solo i messaggi inviati dagli ospiti
