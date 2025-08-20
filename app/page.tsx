@@ -28,6 +28,7 @@ import {
   Utensils,
   Heart,
   Sparkles,
+  Send,
   Target,
   Award,
   TrendingUp,
@@ -45,7 +46,7 @@ export default function LandingPage() {
   const [touchEnd, setTouchEnd] = useState<number | null>(null)
 
   // Messaggi demo dinamici
-  const demoMessages: { role: 'user' | 'assistant'; text: string }[] = [
+  const demoChatMessages: { role: 'user' | 'assistant'; text: string }[] = [
     { role: 'user', text: 'Ciao! A che ora è il check-in?' },
     { role: 'assistant', text: 'Ciao! Il check-in è dalle 15:00 alle 20:00. Ti invieremo il codice della cassetta di sicurezza il giorno dell\'arrivo.' },
     { role: 'user', text: 'Posso fare check-in dopo le 22?' },
@@ -55,7 +56,7 @@ export default function LandingPage() {
     { role: 'user', text: 'Wifi e ristoranti consigliati?' },
     { role: 'assistant', text: 'Wifi fibra 200Mbps, password: CASA2024. Per cenare ti consiglio Trattoria Roma (5 min a piedi) e Osteria Bella Vista.' }
   ]
-  const [demoVisible, setDemoVisible] = useState<typeof demoMessages>([])
+  const [demoVisible, setDemoVisible] = useState<typeof demoChatMessages>([])
   const [demoRunId, setDemoRunId] = useState(0)
   const demoScrollRef = useRef<HTMLDivElement | null>(null)
 
@@ -64,8 +65,8 @@ export default function LandingPage() {
     let i = 0
     const interval = setInterval(() => {
       i += 1
-      setDemoVisible(demoMessages.slice(0, i))
-      if (i >= demoMessages.length) {
+      setDemoVisible(demoChatMessages.slice(0, i))
+      if (i >= demoChatMessages.length) {
         clearInterval(interval)
       }
     }, 1400)
@@ -166,6 +167,12 @@ export default function LandingPage() {
   const [feedbackMessage, setFeedbackMessage] = useState('')
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false)
 
+  // Stati per il popup demo chat
+  const [isDemoPopupOpen, setIsDemoPopupOpen] = useState(false)
+  const [demoMessages, setDemoMessages] = useState<Array<{role: 'user' | 'assistant', text: string}>>([])
+  const [demoInput, setDemoInput] = useState('')
+  const [isDemoLoading, setIsDemoLoading] = useState(false)
+
   // Gestione flip della card pricing - una sola volta
   const handlePricingFlip = () => {
     if (!pricingTriggered) {
@@ -185,6 +192,53 @@ export default function LandingPage() {
         setPricingFlipped(false) // Flip immediato dopo l'animazione
       }, 5600) // 600ms flip + 5000ms animazione
     }
+  }
+
+  // Gestione chat demo popup
+  const handleDemoChat = async (message: string) => {
+    if (!message.trim() || isDemoLoading) return
+
+    setIsDemoLoading(true)
+    setDemoMessages(prev => [...prev, { role: 'user', text: message }])
+    setDemoInput('')
+
+    try {
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message,
+          assistantId: 'asst_L285y7tLbfulOmLXNh6mlUEE'
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Errore nella risposta del server')
+      }
+
+      const data = await response.json()
+      setDemoMessages(prev => [...prev, { role: 'assistant', text: data.response }])
+    } catch (error) {
+      console.error('Errore nella chat demo:', error)
+      setDemoMessages(prev => [...prev, { 
+        role: 'assistant', 
+        text: 'Mi dispiace, si è verificato un errore. Riprova più tardi.' 
+      }])
+    } finally {
+      setIsDemoLoading(false)
+    }
+  }
+
+  const openDemoPopup = () => {
+    setIsDemoPopupOpen(true)
+    setDemoMessages([
+      { 
+        role: 'assistant', 
+        text: 'Ciao! Sono l\'assistente AI di Casa Bella Vista. Come posso aiutarti oggi?' 
+      }
+    ])
   }
 
   // Intersection Observer per le animazioni "Come funziona"
@@ -1003,30 +1057,75 @@ export default function LandingPage() {
                </Link>
               </motion.div>
 
-              {/* Bottone secondario */}
-              <motion.div
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className="relative group"
-              >
-                <Link
-                  href="#features"
-                  className="inline-flex items-center gap-3 px-10 py-5 text-lg font-semibold text-gray-700 bg-white/60 backdrop-blur-xl border border-white/30 rounded-2xl shadow-lg hover:bg-white/80 hover:shadow-xl transition-all duration-300"
+              {/* Bottoni secondari */}
+              <div className="flex flex-col sm:flex-row gap-4">
+                {/* Bottone Scopri Funzionalità */}
+                <motion.div
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="relative group"
                 >
-                  <span>Scopri Funzionalità</span>
-                  <motion.div
-                    animate={{ rotate: [0, 10, 0] }}
-                    transition={{
-                      duration: 2,
-                      repeat: Infinity,
-                      repeatDelay: 1,
-                      ease: "easeInOut",
-                    }}
+                  <Link
+                    href="#features"
+                    className="inline-flex items-center gap-3 px-8 py-4 text-base font-semibold text-gray-700 bg-white/60 backdrop-blur-xl border border-white/30 rounded-2xl shadow-lg hover:bg-white/80 hover:shadow-xl transition-all duration-300"
                   >
-                    <Sparkles className="w-5 h-5 text-rose-500" />
-                  </motion.div>
-               </Link>
-              </motion.div>
+                    <span>Scopri Funzionalità</span>
+                    <motion.div
+                      animate={{ rotate: [0, 10, 0] }}
+                      transition={{
+                        duration: 2,
+                        repeat: Infinity,
+                        repeatDelay: 1,
+                        ease: "easeInOut",
+                      }}
+                    >
+                      <Sparkles className="w-4 h-4 text-rose-500" />
+                    </motion.div>
+                 </Link>
+                </motion.div>
+
+                {/* Bottone PROVA DEMO */}
+                <motion.div
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="relative group"
+                >
+                  <button
+                    onClick={openDemoPopup}
+                    className="inline-flex items-center gap-3 px-8 py-4 text-base font-bold text-white bg-gradient-to-r from-orange-500 to-amber-500 rounded-2xl shadow-lg hover:from-orange-600 hover:to-amber-600 hover:shadow-xl transition-all duration-300 overflow-hidden"
+                  >
+                    {/* Effetto shimmer */}
+                    <motion.div
+                      className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12"
+                      animate={{
+                        x: ["-100%", "200%"]
+                      }}
+                      transition={{
+                        duration: 2,
+                        repeat: Infinity,
+                        repeatDelay: 3,
+                        ease: "easeInOut"
+                      }}
+                    />
+                    <span className="relative z-10">PROVA DEMO</span>
+                    <motion.div
+                      animate={{ 
+                        scale: [1, 1.2, 1],
+                        rotate: [0, 360, 0]
+                      }}
+                      transition={{
+                        duration: 2,
+                        repeat: Infinity,
+                        repeatDelay: 1,
+                        ease: "easeInOut",
+                      }}
+                      className="relative z-10"
+                    >
+                      <MessageSquare className="w-4 h-4" />
+                    </motion.div>
+                 </button>
+                </motion.div>
+              </div>
             </motion.div>
           </motion.div>
 
@@ -1041,7 +1140,7 @@ export default function LandingPage() {
             <div className="absolute -inset-8 bg-gradient-to-r from-rose-400/20 via-pink-500/30 to-rose-600/20 rounded-[3rem] blur-3xl opacity-60"></div>
             
             {/* Container principale con glassmorphism */}
-            <div className="relative bg-white/30 backdrop-blur-2xl border border-white/40 rounded-[2rem] p-8 md:p-12 shadow-2xl">
+            <div className="relative bg-white/30 backdrop-blur-2xl border-0 md:border md:border-white/40 rounded-[2rem] p-4 md:p-12 shadow-2xl">
               {/* Pattern decorativo interno */}
               <div className="absolute inset-0 rounded-[2rem] overflow-hidden pointer-events-none">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-rose-100/20 to-transparent rounded-full blur-3xl"></div>
@@ -1049,13 +1148,13 @@ export default function LandingPage() {
                   </div>
 
               {/* Demo chat ultra-stilizzata */}
-              <div className="relative bg-white/70 backdrop-blur-xl border border-white/50 rounded-3xl p-8 shadow-xl">
+              <div className="relative bg-white/70 backdrop-blur-xl border border-white/50 rounded-3xl p-4 md:p-8 shadow-xl">
                 {/* Header della chat spettacolare */}
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.8, delay: 1.2 }}
-                  className="flex items-center mb-8 pb-6 border-b border-gray-200/50"
+                  className="flex items-center mb-4 md:mb-8 pb-3 md:pb-6 border-b border-gray-200/50"
                 >
                   <motion.div
                     className="relative"
@@ -1063,29 +1162,29 @@ export default function LandingPage() {
                     transition={{ type: "spring", stiffness: 400 }}
                   >
                     <div className="absolute -inset-2 bg-gradient-to-r from-rose-400 to-pink-500 rounded-2xl blur-lg opacity-30"></div>
-                    <div className="relative w-16 h-16 bg-gradient-to-r from-rose-500 to-pink-600 rounded-2xl flex items-center justify-center shadow-lg">
-                      <MessageSquare className="w-8 h-8 text-white" />
+                    <div className="relative w-12 h-12 md:w-16 md:h-16 bg-gradient-to-r from-rose-500 to-pink-600 rounded-2xl flex items-center justify-center shadow-lg">
+                      <MessageSquare className="w-6 h-6 md:w-8 md:h-8 text-white" />
                 </div>
                   </motion.div>
-                  <div className="ml-6">
-                    <h3 className="text-2xl font-bold text-gray-900">Casa Bella Vista Bot</h3>
-                    <p className="text-gray-600 font-medium">Assistente AI sempre attivo</p>
+                  <div className="ml-3 md:ml-6 flex-1 min-w-0">
+                    <h3 className="text-lg md:text-2xl font-bold text-gray-900 truncate">Casa Bella Vista Bot</h3>
+                    <p className="text-sm md:text-base text-gray-600 font-medium">Assistente AI sempre attivo</p>
                   </div>
                   <motion.div
-                    className="ml-auto flex items-center gap-2"
+                    className="ml-2 md:ml-auto flex items-center gap-1 md:gap-2 flex-shrink-0"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 1.4 }}
                   >
-                    <div className="w-3 h-3 bg-green-400 rounded-full"></div>
-                    <span className="text-sm text-gray-600 font-semibold">Online</span>
+                    <div className="w-2 h-2 md:w-3 md:h-3 bg-green-400 rounded-full"></div>
+                    <span className="text-xs md:text-sm text-gray-600 font-semibold">Online</span>
                   </motion.div>
                 </motion.div>
 
                 {/* Area messaggi con effetti premium */}
                 <motion.div
                   ref={demoScrollRef}
-                  className="space-y-6 h-80 overflow-y-auto pr-4 scrollbar-custom"
+                  className="space-y-3 md:space-y-6 h-60 md:h-80 overflow-y-auto pr-2 md:pr-4 scrollbar-custom"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ duration: 0.8, delay: 1.4 }}
@@ -1099,13 +1198,13 @@ export default function LandingPage() {
                       className={`relative ${m.role === 'user' ? 'flex justify-end' : 'flex justify-start'}`}
                     >
                       <div
-                        className={`max-w-sm px-6 py-4 rounded-2xl shadow-lg ${
+                        className={`max-w-xs md:max-w-sm px-3 py-2 md:px-6 md:py-4 rounded-2xl shadow-lg ${
                           m.role === 'user'
                             ? 'bg-gradient-to-r from-rose-500 to-pink-600 text-white'
                             : 'bg-white/80 backdrop-blur-xl border border-white/50 text-gray-800'
                         }`}
                       >
-                        <div className="relative font-medium leading-relaxed">
+                        <div className="relative font-medium leading-relaxed text-sm md:text-base">
                       {m.text}
                         </div>
                       </div>
@@ -1118,13 +1217,13 @@ export default function LandingPage() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.8, delay: 1.6 }}
-                  className="mt-8 pt-6 border-t border-gray-200/50 text-center"
+                  className="mt-4 md:mt-8 pt-3 md:pt-6 border-t border-gray-200/50 text-center"
                 >
                   <motion.button
                     onClick={() => setDemoRunId((v) => v + 1)}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    className="relative group inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-rose-500 to-pink-600 text-white font-bold rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden"
+                    className="relative group inline-flex items-center gap-2 md:gap-3 px-4 py-2 md:px-8 md:py-4 bg-gradient-to-r from-rose-500 to-pink-600 text-white font-bold rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden text-sm md:text-base"
                   >
                     {/* Effetto shimmer */}
                     <motion.div
@@ -1183,100 +1282,137 @@ export default function LandingPage() {
         `}</style>
       </section>
 
-      {/* FEATURES SECTION - Ultra Luxurious Purple/Blue Style */}
+      {/* HOW IT WORKS SECTION MOVED HERE - Animazioni Interactive */}
+      <section id="how-it-works" className="section-padding bg-pink-50">
+        <div className="container-max">
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <h2 className="text-5xl md:text-6xl font-black text-dark mb-6 leading-tight">
+              Come Funziona
+            </h2>
+            <p className="text-xl md:text-2xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+              Tre semplici passi per attivare il tuo assistente virtuale
+            </p>
+          </motion.div>
+
+          {/* Steps con animazioni */}
+          <div className="grid md:grid-cols-3 gap-8 lg:gap-12">
+               {howItWorksSteps.map((step, index) => (
+                 <motion.div
+                   key={index}
+                   ref={howItWorksRefs[index]}
+                   initial={{ opacity: 0, y: 30 }}
+                   whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: index * 0.1 }}
+                viewport={{ once: true }}
+                className="relative"
+              >
+                {/* Numero del passo - floating */}
+                <div className="absolute -top-4 left-4 md:left-1/2 md:transform md:-translate-x-1/2 z-20">
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    whileInView={{ scale: 1 }}
+                    transition={{ delay: 0.3, type: "spring" }}
+                    viewport={{ once: true }}
+                    className="w-8 h-8 bg-gradient-to-r from-primary to-accent rounded-full flex items-center justify-center shadow-lg"
+                  >
+                    <span className="text-sm font-bold text-white">{step.step}</span>
+                  </motion.div>
+                   </div>
+                   
+                                {/* Card con animazione statica */}
+                <div className="bg-white rounded-2xl p-6 shadow-xl border border-gray-100 h-auto md:h-[36rem] relative overflow-hidden flex flex-col">
+                  
+                  {/* Titolo e descrizione con spazio ridotto */}
+                  <div className="text-center mb-6">
+                    <h3 className="text-2xl font-black mb-4 text-dark leading-tight">{step.title}</h3>
+                    <p className="text-gray-600 text-base leading-relaxed font-medium">
+                      {step.description}
+                    </p>
+                  </div>
+                  
+                  {/* Animazioni dinamiche - posizionamento ottimizzato */}
+                  <div className="flex-1 flex items-center justify-center">
+                    {index === 0 && <RegistrationAnimation isActive={howItWorksInView[0]} />}
+                    {index === 1 && <CustomizationAnimation isActive={howItWorksInView[1]} />}
+                    {index === 2 && <SharingAnimation isActive={howItWorksInView[2]} />}
+                  </div>
+                  
+                  {/* Gradiente decorativo */}
+                  <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${
+                    index === 0 ? 'from-blue-400 to-blue-600' :
+                    index === 1 ? 'from-green-400 to-green-600' :
+                    'from-purple-400 to-purple-600'
+                  } rounded-t-2xl z-10`}></div>
+                </div>
+                
+
+                 </motion.div>
+               ))}
+           </div>
+        </div>
+      </section>
+
+      {/* FEATURES SECTION MOVED HERE - Ultra Luxurious Purple/Blue Style */}
       <section id="features" className="relative overflow-hidden section-padding">
         {/* Background ultra-elegante viola e blu */}
         <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-purple-900/90 to-indigo-900"></div>
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(139,69,219,0.15),transparent_60%)] opacity-70"></div>
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,rgba(79,70,229,0.1),transparent_70%)] opacity-60"></div>
-        <div className="absolute inset-0 bg-[conic-gradient(from_135deg_at_20%_80%,transparent_0deg,rgba(139,69,219,0.08)_120deg,transparent_240deg)] opacity-50"></div>
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_30%,rgba(139,92,246,0.3),transparent_50%)] opacity-60"></div>
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_70%,rgba(99,102,241,0.25),transparent_50%)] opacity-50"></div>
+        <div className="absolute inset-0 bg-[conic-gradient(from_45deg_at_50%_50%,transparent_0deg,rgba(168,85,247,0.1)_120deg,transparent_240deg)] opacity-40"></div>
 
         {/* Particelle fluttuanti eleganti */}
-        <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <motion.div
-            className="absolute top-[12%] left-[8%] w-3 h-3 bg-purple-200/30 rounded-full"
+            className="absolute top-[20%] left-[15%] w-3 h-3 bg-purple-300/30 rounded-full"
             animate={{
-              y: [0, -50, 0],
-              x: [0, 25, 0],
-              opacity: [0.3, 0.7, 0.3],
-              scale: [1, 1.6, 1]
+              y: [0, -30, 0],
+              x: [0, 15, 0],
+              opacity: [0.3, 0.8, 0.3],
+              scale: [1, 1.2, 1]
             }}
             transition={{
-              duration: 11,
+              duration: 8,
               repeat: Infinity,
               ease: "easeInOut"
             }}
           />
           <motion.div 
-            className="absolute top-[20%] right-[12%] w-2.5 h-2.5 bg-indigo-300/25 rounded-full"
+            className="absolute top-[60%] right-[20%] w-2 h-2 bg-indigo-300/40 rounded-full"
             animate={{
-              y: [0, -40, 0],
-              x: [0, -20, 0],
-              opacity: [0.2, 0.6, 0.2],
-              scale: [1, 2, 1]
+              y: [0, -25, 0],
+              x: [0, -10, 0],
+              opacity: [0.2, 0.7, 0.2]
             }}
             transition={{
-              duration: 9,
+              duration: 6,
               repeat: Infinity,
               ease: "easeInOut",
-              delay: 2.5
+              delay: 2
             }}
           />
           <motion.div 
-            className="absolute top-[75%] left-[85%] w-2 h-2 bg-purple-400/20 rounded-full"
+            className="absolute top-[40%] left-[70%] w-1.5 h-1.5 bg-purple-400/35 rounded-full"
             animate={{
-              y: [0, -30, 0],
-              opacity: [0.2, 0.5, 0.2],
-              scale: [1, 1.4, 1]
+              y: [0, -20, 0],
+              opacity: [0.2, 0.6, 0.2],
+              scale: [1, 1.8, 1]
             }}
             transition={{
               duration: 7,
               repeat: Infinity,
               ease: "easeInOut",
-              delay: 5
+              delay: 4
             }}
           />
-          <motion.div 
-            className="absolute top-[65%] left-[15%] w-1.5 h-1.5 bg-pink-200/35 rounded-full"
-            animate={{
-              y: [0, -35, 0],
-              x: [0, 15, 0],
-              opacity: [0.15, 0.4, 0.15]
-            }}
-            transition={{
-              duration: 13,
-              repeat: Infinity,
-              ease: "easeInOut",
-              delay: 7.5
-            }}
-          />
-        </div>
-
-        {/* Pattern geometrici sottili */}
-        <div className="absolute inset-0 opacity-15">
-          <svg className="absolute top-16 left-16 w-28 h-28 text-purple-300" viewBox="0 0 100 100">
-            <motion.circle
-              cx="50" cy="50" r="18" fill="none" stroke="currentColor" strokeWidth="0.4"
-              animate={{ rotate: 360 }}
-              transition={{ duration: 35, repeat: Infinity, ease: "linear" }}
-            />
-            <motion.circle
-              cx="50" cy="50" r="32" fill="none" stroke="currentColor" strokeWidth="0.25"
-              animate={{ rotate: -360 }}
-              transition={{ duration: 50, repeat: Infinity, ease: "linear" }}
-            />
-          </svg>
-          <svg className="absolute bottom-24 right-24 w-20 h-20 text-indigo-200" viewBox="0 0 100 100">
-            <motion.rect
-              x="25" y="25" width="50" height="50" fill="none" stroke="currentColor" strokeWidth="0.4"
-              animate={{ rotate: 360 }}
-              transition={{ duration: 42, repeat: Infinity, ease: "linear" }}
-            />
-          </svg>
         </div>
 
         <div className="relative container-max">
-          {/* Header cinematografico */}
+          {/* Header spettacolare con animazioni */}
           <motion.div
             initial={{ opacity: 0, y: 50 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -1351,7 +1487,7 @@ export default function LandingPage() {
                 />
 
                 {/* Card principale */}
-                <div className="relative bg-white rounded-3xl p-6 lg:p-8 shadow-lg border border-rose-100/40 overflow-hidden text-center group-hover:shadow-2xl transition-all duration-500"
+                <div className="relative bg-white rounded-3xl p-4 md:p-6 lg:p-8 shadow-lg border border-rose-100/40 overflow-hidden text-center group-hover:shadow-2xl transition-all duration-500 h-32 md:h-auto flex flex-col justify-center md:block"
                      style={{ 
                        boxShadow: "0 10px 25px rgba(244, 63, 94, 0.04), 0 0 0 1px rgba(251, 207, 232, 0.08)"
                      }}>
@@ -1377,7 +1513,7 @@ export default function LandingPage() {
                       rotate: 5,
                       boxShadow: "0 15px 30px rgba(244, 63, 94, 0.2)"
                     }}
-                    className="relative w-16 h-16 lg:w-20 lg:h-20 rounded-2xl bg-gradient-to-r from-purple-500 to-indigo-600 flex items-center justify-center mb-6 mx-auto shadow-lg overflow-hidden"
+                    className="relative w-8 h-8 md:w-16 md:h-16 lg:w-20 lg:h-20 rounded-xl md:rounded-2xl bg-gradient-to-r from-purple-500 to-indigo-600 flex items-center justify-center mb-2 md:mb-6 mx-auto shadow-lg overflow-hidden"
                   >
                     {/* Shimmer effect sull'icona */}
                     <motion.div
@@ -1392,7 +1528,7 @@ export default function LandingPage() {
                         ease: "easeInOut"
                       }}
                     />
-                    <div className="relative text-white">
+                    <div className="relative text-white text-xs md:text-base">
                    {feature.icon}
                  </div>
                   </motion.div>
@@ -1403,7 +1539,7 @@ export default function LandingPage() {
                     whileInView={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.5 + (index * 0.1), duration: 0.6 }}
                     viewport={{ once: true }}
-                    className="text-xl lg:text-2xl font-bold mb-4 text-gray-900 group-hover:text-gray-800 transition-colors duration-300"
+                    className="text-xs md:text-xl lg:text-2xl font-bold mb-1 md:mb-4 text-gray-900 group-hover:text-gray-800 transition-colors duration-300 leading-tight"
                   >
                     {feature.title}
                   </motion.h3>
@@ -1419,13 +1555,13 @@ export default function LandingPage() {
                     {feature.description}
                   </motion.p>
 
-                  {/* Lista features ultra-stilizzata */}
+                  {/* Lista features ultra-stilizzata - nascosta su mobile */}
                   <motion.ul 
                     initial={{ opacity: 0 }}
                     whileInView={{ opacity: 1 }}
                     transition={{ delay: 0.8 + (index * 0.1), duration: 0.7 }}
                     viewport={{ once: true }}
-                    className="space-y-3"
+                    className="hidden md:block space-y-3"
                   >
                    {feature.features.map((item, i) => (
                       <motion.li 
@@ -1476,81 +1612,6 @@ export default function LandingPage() {
           </div>
 
 
-        </div>
-      </section>
-
-      {/* How It Works - Animazioni Interactive */}
-      <section id="how-it-works" className="section-padding bg-pink-50">
-        <div className="container-max">
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            className="text-center mb-16"
-          >
-            <h2 className="text-5xl md:text-6xl font-black text-dark mb-6 leading-tight">
-              Come Funziona
-            </h2>
-            <p className="text-xl md:text-2xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-              Tre semplici passi per attivare il tuo assistente virtuale
-            </p>
-          </motion.div>
-
-          {/* Steps con animazioni */}
-          <div className="grid md:grid-cols-3 gap-8 lg:gap-12">
-               {howItWorksSteps.map((step, index) => (
-                 <motion.div
-                   key={index}
-                   ref={howItWorksRefs[index]}
-                   initial={{ opacity: 0, y: 30 }}
-                   whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
-                viewport={{ once: true }}
-                className="relative"
-              >
-                {/* Numero del passo - floating */}
-                <div className="absolute -top-4 left-4 md:left-1/2 md:transform md:-translate-x-1/2 z-20">
-                  <motion.div
-                    initial={{ scale: 0 }}
-                    whileInView={{ scale: 1 }}
-                    transition={{ delay: 0.3, type: "spring" }}
-                    viewport={{ once: true }}
-                    className="w-8 h-8 bg-gradient-to-r from-primary to-accent rounded-full flex items-center justify-center shadow-lg"
-                  >
-                    <span className="text-sm font-bold text-white">{step.step}</span>
-                  </motion.div>
-                   </div>
-                   
-                                {/* Card con animazione statica */}
-                <div className="bg-white rounded-2xl p-6 shadow-xl border border-gray-100 h-auto md:h-[36rem] relative overflow-hidden flex flex-col">
-                  
-                  {/* Titolo e descrizione con spazio ridotto */}
-                  <div className="text-center mb-6">
-                    <h3 className="text-2xl font-black mb-4 text-dark leading-tight">{step.title}</h3>
-                    <p className="text-gray-600 text-base leading-relaxed font-medium">
-                      {step.description}
-                    </p>
-                  </div>
-                  
-                  {/* Animazioni dinamiche - posizionamento ottimizzato */}
-                  <div className="flex-1 flex items-center justify-center">
-                    {index === 0 && <RegistrationAnimation isActive={howItWorksInView[0]} />}
-                    {index === 1 && <CustomizationAnimation isActive={howItWorksInView[1]} />}
-                    {index === 2 && <SharingAnimation isActive={howItWorksInView[2]} />}
-                  </div>
-                  
-                  {/* Gradiente decorativo */}
-                  <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${
-                    index === 0 ? 'from-blue-400 to-blue-600' :
-                    index === 1 ? 'from-green-400 to-green-600' :
-                    'from-purple-400 to-purple-600'
-                  } rounded-t-2xl z-10`}></div>
-                </div>
-                
-
-                 </motion.div>
-               ))}
-           </div>
         </div>
       </section>
 
@@ -1920,50 +1981,14 @@ export default function LandingPage() {
             ))}
           </div>
 
-          {/* Sezione bottom con garanzie e benefici */}
-          <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.4 }}
-            viewport={{ once: true }}
-            className="text-center mt-16"
-          >
-            <div className="max-w-4xl mx-auto">
-              <div className="grid md:grid-cols-3 gap-8">
-                {[
-                  { icon: Shield, text: "Garanzia 30 giorni", subtext: "Rimborso completo" },
-                  { icon: Zap, text: "Setup istantaneo", subtext: "Attivo in 5 minuti" },
-                  { icon: Heart, text: "Supporto dedicato", subtext: "Sempre al tuo fianco" }
-                ].map((item, index) => (
-                <motion.div
-                  key={index}
-                    initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.6 + (index * 0.1), duration: 0.5 }}
-                    viewport={{ once: true }}
-                    whileHover={{ y: -2 }}
-                    className="text-center"
-                  >
-                    <motion.div
-                      className="inline-flex items-center justify-center w-12 h-12 bg-gradient-to-r from-rose-100 to-pink-100 rounded-2xl mb-4 shadow-sm"
-                      whileHover={{ scale: 1.1, rotate: 5 }}
-                      transition={{ type: "spring", stiffness: 400 }}
-                    >
-                      <item.icon className="w-6 h-6 text-rose-600" />
-                </motion.div>
-                    <h4 className="text-lg font-bold text-gray-900 mb-1">{item.text}</h4>
-                    <p className="text-gray-600">{item.subtext}</p>
-                  </motion.div>
-            ))}
-          </div>
-            </div>
-          </motion.div>
+
         </div>
       </section>
 
 
 
-      {/* FEEDBACK SECTION - Ultra Modern & Cinematic */}
+
+      {/* FEEDBACK SECTION - Mobile: semplice, Desktop: completa come prima */}
       <section id="feedback" className="relative overflow-hidden">
         {/* Background con gradiente dinamico e pattern */}
         <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900"></div>
@@ -2016,14 +2041,14 @@ export default function LandingPage() {
         </div>
 
         <div className="relative section-padding">
-        <div className="container-max">
+          <div className="container-max">
             {/* Header con animazione cinematografica */}
-          <motion.div
+            <motion.div
               initial={{ opacity: 0, y: 50 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, ease: "easeOut" }}
               viewport={{ once: true }}
-              className="text-center mb-20"
+              className="text-center mb-12 md:mb-20"
             >
               <motion.div
                 initial={{ scale: 0.8 }}
@@ -2032,60 +2057,103 @@ export default function LandingPage() {
                 viewport={{ once: true }}
                 className="inline-block"
               >
-                <h2 className="text-5xl md:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-purple-200 to-blue-200 mb-6 leading-tight">
+                <h2 className="text-3xl md:text-5xl lg:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-purple-200 to-blue-200 mb-4 md:mb-6 leading-tight">
                   Il Tuo Feedback
                   <br />
                   <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-pink-300 to-purple-300">
                     È Prezioso
                   </span>
-            </h2>
-          </motion.div>
+                </h2>
+              </motion.div>
 
               <motion.p
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.4 }}
                 viewport={{ once: true }}
-                className="text-xl md:text-2xl text-gray-300 max-w-4xl mx-auto leading-relaxed"
+                className="text-sm md:text-xl lg:text-2xl text-gray-300 max-w-4xl mx-auto leading-relaxed"
               >
                 Condividi la tua esperienza e aiutaci a rendere HostGPT ancora più straordinario.
-                <br />
+                <br className="hidden md:block" />
                 <span className="text-purple-300 font-semibold">Ogni opinione conta per costruire il futuro insieme.</span>
               </motion.p>
             </motion.div>
 
-            {/* Grid principale con layout cinematografico */}
-            <div className="grid lg:grid-cols-2 gap-16 lg:gap-24 items-start">
+            {/* Layout responsive: mobile stack, desktop grid */}
+            <div className="md:grid md:grid-cols-2 md:gap-16 lg:gap-24 md:items-start space-y-8 md:space-y-0">
               
-              {/* Colonna sinistra - Form di feedback ultra-moderno */}
-            <motion.div
+              {/* Mobile: Video testimonianze in alto */}
+              <div className="md:hidden">
+                <div className="relative">
+                  <div className="absolute -inset-4 bg-gradient-to-r from-yellow-600/20 via-orange-600/20 to-red-600/20 rounded-3xl blur-xl opacity-50"></div>
+                  <div className="relative bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 shadow-2xl">
+                    <div className="text-center">
+                      <motion.div
+                        initial={{ scale: 0 }}
+                        whileInView={{ scale: 1 }}
+                        transition={{ duration: 0.6, delay: 0.2, type: "spring", stiffness: 200 }}
+                        viewport={{ once: true }}
+                        className="inline-flex items-center justify-center w-12 h-12 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-2xl mb-3 shadow-lg"
+                      >
+                        <Sparkles className="w-6 h-6 text-white" />
+                      </motion.div>
+                      <h3 className="text-lg font-bold text-white mb-3">Video Testimonianze</h3>
+                      
+                      {/* Video compatto per mobile */}
+                      <div className="relative aspect-video bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl border border-white/10 overflow-hidden group cursor-pointer">
+                        <div className="absolute inset-0 bg-gradient-to-br from-purple-600/20 to-pink-600/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <motion.div
+                            whileHover={{ scale: 1.1 }}
+                            className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/30"
+                          >
+                            <div className="w-0 h-0 border-l-[8px] border-l-white border-y-[6px] border-y-transparent ml-1"></div>
+                          </motion.div>
+                        </div>
+                        <div className="absolute bottom-2 left-2 right-2">
+                          <div className="bg-black/50 backdrop-blur-sm rounded-lg p-2">
+                            <div className="text-white text-xs font-semibold">Marco ci racconta la sua esperienza</div>
+                            <div className="text-gray-300 text-xs">Host da Roma • 2:34</div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <p className="text-gray-300 text-xs mt-3">
+                        Guarda come i nostri host utilizzano HostGPT
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Form di feedback - responsive */}
+              <motion.div
                 initial={{ opacity: 0, x: -50 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.8, delay: 0.2 }}
                 viewport={{ once: true }}
                 className="relative"
               >
-                {/* Glow effect dietro il form */}
                 <div className="absolute -inset-4 bg-gradient-to-r from-purple-600/20 via-pink-600/20 to-blue-600/20 rounded-3xl blur-xl opacity-60"></div>
                 
-                <div className="relative bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-8 md:p-12 shadow-2xl">
+                <div className="relative bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 md:p-8 lg:p-12 shadow-2xl">
                   {/* Header del form */}
-                  <div className="text-center mb-8">
+                  <div className="text-center mb-6 md:mb-8">
                     <motion.div
                       initial={{ scale: 0 }}
                       whileInView={{ scale: 1 }}
                       transition={{ duration: 0.6, delay: 0.3, type: "spring", stiffness: 200 }}
                       viewport={{ once: true }}
-                      className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl mb-4 shadow-lg"
+                      className="inline-flex items-center justify-center w-12 h-12 md:w-16 md:h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl mb-3 md:mb-4 shadow-lg"
                     >
-                      <MessageSquare className="w-8 h-8 text-white" />
+                      <MessageSquare className="w-6 h-6 md:w-8 md:h-8 text-white" />
                     </motion.div>
-                    <h3 className="text-2xl md:text-3xl font-bold text-white mb-2">Raccontaci Tutto</h3>
-                    <p className="text-gray-300">La tua voce è il nostro motore di miglioramento</p>
+                    <h3 className="text-lg md:text-2xl lg:text-3xl font-bold text-white mb-1 md:mb-2">Raccontaci Tutto</h3>
+                    <p className="text-gray-300 text-sm md:text-base">La tua voce è il nostro motore di miglioramento</p>
                   </div>
 
                   {/* Form con gestione stato */}
-                  <form onSubmit={handleFeedbackSubmit} className="space-y-6">
+                  <form onSubmit={handleFeedbackSubmit} className="space-y-4 md:space-y-6">
                     {/* Rating con stelle interattive */}
                     <motion.div
                       initial={{ opacity: 0, y: 20 }}
@@ -2094,76 +2162,66 @@ export default function LandingPage() {
                       viewport={{ once: true }}
                       className="text-center"
                     >
-                      <label className="block text-white font-semibold mb-4 text-lg">Come valuti HostGPT?</label>
-                      <div className="flex justify-center space-x-2">
+                      <label className="block text-white font-semibold mb-3 text-sm md:text-lg">Come valuti HostGPT?</label>
+                      <div className="flex justify-center space-x-1 md:space-x-2">
                         {[1, 2, 3, 4, 5].map((star) => (
                           <motion.button
                             key={star}
                             type="button"
                             onClick={() => setFeedbackRating(star)}
-                            whileHover={{ scale: 1.2, rotate: 15 }}
+                            whileHover={{ scale: 1.1, rotate: 10 }}
                             whileTap={{ scale: 0.9 }}
                             className="group relative"
                           >
-                            <Star className={`w-10 h-10 transition-colors duration-200 drop-shadow-lg ${
+                            <Star className={`w-6 h-6 md:w-10 md:h-10 transition-colors duration-200 drop-shadow-lg ${
                               star <= feedbackRating 
                                 ? 'text-yellow-400 fill-current' 
                                 : 'text-gray-500 hover:text-yellow-300'
                             }`} />
-                            <motion.div
-                              initial={{ opacity: 0, scale: 0 }}
-                              whileHover={{ opacity: 1, scale: 1 }}
-                              className="absolute -top-12 left-1/2 transform -translate-x-1/2 bg-black/80 text-white text-xs px-2 py-1 rounded-lg"
-                            >
-                              {star} {star === 1 ? 'stella' : 'stelle'}
-                            </motion.div>
                           </motion.button>
-                ))}
-              </div>
+                        ))}
+                      </div>
                     </motion.div>
 
-                    {/* Campo nome con effetti glassmorphism */}
-                    <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.5, delay: 0.5 }}
-                      viewport={{ once: true }}
-                      className="relative group"
-                    >
-                      <label className="block text-white font-semibold mb-2">Il Tuo Nome</label>
-                      <div className="relative">
+                    {/* Campi del form */}
+                    <div className="grid md:grid-cols-2 gap-4 md:gap-6">
+                      <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.5, delay: 0.5 }}
+                        viewport={{ once: true }}
+                        className="relative group"
+                      >
+                        <label className="block text-white font-semibold mb-2 text-sm md:text-base">Il Tuo Nome</label>
                         <input
                           type="text"
                           value={feedbackName}
                           onChange={(e) => setFeedbackName(e.target.value)}
                           placeholder="Come ti chiami?"
-                          className="w-full px-6 py-4 bg-white/10 border border-white/20 rounded-2xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-400/50 backdrop-blur-sm transition-all duration-300 group-hover:bg-white/15"
+                          className="w-full px-4 py-3 md:px-6 md:py-4 bg-white/10 border border-white/20 rounded-xl md:rounded-2xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-400/50 backdrop-blur-sm transition-all duration-300 group-hover:bg-white/15 text-sm md:text-base"
                           required
                         />
-                        <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-purple-500/20 to-pink-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
-                </div>
-                    </motion.div>
+                        <div className="absolute inset-0 rounded-xl md:rounded-2xl bg-gradient-to-r from-purple-500/20 to-pink-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+                      </motion.div>
 
-                    {/* Campo email */}
-                    <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.5, delay: 0.6 }}
-                      viewport={{ once: true }}
-                      className="relative group"
-                    >
-                      <label className="block text-white font-semibold mb-2">Email (Opzionale)</label>
-                      <div className="relative">
+                      <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.5, delay: 0.6 }}
+                        viewport={{ once: true }}
+                        className="relative group"
+                      >
+                        <label className="block text-white font-semibold mb-2 text-sm md:text-base">Email (Opzionale)</label>
                         <input
                           type="email"
                           value={feedbackEmail}
                           onChange={(e) => setFeedbackEmail(e.target.value)}
                           placeholder="per ricevere aggiornamenti"
-                          className="w-full px-6 py-4 bg-white/10 border border-white/20 rounded-2xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-400/50 backdrop-blur-sm transition-all duration-300 group-hover:bg-white/15"
+                          className="w-full px-4 py-3 md:px-6 md:py-4 bg-white/10 border border-white/20 rounded-xl md:rounded-2xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-400/50 backdrop-blur-sm transition-all duration-300 group-hover:bg-white/15 text-sm md:text-base"
                         />
-                        <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-blue-500/20 to-purple-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
-                </div>
-                    </motion.div>
+                        <div className="absolute inset-0 rounded-xl md:rounded-2xl bg-gradient-to-r from-blue-500/20 to-purple-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+                      </motion.div>
+                    </div>
 
                     {/* Categoria feedback */}
                     <motion.div
@@ -2173,12 +2231,12 @@ export default function LandingPage() {
                       viewport={{ once: true }}
                       className="relative group"
                     >
-                      <label className="block text-white font-semibold mb-2">Categoria</label>
+                      <label className="block text-white font-semibold mb-2 text-sm md:text-base">Categoria</label>
                       <div className="relative">
                         <select 
                           value={feedbackCategory}
                           onChange={(e) => setFeedbackCategory(e.target.value)}
-                          className="w-full px-6 py-4 bg-white/10 border border-white/20 rounded-2xl text-white focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-400/50 backdrop-blur-sm transition-all duration-300 group-hover:bg-white/15 appearance-none"
+                          className="w-full px-4 py-3 md:px-6 md:py-4 bg-white/10 border border-white/20 rounded-xl md:rounded-2xl text-white focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-400/50 backdrop-blur-sm transition-all duration-300 group-hover:bg-white/15 appearance-none text-sm md:text-base"
                           required
                         >
                           <option value="" className="bg-gray-800">Seleziona una categoria</option>
@@ -2188,12 +2246,12 @@ export default function LandingPage() {
                           <option value="compliment" className="bg-gray-800">💝 Complimento</option>
                           <option value="other" className="bg-gray-800">💬 Altro</option>
                         </select>
-                        <ChevronRight className="absolute right-4 top-1/2 transform -translate-y-1/2 rotate-90 w-5 h-5 text-gray-400 pointer-events-none" />
-                        <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-green-500/20 to-blue-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
-              </div>
-            </motion.div>
+                        <ChevronRight className="absolute right-4 top-1/2 transform -translate-y-1/2 rotate-90 w-4 h-4 md:w-5 md:h-5 text-gray-400 pointer-events-none" />
+                        <div className="absolute inset-0 rounded-xl md:rounded-2xl bg-gradient-to-r from-green-500/20 to-blue-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+                      </div>
+                    </motion.div>
 
-                    {/* Messaggio principale con counter */}
+                    {/* Messaggio */}
                     <motion.div
                       initial={{ opacity: 0, y: 20 }}
                       whileInView={{ opacity: 1, y: 0 }}
@@ -2201,48 +2259,48 @@ export default function LandingPage() {
                       viewport={{ once: true }}
                       className="relative group"
                     >
-                      <label className="block text-white font-semibold mb-2">Il Tuo Messaggio</label>
+                      <label className="block text-white font-semibold mb-2 text-sm md:text-base">Il Tuo Messaggio</label>
                       <div className="relative">
                         <textarea
-                          rows={6}
+                          rows={4}
                           value={feedbackMessage}
                           onChange={(e) => setFeedbackMessage(e.target.value.slice(0, 500))}
                           placeholder="Condividi i tuoi pensieri, suggerimenti o esperienze con HostGPT..."
-                          className="w-full px-6 py-4 bg-white/10 border border-white/20 rounded-2xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-500/50 focus:border-pink-400/50 backdrop-blur-sm transition-all duration-300 group-hover:bg-white/15 resize-none"
+                          className="w-full px-4 py-3 md:px-6 md:py-4 bg-white/10 border border-white/20 rounded-xl md:rounded-2xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-500/50 focus:border-pink-400/50 backdrop-blur-sm transition-all duration-300 group-hover:bg-white/15 resize-none text-sm md:text-base"
                           required
                         />
-                        <div className={`absolute bottom-3 right-3 text-xs transition-colors duration-200 ${
+                        <div className={`absolute bottom-2 right-2 text-xs transition-colors duration-200 ${
                           feedbackMessage.length > 450 ? 'text-yellow-400' : 'text-gray-400'
                         }`}>
                           {feedbackMessage.length}/500
                         </div>
-                        <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-pink-500/20 to-purple-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+                        <div className="absolute inset-0 rounded-xl md:rounded-2xl bg-gradient-to-r from-pink-500/20 to-purple-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
                       </div>
                     </motion.div>
 
-                    {/* Bottone di invio con effetti spettacolari */}
+                    {/* Bottone di invio */}
                     <motion.div
                       initial={{ opacity: 0, y: 20 }}
                       whileInView={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.5, delay: 0.9 }}
                       viewport={{ once: true }}
-                      className="pt-4"
+                      className="pt-2 md:pt-4"
                     >
                       {!feedbackSubmitted ? (
                         <motion.button
                           type="submit"
                           disabled={!feedbackRating || !feedbackName || !feedbackCategory || !feedbackMessage}
                           whileHover={{ 
-                            scale: 1.05,
+                            scale: 1.02,
                             boxShadow: "0 20px 40px rgba(168, 85, 247, 0.4)"
                           }}
-                          whileTap={{ scale: 0.95 }}
+                          whileTap={{ scale: 0.98 }}
                           className="relative w-full group overflow-hidden disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           {/* Background animato del bottone */}
-                          <div className="absolute inset-0 bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 rounded-2xl"></div>
+                          <div className="absolute inset-0 bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 rounded-xl md:rounded-2xl"></div>
                           <motion.div
-                            className="absolute inset-0 bg-gradient-to-r from-pink-600 via-purple-600 to-blue-600 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                            className="absolute inset-0 bg-gradient-to-r from-pink-600 via-purple-600 to-blue-600 rounded-xl md:rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"
                             animate={{
                               backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
                             }}
@@ -2254,13 +2312,13 @@ export default function LandingPage() {
                           />
                           
                           {/* Contenuto del bottone */}
-                          <div className="relative px-8 py-4 flex items-center justify-center space-x-3">
-                            <span className="text-white font-bold text-lg">Invia Feedback</span>
+                          <div className="relative px-6 py-3 md:px-8 md:py-4 flex items-center justify-center space-x-2 md:space-x-3">
+                            <span className="text-white font-bold text-sm md:text-lg">Invia Feedback</span>
                             <motion.div
                               animate={{ x: [0, 5, 0] }}
                               transition={{ duration: 1.5, repeat: Infinity }}
                             >
-                              <ArrowRight className="w-5 h-5 text-white" />
+                              <ArrowRight className="w-4 h-4 md:w-5 md:h-5 text-white" />
                             </motion.div>
                           </div>
 
@@ -2279,24 +2337,23 @@ export default function LandingPage() {
                           />
                         </motion.button>
                       ) : (
-                        /* Messaggio di successo */
                         <motion.div
                           initial={{ scale: 0, opacity: 0 }}
                           animate={{ scale: 1, opacity: 1 }}
                           className="relative w-full"
                         >
-                          <div className="bg-gradient-to-r from-green-500 to-emerald-500 rounded-2xl px-8 py-4 text-center">
-                            <div className="flex items-center justify-center space-x-3">
+                          <div className="bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl md:rounded-2xl px-6 py-3 md:px-8 md:py-4 text-center">
+                            <div className="flex items-center justify-center space-x-2 md:space-x-3">
                               <motion.div
                                 initial={{ scale: 0 }}
                                 animate={{ scale: 1 }}
                                 transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
                               >
-                                <Check className="w-6 h-6 text-white" />
+                                <Check className="w-5 h-5 md:w-6 md:h-6 text-white" />
                               </motion.div>
-                              <span className="text-white font-bold text-lg">Feedback Inviato!</span>
-            </div>
-                            <p className="text-green-100 text-sm mt-2">Grazie per il tuo contributo prezioso 🙏</p>
+                              <span className="text-white font-bold text-sm md:text-lg">Feedback Inviato!</span>
+                            </div>
+                            <p className="text-green-100 text-xs md:text-sm mt-1 md:mt-2">Grazie per il tuo contributo prezioso 🙏</p>
                           </div>
                         </motion.div>
                       )}
@@ -2305,13 +2362,13 @@ export default function LandingPage() {
                 </div>
               </motion.div>
 
-              {/* Colonna destra - Statistiche e feedback visivi */}
+              {/* Desktop: Colonna destra - Statistiche e feedback visivi */}
               <motion.div
                 initial={{ opacity: 0, x: 50 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.8, delay: 0.4 }}
                 viewport={{ once: true }}
-                className="space-y-8"
+                className="hidden md:block space-y-8"
               >
                 {/* Card video testimonianze */}
                 <div className="relative">
@@ -2450,12 +2507,8 @@ export default function LandingPage() {
                     </div>
                   </div>
                 </div>
-
-
               </motion.div>
             </div>
-
-
           </div>
         </div>
       </section>
@@ -2859,9 +2912,9 @@ export default function LandingPage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.3 }}
                 viewport={{ once: true }}
-                className="text-5xl md:text-6xl font-black mb-8 leading-tight"
+                className="text-2xl md:text-5xl lg:text-6xl font-black mb-6 md:mb-8 leading-tight"
               >
-                <span className="text-gray-900 block mb-2">Pronto a Rivoluzionare</span>
+                <span className="text-gray-900 block mb-1 md:mb-2">Pronto a Rivoluzionare</span>
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-600 via-pink-600 to-rose-700 block relative">
                   l'Esperienza dei Tuoi Ospiti?
                   {/* Effetto shimmer */}
@@ -2886,7 +2939,7 @@ export default function LandingPage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.5 }}
                 viewport={{ once: true }}
-                className="text-2xl text-gray-700 mb-12 max-w-3xl mx-auto leading-relaxed font-light"
+                className="text-base md:text-2xl text-gray-700 mb-8 md:mb-12 max-w-3xl mx-auto leading-relaxed font-light"
               >
                 Unisciti a <span className="font-bold text-transparent bg-clip-text bg-gradient-to-r from-rose-600 to-pink-600">centinaia di host</span> che hanno già migliorato il loro servizio con HostGPT
               </motion.p>
@@ -2912,7 +2965,7 @@ export default function LandingPage() {
                   
                   <Link
                     href="/register"
-                    className="relative inline-flex items-center gap-4 px-12 py-6 text-xl font-black text-white bg-gradient-to-r from-rose-500 via-pink-500 to-rose-600 rounded-3xl shadow-2xl transition-all duration-300 group-hover:shadow-rose-500/30 overflow-hidden"
+                    className="relative inline-flex items-center gap-2 md:gap-4 px-6 py-3 md:px-12 md:py-6 text-sm md:text-xl font-black text-white bg-gradient-to-r from-rose-500 via-pink-500 to-rose-600 rounded-2xl md:rounded-3xl shadow-2xl transition-all duration-300 group-hover:shadow-rose-500/30 overflow-hidden"
                   >
                     {/* Effetto shimmer interno */}
                     <motion.div
@@ -2934,33 +2987,13 @@ export default function LandingPage() {
                       transition={{ type: "spring", stiffness: 400 }}
                       className="relative z-10"
                     >
-                      <ArrowRight className="w-6 h-6" />
+                      <ArrowRight className="w-4 h-4 md:w-6 md:h-6" />
                     </motion.div>
                   </Link>
                 </motion.div>
               </motion.div>
 
-              {/* Indicatori di fiducia */}
-              <motion.div
-                initial={{ opacity: 0 }}
-                whileInView={{ opacity: 1 }}
-                transition={{ duration: 0.6, delay: 0.9 }}
-                viewport={{ once: true }}
-                className="flex items-center justify-center gap-8 mt-8 text-sm text-gray-600"
-              >
-                <div className="flex items-center gap-2">
-                  <Shield className="w-4 h-4 text-rose-500" />
-                  <span className="font-semibold">Sicuro al 100%</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Zap className="w-4 h-4 text-rose-500" />
-                  <span className="font-semibold">Setup in 5 minuti</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Heart className="w-4 h-4 text-rose-500" />
-                  <span className="font-semibold">Garanzia 30 giorni</span>
-                </div>
-              </motion.div>
+
             </div>
 
             {/* Decorazioni angolari eleganti */}
@@ -3042,6 +3075,132 @@ export default function LandingPage() {
 
       {/* Cookie Banner */}
       <CookieBanner />
+
+      {/* Demo Chat Popup Modal */}
+      {isDemoPopupOpen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+        >
+          {/* Backdrop blur */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 bg-black/30 backdrop-blur-lg"
+            onClick={() => setIsDemoPopupOpen(false)}
+          />
+          
+          {/* Modal Content */}
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.8, opacity: 0 }}
+            className="relative w-full max-w-2xl max-h-[90vh] bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 overflow-hidden"
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between p-6 border-b border-gray-200/50">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-gradient-to-r from-orange-500 to-amber-500 rounded-2xl flex items-center justify-center">
+                  <MessageSquare className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900">Demo Chat</h3>
+                  <p className="text-sm text-gray-600">Casa Bella Vista Bot</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsDemoPopupOpen(false)}
+                className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
+              >
+                <X className="w-4 h-4 text-gray-600" />
+              </button>
+            </div>
+
+            {/* Chat Messages */}
+            <div className="flex-1 p-6 space-y-4 max-h-96 overflow-y-auto">
+              {demoMessages.map((message, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                  className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                >
+                  <div
+                    className={`max-w-xs px-4 py-3 rounded-2xl ${
+                      message.role === 'user'
+                        ? 'bg-gradient-to-r from-orange-500 to-amber-500 text-white'
+                        : 'bg-gray-100 text-gray-900'
+                    }`}
+                  >
+                    <p className="text-sm leading-relaxed">{message.text}</p>
+                  </div>
+                </motion.div>
+              ))}
+              
+              {isDemoLoading && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="flex justify-start"
+                >
+                  <div className="bg-gray-100 px-4 py-3 rounded-2xl">
+                    <div className="flex space-x-1">
+                      <motion.div
+                        className="w-2 h-2 bg-gray-400 rounded-full"
+                        animate={{ scale: [1, 1.2, 1] }}
+                        transition={{ duration: 0.6, repeat: Infinity, delay: 0 }}
+                      />
+                      <motion.div
+                        className="w-2 h-2 bg-gray-400 rounded-full"
+                        animate={{ scale: [1, 1.2, 1] }}
+                        transition={{ duration: 0.6, repeat: Infinity, delay: 0.2 }}
+                      />
+                      <motion.div
+                        className="w-2 h-2 bg-gray-400 rounded-full"
+                        animate={{ scale: [1, 1.2, 1] }}
+                        transition={{ duration: 0.6, repeat: Infinity, delay: 0.4 }}
+                      />
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </div>
+
+            {/* Input Area */}
+            <div className="p-3 border-t border-gray-200/50">
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault()
+                  handleDemoChat(demoInput)
+                }}
+                className="flex gap-3"
+              >
+                <input
+                  type="text"
+                  value={demoInput}
+                  onChange={(e) => setDemoInput(e.target.value)}
+                  placeholder="Scrivi un messaggio..."
+                  className="flex-1 px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500"
+                  disabled={isDemoLoading}
+                />
+                <motion.button
+                  type="submit"
+                  disabled={!demoInput.trim() || isDemoLoading}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="px-6 py-3 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-2xl font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:from-orange-600 hover:to-amber-600 transition-all duration-200"
+                >
+                  <Send className="w-4 h-4" />
+                </motion.button>
+              </form>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
     </div>
   )
 }
