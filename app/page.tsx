@@ -630,7 +630,7 @@ export default function LandingPage() {
               </motion.div>
 
               {/* Desktop Menu premium */}
-              <div className="hidden md:flex items-center space-x-1 relative z-10">
+              <div className="hidden md:flex items-center space-x-3 relative z-10">
                 {[
                   { href: "#features", label: "Funzionalità" },
                   { href: "#demo", label: "Demo" },
