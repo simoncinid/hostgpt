@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
@@ -27,7 +27,7 @@ import { useAuthStore, useChatbotStore } from '@/lib/store'
 import { chatbots as chatbotsApi, subscription, auth } from '@/lib/api'
 import toast from 'react-hot-toast'
 
-export default function DashboardPage() {
+function DashboardContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { user, logout, setAuth, isAuthenticated } = useAuthStore()
@@ -437,5 +437,26 @@ export default function DashboardPage() {
         </div>
       )}
     </div>
+  )
+}
+
+// Componente di fallback per il loading
+function DashboardFallback() {
+  return (
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="text-center">
+        <div className="loading-spinner w-8 h-8 mx-auto mb-4"></div>
+        <p className="text-gray-600">Caricamento dashboard...</p>
+      </div>
+    </div>
+  )
+}
+
+// Componente principale avvolto in Suspense
+export default function DashboardPage() {
+  return (
+    <Suspense fallback={<DashboardFallback />}>
+      <DashboardContent />
+    </Suspense>
   )
 }

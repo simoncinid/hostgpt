@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, Suspense } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { motion } from 'framer-motion'
@@ -16,7 +16,7 @@ interface ConversationItem {
   message_count: number
 }
 
-export default function ConversationsPage() {
+function ConversationsContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const selectedBotIdQuery = searchParams.get('chatbot')
@@ -129,6 +129,40 @@ export default function ConversationsPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+// Componente di fallback per il loading
+function ConversationsFallback() {
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="bg-white shadow-sm">
+        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+          <Link href="/dashboard" className="text-gray-600 hover:text-primary flex items-center">
+            <ArrowLeft className="w-5 h-5 mr-2" />
+            Dashboard
+          </Link>
+          <h1 className="text-xl font-semibold">Conversazioni</h1>
+        </div>
+      </div>
+      <div className="max-w-6xl mx-auto px-4 py-8">
+        <div className="bg-white rounded-2xl shadow p-6">
+          <div className="text-center py-12">
+            <div className="loading-spinner w-8 h-8 mx-auto mb-4"></div>
+            <p className="text-gray-600">Caricamento conversazioni...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Componente principale avvolto in Suspense
+export default function ConversationsPage() {
+  return (
+    <Suspense fallback={<ConversationsFallback />}>
+      <ConversationsContent />
+    </Suspense>
   )
 }
 

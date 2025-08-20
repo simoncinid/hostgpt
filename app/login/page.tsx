@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
@@ -15,7 +15,7 @@ interface LoginForm {
   password: string
 }
 
-export default function LoginPage() {
+function LoginContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [showPassword, setShowPassword] = useState(false)
@@ -221,5 +221,31 @@ export default function LoginPage() {
         </div>
       </motion.div>
     </div>
+  )
+}
+
+// Componente di fallback per il loading
+function LoginFallback() {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
+      <div className="w-full max-w-md">
+        <div className="bg-white rounded-2xl shadow-xl p-8">
+          <div className="text-center">
+            <div className="loading-spinner w-8 h-8 mx-auto mb-4"></div>
+            <h1 className="text-2xl font-bold text-dark mb-2">Caricamento...</h1>
+            <p className="text-gray-600">Preparazione della pagina di accesso.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Componente principale avvolto in Suspense
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<LoginFallback />}>
+      <LoginContent />
+    </Suspense>
   )
 }
