@@ -955,6 +955,74 @@ async def send_message(
         logger.error(f"Error in chat: {e}")
         raise HTTPException(status_code=500, detail="Errore nel processare il messaggio")
 
+# --- Demo Chat (no auth, no DB save) ---
+
+class DemoMessageCreate(BaseModel):
+    content: str
+    thread_id: Optional[str] = None
+
+@app.post("/api/demochat")
+async def demo_chat(message: DemoMessageCreate):
+    """
+    Endpoint per la demo chat della landing page.
+    Non richiede autenticazione e non salva messaggi nel database.
+    """
+    try:
+        client = get_openai_client()
+        
+        # Usa l'assistant ID fisso per la demo
+        demo_assistant_id = "asst_L285y7tLbfulOmLXNh6mlUEE"
+        
+        # Crea o usa thread esistente
+        if not message.thread_id:
+            thread = client.beta.threads.create(extra_headers={"OpenAI-Beta": "assistants=v2"})
+            thread_id = thread.id
+        else:
+            thread_id = message.thread_id
+        
+        # Invia messaggio a OpenAI
+        client.beta.threads.messages.create(
+            thread_id=thread_id,
+            role="user",
+            content=message.content,
+            extra_headers={"OpenAI-Beta": "assistants=v2"}
+        )
+        
+        # Esegui assistant
+        run = client.beta.threads.runs.create(
+            thread_id=thread_id,
+            assistant_id=demo_assistant_id,
+            extra_headers={"OpenAI-Beta": "assistants=v2"}
+        )
+        
+        # Attendi risposta
+        import time
+        while run.status in ["queued", "in_progress"]:
+            time.sleep(1)
+            run = client.beta.threads.runs.retrieve(
+                thread_id=thread_id,
+                run_id=run.id,
+                extra_headers={"OpenAI-Beta": "assistants=v2"}
+            )
+        
+        # Gestisci eventuali errori nel run
+        if run.status == "failed":
+            logger.error(f"Demo chat run failed: {run.last_error}")
+            raise HTTPException(status_code=500, detail="Errore nell'elaborazione della risposta")
+        
+        # Ottieni risposta
+        messages = client.beta.threads.messages.list(thread_id=thread_id, extra_headers={"OpenAI-Beta": "assistants=v2"})
+        assistant_message = messages.data[0].content[0].text.value
+        
+        return {
+            "message": assistant_message,
+            "thread_id": thread_id
+        }
+        
+    except Exception as e:
+        logger.error(f"Error in demo chat: {e}")
+        raise HTTPException(status_code=500, detail="Errore nel processare il messaggio demo")
+
 # --- Conversations & Analytics ---
 
 @app.get("/api/chatbots/{chatbot_id}/conversations")

@@ -194,6 +194,9 @@ export default function LandingPage() {
     }
   }
 
+  // Stati per il thread della demo
+  const [demoThreadId, setDemoThreadId] = useState<string | null>(null)
+
   // Gestione chat demo popup
   const handleDemoChat = async (message: string) => {
     if (!message.trim() || isDemoLoading) return
@@ -203,14 +206,14 @@ export default function LandingPage() {
     setDemoInput('')
 
     try {
-      const response = await fetch('/api/chat', {
+      const response = await fetch('/api/demochat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          message,
-          assistantId: 'asst_L285y7tLbfulOmLXNh6mlUEE'
+          content: message,
+          thread_id: demoThreadId
         }),
       })
 
@@ -219,7 +222,13 @@ export default function LandingPage() {
       }
 
       const data = await response.json()
-      setDemoMessages(prev => [...prev, { role: 'assistant', text: data.response }])
+      
+      // Salva il thread_id per i messaggi successivi
+      if (!demoThreadId && data.thread_id) {
+        setDemoThreadId(data.thread_id)
+      }
+      
+      setDemoMessages(prev => [...prev, { role: 'assistant', text: data.message }])
     } catch (error) {
       console.error('Errore nella chat demo:', error)
       setDemoMessages(prev => [...prev, { 
