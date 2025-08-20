@@ -5,6 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { motion } from 'framer-motion'
 import CookieBanner from '../components/CookieBanner'
+import api from '../lib/api'
 import { 
   MessageSquare, 
   Home, 
@@ -206,22 +207,15 @@ export default function LandingPage() {
     setDemoInput('')
 
     try {
-      const response = await fetch('/api/demochat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          content: message,
-          thread_id: demoThreadId
-        }),
+      console.log('🚀 Invio messaggio demo:', { message, thread_id: demoThreadId })
+      
+      const response = await api.post('/demochat', {
+        content: message,
+        thread_id: demoThreadId
       })
 
-      if (!response.ok) {
-        throw new Error('Errore nella risposta del server')
-      }
-
-      const data = await response.json()
+      console.log('✅ Dati ricevuti:', response.data)
+      const data = response.data
       
       // Salva il thread_id per i messaggi successivi
       if (!demoThreadId && data.thread_id) {

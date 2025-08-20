@@ -961,12 +961,18 @@ class DemoMessageCreate(BaseModel):
     content: str
     thread_id: Optional[str] = None
 
+@app.get("/api/demochat/test")
+async def demo_chat_test():
+    """Test endpoint per verificare che demochat sia raggiungibile"""
+    return {"status": "ok", "message": "Demo chat endpoint is working"}
+
 @app.post("/api/demochat")
 async def demo_chat(message: DemoMessageCreate):
     """
     Endpoint per la demo chat della landing page.
     Non richiede autenticazione e non salva messaggi nel database.
     """
+    logger.info(f"🎯 Demo chat richiesta ricevuta: {message.content[:50]}...")
     try:
         client = get_openai_client()
         
