@@ -948,24 +948,24 @@ async def send_message(
             thread = client.beta.threads.create(extra_headers={"OpenAI-Beta": "assistants=v2"})
             thread_id = thread.id
             
-                    # Crea nuova conversazione nel DB
-        guest_identifier = request.client.host
-        conversation = Conversation(
-            chatbot_id=chatbot.id,
-            thread_id=thread_id,
-            guest_name=message.guest_name,
-            guest_identifier=guest_identifier
-        )
-        db.add(conversation)
-        db.commit()
-        db.refresh(conversation)
-        is_new_conversation = True
-    else:
-        thread_id = message.thread_id
-        conversation = db.query(Conversation).filter(
-            Conversation.thread_id == thread_id
-        ).first()
-        is_new_conversation = False
+            # Crea nuova conversazione nel DB
+            guest_identifier = request.client.host
+            conversation = Conversation(
+                chatbot_id=chatbot.id,
+                thread_id=thread_id,
+                guest_name=message.guest_name,
+                guest_identifier=guest_identifier
+            )
+            db.add(conversation)
+            db.commit()
+            db.refresh(conversation)
+            is_new_conversation = True
+        else:
+            thread_id = message.thread_id
+            conversation = db.query(Conversation).filter(
+                Conversation.thread_id == thread_id
+            ).first()
+            is_new_conversation = False
         
         # Invia messaggio a OpenAI
         client.beta.threads.messages.create(
