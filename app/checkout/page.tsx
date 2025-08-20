@@ -1,12 +1,13 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { subscription } from '@/lib/api'
 import { useAuthStore } from '@/lib/store'
 
-export default function CheckoutPage() {
+// Componente separato che utilizza useSearchParams
+function CheckoutContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { setAuth } = useAuthStore()
@@ -102,6 +103,27 @@ export default function CheckoutPage() {
         )}
       </div>
     </div>
+  )
+}
+
+// Componente di fallback per il loading
+function CheckoutFallback() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+      <div className="w-full max-w-md bg-white rounded-lg shadow p-6 text-center">
+        <h1 className="text-2xl font-semibold mb-2">Caricamento…</h1>
+        <p className="text-gray-600">Preparazione della pagina di checkout.</p>
+      </div>
+    </div>
+  )
+}
+
+// Componente principale avvolto in Suspense
+export default function CheckoutPage() {
+  return (
+    <Suspense fallback={<CheckoutFallback />}>
+      <CheckoutContent />
+    </Suspense>
   )
 }
 
