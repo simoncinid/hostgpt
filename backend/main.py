@@ -56,6 +56,10 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 stripe.api_key = settings.STRIPE_SECRET_KEY
 openai.api_key = settings.OPENAI_API_KEY
 
+def is_subscription_active(subscription_status: str) -> bool:
+    """Verifica se l'abbonamento è attivo (considerando anche 'cancelling')"""
+    return subscription_status in ['active', 'cancelling']
+
 def get_openai_client():
     """Restituisce un client OpenAI configurato per Assistants v2."""
     return openai.OpenAI(
@@ -461,7 +465,7 @@ async def create_checkout_session(current_user: User = Depends(get_current_user)
             raise HTTPException(status_code=400, detail="Devi verificare la tua email prima di sottoscrivere un abbonamento")
         
         # Se ha già un abbonamento attivo, non permettere un nuovo checkout
-        if current_user.subscription_status == 'active':
+        if is_subscription_active(current_user.subscription_status):
             logger.error(f"User {current_user.id} already has active subscription")
             raise HTTPException(status_code=400, detail="Hai già un abbonamento attivo")
         
@@ -646,7 +650,7 @@ async def confirm_subscription(
                     db.commit()
                     
                     # Invia email di attivazione abbonamento (solo se non già inviata)
-                    if current_user.subscription_status != 'active':
+                    if not is_subscription_active(current_user.subscription_status):
                         email_body = create_subscription_activation_email(current_user.full_name or current_user.email)
                         background_tasks.add_task(
                             send_email, 
@@ -777,7 +781,7 @@ async def cancel_subscription(
     
     try:
         # Verifica che l'utente abbia un abbonamento attivo
-        if current_user.subscription_status != 'active':
+        if not is_subscription_active(current_user.subscription_status):
             raise HTTPException(
                 status_code=400,
                 detail="Non hai un abbonamento attivo da annullare"
@@ -822,7 +826,7 @@ async def cancel_subscription(
                 if current_stripe_sub.cancel_at_period_end:
                     logger.info(f"Subscription {stripe_subscription_id} is already being canceled")
                     # Aggiorna il database per riflettere lo stato corretto
-                    current_user.subscription_status = 'active'  # Rimane attivo fino alla fine del periodo
+                    current_user.subscription_status = 'cancelling'  # Stato per abbonamento in fase di annullamento
                     current_user.subscription_end_date = datetime.utcfromtimestamp(current_stripe_sub.current_period_end)
                     db.commit()
                     logger.info(f"User {current_user.id} subscription already cancelling, database updated")
@@ -869,8 +873,8 @@ async def cancel_subscription(
             }
         
         # SOLO DOPO aver ricevuto conferma da Stripe, aggiorna il database
-        # Mantieni lo stato come 'active' ma aggiungi un flag per indicare che è in fase di annullamento
-        current_user.subscription_status = 'active'  # Rimane attivo fino alla fine del periodo
+        # Imposta lo stato come 'cancelling' per indicare che è in fase di annullamento
+        current_user.subscription_status = 'cancelling'  # Stato per abbonamento in fase di annullamento
         current_user.subscription_end_date = datetime.utcfromtimestamp(stripe_subscription.current_period_end)
         # I dati rimangono nel database come richiesto
         db.commit()
@@ -912,7 +916,7 @@ async def create_chatbot(
 ):
     """Crea un nuovo chatbot"""
     # Verifica abbonamento attivo
-    if current_user.subscription_status != 'active':
+    if not is_subscription_active(current_user.subscription_status):
         raise HTTPException(
             status_code=403, 
             detail="Devi attivare un abbonamento per creare un chatbot. Abbonamento mensile: 29€/mese"
@@ -987,7 +991,7 @@ async def get_subscription_status(
         "messages_remaining": current_user.messages_limit - current_user.messages_used,
         "messages_reset_date": current_user.messages_reset_date,
         "next_reset_date": current_user.messages_reset_date + timedelta(days=30) if current_user.messages_reset_date else None,
-        "is_blocked": current_user.subscription_status != 'active',
+        "is_blocked": not is_subscription_active(current_user.subscription_status),
         "monthly_price": "29€"
     }
 
@@ -998,7 +1002,7 @@ async def get_chatbots(
 ):
     """Ottieni tutti i chatbot dell'utente"""
     # Blocca accesso senza abbonamento attivo
-    if current_user.subscription_status != 'active':
+    if not is_subscription_active(current_user.subscription_status):
         raise HTTPException(
             status_code=403,
             detail="Abbonamento non attivo. Sottoscrivi un abbonamento mensile a 29€ per accedere alle funzionalità."
@@ -1042,7 +1046,7 @@ async def get_chatbot(
 ):
     """Ottieni dettagli di un chatbot"""
     # Blocca accesso senza abbonamento attivo
-    if current_user.subscription_status != 'active':
+    if not is_subscription_active(current_user.subscription_status):
         raise HTTPException(
             status_code=403,
             detail="Abbonamento non attivo. Sottoscrivi un abbonamento mensile a 29€ per accedere alle funzionalità."
@@ -1066,7 +1070,7 @@ async def update_chatbot(
 ):
     """Aggiorna un chatbot"""
     # Blocca accesso senza abbonamento attivo
-    if current_user.subscription_status != 'active':
+    if not is_subscription_active(current_user.subscription_status):
         raise HTTPException(
             status_code=403,
             detail="Abbonamento non attivo. Sottoscrivi un abbonamento mensile a 29€ per accedere alle funzionalità."
@@ -1235,7 +1239,7 @@ async def send_message(
         raise HTTPException(status_code=404, detail="Proprietario del chatbot non trovato")
     
     # Verifica abbonamento attivo
-    if owner.subscription_status != 'active':
+    if not is_subscription_active(owner.subscription_status):
         raise HTTPException(
             status_code=403, 
             detail="Il proprietario di questo chatbot non ha un abbonamento attivo. Il servizio è temporaneamente non disponibile."
@@ -1360,7 +1364,7 @@ async def get_conversations(
 ):
     """Ottieni tutte le conversazioni di un chatbot"""
     # Blocca accesso senza abbonamento attivo
-    if current_user.subscription_status != 'active':
+    if not is_subscription_active(current_user.subscription_status):
         raise HTTPException(
             status_code=403,
             detail="Abbonamento non attivo. Sottoscrivi un abbonamento mensile a 29€ per accedere alle funzionalità."

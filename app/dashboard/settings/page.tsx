@@ -137,12 +137,19 @@ export default function SettingsPage() {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-medium">Stato: <span className={user?.subscription_status === 'active' ? 'text-green-600' : 'text-red-600'}>{user?.subscription_status || 'inactive'}</span></p>
+                  <p className="font-medium">Stato: <span className={
+                    user?.subscription_status === 'active' ? 'text-green-600' : 
+                    user?.subscription_status === 'cancelling' ? 'text-orange-600' : 
+                    'text-red-600'
+                  }>{user?.subscription_status || 'inactive'}</span></p>
                   {user?.subscription_end_date && (
-                    <p className="text-sm text-gray-500">Prossimo rinnovo: {new Date(user.subscription_end_date).toLocaleDateString('it-IT')}</p>
+                    <p className="text-sm text-gray-500">
+                      {user?.subscription_status === 'cancelling' ? 'Fine abbonamento: ' : 'Prossimo rinnovo: '}
+                      {new Date(user.subscription_end_date).toLocaleDateString('it-IT')}
+                    </p>
                   )}
                 </div>
-                {user?.subscription_status !== 'active' && (
+                {!['active', 'cancelling'].includes(user?.subscription_status || '') && (
                   <button onClick={handleStartCheckout} disabled={isCheckoutLoading} className="btn-primary inline-flex items-center">
                     {isCheckoutLoading ? (
                       <>
@@ -169,11 +176,11 @@ export default function SettingsPage() {
                         <p className="text-sm text-red-700 mb-3">
                           Annullando l'abbonamento il servizio verrà disattivato, ma tutti i tuoi dati (chatbot, conversazioni, messaggi) rimarranno nel database.
                         </p>
-                                                 <button 
-                           onClick={() => setShowCancelModal(true)} 
-                           disabled={isCancellingSubscription}
-                           className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center"
-                         >
+                        <button 
+                          onClick={() => setShowCancelModal(true)} 
+                          disabled={isCancellingSubscription}
+                          className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center"
+                        >
                           {isCancellingSubscription ? (
                             <>
                               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -181,6 +188,36 @@ export default function SettingsPage() {
                             </>
                           ) : (
                             'Annulla Abbonamento'
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {user?.subscription_status === 'cancelling' && (
+                <div className="border-t pt-4">
+                  <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                    <div className="flex items-start gap-3">
+                      <AlertTriangle className="w-5 h-5 text-orange-600 mt-0.5 flex-shrink-0" />
+                      <div className="flex-1">
+                        <h3 className="font-medium text-orange-800 mb-1">Abbonamento in Fase di Annullamento</h3>
+                        <p className="text-sm text-orange-700 mb-3">
+                          Il tuo abbonamento è in fase di annullamento e rimarrà attivo fino alla fine del periodo corrente. Puoi riattivarlo in qualsiasi momento.
+                        </p>
+                        <button 
+                          onClick={handleStartCheckout} 
+                          disabled={isCheckoutLoading}
+                          className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center"
+                        >
+                          {isCheckoutLoading ? (
+                            <>
+                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                              Riattivazione...
+                            </>
+                          ) : (
+                            'Riattiva Abbonamento'
                           )}
                         </button>
                       </div>
