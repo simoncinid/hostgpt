@@ -599,24 +599,42 @@ async def cancel_subscription(
                 detail="Non hai un abbonamento attivo da annullare"
             )
         
-        # Se c'è un subscription_id su Stripe, cancella anche lì
+        # Se c'è un subscription_id su Stripe, cancella anche lì PRIMA di aggiornare il DB
         if current_user.stripe_subscription_id:
             try:
-                stripe.Subscription.modify(
+                # Chiama Stripe per annullare l'abbonamento
+                stripe_subscription = stripe.Subscription.modify(
                     current_user.stripe_subscription_id,
                     cancel_at_period_end=True  # Cancella alla fine del periodo corrente
                 )
                 logger.info(f"Stripe subscription {current_user.stripe_subscription_id} marked for cancellation")
+                
+                # Verifica che la cancellazione sia stata accettata da Stripe
+                if stripe_subscription.status not in ['active', 'canceled']:
+                    raise HTTPException(
+                        status_code=500,
+                        detail="Errore nella cancellazione dell'abbonamento su Stripe"
+                    )
+                    
+            except stripe.error.StripeError as e:
+                logger.error(f"Stripe error cancelling subscription: {e}")
+                raise HTTPException(
+                    status_code=500,
+                    detail=f"Errore nella cancellazione dell'abbonamento: {str(e)}"
+                )
             except Exception as e:
-                logger.error(f"Error cancelling Stripe subscription: {e}")
-                # Continua comunque con la cancellazione locale
+                logger.error(f"Unexpected error cancelling Stripe subscription: {e}")
+                raise HTTPException(
+                    status_code=500,
+                    detail="Errore imprevisto nella cancellazione dell'abbonamento"
+                )
         
-        # Aggiorna lo stato nel database
+        # SOLO DOPO aver ricevuto conferma da Stripe, aggiorna il database
         current_user.subscription_status = 'cancelled'
         # I dati rimangono nel database come richiesto
         db.commit()
         
-        logger.info(f"User {current_user.id} subscription cancelled")
+        logger.info(f"User {current_user.id} subscription cancelled successfully")
         return {"status": "cancelled", "message": "Abbonamento annullato con successo"}
         
     except HTTPException:
