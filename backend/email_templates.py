@@ -226,7 +226,7 @@ def get_base_email_template():
             </div>
             
             <div class="content">
-                {{content}}
+                {content}
             </div>
             
             <div class="footer">
@@ -281,7 +281,7 @@ def create_welcome_email(user_name: str, verification_link: str) -> str:
         </div>
     """
     
-    return get_base_email_template().replace("{{content}}", content)
+    return get_base_email_template().format(content=content)
 
 def create_subscription_activation_email(user_name: str) -> str:
     """Template email per attivazione abbonamento"""
@@ -315,7 +315,7 @@ def create_subscription_activation_email(user_name: str) -> str:
         </div>
     """
     
-    return get_base_email_template().replace("{{content}}", content)
+    return get_base_email_template().format(content=content)
 
 def create_subscription_cancellation_email(user_name: str, end_date: str) -> str:
     """Template email per annullamento abbonamento"""
@@ -351,7 +351,7 @@ def create_subscription_cancellation_email(user_name: str, end_date: str) -> str
         </div>
     """
     
-    return get_base_email_template().replace("{{content}}", content)
+    return get_base_email_template().format(content=content)
 
 def create_chatbot_ready_email(user_name: str, property_name: str, chat_url: str) -> str:
     """Template email per chatbot pronto"""
@@ -391,4 +391,4 @@ def create_chatbot_ready_email(user_name: str, property_name: str, chat_url: str
         </div>
     """
     
-    return get_base_email_template().replace("{{content}}", content)
+    return get_base_email_template().format(content=content)

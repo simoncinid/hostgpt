@@ -467,7 +467,7 @@ async def create_checkout_session(current_user: User = Depends(get_current_user)
             current_user.stripe_customer_id = customer.id
             db.commit()
 
-        # Controlla se ci sono sottoscrizioni attive o in corso (ma permette riattivazione se cancellata)
+        # Controlla se ci sono sottoscrizioni attive o in corso
         if current_user.stripe_customer_id:
             subs = stripe.Subscription.list(customer=current_user.stripe_customer_id, status='all', limit=1)
             if subs.data:
@@ -475,23 +475,51 @@ async def create_checkout_session(current_user: User = Depends(get_current_user)
                 # Controlla se la sottoscrizione è in fase di annullamento (cancel_at_period_end=True)
                 is_canceling = sub.cancel_at_period_end if hasattr(sub, 'cancel_at_period_end') else False
                 
-                # Se la sottoscrizione è attiva ma in fase di annullamento, permette la riattivazione
+                # Se la sottoscrizione è attiva ma in fase di annullamento, riattiva quella esistente
                 if sub.status == 'active' and is_canceling:
-                    logger.info(f"User {current_user.id} has subscription canceling at period end, allowing reactivation")
-                    # Aggiorna il subscription_id nel database per la nuova sottoscrizione
-                    current_user.stripe_subscription_id = None
-                    db.commit()
-                # Permette riattivazione solo se la sottoscrizione è completamente cancellata
-                elif sub.status in ['active', 'trialing', 'incomplete', 'incomplete_expired', 'past_due', 'unpaid']:
+                    logger.info(f"User {current_user.id} has subscription canceling at period end, reactivating existing subscription")
+                    try:
+                        # Riattiva l'abbonamento esistente rimuovendo cancel_at_period_end
+                        reactivated_sub = stripe.Subscription.modify(
+                            sub.id,
+                            cancel_at_period_end=False
+                        )
+                        
+                        # Aggiorna il database con l'abbonamento riattivato
+                        current_user.stripe_subscription_id = reactivated_sub.id
+                        current_user.subscription_status = 'active'
+                        current_user.subscription_end_date = datetime.utcfromtimestamp(reactivated_sub.current_period_end)
+                        db.commit()
+                        
+                        return {"status": "reactivated", "message": "Abbonamento riattivato con successo"}
+                        
+                    except stripe.error.StripeError as e:
+                        logger.error(f"Stripe error reactivating subscription: {e}")
+                        raise HTTPException(
+                            status_code=500,
+                            detail=f"Errore nella riattivazione dell'abbonamento: {str(e)}"
+                        )
+                
+                # Se la sottoscrizione è attiva e non in fase di cancellazione, non permettere nuovo checkout
+                elif sub.status in ['active', 'trialing'] and not is_canceling:
+                    raise HTTPException(
+                        status_code=400,
+                        detail="Hai già un abbonamento attivo. Non è necessario crearne un altro."
+                    )
+                
+                # Se la sottoscrizione è in altri stati problematici, non permettere nuovo checkout
+                elif sub.status in ['incomplete', 'incomplete_expired', 'past_due', 'unpaid']:
                     raise HTTPException(
                         status_code=400,
                         detail=(
-                            "Hai già una sottoscrizione attiva o in corso. Completa o verifica il pagamento senza crearne un'altra."
+                            "Hai una sottoscrizione con problemi di pagamento. "
+                            "Risolvi il problema di pagamento prima di creare un nuovo abbonamento."
                         ),
                     )
-                # Se la sottoscrizione è cancellata, permette la riattivazione
+                
+                # Se la sottoscrizione è completamente cancellata, permette la creazione di uno nuovo
                 elif sub.status == 'canceled':
-                    logger.info(f"User {current_user.id} has canceled subscription, allowing reactivation")
+                    logger.info(f"User {current_user.id} has canceled subscription, allowing new subscription creation")
                     # Aggiorna il subscription_id nel database per la nuova sottoscrizione
                     current_user.stripe_subscription_id = None
                     db.commit()
@@ -543,11 +571,18 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
         ).first()
         
         if user:
+            # Verifica se è una nuova sottoscrizione o una riattivazione
+            subscription = stripe.Subscription.retrieve(session['subscription'])
+            
             user.stripe_subscription_id = session['subscription']
             user.subscription_status = 'active'
-            user.subscription_end_date = datetime.utcnow() + timedelta(days=30)
-            user.messages_used = 0
-            user.messages_reset_date = datetime.utcnow()
+            user.subscription_end_date = datetime.utcfromtimestamp(subscription.current_period_end)
+            
+            # Reset messaggi solo se è una nuova sottoscrizione (non riattivazione)
+            if not subscription.cancel_at_period_end:
+                user.messages_used = 0
+                user.messages_reset_date = datetime.utcnow()
+            
             db.commit()
     
     elif event['type'] == 'customer.subscription.deleted':
@@ -624,6 +659,68 @@ async def confirm_subscription(
     except Exception as e:
         logger.error(f"Subscription confirm error: {e}")
         raise HTTPException(status_code=400, detail=str(e))
+
+@app.post("/api/subscription/reactivate")
+async def reactivate_subscription(
+    background_tasks: BackgroundTasks,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Riattiva l'abbonamento dell'utente se è in fase di cancellazione"""
+    try:
+        # Verifica che l'utente abbia un abbonamento in fase di cancellazione
+        if not current_user.stripe_subscription_id:
+            raise HTTPException(
+                status_code=400,
+                detail="Non hai un abbonamento da riattivare"
+            )
+        
+        # Verifica lo stato dell'abbonamento su Stripe
+        try:
+            stripe_subscription = stripe.Subscription.retrieve(current_user.stripe_subscription_id)
+            
+            # Verifica se l'abbonamento è in fase di cancellazione
+            if not stripe_subscription.cancel_at_period_end:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Il tuo abbonamento non è in fase di cancellazione"
+                )
+            
+            # Riattiva l'abbonamento
+            reactivated_sub = stripe.Subscription.modify(
+                current_user.stripe_subscription_id,
+                cancel_at_period_end=False
+            )
+            
+            # Aggiorna il database
+            current_user.subscription_status = 'active'
+            current_user.subscription_end_date = datetime.utcfromtimestamp(reactivated_sub.current_period_end)
+            db.commit()
+            
+            # Invia email di conferma riattivazione
+            email_body = create_subscription_activation_email(current_user.full_name or current_user.email)
+            background_tasks.add_task(
+                send_email, 
+                current_user.email, 
+                "🎉 Abbonamento HostGPT Riattivato!", 
+                email_body
+            )
+            
+            logger.info(f"User {current_user.id} subscription reactivated successfully")
+            return {"status": "reactivated", "message": "Abbonamento riattivato con successo"}
+            
+        except stripe.error.StripeError as e:
+            logger.error(f"Stripe error reactivating subscription: {e}")
+            raise HTTPException(
+                status_code=500,
+                detail=f"Errore nella riattivazione dell'abbonamento: {str(e)}"
+            )
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Subscription reactivate error: {e}")
+        raise HTTPException(status_code=500, detail="Errore durante la riattivazione dell'abbonamento")
 
 @app.post("/api/subscription/cancel")
 async def cancel_subscription(
