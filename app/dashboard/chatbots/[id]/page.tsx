@@ -80,10 +80,6 @@ export default function ChatbotDetailPage() {
         <div className="bg-white shadow-sm">
           <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Link href="/dashboard/chatbots" className="text-gray-600 hover:text-primary flex items-center">
-                <ArrowLeft className="w-5 h-5 mr-2" />
-                Torna ai Chatbot
-              </Link>
               <h1 className="text-xl font-semibold">{currentChatbot.property_name}</h1>
             </div>
             <div className="flex items-center gap-2">

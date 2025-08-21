@@ -97,7 +97,10 @@ export default function ChatbotsListPage() {
                 animate={{ opacity: 1, y: 0 }}
                 className="bg-white rounded-xl border p-5 flex items-center justify-between hover:shadow-md transition"
               >
-                <div className="flex-1">
+                <div 
+                  className="flex-1 cursor-pointer"
+                  onClick={() => router.push(`/dashboard/chatbots/${bot.id}`)}
+                >
                   <div className="flex items-center gap-2">
                     <h3 className="font-semibold text-lg">{bot.property_name}</h3>
                     {bot.is_active ? (
