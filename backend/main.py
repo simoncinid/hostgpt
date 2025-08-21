@@ -821,6 +821,11 @@ async def cancel_subscription(
                 # Verifica se l'abbonamento è già in fase di cancellazione
                 if current_stripe_sub.cancel_at_period_end:
                     logger.info(f"Subscription {stripe_subscription_id} is already being canceled")
+                    # Aggiorna il database per riflettere lo stato corretto
+                    current_user.subscription_status = 'active'  # Rimane attivo fino alla fine del periodo
+                    current_user.subscription_end_date = datetime.utcfromtimestamp(current_stripe_sub.current_period_end)
+                    db.commit()
+                    logger.info(f"User {current_user.id} subscription already cancelling, database updated")
                     return {
                         "status": "already_cancelling", 
                         "message": "Il tuo abbonamento è già in fase di annullamento."
@@ -866,6 +871,7 @@ async def cancel_subscription(
         # SOLO DOPO aver ricevuto conferma da Stripe, aggiorna il database
         # Mantieni lo stato come 'active' ma aggiungi un flag per indicare che è in fase di annullamento
         current_user.subscription_status = 'active'  # Rimane attivo fino alla fine del periodo
+        current_user.subscription_end_date = datetime.utcfromtimestamp(stripe_subscription.current_period_end)
         # I dati rimangono nel database come richiesto
         db.commit()
         
