@@ -36,10 +36,6 @@ export default function ChatbotsListPage() {
     try {
       const response = await chatbotsApi.list()
       setChatbots(response.data)
-      if ((response.data || []).length >= 1) {
-        router.replace(`/dashboard/chatbots/${response.data[0].id}`)
-        return
-      }
     } catch {
       toast.error('Errore nel caricamento dei chatbot')
     } finally {

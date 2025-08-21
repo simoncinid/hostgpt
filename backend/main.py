@@ -3,6 +3,7 @@ from fastapi.security import OAuth2PasswordBearer
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from typing import List, Optional
 from datetime import datetime, timedelta
 import stripe
@@ -703,6 +704,16 @@ async def get_chatbots(
     result = []
     for bot in chatbots:
         chat_url = f"{settings.FRONTEND_URL}/chat/{bot.uuid}"
+        
+        # Calcola statistiche reali dal database
+        total_conversations = db.query(func.count(Conversation.id)).filter(
+            Conversation.chatbot_id == bot.id
+        ).scalar()
+        
+        total_messages = db.query(func.count(Message.id)).join(Conversation).filter(
+            Conversation.chatbot_id == bot.id
+        ).scalar()
+        
         result.append({
             "id": bot.id,
             "uuid": bot.uuid,
@@ -711,8 +722,8 @@ async def get_chatbots(
             "property_city": bot.property_city,
             "chat_url": chat_url,
             "qr_code": generate_qr_code(chat_url),
-            "total_conversations": bot.total_conversations,
-            "total_messages": bot.total_messages,
+            "total_conversations": total_conversations,
+            "total_messages": total_messages,
             "is_active": bot.is_active,
             "created_at": bot.created_at
         })

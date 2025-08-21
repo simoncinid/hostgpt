@@ -131,7 +131,7 @@ function DashboardContent() {
     <div className="min-h-screen bg-gray-50">
       {/* Sidebar / Drawer */}
       <div className={`fixed left-0 top-0 h-full bg-white shadow-lg z-40 transform transition-all duration-200 ${isMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'} ${isSidebarCollapsed ? 'w-16' : 'w-64'}`}>
-        <div className="p-6 relative">
+        <div className={`${isSidebarCollapsed ? 'p-4' : 'p-6'} relative`}>
           <button onClick={() => setIsMenuOpen(false)} className="md:hidden absolute right-3 top-3 p-2 rounded-lg hover:bg-gray-100" aria-label="Chiudi menu">
             <X className="w-5 h-5" />
           </button>
@@ -142,36 +142,36 @@ function DashboardContent() {
           >
             {isSidebarCollapsed ? <Menu className="w-5 h-5" /> : <X className="w-5 h-5" />}
           </button>
-          <Link href="/" className="flex items-center space-x-2">
-            <Home className="w-8 h-8 text-primary" />
+          <Link href="/" className={`flex items-center ${isSidebarCollapsed ? 'justify-center' : 'space-x-2'}`}>
+            <Home className={`${isSidebarCollapsed ? 'w-6 h-6' : 'w-8 h-8'} text-primary`} />
             {!isSidebarCollapsed && <span className="text-2xl font-bold text-dark">HostGPT</span>}
           </Link>
         </div>
 
         <nav className="mt-8">
-          <Link href="/dashboard" className="flex items-center px-6 py-3 bg-primary/10 text-primary border-r-3 border-primary">
-            <BarChart3 className="w-5 h-5 mr-3" />
+          <Link href="/dashboard" className={`flex items-center ${isSidebarCollapsed ? 'justify-center px-2 py-3' : 'px-6 py-3'} bg-primary/10 text-primary border-r-3 border-primary`}>
+            <BarChart3 className={`${isSidebarCollapsed ? 'w-6 h-6' : 'w-5 h-5'} ${!isSidebarCollapsed ? 'mr-3' : ''}`} />
             {!isSidebarCollapsed && "Dashboard"}
           </Link>
           <Link 
             href="/dashboard/chatbots"
-            className="flex items-center px-6 py-3 text-gray-600 hover:bg-gray-50"
+            className={`flex items-center ${isSidebarCollapsed ? 'justify-center px-2 py-3' : 'px-6 py-3'} text-gray-600 hover:bg-gray-50`}
           >
-            <MessageSquare className="w-5 h-5 mr-3" />
+            <MessageSquare className={`${isSidebarCollapsed ? 'w-6 h-6' : 'w-5 h-5'} ${!isSidebarCollapsed ? 'mr-3' : ''}`} />
             {!isSidebarCollapsed && "I Miei Chatbot"}
           </Link>
-          <Link href="/dashboard/conversations" className="flex items-center px-6 py-3 text-gray-600 hover:bg-gray-50">
-            <Users className="w-5 h-5 mr-3" />
+          <Link href="/dashboard/conversations" className={`flex items-center ${isSidebarCollapsed ? 'justify-center px-2 py-3' : 'px-6 py-3'} text-gray-600 hover:bg-gray-50`}>
+            <Users className={`${isSidebarCollapsed ? 'w-6 h-6' : 'w-5 h-5'} ${!isSidebarCollapsed ? 'mr-3' : ''}`} />
             {!isSidebarCollapsed && "Conversazioni"}
           </Link>
-          <Link href="/dashboard/settings" className="flex items-center px-6 py-3 text-gray-600 hover:bg-gray-50">
-            <Settings className="w-5 h-5 mr-3" />
+          <Link href="/dashboard/settings" className={`flex items-center ${isSidebarCollapsed ? 'justify-center px-2 py-3' : 'px-6 py-3'} text-gray-600 hover:bg-gray-50`}>
+            <Settings className={`${isSidebarCollapsed ? 'w-6 h-6' : 'w-5 h-5'} ${!isSidebarCollapsed ? 'mr-3' : ''}`} />
             {!isSidebarCollapsed && "Impostazioni"}
           </Link>
         </nav>
 
-        <div className="absolute bottom-0 left-0 right-0 p-6">
-          <div className="bg-gray-100 rounded-lg p-4">
+        <div className={`absolute bottom-0 left-0 right-0 ${isSidebarCollapsed ? 'p-2' : 'p-6'}`}>
+          <div className={`bg-gray-100 rounded-lg ${isSidebarCollapsed ? 'p-2' : 'p-4'}`}>
             {!isSidebarCollapsed && (
               <>
                 <p className="text-sm font-semibold text-gray-700">{user?.full_name}</p>
