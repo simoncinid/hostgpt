@@ -17,6 +17,7 @@ export default function SettingsPage() {
   const [isCheckoutLoading, setIsCheckoutLoading] = useState(false)
   const [isCancellingSubscription, setIsCancellingSubscription] = useState(false)
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
+  const [showCancelModal, setShowCancelModal] = useState(false)
 
   useEffect(() => {
     const load = async () => {
@@ -36,6 +37,20 @@ export default function SettingsPage() {
     setIsCheckoutLoading(true)
     try {
       const res = await subscription.createCheckout()
+      
+      // Controlla se l'abbonamento è stato riattivato
+      if (res.data.status === 'reactivated') {
+        toast.success(
+          'Abbonamento riattivato con successo! Riprenderai a pagare regolarmente dal prossimo rinnovo.',
+          { duration: 5000 }
+        )
+        // Ricarica i dati utente per aggiornare lo stato
+        const me = await auth.me()
+        setUser(me.data)
+        return
+      }
+      
+      // Altrimenti reindirizza al checkout
       window.location.href = (res.data as any).checkout_url
     } catch (e: any) {
       toast.error(e.response?.data?.detail || 'Errore nell\'avvio del checkout')
@@ -45,10 +60,7 @@ export default function SettingsPage() {
   }
 
   const handleCancelSubscription = async () => {
-    if (!confirm('Sei sicuro di voler annullare l\'abbonamento? Il servizio verrà disattivato ma i tuoi dati rimarranno nel database.')) {
-      return
-    }
-
+    setShowCancelModal(false)
     setIsCancellingSubscription(true)
     try {
       await subscription.cancel()
@@ -146,11 +158,11 @@ export default function SettingsPage() {
                         <p className="text-sm text-red-700 mb-3">
                           Annullando l'abbonamento il servizio verrà disattivato, ma tutti i tuoi dati (chatbot, conversazioni, messaggi) rimarranno nel database.
                         </p>
-                        <button 
-                          onClick={handleCancelSubscription} 
-                          disabled={isCancellingSubscription}
-                          className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center"
-                        >
+                                                 <button 
+                           onClick={() => setShowCancelModal(true)} 
+                           disabled={isCancellingSubscription}
+                           className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center"
+                         >
                           {isCancellingSubscription ? (
                             <>
                               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -177,6 +189,47 @@ export default function SettingsPage() {
           </div>
         </div>
       </div>
+
+      {/* Modal di conferma annullamento */}
+      {showCancelModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
+            <div className="flex items-start gap-3 mb-4">
+              <AlertTriangle className="w-6 h-6 text-red-600 mt-0.5 flex-shrink-0" />
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-1">Conferma Annullamento</h3>
+                <p className="text-sm text-gray-600">
+                  Sei sicuro di voler annullare l'abbonamento? Il servizio verrà disattivato ma tutti i tuoi dati (chatbot, conversazioni, messaggi) rimarranno nel database.
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setShowCancelModal(false)}
+                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                disabled={isCancellingSubscription}
+              >
+                Annulla
+              </button>
+              <button
+                onClick={handleCancelSubscription}
+                disabled={isCancellingSubscription}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center"
+              >
+                {isCancellingSubscription ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Annullamento...
+                  </>
+                ) : (
+                  'Conferma Annullamento'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

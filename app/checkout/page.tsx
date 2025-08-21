@@ -12,7 +12,7 @@ function CheckoutContent() {
   const searchParams = useSearchParams()
   const { setAuth } = useAuthStore()
 
-  const [status, setStatus] = useState<'idle' | 'processing' | 'error' | 'cancelled'>('idle')
+  const [status, setStatus] = useState<'idle' | 'processing' | 'error' | 'cancelled' | 'success'>('idle')
   const [errorMessage, setErrorMessage] = useState<string>('')
 
   useEffect(() => {
@@ -41,6 +41,17 @@ function CheckoutContent() {
         }
 
         const resp = await subscription.createCheckout()
+        
+        // Controlla se l'abbonamento è stato riattivato
+        if (resp.data.status === 'reactivated') {
+          setStatus('success')
+          setErrorMessage('Abbonamento riattivato con successo! Riprenderai a pagare regolarmente dal prossimo rinnovo. Reindirizzamento alla dashboard...')
+          setTimeout(() => {
+            window.location.href = '/dashboard'
+          }, 3000)
+          return
+        }
+        
         const url: string | undefined = resp?.data?.checkout_url
         if (url) {
           window.location.href = url
@@ -91,6 +102,16 @@ function CheckoutContent() {
             <div className="flex gap-3 justify-center">
               <Link href="/login" className="btn-secondary">Accedi</Link>
               <button className="btn-primary" onClick={() => router.refresh()}>Riprova</button>
+            </div>
+          </>
+        )}
+
+        {status === 'success' && (
+          <>
+            <h1 className="text-2xl font-semibold mb-2 text-green-600">Abbonamento riattivato!</h1>
+            <p className="text-gray-600 mb-6">{errorMessage}</p>
+            <div className="flex gap-3 justify-center">
+              <Link href="/dashboard" className="btn-primary">Vai alla dashboard</Link>
             </div>
           </>
         )}

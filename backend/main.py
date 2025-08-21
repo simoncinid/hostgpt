@@ -544,6 +544,8 @@ async def create_checkout_session(current_user: User = Depends(get_current_user)
         
     except Exception as e:
         logger.error(f"Stripe checkout error: {e}")
+        logger.error(f"Error type: {type(e)}")
+        logger.error(f"Error details: {str(e)}")
         raise HTTPException(status_code=400, detail=str(e))
 
 @app.post("/api/subscription/webhook")
