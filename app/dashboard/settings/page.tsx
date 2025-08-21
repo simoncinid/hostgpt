@@ -63,8 +63,12 @@ export default function SettingsPage() {
     setShowCancelModal(false)
     setIsCancellingSubscription(true)
     try {
-      await subscription.cancel()
-      toast.success('Abbonamento annullato con successo')
+      const response = await subscription.cancel()
+      if (response.data.status === 'already_cancelling') {
+        toast.success('Il tuo abbonamento è già in fase di annullamento')
+      } else {
+        toast.success('Abbonamento annullato con successo')
+      }
       // Ricarica i dati utente per aggiornare lo stato
       const me = await auth.me()
       setUser(me.data)

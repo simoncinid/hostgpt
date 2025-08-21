@@ -636,7 +636,8 @@ async def confirm_subscription(
             subs = stripe.Subscription.list(customer=current_user.stripe_customer_id, status='all', limit=1)
             if subs.data:
                 sub = subs.data[0]
-                if sub.status in ['active', 'trialing']:
+                # Verifica che l'abbonamento sia attivo e non in fase di cancellazione
+                if sub.status in ['active', 'trialing'] and not sub.cancel_at_period_end:
                     current_user.stripe_subscription_id = sub.id
                     current_user.subscription_status = 'active'
                     current_user.subscription_end_date = datetime.utcfromtimestamp(sub.current_period_end)
@@ -655,6 +656,10 @@ async def confirm_subscription(
                         )
                     
                     return {"status": "active"}
+                elif sub.status in ['active', 'trialing'] and sub.cancel_at_period_end:
+                    # L'abbonamento è attivo ma in fase di cancellazione
+                    logger.info(f"User {current_user.id} has subscription in cancellation phase")
+                    return {"status": "cancelling"}
 
         return {"status": current_user.subscription_status or 'inactive'}
     except Exception as e:
@@ -773,14 +778,55 @@ async def cancel_subscription(
             )
         
         # Se c'è un subscription_id su Stripe, cancella anche lì PRIMA di aggiornare il DB
-        if current_user.stripe_subscription_id:
+        logger.info(f"User {current_user.id} stripe_subscription_id: {current_user.stripe_subscription_id}")
+        
+        # Se non c'è stripe_subscription_id nel database, prova a cercarlo su Stripe
+        stripe_subscription_id = current_user.stripe_subscription_id
+        if not stripe_subscription_id and current_user.stripe_customer_id:
             try:
+                logger.info(f"User {current_user.id} has no stripe_subscription_id in DB, searching on Stripe...")
+                # Cerca tutte le sottoscrizioni (non solo quelle 'active') per trovare anche quelle in fase di cancellazione
+                subs = stripe.Subscription.list(customer=current_user.stripe_customer_id, status='all', limit=10)
+                if subs.data:
+                    # Trova la sottoscrizione più recente che non sia in fase di cancellazione
+                    active_sub = None
+                    for sub in subs.data:
+                        if sub.status == 'active' and not sub.cancel_at_period_end:
+                            active_sub = sub
+                            break
+                    
+                    if active_sub:
+                        stripe_subscription_id = active_sub.id
+                        logger.info(f"Found active subscription on Stripe: {stripe_subscription_id}")
+                        # Aggiorna il database con l'ID trovato
+                        current_user.stripe_subscription_id = stripe_subscription_id
+                        db.commit()
+                    else:
+                        logger.info(f"No active (non-canceling) subscription found on Stripe for user {current_user.id}")
+            except Exception as e:
+                logger.error(f"Error searching for subscription on Stripe: {e}")
+        
+        if stripe_subscription_id:
+            try:
+                # Prima recupera l'abbonamento per verificare lo stato attuale
+                current_stripe_sub = stripe.Subscription.retrieve(stripe_subscription_id)
+                logger.info(f"Current Stripe subscription status: {current_stripe_sub.status}, cancel_at_period_end: {current_stripe_sub.cancel_at_period_end}")
+                
+                # Verifica se l'abbonamento è già in fase di cancellazione
+                if current_stripe_sub.cancel_at_period_end:
+                    logger.info(f"Subscription {stripe_subscription_id} is already being canceled")
+                    return {
+                        "status": "already_cancelling", 
+                        "message": "Il tuo abbonamento è già in fase di annullamento."
+                    }
+                
                 # Chiama Stripe per annullare l'abbonamento
                 stripe_subscription = stripe.Subscription.modify(
-                    current_user.stripe_subscription_id,
+                    stripe_subscription_id,
                     cancel_at_period_end=True  # Cancella alla fine del periodo corrente
                 )
-                logger.info(f"Stripe subscription {current_user.stripe_subscription_id} marked for cancellation")
+                logger.info(f"Stripe subscription {stripe_subscription_id} marked for cancellation")
+                logger.info(f"Updated Stripe subscription status: {stripe_subscription.status}, cancel_at_period_end: {stripe_subscription.cancel_at_period_end}")
                 
                 # Verifica che la cancellazione sia stata accettata da Stripe
                 if stripe_subscription.status not in ['active', 'canceled']:
@@ -801,6 +847,15 @@ async def cancel_subscription(
                     status_code=500,
                     detail="Errore imprevisto nella cancellazione dell'abbonamento"
                 )
+        else:
+            logger.warning(f"User {current_user.id} has no stripe_subscription_id and no active subscription found on Stripe")
+            # Se non c'è abbonamento su Stripe, aggiorna solo il database
+            current_user.subscription_status = 'cancelled'
+            db.commit()
+            return {
+                "status": "cancelled", 
+                "message": "Abbonamento annullato con successo."
+            }
         
         # SOLO DOPO aver ricevuto conferma da Stripe, aggiorna il database
         # Mantieni lo stato come 'active' ma aggiungi un flag per indicare che è in fase di annullamento
