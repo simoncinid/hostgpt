@@ -64,7 +64,7 @@ function LoginContent() {
           toast.error('Devi verificare la tua email. Controlla la posta e clicca il link di verifica.')
           return
         }
-        if (subscriptionStatus !== 'active') {
+        if (!['active', 'cancelling'].includes(subscriptionStatus)) {
           toast('Completa il pagamento per continuare', { icon: '💳' })
           router.push('/checkout')
         } else {

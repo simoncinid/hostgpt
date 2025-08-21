@@ -38,7 +38,7 @@ export default function SettingsPage() {
     try {
       const res = await subscription.createCheckout()
       
-      // Controlla se l'abbonamento è stato riattivato
+      // Controlla se l'abbonamento è stato riattivato automaticamente
       if (res.data.status === 'reactivated') {
         toast.success(
           'Abbonamento riattivato con successo! Riprenderai a pagare regolarmente dal prossimo rinnovo.',
@@ -206,20 +206,20 @@ export default function SettingsPage() {
                         <p className="text-sm text-orange-700 mb-3">
                           Il tuo abbonamento è in fase di annullamento e rimarrà attivo fino alla fine del periodo corrente. Puoi riattivarlo in qualsiasi momento.
                         </p>
-                        <button 
-                          onClick={handleStartCheckout} 
-                          disabled={isCheckoutLoading}
-                          className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center"
-                        >
-                          {isCheckoutLoading ? (
-                            <>
-                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                              Riattivazione...
-                            </>
-                          ) : (
-                            'Riattiva Abbonamento'
-                          )}
-                        </button>
+                                                 <button 
+                           onClick={handleStartCheckout} 
+                           disabled={isCheckoutLoading}
+                           className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center"
+                         >
+                           {isCheckoutLoading ? (
+                             <>
+                               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                               Riattivazione...
+                             </>
+                           ) : (
+                             'Riattiva Abbonamento (Gratis)'
+                           )}
+                         </button>
                       </div>
                     </div>
                   </div>

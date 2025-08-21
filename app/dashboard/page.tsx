@@ -60,7 +60,7 @@ function DashboardContent() {
             setUser(updatedMe.data)
           } catch {}
         }
-        if (status !== 'active') {
+        if (!['active', 'cancelling'].includes(status)) {
           router.replace('/checkout')
           return
         }

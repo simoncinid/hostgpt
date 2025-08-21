@@ -24,7 +24,7 @@ export default function ChatbotsListPage() {
       if (!isAuthenticated) return
       try {
         const me = await auth.me()
-        if (me.data?.subscription_status !== 'active') {
+        if (!['active', 'cancelling'].includes(me.data?.subscription_status)) {
           router.replace('/checkout')
           return
         }
