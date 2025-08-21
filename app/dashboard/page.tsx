@@ -26,7 +26,7 @@ import Sidebar from '@/app/components/Sidebar'
 function DashboardContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { user, logout, setAuth, isAuthenticated } = useAuthStore()
+  const { user, logout, setAuth, setUser, isAuthenticated } = useAuthStore()
   const { chatbots, setChatbots, deleteChatbot } = useChatbotStore()
   const [isLoading, setIsLoading] = useState(true)
   const [selectedBot, setSelectedBot] = useState<number | null>(null)
@@ -45,8 +45,8 @@ function DashboardContent() {
       if (isInitializing || isStartingCheckout) return
       if (!isAuthenticated) return
       try {
-        const me = await subscriptionStatus()
-        const status = me?.subscription_status
+        const me = await auth.me()
+        const status = me.data?.subscription_status
         // Se arriviamo da checkout riuscito, prova una conferma e ri-verifica
         const urlParams = new URLSearchParams(window.location.search)
         const subscriptionSuccess = urlParams.get('subscription') === 'success'
@@ -55,12 +55,17 @@ function DashboardContent() {
           try {
             const { subscription } = await import('@/lib/api')
             await subscription.confirm(sessionId)
+            // Ricarica i dati utente dopo la conferma
+            const updatedMe = await auth.me()
+            setUser(updatedMe.data)
           } catch {}
         }
         if (status !== 'active') {
           router.replace('/checkout')
           return
         }
+        // Aggiorna sempre lo store con i dati più recenti
+        setUser(me.data)
         loadChatbots()
       } catch {
         loadChatbots()
@@ -80,15 +85,7 @@ function DashboardContent() {
     }
   }
 
-  // helper per leggere lo stato abbonamento
-  const subscriptionStatus = async (): Promise<{ subscription_status: string } | null> => {
-    try {
-      const me = await auth.me()
-      return { subscription_status: me.data?.subscription_status }
-    } catch {
-      return null
-    }
-  }
+
 
   const handleDeleteBot = async (id: number) => {
     if (!confirm('Sei sicuro di voler eliminare questo chatbot?')) return

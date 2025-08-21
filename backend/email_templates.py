@@ -18,7 +18,7 @@ HOSTGPT_COLORS = {
     'gradient_success': 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)'
 }
 
-def get_base_email_template():
+def get_base_email_template(content: str):
     """Template base per tutte le email con stile enterprise"""
     return f"""
     <!DOCTYPE html>
@@ -315,7 +315,7 @@ def create_subscription_activation_email(user_name: str) -> str:
         </div>
     """
     
-    return get_base_email_template().format(content=content)
+    return get_base_email_template(content)
 
 def create_subscription_cancellation_email(user_name: str, end_date: str) -> str:
     """Template email per annullamento abbonamento"""
@@ -351,7 +351,7 @@ def create_subscription_cancellation_email(user_name: str, end_date: str) -> str
         </div>
     """
     
-    return get_base_email_template().format(content=content)
+    return get_base_email_template(content)
 
 def create_chatbot_ready_email(user_name: str, property_name: str, chat_url: str) -> str:
     """Template email per chatbot pronto"""
@@ -391,4 +391,4 @@ def create_chatbot_ready_email(user_name: str, property_name: str, chat_url: str
         </div>
     """
     
-    return get_base_email_template().format(content=content)
+    return get_base_email_template(content)
