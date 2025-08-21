@@ -25,6 +25,12 @@ import logging
 from database import get_db, engine
 from models import Base, User, Chatbot, Conversation, Message, KnowledgeBase, Analytics
 from config import settings
+from email_templates import (
+    create_welcome_email,
+    create_subscription_activation_email,
+    create_subscription_cancellation_email,
+    create_chatbot_ready_email
+)
 
 # Configurazione logging
 logging.basicConfig(level=logging.INFO)
@@ -190,6 +196,8 @@ async def send_email(to_email: str, subject: str, body: str, attachments: Option
     except Exception as e:
         logger.error(f"Failed to send email: {e}")
 
+
+
 def generate_qr_code(url: str) -> str:
     """Genera QR code e ritorna come base64"""
     qr = qrcode.QRCode(version=1, box_size=10, border=5)
@@ -349,17 +357,7 @@ async def register(user: UserRegister, background_tasks: BackgroundTasks, db: Se
     
     # Invia email di verifica
     verification_link = f"{settings.BACKEND_URL}/api/auth/verify-email?token={verification_token}"
-    email_body = f"""
-    <h2>Benvenuto su HostGPT!</h2>
-    <p>Caro {user.full_name},</p>
-    <p>Grazie per esserti registrato! Per completare la registrazione e attivare il tuo abbonamento, clicca sul link qui sotto:</p>
-    <p><a href="{verification_link}" style="background-color: #4CAF50; color: white; padding: 14px 20px; text-align: center; text-decoration: none; display: inline-block; border-radius: 4px;">Verifica Email e Attiva Abbonamento</a></p>
-    <p>Se il pulsante non funziona, copia e incolla questo link nel tuo browser:</p>
-    <p>{verification_link}</p>
-    <p><strong>Importante:</strong> Dopo la verifica dell'email, verrai reindirizzato alla pagina di pagamento per attivare il tuo abbonamento mensile a 29€/mese.</p>
-    <br>
-    <p>Il team di HostGPT</p>
-    """
+    email_body = create_welcome_email(user.full_name, verification_link)
     
     background_tasks.add_task(send_email, user.email, "Conferma la tua email - HostGPT", email_body)
     
@@ -474,8 +472,17 @@ async def create_checkout_session(current_user: User = Depends(get_current_user)
             subs = stripe.Subscription.list(customer=current_user.stripe_customer_id, status='all', limit=1)
             if subs.data:
                 sub = subs.data[0]
+                # Controlla se la sottoscrizione è in fase di annullamento (cancel_at_period_end=True)
+                is_canceling = sub.cancel_at_period_end if hasattr(sub, 'cancel_at_period_end') else False
+                
+                # Se la sottoscrizione è attiva ma in fase di annullamento, permette la riattivazione
+                if sub.status == 'active' and is_canceling:
+                    logger.info(f"User {current_user.id} has subscription canceling at period end, allowing reactivation")
+                    # Aggiorna il subscription_id nel database per la nuova sottoscrizione
+                    current_user.stripe_subscription_id = None
+                    db.commit()
                 # Permette riattivazione solo se la sottoscrizione è completamente cancellata
-                if sub.status in ['active', 'trialing', 'incomplete', 'incomplete_expired', 'past_due', 'unpaid']:
+                elif sub.status in ['active', 'trialing', 'incomplete', 'incomplete_expired', 'past_due', 'unpaid']:
                     raise HTTPException(
                         status_code=400,
                         detail=(
@@ -557,7 +564,12 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
     return {"status": "success"}
 
 @app.post("/api/subscription/confirm")
-async def confirm_subscription(payload: SubscriptionConfirm, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+async def confirm_subscription(
+    payload: SubscriptionConfirm, 
+    background_tasks: BackgroundTasks,
+    current_user: User = Depends(get_current_user), 
+    db: Session = Depends(get_db)
+):
     """Conferma lato backend lo stato dell'abbonamento dopo il redirect di successo da Stripe."""
     try:
         session_id = payload.session_id
@@ -571,6 +583,16 @@ async def confirm_subscription(payload: SubscriptionConfirm, current_user: User 
                 current_user.messages_used = 0
                 current_user.messages_reset_date = datetime.utcnow()
                 db.commit()
+                
+                # Invia email di attivazione abbonamento
+                email_body = create_subscription_activation_email(current_user.full_name or current_user.email)
+                background_tasks.add_task(
+                    send_email, 
+                    current_user.email, 
+                    "🎉 Abbonamento HostGPT Attivato!", 
+                    email_body
+                )
+                
                 return {"status": "active"}
 
         # Fallback: controlla lo stato su Stripe dal customer
@@ -585,6 +607,17 @@ async def confirm_subscription(payload: SubscriptionConfirm, current_user: User 
                     current_user.messages_used = 0
                     current_user.messages_reset_date = datetime.utcnow()
                     db.commit()
+                    
+                    # Invia email di attivazione abbonamento (solo se non già inviata)
+                    if current_user.subscription_status != 'active':
+                        email_body = create_subscription_activation_email(current_user.full_name or current_user.email)
+                        background_tasks.add_task(
+                            send_email, 
+                            current_user.email, 
+                            "🎉 Abbonamento HostGPT Attivato!", 
+                            email_body
+                        )
+                    
                     return {"status": "active"}
 
         return {"status": current_user.subscription_status or 'inactive'}
@@ -594,6 +627,7 @@ async def confirm_subscription(payload: SubscriptionConfirm, current_user: User 
 
 @app.post("/api/subscription/cancel")
 async def cancel_subscription(
+    background_tasks: BackgroundTasks,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -640,6 +674,19 @@ async def cancel_subscription(
         current_user.subscription_status = 'cancelled'
         # I dati rimangono nel database come richiesto
         db.commit()
+        
+        # Invia email di annullamento abbonamento
+        end_date = current_user.subscription_end_date.strftime("%d/%m/%Y") if current_user.subscription_end_date else "fine del periodo corrente"
+        email_body = create_subscription_cancellation_email(
+            current_user.full_name or current_user.email,
+            end_date
+        )
+        background_tasks.add_task(
+            send_email, 
+            current_user.email, 
+            "😔 Abbonamento HostGPT Annullato", 
+            email_body
+        )
         
         logger.info(f"User {current_user.id} subscription cancelled successfully")
         return {"status": "cancelled", "message": "Abbonamento annullato con successo"}
@@ -695,19 +742,7 @@ async def create_chatbot(
     qr_code = generate_qr_code(chat_url)
     
     # Invia email di conferma
-    email_body = f"""
-    <h2>Il tuo Chatbot è pronto!</h2>
-    <p>Ciao {current_user.full_name},</p>
-    <p>Il chatbot per <strong>{chatbot.property_name}</strong> è stato creato con successo!</p>
-    <p>I tuoi ospiti possono ora chattare con il bot attraverso:</p>
-    <ul>
-        <li><strong>Link diretto:</strong> <a href="{chat_url}">{chat_url}</a></li>
-        <li><strong>QR Code:</strong> Usa il QR code allegato</li>
-    </ul>
-    <p>Accedi alla dashboard per vedere le statistiche e gestire le conversazioni.</p>
-    <br>
-    <p>Il team di HostGPT</p>
-    """
+    email_body = create_chatbot_ready_email(current_user.full_name or current_user.email, chatbot.property_name, chat_url)
     
     # Prepara allegato QR code
     try:
