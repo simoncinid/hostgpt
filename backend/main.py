@@ -469,11 +469,12 @@ async def create_checkout_session(current_user: User = Depends(get_current_user)
             current_user.stripe_customer_id = customer.id
             db.commit()
 
-        # Evita doppie sottoscrizioni creando una nuova sessione se c'è già una subscription in corso/attiva
+        # Controlla se ci sono sottoscrizioni attive o in corso (ma permette riattivazione se cancellata)
         if current_user.stripe_customer_id:
             subs = stripe.Subscription.list(customer=current_user.stripe_customer_id, status='all', limit=1)
             if subs.data:
                 sub = subs.data[0]
+                # Permette riattivazione solo se la sottoscrizione è completamente cancellata
                 if sub.status in ['active', 'trialing', 'incomplete', 'incomplete_expired', 'past_due', 'unpaid']:
                     raise HTTPException(
                         status_code=400,
@@ -481,6 +482,12 @@ async def create_checkout_session(current_user: User = Depends(get_current_user)
                             "Hai già una sottoscrizione attiva o in corso. Completa o verifica il pagamento senza crearne un'altra."
                         ),
                     )
+                # Se la sottoscrizione è cancellata, permette la riattivazione
+                elif sub.status == 'canceled':
+                    logger.info(f"User {current_user.id} has canceled subscription, allowing reactivation")
+                    # Aggiorna il subscription_id nel database per la nuova sottoscrizione
+                    current_user.stripe_subscription_id = None
+                    db.commit()
         
         # Crea sessione checkout per abbonamento mensile a 29€
         checkout_session = stripe.checkout.Session.create(
