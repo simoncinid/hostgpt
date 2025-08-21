@@ -60,22 +60,29 @@ export default function SettingsPage() {
   }
 
   const handleCancelSubscription = async () => {
+    console.log('=== FRONTEND: Cancellation started ===')
     setShowCancelModal(false)
     setIsCancellingSubscription(true)
     try {
+      console.log('=== FRONTEND: Calling subscription.cancel() ===')
       const response = await subscription.cancel()
+      console.log('=== FRONTEND: Response received ===', response.data)
+      
       if (response.data.status === 'already_cancelling') {
         toast.success('Il tuo abbonamento è già in fase di annullamento')
       } else {
         toast.success('Abbonamento annullato con successo')
       }
       // Ricarica i dati utente per aggiornare lo stato
+      console.log('=== FRONTEND: Reloading user data ===')
       const me = await auth.me()
       setUser(me.data)
     } catch (e: any) {
+      console.error('=== FRONTEND: Error during cancellation ===', e)
       toast.error(e.response?.data?.detail || 'Errore nell\'annullamento dell\'abbonamento')
     } finally {
       setIsCancellingSubscription(false)
+      console.log('=== FRONTEND: Cancellation completed ===')
     }
   }
 

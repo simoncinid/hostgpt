@@ -769,6 +769,12 @@ async def cancel_subscription(
     db: Session = Depends(get_db)
 ):
     """Annulla l'abbonamento dell'utente"""
+    logger.info(f"=== CANCELLATION REQUEST STARTED ===")
+    logger.info(f"User {current_user.id} ({current_user.email}) requesting subscription cancellation")
+    logger.info(f"Current subscription status: {current_user.subscription_status}")
+    logger.info(f"Current stripe_subscription_id: {current_user.stripe_subscription_id}")
+    logger.info(f"Current stripe_customer_id: {current_user.stripe_customer_id}")
+    
     try:
         # Verifica che l'utente abbia un abbonamento attivo
         if current_user.subscription_status != 'active':
@@ -877,6 +883,7 @@ async def cancel_subscription(
         )
         
         logger.info(f"User {current_user.id} subscription cancelled successfully")
+        logger.info(f"=== CANCELLATION REQUEST COMPLETED ===")
         return {
             "status": "cancelling", 
             "message": "Abbonamento annullato con successo. Il tuo abbonamento rimarrà attivo fino alla fine del periodo corrente."
