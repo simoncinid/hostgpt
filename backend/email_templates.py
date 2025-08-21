@@ -281,7 +281,7 @@ def create_welcome_email(user_name: str, verification_link: str) -> str:
         </div>
     """
     
-    return get_base_email_template().format(content=content)
+    return get_base_email_template(content)
 
 def create_subscription_activation_email(user_name: str) -> str:
     """Template email per attivazione abbonamento"""
