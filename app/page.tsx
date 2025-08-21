@@ -1026,7 +1026,7 @@ export default function LandingPage() {
               <motion.div
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                className="relative group"
+                className="relative group w-full sm:w-auto"
               >
                 <motion.div
                   className="absolute -inset-2 bg-gradient-to-r from-rose-400 to-pink-500 rounded-2xl blur-xl opacity-0 group-hover:opacity-30 transition-opacity duration-300"
@@ -1034,7 +1034,7 @@ export default function LandingPage() {
                 />
                 <Link
                   href="/register"
-                  className="relative inline-flex items-center gap-3 px-10 py-5 text-lg font-bold text-white bg-gradient-to-r from-rose-500 via-pink-500 to-rose-600 rounded-2xl shadow-2xl transition-all duration-300 group-hover:shadow-rose-500/25 overflow-hidden"
+                  className="relative flex items-center justify-center gap-3 px-10 py-4 text-lg font-bold text-white bg-gradient-to-r from-rose-500 via-pink-500 to-rose-600 rounded-2xl shadow-2xl transition-all duration-300 group-hover:shadow-rose-500/25 overflow-hidden w-[90%] mx-[5%] sm:w-96 sm:mx-0"
                 >
                   {/* Effetto shimmer interno */}
                   <motion.div
@@ -1060,75 +1060,72 @@ export default function LandingPage() {
                </Link>
               </motion.div>
 
-              {/* Bottoni secondari */}
-              <div className="flex flex-col sm:flex-row gap-4">
-                {/* Bottone Scopri Funzionalità */}
-                <motion.div
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="relative group"
+              {/* Bottone Scopri Funzionalità */}
+              <motion.div
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="relative group w-full sm:w-auto"
+              >
+                <Link
+                  href="#features"
+                  className="flex items-center justify-center gap-3 px-8 py-4 text-base font-semibold text-gray-700 bg-white/60 backdrop-blur-xl border border-white/30 rounded-2xl shadow-lg hover:bg-white/80 hover:shadow-xl transition-all duration-300 w-[90%] mx-[5%] sm:w-96 sm:mx-0"
                 >
-                  <Link
-                    href="#features"
-                    className="inline-flex items-center gap-3 px-8 py-4 text-base font-semibold text-gray-700 bg-white/60 backdrop-blur-xl border border-white/30 rounded-2xl shadow-lg hover:bg-white/80 hover:shadow-xl transition-all duration-300"
+                  <span>Scopri Funzionalità</span>
+                  <motion.div
+                    animate={{ rotate: [0, 10, 0] }}
+                    transition={{
+                      duration: 2,
+                      repeat: Infinity,
+                      repeatDelay: 1,
+                      ease: "easeInOut",
+                    }}
                   >
-                    <span>Scopri Funzionalità</span>
-                    <motion.div
-                      animate={{ rotate: [0, 10, 0] }}
-                      transition={{
-                        duration: 2,
-                        repeat: Infinity,
-                        repeatDelay: 1,
-                        ease: "easeInOut",
-                      }}
-                    >
-                      <Sparkles className="w-4 h-4 text-rose-500" />
-                    </motion.div>
-                 </Link>
-                </motion.div>
+                    <Sparkles className="w-4 h-4 text-rose-500" />
+                  </motion.div>
+               </Link>
+              </motion.div>
 
-                {/* Bottone PROVA DEMO */}
-                <motion.div
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="relative group"
+              {/* Bottone PROVA DEMO */}
+              <motion.div
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="relative group w-full sm:w-auto"
+              >
+                <button
+                  onClick={openDemoPopup}
+                  className="flex items-center justify-center gap-3 px-8 py-4 text-base font-bold text-white bg-gradient-to-r from-orange-500 to-amber-500 rounded-2xl shadow-lg hover:from-orange-600 hover:to-amber-600 hover:shadow-xl transition-all duration-300 overflow-hidden w-[90%] mx-[5%] sm:w-96 sm:mx-0"
                 >
-                  <button
-                    onClick={openDemoPopup}
-                    className="inline-flex items-center gap-3 px-8 py-4 text-base font-bold text-white bg-gradient-to-r from-orange-500 to-amber-500 rounded-2xl shadow-lg hover:from-orange-600 hover:to-amber-600 hover:shadow-xl transition-all duration-300 overflow-hidden"
+                  {/* Effetto shimmer */}
+                  <motion.div
+                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12"
+                    animate={{
+                      x: ["-100%", "200%"]
+                    }}
+                    transition={{
+                      duration: 2,
+                      repeat: Infinity,
+                      repeatDelay: 3,
+                      ease: "easeInOut"
+                    }}
+                  />
+                  <span className="relative z-10">PROVA DEMO</span>
+                  <motion.div
+                    animate={{ 
+                      scale: [1, 1.2, 1],
+                      rotate: [0, 360, 0]
+                    }}
+                    transition={{
+                      duration: 2,
+                      repeat: Infinity,
+                      repeatDelay: 1,
+                      ease: "easeInOut",
+                    }}
+                    className="relative z-10"
                   >
-                    {/* Effetto shimmer */}
-                    <motion.div
-                      className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12"
-                      animate={{
-                        x: ["-100%", "200%"]
-                      }}
-                      transition={{
-                        duration: 2,
-                        repeat: Infinity,
-                        repeatDelay: 3,
-                        ease: "easeInOut"
-                      }}
-                    />
-                    <span className="relative z-10">PROVA DEMO</span>
-                    <motion.div
-                      animate={{ 
-                        scale: [1, 1.2, 1],
-                        rotate: [0, 360, 0]
-                      }}
-                      transition={{
-                        duration: 2,
-                        repeat: Infinity,
-                        repeatDelay: 1,
-                        ease: "easeInOut",
-                      }}
-                      className="relative z-10"
-                    >
-                      <MessageSquare className="w-4 h-4" />
-                    </motion.div>
-                 </button>
-                </motion.div>
-              </div>
+                    <MessageSquare className="w-4 h-4" />
+                  </motion.div>
+               </button>
+              </motion.div>
             </motion.div>
           </motion.div>
 

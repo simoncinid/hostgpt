@@ -28,6 +28,7 @@ export default function ChatbotDetailPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [conversations, setConversations] = useState<ConversationPreview[]>([])
   const [analytics, setAnalytics] = useState<any>(null)
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
 
   useEffect(() => {
     if (!id) return
@@ -72,10 +73,10 @@ export default function ChatbotDetailPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Sidebar currentPath={`/dashboard/chatbots/${id}`} onLogout={handleLogout} />
+             <Sidebar currentPath={`/dashboard/chatbots/${id}`} onLogout={handleLogout} isSidebarCollapsed={isSidebarCollapsed} setIsSidebarCollapsed={setIsSidebarCollapsed} />
       
-      {/* Main Content Wrapper */}
-      <div className={`transition-all duration-200 md:ml-64 p-4 md:p-8`}>
+             {/* Main Content Wrapper */}
+       <div className={`transition-all duration-200 ${isSidebarCollapsed ? 'md:ml-16' : 'md:ml-64'} p-4 md:p-8`}>
         <div className="bg-white shadow-sm">
           <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
             <div className="flex items-center gap-3">

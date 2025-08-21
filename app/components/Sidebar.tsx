@@ -17,12 +17,17 @@ import { useAuthStore } from '@/lib/store'
 interface SidebarProps {
   currentPath: string
   onLogout: () => void
+  isSidebarCollapsed?: boolean
+  setIsSidebarCollapsed?: (collapsed: boolean) => void
 }
 
-export default function Sidebar({ currentPath, onLogout }: SidebarProps) {
+export default function Sidebar({ currentPath, onLogout, isSidebarCollapsed: externalIsCollapsed, setIsSidebarCollapsed: externalSetCollapsed }: SidebarProps) {
   const { user } = useAuthStore()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
+  const [internalIsCollapsed, setInternalIsCollapsed] = useState(false)
+  
+  const isSidebarCollapsed = externalIsCollapsed !== undefined ? externalIsCollapsed : internalIsCollapsed
+  const setIsSidebarCollapsed = externalSetCollapsed || setInternalIsCollapsed
 
   return (
     <>
@@ -39,10 +44,12 @@ export default function Sidebar({ currentPath, onLogout }: SidebarProps) {
           >
             {isSidebarCollapsed ? <Menu className="w-5 h-5" /> : <X className="w-5 h-5" />}
           </button>
-          <Link href="/" className={`flex items-center ${isSidebarCollapsed ? 'justify-center' : 'space-x-2'}`}>
-            <Home className={`${isSidebarCollapsed ? 'w-6 h-6' : 'w-8 h-8'} text-primary`} />
-            {!isSidebarCollapsed && <span className="text-2xl font-bold text-dark">HostGPT</span>}
-          </Link>
+          {!isSidebarCollapsed && (
+            <Link href="/" className="flex items-center space-x-2">
+              <Home className="w-8 h-8 text-primary" />
+              <span className="text-2xl font-bold text-dark">HostGPT</span>
+            </Link>
+          )}
         </div>
 
         <nav className="mt-8">
