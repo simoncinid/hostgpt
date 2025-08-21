@@ -89,8 +89,8 @@ export default function Sidebar({ currentPath, onLogout, isSidebarCollapsed: ext
               <>
                 <p className="text-sm font-semibold text-gray-700">{user?.full_name}</p>
                 <p className="text-xs text-gray-500">{user?.email}</p>
-                <p className="text-xs text-green-600 mt-1">
-                  Abbonamento Attivo
+                <p className={`text-xs mt-1 ${user?.subscription_status === 'active' ? 'text-green-600' : 'text-red-600'}`}>
+                  {user?.subscription_status === 'active' ? 'Abbonamento Attivo' : 'Abbonamento Annullato'}
                 </p>
               </>
             )}

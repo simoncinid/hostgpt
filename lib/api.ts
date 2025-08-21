@@ -55,6 +55,8 @@ export const subscription = {
     api.post('/subscription/create-checkout'),
   confirm: (session_id?: string) =>
     api.post('/subscription/confirm', { session_id }),
+  cancel: () =>
+    api.post('/subscription/cancel'),
 }
 
 export const chatbots = {

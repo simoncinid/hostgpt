@@ -8,6 +8,7 @@ import { MessageSquare, Users, QrCode, ExternalLink, Edit, Trash2, Eye, ArrowLef
 import { useAuthStore, useChatbotStore } from '@/lib/store'
 import { chatbots as chatbotsApi, auth } from '@/lib/api'
 import toast from 'react-hot-toast'
+import Sidebar from '@/app/components/Sidebar'
 
 export default function ChatbotsListPage() {
   const router = useRouter()
@@ -16,6 +17,7 @@ export default function ChatbotsListPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [showQRModal, setShowQRModal] = useState(false)
   const [currentQR, setCurrentQR] = useState<{ url: string; qr: string } | null>(null)
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
 
   useEffect(() => {
     const bootstrap = async () => {
@@ -59,114 +61,118 @@ export default function ChatbotsListPage() {
     setShowQRModal(true)
   }
 
+  const handleLogout = () => {
+    // Implementazione logout se necessario
+    router.push('/')
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="bg-white shadow-sm">
+      <Sidebar currentPath="/dashboard/chatbots" onLogout={handleLogout} isSidebarCollapsed={isSidebarCollapsed} setIsSidebarCollapsed={setIsSidebarCollapsed} />
+      
+      {/* Main Content Wrapper */}
+      <div className={`transition-all duration-200 ${isSidebarCollapsed ? 'md:ml-16' : 'md:ml-64'} p-4 md:p-8`}>
+        <div className="bg-white shadow-sm">
           <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Link href="/dashboard" className="text-gray-600 hover:text-primary flex items-center">
-              <ArrowLeft className="w-5 h-5 mr-2" />
-              Dashboard
-            </Link>
             <h1 className="text-xl font-semibold">I Miei Chatbot</h1>
-          </div>
             {/* Nasconde il pulsante Crea se esiste già un chatbot */}
             {chatbots.length === 0 ? (
               <Link href="/dashboard/chatbots/create" className="btn-primary">Crea Nuovo</Link>
             ) : null}
+          </div>
         </div>
-      </div>
 
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        {isLoading ? (
-          <div className="flex items-center justify-center py-20 text-gray-600">
-            <Loader2 className="w-6 h-6 animate-spin mr-2" /> Caricamento...
-          </div>
-        ) : chatbots.length === 0 ? (
-          <div className="text-center bg-white rounded-2xl shadow p-12">
-            <MessageSquare className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-500 mb-4">Non hai ancora creato alcun chatbot</p>
-            <Link href="/dashboard/chatbots/create" className="btn-primary">Crea il tuo primo chatbot</Link>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {chatbots.map((bot) => (
-              <motion.div
-                key={bot.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-white rounded-xl border p-5 flex items-center justify-between hover:shadow-md transition"
-              >
-                <div 
-                  className="flex-1 cursor-pointer"
-                  onClick={() => router.push(`/dashboard/chatbots/${bot.id}`)}
+        <div className="max-w-6xl mx-auto px-4 py-8">
+          {isLoading ? (
+            <div className="flex items-center justify-center py-20 text-gray-600">
+              <Loader2 className="w-6 h-6 animate-spin mr-2" /> Caricamento...
+            </div>
+          ) : chatbots.length === 0 ? (
+            <div className="text-center bg-white rounded-2xl shadow p-12">
+              <MessageSquare className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+              <p className="text-gray-500 mb-4">Non hai ancora creato alcun chatbot</p>
+              <Link href="/dashboard/chatbots/create" className="btn-primary">Crea il tuo primo chatbot</Link>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {chatbots.map((bot) => (
+                <motion.div
+                  key={bot.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-white rounded-xl border p-5 flex items-center justify-between hover:shadow-md transition"
                 >
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-semibold text-lg">{bot.property_name}</h3>
-                    {bot.is_active ? (
-                      <span className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full">Attivo</span>
-                    ) : (
-                      <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">Inattivo</span>
-                    )}
+                  <div 
+                    className="flex-1 cursor-pointer"
+                    onClick={() => router.push(`/dashboard/chatbots/${bot.id}`)}
+                  >
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-semibold text-lg">{bot.property_name}</h3>
+                      {bot.is_active ? (
+                        <span className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full">Attivo</span>
+                      ) : (
+                        <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">Inattivo</span>
+                      )}
+                    </div>
+                    <p className="text-sm text-gray-500 mt-1">{bot.property_city}</p>
+                    <div className="flex items-center gap-4 mt-2 text-sm text-gray-600">
+                      <span className="flex items-center"><Users className="w-4 h-4 mr-1" />{bot.total_conversations} conversazioni</span>
+                      <span className="flex items-center"><MessageSquare className="w-4 h-4 mr-1" />{bot.total_messages} messaggi</span>
+                    </div>
                   </div>
-                  <p className="text-sm text-gray-500 mt-1">{bot.property_city}</p>
-                  <div className="flex items-center gap-4 mt-2 text-sm text-gray-600">
-                    <span className="flex items-center"><Users className="w-4 h-4 mr-1" />{bot.total_conversations} conversazioni</span>
-                    <span className="flex items-center"><MessageSquare className="w-4 h-4 mr-1" />{bot.total_messages} messaggi</span>
+                  <div className="flex items-center gap-2 ml-4">
+                    <button onClick={() => showQRCode(bot.chat_url, bot.qr_code)} className="p-2 hover:bg-gray-100 rounded-lg" title="QR Code">
+                      <QrCode className="w-5 h-5 text-gray-700" />
+                    </button>
+                    <a href={bot.chat_url} target="_blank" rel="noopener noreferrer" className="p-2 hover:bg-gray-100 rounded-lg" title="Apri Chat">
+                      <ExternalLink className="w-5 h-5 text-gray-700" />
+                    </a>
+                    <Link href={`/dashboard/chatbots/${bot.id}`} className="p-2 hover:bg-gray-100 rounded-lg" title="Dettagli">
+                      <Eye className="w-5 h-5 text-gray-700" />
+                    </Link>
+                    <Link href={`/dashboard/chatbots/${bot.id}/edit`} className="p-2 hover:bg-gray-100 rounded-lg" title="Modifica">
+                      <Edit className="w-5 h-5 text-gray-700" />
+                    </Link>
+                    <button onClick={() => handleDelete(bot.id)} className="p-2 hover:bg-red-50 rounded-lg" title="Elimina">
+                      <Trash2 className="w-5 h-5 text-red-600" />
+                    </button>
                   </div>
-                </div>
-                <div className="flex items-center gap-2 ml-4">
-                  <button onClick={() => showQRCode(bot.chat_url, bot.qr_code)} className="p-2 hover:bg-gray-100 rounded-lg" title="QR Code">
-                    <QrCode className="w-5 h-5 text-gray-700" />
-                  </button>
-                  <a href={bot.chat_url} target="_blank" rel="noopener noreferrer" className="p-2 hover:bg-gray-100 rounded-lg" title="Apri Chat">
-                    <ExternalLink className="w-5 h-5 text-gray-700" />
-                  </a>
-                  <Link href={`/dashboard/chatbots/${bot.id}`} className="p-2 hover:bg-gray-100 rounded-lg" title="Dettagli">
-                    <Eye className="w-5 h-5 text-gray-700" />
-                  </Link>
-                  <Link href={`/dashboard/chatbots/${bot.id}/edit`} className="p-2 hover:bg-gray-100 rounded-lg" title="Modifica">
-                    <Edit className="w-5 h-5 text-gray-700" />
-                  </Link>
-                  <button onClick={() => handleDelete(bot.id)} className="p-2 hover:bg-red-50 rounded-lg" title="Elimina">
-                    <Trash2 className="w-5 h-5 text-red-600" />
-                  </button>
-                </div>
-              </motion.div>
-            ))}
+                </motion.div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {showQRModal && currentQR && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-white rounded-2xl p-8 max-w-md w-full mx-4">
+              <h3 className="text-xl font-bold mb-4">QR Code Chatbot</h3>
+              <div className="bg-gray-100 p-4 rounded-lg mb-4">
+                <img src={`data:image/png;base64,${currentQR.qr}`} alt="QR Code" className="w-full h-auto" />
+              </div>
+              <div className="flex items-center gap-2 p-2 bg-gray-100 rounded-lg mb-4">
+                <input type="text" value={currentQR.url} readOnly className="flex-1 bg-transparent text-sm" />
+                <button onClick={() => { navigator.clipboard.writeText(currentQR.url); toast.success('Link copiato!') }} className="text-primary hover:text-secondary">Copia</button>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => {
+                    const link = document.createElement('a')
+                    link.download = 'qr-code-chatbot.png'
+                    link.href = `data:image/png;base64,${currentQR.qr}`
+                    link.click()
+                    toast.success('QR Code scaricato!')
+                  }}
+                  className="flex-1 btn-secondary"
+                >
+                  Scarica QR
+                </button>
+                <button onClick={() => setShowQRModal(false)} className="flex-1 btn-primary">Chiudi</button>
+              </div>
+            </motion.div>
           </div>
         )}
       </div>
-
-      {showQRModal && currentQR && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-white rounded-2xl p-8 max-w-md w-full mx-4">
-            <h3 className="text-xl font-bold mb-4">QR Code Chatbot</h3>
-            <div className="bg-gray-100 p-4 rounded-lg mb-4">
-              <img src={`data:image/png;base64,${currentQR.qr}`} alt="QR Code" className="w-full h-auto" />
-            </div>
-            <div className="flex items-center gap-2 p-2 bg-gray-100 rounded-lg mb-4">
-              <input type="text" value={currentQR.url} readOnly className="flex-1 bg-transparent text-sm" />
-              <button onClick={() => { navigator.clipboard.writeText(currentQR.url); toast.success('Link copiato!') }} className="text-primary hover:text-secondary">Copia</button>
-            </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => {
-                  const link = document.createElement('a')
-                  link.download = 'qr-code-chatbot.png'
-                  link.href = `data:image/png;base64,${currentQR.qr}`
-                  link.click()
-                  toast.success('QR Code scaricato!')
-                }}
-                className="flex-1 btn-secondary"
-              >
-                Scarica QR
-              </button>
-              <button onClick={() => setShowQRModal(false)} className="flex-1 btn-primary">Chiudi</button>
-            </div>
-          </motion.div>
-        </div>
-      )}
     </div>
   )
 }

@@ -585,6 +585,46 @@ async def confirm_subscription(payload: SubscriptionConfirm, current_user: User 
         logger.error(f"Subscription confirm error: {e}")
         raise HTTPException(status_code=400, detail=str(e))
 
+@app.post("/api/subscription/cancel")
+async def cancel_subscription(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Annulla l'abbonamento dell'utente"""
+    try:
+        # Verifica che l'utente abbia un abbonamento attivo
+        if current_user.subscription_status != 'active':
+            raise HTTPException(
+                status_code=400,
+                detail="Non hai un abbonamento attivo da annullare"
+            )
+        
+        # Se c'è un subscription_id su Stripe, cancella anche lì
+        if current_user.stripe_subscription_id:
+            try:
+                stripe.Subscription.modify(
+                    current_user.stripe_subscription_id,
+                    cancel_at_period_end=True  # Cancella alla fine del periodo corrente
+                )
+                logger.info(f"Stripe subscription {current_user.stripe_subscription_id} marked for cancellation")
+            except Exception as e:
+                logger.error(f"Error cancelling Stripe subscription: {e}")
+                # Continua comunque con la cancellazione locale
+        
+        # Aggiorna lo stato nel database
+        current_user.subscription_status = 'cancelled'
+        # I dati rimangono nel database come richiesto
+        db.commit()
+        
+        logger.info(f"User {current_user.id} subscription cancelled")
+        return {"status": "cancelled", "message": "Abbonamento annullato con successo"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Subscription cancel error: {e}")
+        raise HTTPException(status_code=500, detail="Errore durante l'annullamento dell'abbonamento")
+
 # --- Chatbot Management ---
 
 @app.post("/api/chatbots/create")

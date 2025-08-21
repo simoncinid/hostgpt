@@ -41,6 +41,7 @@ export default function ChatWidgetPage() {
   const [guestName, setGuestName] = useState('')
   const [showWelcome, setShowWelcome] = useState(true)
   const [showInfo, setShowInfo] = useState(false)
+  const [subscriptionCancelled, setSubscriptionCancelled] = useState(false)
   
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -67,8 +68,12 @@ export default function ChatWidgetPage() {
           timestamp: new Date()
         }])
       }
-    } catch (error) {
-      toast.error('Chatbot non trovato')
+    } catch (error: any) {
+      if (error.response?.status === 403) {
+        setSubscriptionCancelled(true)
+      } else {
+        toast.error('Chatbot non trovato')
+      }
     }
   }
 
@@ -111,8 +116,12 @@ export default function ChatWidgetPage() {
       }
 
       setMessages(prev => [...prev, assistantMessage])
-    } catch (error) {
-      toast.error('Errore nell\'invio del messaggio')
+    } catch (error: any) {
+      if (error.response?.status === 403) {
+        setSubscriptionCancelled(true)
+      } else {
+        toast.error('Errore nell\'invio del messaggio')
+      }
     } finally {
       setIsLoading(false)
     }
@@ -123,12 +132,36 @@ export default function ChatWidgetPage() {
     setTimeout(() => inputRef.current?.focus(), 100)
   }
 
-  if (!chatInfo) {
+  if (!chatInfo && !subscriptionCancelled) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-12 h-12 text-primary animate-spin mx-auto mb-4" />
           <p className="text-gray-600">Caricamento chatbot...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (subscriptionCancelled) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
+        <div className="max-w-md mx-auto text-center px-4">
+          <div className="bg-white rounded-2xl shadow-xl p-8">
+            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <X className="w-8 h-8 text-red-600" />
+            </div>
+            <h1 className="text-2xl font-bold text-gray-900 mb-4">Servizio Non Disponibile</h1>
+            <p className="text-gray-600 mb-6">
+              L'host di questa struttura non utilizza più il servizio HostGPT. 
+              Il chatbot non è più disponibile.
+            </p>
+            <div className="bg-gray-50 rounded-lg p-4">
+              <p className="text-sm text-gray-500">
+                Per assistenza, contatta direttamente l'host della struttura.
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     )
