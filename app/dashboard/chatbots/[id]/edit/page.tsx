@@ -77,63 +77,71 @@ export default function EditChatbotPage() {
             <ArrowLeft className="w-5 h-5 mr-2" />
             Indietro
           </Link>
+          <h1 className="text-xl font-semibold hidden md:block">Modifica Chatbot</h1>
+        </div>
+      </div>
+
+      <div className="bg-white shadow-sm md:hidden">
+        <div className="px-4 py-4">
           <h1 className="text-xl font-semibold">Modifica Chatbot</h1>
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        <motion.form
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          onSubmit={handleSubmit(onSubmit)}
-          className="bg-white rounded-2xl shadow p-6 space-y-6"
-        >
-          <div>
-            <label className="label">Nome</label>
-            <input {...register('name')} className="input-field" />
-          </div>
+      <div className="p-4 md:p-8">
+        <div className="max-w-4xl mx-auto">
+          <motion.form
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            onSubmit={handleSubmit(onSubmit)}
+            className="bg-white rounded-2xl shadow p-6 space-y-6"
+          >
+            <div>
+              <label className="label">Nome</label>
+              <input {...register('name')} className="input-field" />
+            </div>
 
-          <div>
-            <label className="label">Messaggio di Benvenuto</label>
-            <textarea {...register('welcome_message')} className="input-field min-h-24" />
-          </div>
+            <div>
+              <label className="label">Messaggio di Benvenuto</label>
+              <textarea {...register('welcome_message')} className="input-field min-h-24" />
+            </div>
 
-          <div>
-            <label className="label">Descrizione della Proprietà</label>
-            <textarea {...register('property_description')} className="input-field min-h-24" />
-          </div>
+            <div>
+              <label className="label">Descrizione della Proprietà</label>
+              <textarea {...register('property_description')} className="input-field min-h-24" />
+            </div>
 
-          <div>
-            <label className="label">Descrizione del Quartiere</label>
-            <textarea {...register('neighborhood_description')} className="input-field min-h-24" />
-          </div>
+            <div>
+              <label className="label">Descrizione del Quartiere</label>
+              <textarea {...register('neighborhood_description')} className="input-field min-h-24" />
+            </div>
 
-          <div>
-            <label className="label">Regole della Casa</label>
-            <textarea {...register('house_rules')} className="input-field min-h-24" />
-          </div>
+            <div>
+              <label className="label">Regole della Casa</label>
+              <textarea {...register('house_rules')} className="input-field min-h-24" />
+            </div>
 
-          <div>
-            <label className="label">Istruzioni Speciali</label>
-            <textarea {...register('special_instructions')} className="input-field min-h-24" />
-          </div>
+            <div>
+              <label className="label">Istruzioni Speciali</label>
+              <textarea {...register('special_instructions')} className="input-field min-h-24" />
+            </div>
 
-          <div className="pt-2">
-            <button type="submit" disabled={isSubmitting} className="btn-primary inline-flex items-center">
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                  Salvataggio...
-                </>
-              ) : (
-                <>
-                  <Save className="w-5 h-5 mr-2" />
-                  Salva Modifiche
-                </>
-              )}
-            </button>
-          </div>
-        </motion.form>
+            <div className="pt-2">
+              <button type="submit" disabled={isSubmitting} className="btn-primary inline-flex items-center">
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                    Salvataggio...
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-5 h-5 mr-2" />
+                    Salva Modifiche
+                  </>
+                )}
+              </button>
+            </div>
+          </motion.form>
+        </div>
       </div>
     </div>
   )

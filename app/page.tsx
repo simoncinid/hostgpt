@@ -37,7 +37,8 @@ import {
   Settings,
   Smartphone as PhoneIcon,
   QrCode,
-  Share2
+  Share2,
+  Headphones
 } from 'lucide-react'
 
 export default function LandingPage() {
@@ -90,13 +91,6 @@ export default function LandingPage() {
       features: ["Risposte personalizzate", "Lingua italiana", "Conoscenza locale"]
     },
     {
-      icon: <Clock className="w-6 h-6 md:w-10 md:h-10 text-white" />,
-      bgGradient: "from-green-500 to-green-600",
-      title: "Assistenza 24/7",
-      description: "I tuoi ospiti ricevono risposte immediate a qualsiasi ora del giorno e della notte",
-      features: ["Disponibilità continua", "Risposte istantanee", "Nessun ritardo"]
-    },
-    {
       icon: <Globe className="w-6 h-6 md:w-10 md:h-10 text-white" />,
       bgGradient: "from-purple-500 to-purple-600",
       title: "Informazioni Locali",
@@ -111,18 +105,25 @@ export default function LandingPage() {
       features: ["Analisi conversazioni", "Metriche performance", "Report dettagliati"]
     },
     {
-      icon: <Shield className="w-6 h-6 md:w-10 md:h-10 text-white" />,
-      bgGradient: "from-red-500 to-red-600",
-      title: "Sicuro e Affidabile",
-      description: "Tecnologia OpenAI all'avanguardia per risposte accurate e sicure",
-      features: ["Tecnologia avanzata", "Sicurezza garantita", "Risposte accurate"]
-    },
-    {
       icon: <Zap className="w-6 h-6 md:w-10 md:h-10 text-white" />,
       bgGradient: "from-yellow-500 to-yellow-600",
       title: "Setup Veloce",
       description: "Attiva il tuo chatbot in meno di 10 minuti con la nostra procedura guidata",
       features: ["Configurazione rapida", "Setup guidato", "Pronto in 10 minuti"]
+    },
+    {
+      icon: <Headphones className="w-6 h-6 md:w-10 md:h-10 text-white" />,
+      bgGradient: "from-green-500 to-green-600",
+      title: "Assistenza 24/7",
+      description: "Supporto tecnico sempre disponibile per aiutarti a ottenere il massimo",
+      features: ["Supporto dedicato", "Risposte rapide", "Assistenza continua"]
+    },
+    {
+      icon: <Shield className="w-6 h-6 md:w-10 md:h-10 text-white" />,
+      bgGradient: "from-red-500 to-red-600",
+      title: "Sicuro e Affidabile",
+      description: "I tuoi dati sono protetti con i più alti standard di sicurezza",
+      features: ["Crittografia avanzata", "Backup automatici", "Conformità GDPR"]
     }
   ]
 
@@ -158,6 +159,7 @@ export default function LandingPage() {
 
   // Stati per le animazioni "Come funziona"
   const [howItWorksInView, setHowItWorksInView] = useState([false, false, false])
+  const [activeStep, setActiveStep] = useState(0)
   const howItWorksRefs = [useRef<HTMLDivElement>(null), useRef<HTMLDivElement>(null), useRef<HTMLDivElement>(null)]
 
   // Stati per il feedback form
@@ -273,6 +275,51 @@ export default function LandingPage() {
           observer.unobserve(howItWorksRefs[index].current)
         }
       })
+    }
+  }, [])
+
+  // Auto-switch per i passi in mobile - Gallery style
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setActiveStep((prev) => {
+        const nextStep = (prev + 1) % 3
+        
+        // Scroll to the next card on mobile
+        if (window.innerWidth < 768) {
+          const container = document.querySelector('.snap-x') as HTMLElement;
+          if (container) {
+            container.scrollTo({
+              left: nextStep * container.offsetWidth,
+              behavior: 'smooth'
+            });
+          }
+        }
+        
+        return nextStep;
+      })
+    }, 6000) // Cambia ogni 6 secondi per dare tempo all'animazione (0.6s + delay + transition)
+
+    return () => clearInterval(interval)
+  }, [])
+
+  // Sync activeStep with scroll position on mobile
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.innerWidth < 768) {
+        const container = document.querySelector('.snap-x') as HTMLElement;
+        if (container) {
+          const scrollLeft = container.scrollLeft;
+          const cardWidth = container.offsetWidth;
+          const currentIndex = Math.round(scrollLeft / cardWidth);
+          setActiveStep(currentIndex);
+        }
+      }
+    };
+
+    const container = document.querySelector('.snap-x') as HTMLElement;
+    if (container && window.innerWidth < 768) {
+      container.addEventListener('scroll', handleScroll);
+      return () => container.removeEventListener('scroll', handleScroll);
     }
   }, [])
 
@@ -977,10 +1024,10 @@ export default function LandingPage() {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.9, delay: 0.4, ease: "easeOut" }}
-              className="text-6xl md:text-8xl font-black mb-8 leading-tight tracking-tight"
+              className="text-4xl sm:text-6xl md:text-8xl font-black mb-8 leading-tight tracking-tight"
             >
-              <span className="text-gray-900 block">Risparmia Tempo con</span>
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-600 via-pink-600 to-rose-700 block relative">
+              <span className="text-gray-900 block text-4xl sm:text-6xl md:text-8xl">Risparmia Tempo con</span>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-600 via-pink-600 to-rose-700 block relative text-5xl sm:text-7xl md:text-8xl">
                 HostGPT
                 {/* Effetto shimmer */}
                 <motion.div
@@ -996,7 +1043,7 @@ export default function LandingPage() {
                   }}
                 />
               </span>
-              <span className="text-gray-900 block text-5xl md:text-6xl mt-4">
+              <span className="text-gray-900 block text-4xl sm:text-6xl md:text-6xl mt-4">
               L'assistente H24 per i tuoi ospiti
               </span>
             </motion.h1>
@@ -1006,7 +1053,7 @@ export default function LandingPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.6 }}
-              className="text-2xl text-gray-700 mb-12 max-w-4xl mx-auto leading-relaxed font-light"
+              className="text-lg sm:text-2xl text-gray-700 mb-12 max-w-4xl mx-auto leading-relaxed font-light"
             >
               Rispondi automaticamente, in modo completo e immediato, alle richieste dei guest 24/7. 
               <br />
@@ -1034,7 +1081,7 @@ export default function LandingPage() {
                 />
                 <Link
                   href="/register"
-                  className="relative flex items-center justify-center gap-3 px-10 py-4 text-lg font-bold text-white bg-gradient-to-r from-rose-500 via-pink-500 to-rose-600 rounded-2xl shadow-2xl transition-all duration-300 group-hover:shadow-rose-500/25 overflow-hidden w-[90%] mx-[5%] sm:w-96 sm:mx-0"
+                  className="relative flex items-center justify-center gap-3 px-10 py-4 text-base font-bold text-white bg-gradient-to-r from-rose-500 via-pink-500 to-rose-600 rounded-2xl shadow-2xl transition-all duration-300 group-hover:shadow-rose-500/25 overflow-hidden w-[90%] mx-[5%] sm:w-96 sm:mx-0"
                 >
                   {/* Effetto shimmer interno */}
                   <motion.div
@@ -1136,49 +1183,39 @@ export default function LandingPage() {
             transition={{ duration: 1.2, delay: 1, ease: [0.23, 1, 0.320, 1] }}
             className="relative"
           >
-            {/* Glow esterno spettacolare */}
-            <div className="absolute -inset-8 bg-gradient-to-r from-rose-400/20 via-pink-500/30 to-rose-600/20 rounded-[3rem] blur-3xl opacity-60"></div>
+            {/* Glow esterno spettacolare - solo desktop */}
+            <div className="hidden md:block absolute -inset-8 bg-gradient-to-r from-rose-400/20 via-pink-500/30 to-rose-600/20 rounded-[3rem] blur-3xl opacity-60"></div>
             
-            {/* Container principale con glassmorphism */}
-            <div className="relative bg-white/30 backdrop-blur-2xl border-0 md:border md:border-white/40 rounded-[2rem] p-4 md:p-12 shadow-2xl">
-              {/* Pattern decorativo interno */}
+            {/* Container principale con glassmorphism - solo desktop */}
+            <div className="hidden md:block relative bg-white/30 backdrop-blur-2xl border-0 md:border md:border-white/40 rounded-[2rem] p-4 md:p-12 shadow-2xl">
+              {/* Pattern decorativo interno - solo desktop */}
               <div className="absolute inset-0 rounded-[2rem] overflow-hidden pointer-events-none">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-rose-100/20 to-transparent rounded-full blur-3xl"></div>
                 <div className="absolute bottom-0 left-0 w-48 h-48 bg-gradient-to-tr from-pink-100/30 to-transparent rounded-full blur-2xl"></div>
-                  </div>
+              </div>
 
-              {/* Demo chat ultra-stilizzata */}
-              <div className="relative bg-white/70 backdrop-blur-xl border border-white/50 rounded-3xl p-4 md:p-8 shadow-xl">
-                {/* Header della chat spettacolare */}
+              {/* Demo chat ultra-stilizzata - desktop */}
+              <div className="relative bg-white/70 backdrop-blur-xl border border-white/50 rounded-3xl p-4 md:p-8 shadow-xl w-[90%] mx-auto">
+              {/* Header della chat spettacolare */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 1.2 }}
+                className="flex items-center mb-4 md:mb-8 pb-3 md:pb-6 border-b border-gray-200/50"
+              >
                 <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.8, delay: 1.2 }}
-                  className="flex items-center mb-4 md:mb-8 pb-3 md:pb-6 border-b border-gray-200/50"
+                  className="relative"
+                  whileHover={{ scale: 1.05 }}
+                  transition={{ type: "spring", stiffness: 400 }}
                 >
-                  <motion.div
-                    className="relative"
-                    whileHover={{ scale: 1.05 }}
-                    transition={{ type: "spring", stiffness: 400 }}
-                  >
-                    <div className="absolute -inset-2 bg-gradient-to-r from-rose-400 to-pink-500 rounded-2xl blur-lg opacity-30"></div>
-                    <div className="relative w-12 h-12 md:w-16 md:h-16 bg-gradient-to-r from-rose-500 to-pink-600 rounded-2xl flex items-center justify-center shadow-lg">
-                      <MessageSquare className="w-6 h-6 md:w-8 md:h-8 text-white" />
+                  <div className="absolute -inset-2 bg-gradient-to-r from-rose-400 to-pink-500 rounded-2xl blur-lg opacity-30"></div>
+                  <div className="relative w-12 h-12 md:w-16 md:h-16 bg-gradient-to-r from-rose-500 to-pink-600 rounded-2xl flex items-center justify-center shadow-lg">
+                    <MessageSquare className="w-6 h-6 md:w-8 md:h-8 text-white" />
                 </div>
                   </motion.div>
                   <div className="ml-3 md:ml-6 flex-1 min-w-0">
                     <h3 className="text-lg md:text-2xl font-bold text-gray-900 truncate">Casa Bella Vista Bot</h3>
-                    <p className="text-sm md:text-base text-gray-600 font-medium">Assistente AI sempre attivo</p>
                   </div>
-                  <motion.div
-                    className="ml-2 md:ml-auto flex items-center gap-1 md:gap-2 flex-shrink-0"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 1.4 }}
-                  >
-                    <div className="w-2 h-2 md:w-3 md:h-3 bg-green-400 rounded-full"></div>
-                    <span className="text-xs md:text-sm text-gray-600 font-semibold">Online</span>
-                  </motion.div>
                 </motion.div>
 
                 {/* Area messaggi con effetti premium */}
@@ -1253,13 +1290,110 @@ export default function LandingPage() {
                   </motion.button>
                 </motion.div>
                 </div>
-                </div>
+              </div>
 
-            {/* Decorazioni angolari eleganti */}
-            <div className="absolute top-4 left-4 w-8 h-8 border-l-2 border-t-2 border-rose-300/40 rounded-tl-lg"></div>
-            <div className="absolute top-4 right-4 w-8 h-8 border-r-2 border-t-2 border-pink-300/40 rounded-tr-lg"></div>
-            <div className="absolute bottom-4 left-4 w-8 h-8 border-l-2 border-b-2 border-rose-300/40 rounded-bl-lg"></div>
-            <div className="absolute bottom-4 right-4 w-8 h-8 border-r-2 border-b-2 border-pink-300/40 rounded-br-lg"></div>
+            {/* Demo chat ultra-stilizzata - mobile */}
+            <div className="md:hidden relative bg-white/70 backdrop-blur-xl border border-white/50 rounded-3xl p-4 md:p-8 shadow-xl w-[90%] mx-auto">
+              {/* Header della chat spettacolare */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 1.2 }}
+                className="flex items-center mb-4 md:mb-8 pb-3 md:pb-6 border-b border-gray-200/50"
+              >
+                <motion.div
+                  className="relative"
+                  whileHover={{ scale: 1.05 }}
+                  transition={{ type: "spring", stiffness: 400 }}
+                >
+                  <div className="absolute -inset-2 bg-gradient-to-r from-rose-400 to-pink-500 rounded-2xl blur-lg opacity-30"></div>
+                  <div className="relative w-12 h-12 md:w-16 md:h-16 bg-gradient-to-r from-rose-500 to-pink-600 rounded-2xl flex items-center justify-center shadow-lg">
+                    <MessageSquare className="w-6 h-6 md:w-8 md:h-8 text-white" />
+                </div>
+                  </motion.div>
+                  <div className="ml-3 md:ml-6 flex-1 min-w-0">
+                    <h3 className="text-lg md:text-2xl font-bold text-gray-900 truncate">Casa Bella Vista Bot</h3>
+                  </div>
+                </motion.div>
+
+                {/* Area messaggi con effetti premium */}
+                <motion.div
+                  ref={demoScrollRef}
+                  className="space-y-3 md:space-y-6 h-60 md:h-80 overflow-y-auto pr-2 md:pr-4 scrollbar-custom"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.8, delay: 1.4 }}
+                >
+                  {demoVisible.map((m, idx) => (
+                    <motion.div
+                      key={idx}
+                      initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      transition={{ duration: 0.5, type: "spring", stiffness: 200 }}
+                      className={`relative ${m.role === 'user' ? 'flex justify-end' : 'flex justify-start'}`}
+                    >
+                      <div
+                        className={`max-w-xs md:max-w-sm px-3 py-2 md:px-6 md:py-4 rounded-2xl shadow-lg ${
+                          m.role === 'user'
+                            ? 'bg-gradient-to-r from-rose-500 to-pink-600 text-white'
+                            : 'bg-white/80 backdrop-blur-xl border border-white/50 text-gray-800'
+                        }`}
+                      >
+                        <div className="relative font-medium leading-relaxed text-sm md:text-base">
+                      {m.text}
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+                </motion.div>
+
+                {/* Bottone replica demo spettacolare */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.8, delay: 1.6 }}
+                  className="mt-4 md:mt-8 pt-3 md:pt-6 border-t border-gray-200/50 text-center"
+                >
+                  <motion.button
+                    onClick={() => setDemoRunId((v) => v + 1)}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="relative group inline-flex items-center gap-2 md:gap-3 px-4 py-2 md:px-8 md:py-4 bg-gradient-to-r from-rose-500 to-pink-600 text-white font-bold rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden text-sm md:text-base"
+                  >
+                    {/* Effetto shimmer */}
+                    <motion.div
+                      className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12"
+                      animate={{
+                        x: ['-100%', '100%'],
+                      }}
+                      transition={{
+                        duration: 2,
+                        repeat: Infinity,
+                        repeatDelay: 4,
+                        ease: "easeInOut",
+                      }}
+                    />
+                    <motion.div
+                      animate={{ rotate: [0, 360] }}
+                      transition={{
+                        duration: 2,
+                        repeat: Infinity,
+                        ease: "linear",
+                      }}
+                      className="relative z-10"
+                    >
+                      <ArrowRight className="w-5 h-5" />
+                    </motion.div>
+                    <span className="relative z-10">Replica Demo</span>
+                  </motion.button>
+                </motion.div>
+            </div>
+
+            {/* Decorazioni angolari eleganti - solo desktop */}
+            <div className="hidden md:block absolute top-4 left-4 w-8 h-8 border-l-2 border-t-2 border-rose-300/40 rounded-tl-lg"></div>
+            <div className="hidden md:block absolute top-4 right-4 w-8 h-8 border-r-2 border-t-2 border-pink-300/40 rounded-tr-lg"></div>
+            <div className="hidden md:block absolute bottom-4 left-4 w-8 h-8 border-l-2 border-b-2 border-rose-300/40 rounded-bl-lg"></div>
+            <div className="hidden md:block absolute bottom-4 right-4 w-8 h-8 border-r-2 border-b-2 border-pink-300/40 rounded-br-lg"></div>
           </motion.div>
         </div>
 
@@ -1279,6 +1413,36 @@ export default function LandingPage() {
           .scrollbar-custom::-webkit-scrollbar-thumb:hover {
             background: linear-gradient(to bottom, #e11d48, #db2777);
           }
+          
+          /* Nascondi auto-switch su desktop */
+          @media (min-width: 768px) {
+            .mobile-auto-switch {
+              transform: none !important;
+              opacity: 1 !important;
+              scale: 1 !important;
+            }
+          }
+
+          /* Nascondi scrollbar per gallery mobile */
+          .scrollbar-hide {
+            -ms-overflow-style: none !important;
+            scrollbar-width: none !important;
+            overflow-x: auto !important;
+          }
+          .scrollbar-hide::-webkit-scrollbar {
+            display: none !important;
+            width: 0 !important;
+            height: 0 !important;
+          }
+          .scrollbar-hide::-webkit-scrollbar-track {
+            display: none !important;
+          }
+          .scrollbar-hide::-webkit-scrollbar-thumb {
+            display: none !important;
+          }
+          .scrollbar-hide::-webkit-scrollbar-corner {
+            display: none !important;
+          }
         `}</style>
       </section>
 
@@ -1289,7 +1453,7 @@ export default function LandingPage() {
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
-            className="text-center mb-16"
+            className="text-center mb-8 md:mb-16"
           >
             <h2 className="text-5xl md:text-6xl font-black text-dark mb-6 leading-tight">
               Come Funziona
@@ -1299,8 +1463,8 @@ export default function LandingPage() {
             </p>
           </motion.div>
 
-          {/* Steps con animazioni */}
-          <div className="grid md:grid-cols-3 gap-8 lg:gap-12">
+          {/* Steps con animazioni - Gallery style su mobile */}
+          <div className="hidden md:grid md:grid-cols-3 gap-8 lg:gap-12">
                {howItWorksSteps.map((step, index) => (
                  <motion.div
                    key={index}
@@ -1312,7 +1476,7 @@ export default function LandingPage() {
                 className="relative"
               >
                 {/* Numero del passo - floating */}
-                <div className="absolute -top-4 left-4 md:left-1/2 md:transform md:-translate-x-1/2 z-20">
+                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 z-20">
                   <motion.div
                     initial={{ scale: 0 }}
                     whileInView={{ scale: 1 }}
@@ -1324,10 +1488,10 @@ export default function LandingPage() {
                   </motion.div>
                    </div>
                    
-                                {/* Card con animazione statica */}
-                <div className="bg-white rounded-2xl p-6 shadow-xl border border-gray-100 h-auto md:h-[36rem] relative overflow-hidden flex flex-col">
+                                {/* Card con animazione statica - DESKTOP VERSIONE ORIGINALE */}
+                <div className="bg-gradient-to-br from-rose-50/80 via-pink-50/60 to-rose-50/80 rounded-2xl p-6 shadow-xl border border-rose-100/50 h-[36rem] relative overflow-hidden flex flex-col">
                   
-                  {/* Titolo e descrizione con spazio ridotto */}
+                  {/* Titolo e descrizione */}
                   <div className="text-center mb-6">
                     <h3 className="text-2xl font-black mb-4 text-dark leading-tight">{step.title}</h3>
                     <p className="text-gray-600 text-base leading-relaxed font-medium">
@@ -1337,9 +1501,9 @@ export default function LandingPage() {
                   
                   {/* Animazioni dinamiche - posizionamento ottimizzato */}
                   <div className="flex-1 flex items-center justify-center">
-                    {index === 0 && <RegistrationAnimation isActive={howItWorksInView[0]} />}
-                    {index === 1 && <CustomizationAnimation isActive={howItWorksInView[1]} />}
-                    {index === 2 && <SharingAnimation isActive={howItWorksInView[2]} />}
+                    {index === 0 && <RegistrationAnimation isActive={true} />}
+                    {index === 1 && <CustomizationAnimation isActive={true} />}
+                    {index === 2 && <SharingAnimation isActive={true} />}
                   </div>
                   
                   {/* Gradiente decorativo */}
@@ -1353,6 +1517,86 @@ export default function LandingPage() {
 
                  </motion.div>
                ))}
+           </div>
+
+           {/* Gallery mobile - una card alla volta */}
+           <div className="md:hidden relative">
+             {/* Container scrollabile orizzontale */}
+             <div className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide">
+               {howItWorksSteps.map((step, index) => (
+                 <motion.div
+                   key={index}
+                   ref={howItWorksRefs[index]}
+                   initial={{ opacity: 0, x: 50 }}
+                   whileInView={{ opacity: 1, x: 0 }}
+                   transition={{ duration: 0.6, delay: 0.2 }}
+                   viewport={{ once: true }}
+                   className="relative flex-shrink-0 w-full snap-center px-4"
+                 >
+                   {/* Card con animazione statica - MOBILE VERSIONE */}
+                   <div className="bg-white rounded-2xl p-6 shadow-xl border border-gray-100 aspect-[9/16] relative overflow-hidden flex flex-col">
+                     
+                     {/* Numero del passo - dentro la card in alto a sinistra */}
+                     <div className="absolute top-4 left-4 z-20">
+                       <motion.div
+                         initial={{ scale: 0 }}
+                         whileInView={{ scale: 1 }}
+                         transition={{ delay: 0.3, type: "spring" }}
+                         viewport={{ once: true }}
+                         className="w-8 h-8 bg-gradient-to-r from-primary to-accent rounded-full flex items-center justify-center shadow-lg"
+                       >
+                         <span className="text-sm font-bold text-white">{step.step}</span>
+                       </motion.div>
+                     </div>
+                     
+                     {/* Titolo e descrizione con spazio ridotto */}
+                     <div className="text-center mb-4">
+                       <h3 className="text-lg font-black mb-2 text-dark leading-tight">{step.title}</h3>
+                       <p className="text-gray-600 text-sm leading-relaxed font-medium">
+                         {step.description}
+                       </p>
+                     </div>
+                     
+                     {/* Animazioni dinamiche - posizionamento ottimizzato */}
+                     <div className="flex-1 flex items-center justify-center">
+                       {index === 0 && <RegistrationAnimation isActive={howItWorksInView[0]} />}
+                       {index === 1 && <CustomizationAnimation isActive={howItWorksInView[1]} />}
+                       {index === 2 && <SharingAnimation isActive={howItWorksInView[2]} />}
+                     </div>
+                     
+                     {/* Gradiente decorativo */}
+                     <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${
+                       index === 0 ? 'from-blue-400 to-blue-600' :
+                       index === 1 ? 'from-green-400 to-green-600' :
+                       'from-purple-400 to-purple-600'
+                     } rounded-t-2xl z-10`}></div>
+                   </div>
+                 </motion.div>
+               ))}
+             </div>
+
+             {/* Indicatori di navigazione */}
+             <div className="flex justify-center mt-6 space-x-2">
+               {howItWorksSteps.map((_, index) => (
+                 <motion.button
+                   key={index}
+                   onClick={() => {
+                     const container = document.querySelector('.snap-x') as HTMLElement;
+                     if (container) {
+                       container.scrollTo({
+                         left: index * container.offsetWidth,
+                         behavior: 'smooth'
+                       });
+                     }
+                   }}
+                   className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                     index === activeStep ? 'bg-primary scale-125' : 'bg-gray-300'
+                   }`}
+                   whileHover={{ scale: 1.2 }}
+                   whileTap={{ scale: 0.9 }}
+                 />
+               ))}
+             </div>
            </div>
         </div>
       </section>
@@ -1453,6 +1697,8 @@ export default function LandingPage() {
           {/* Grid delle features ultra-lussuose */}
           <div className="grid grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
              {features.map((feature, index) => (
+               // Mostra solo le prime 4 features su mobile, tutte su desktop
+               <div key={index} className={`${index >= 4 ? 'hidden lg:block' : ''}`}>
                <motion.div
                  key={index}
                 initial={{ opacity: 0, y: 40, scale: 0.95 }}
@@ -1608,6 +1854,7 @@ export default function LandingPage() {
 
 
                </motion.div>
+               </div>
              ))}
           </div>
 
@@ -1736,9 +1983,13 @@ export default function LandingPage() {
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.6 }}
               viewport={{ once: true }}
-              className="text-2xl text-gray-700 max-w-4xl mx-auto"
+              className="text-xl md:text-2xl text-gray-700 max-w-4xl mx-auto"
             >
-              Tutto ciò che ti serve per trasformare la tua attività
+              Tutto ciò che ti serve per trasformare completamente
+              <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-indigo-400 font-semibold">
+                l'esperienza dei tuoi ospiti
+              </span>
               <br />
               <span className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-rose-600 to-pink-600">
                 €29/mese
@@ -2057,7 +2308,7 @@ export default function LandingPage() {
                 viewport={{ once: true }}
                 className="inline-block"
               >
-                <h2 className="text-3xl md:text-5xl lg:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-purple-200 to-blue-200 mb-4 md:mb-6 leading-tight">
+                <h2 className="text-5xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-purple-200 to-blue-200 mb-4 md:mb-6 leading-tight">
                   Il Tuo Feedback
                   <br />
                   <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-pink-300 to-purple-300">
@@ -2071,7 +2322,7 @@ export default function LandingPage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.4 }}
                 viewport={{ once: true }}
-                className="text-sm md:text-xl lg:text-2xl text-gray-300 max-w-4xl mx-auto leading-relaxed"
+                className="text-xl md:text-2xl text-gray-300 max-w-4xl mx-auto leading-relaxed"
               >
                 Condividi la tua esperienza e aiutaci a rendere HostGPT ancora più straordinario.
                 <br className="hidden md:block" />
@@ -2614,7 +2865,7 @@ export default function LandingPage() {
               {/* Glow effect */}
               <div className="absolute -inset-2 bg-gradient-to-r from-blue-500/30 to-cyan-500/30 rounded-3xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
               
-              <div className="relative bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 md:p-8 shadow-2xl overflow-hidden">
+              <div className="relative bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 md:p-8 shadow-2xl overflow-hidden text-center">
                 {/* Background pattern */}
                 <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-blue-500/20 to-transparent rounded-full blur-2xl"></div>
                 
@@ -2664,7 +2915,7 @@ export default function LandingPage() {
             >
               <div className="absolute -inset-2 bg-gradient-to-r from-purple-500/30 to-pink-500/30 rounded-3xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
               
-              <div className="relative bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 md:p-8 shadow-2xl overflow-hidden">
+              <div className="relative bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 md:p-8 shadow-2xl overflow-hidden text-center">
                 <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-purple-500/20 to-transparent rounded-full blur-2xl"></div>
                 
                 <motion.div
@@ -2709,7 +2960,7 @@ export default function LandingPage() {
             >
               <div className="absolute -inset-2 bg-gradient-to-r from-green-500/30 to-emerald-500/30 rounded-3xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
               
-              <div className="relative bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 md:p-8 shadow-2xl overflow-hidden">
+              <div className="relative bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 md:p-8 shadow-2xl overflow-hidden text-center">
                 <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-green-500/20 to-transparent rounded-full blur-2xl"></div>
                 
                 <motion.div
@@ -2754,7 +3005,7 @@ export default function LandingPage() {
             >
               <div className="absolute -inset-2 bg-gradient-to-r from-yellow-500/30 to-orange-500/30 rounded-3xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
               
-              <div className="relative bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 md:p-8 shadow-2xl overflow-hidden">
+              <div className="relative bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 md:p-8 shadow-2xl overflow-hidden text-center">
                 <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-yellow-500/20 to-transparent rounded-full blur-2xl"></div>
                 
                 <motion.div
@@ -2794,32 +3045,7 @@ export default function LandingPage() {
             </motion.div>
           </div>
 
-          {/* Sezione bottom con insight */}
-          <motion.div
-            initial={{ opacity: 0, y: 40 }}
-              whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.8 }}
-            className="text-center mt-16"
-          >
-            <div className="relative inline-block">
-              <div className="absolute -inset-6 bg-gradient-to-r from-indigo-600/20 via-purple-600/20 to-pink-600/20 rounded-full blur-2xl opacity-60"></div>
-              <motion.div
-                whileHover={{ scale: 1.02 }}
-                className="relative bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl px-8 py-6 shadow-2xl"
-              >
-                <p className="text-gray-300 text-lg">
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-400 font-bold">
-                    Crescita del 300%
-                  </span>{" "}
-                  negli ultimi 6 mesi
-                  <br />
-                  <span className="text-sm text-gray-400">
-                    La fiducia dei nostri host è la nostra forza motrice
-                  </span>
-                </p>
-            </motion.div>
-          </div>
-          </motion.div>
+
         </div>
       </section>
 

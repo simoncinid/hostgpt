@@ -106,18 +106,27 @@ export default function ChatbotsListPage() {
                     className="flex-1 cursor-pointer"
                     onClick={() => router.push(`/dashboard/chatbots/${bot.id}`)}
                   >
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-semibold text-lg">{bot.property_name}</h3>
+                    {/* Nome e status in alto */}
+                    <div className="flex items-center justify-between mb-1">
+                      <h3 className="font-semibold text-base md:text-lg">{bot.property_name}</h3>
                       {bot.is_active ? (
                         <span className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full">Attivo</span>
                       ) : (
                         <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">Inattivo</span>
                       )}
                     </div>
-                    <p className="text-sm text-gray-500 mt-1">{bot.property_city}</p>
-                    <div className="flex items-center gap-4 mt-2 text-sm text-gray-600">
-                      <span className="flex items-center"><Users className="w-4 h-4 mr-1" />{bot.total_conversations} conversazioni</span>
-                      <span className="flex items-center"><MessageSquare className="w-4 h-4 mr-1" />{bot.total_messages} messaggi</span>
+                    {/* Città sotto */}
+                    <p className="text-sm text-gray-500 mb-2">{bot.property_city}</p>
+                    {/* Statistiche in una riga in basso */}
+                    <div className="flex items-center gap-3 text-xs md:text-sm text-gray-600">
+                      <span className="flex items-center">
+                        <Users className="w-3 h-3 md:w-4 md:h-4 mr-1" />
+                        {bot.total_conversations} conversazioni
+                      </span>
+                      <span className="flex items-center">
+                        <MessageSquare className="w-3 h-3 md:w-4 md:h-4 mr-1" />
+                        {bot.total_messages} messaggi
+                      </span>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 ml-4">

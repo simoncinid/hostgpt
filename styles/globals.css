@@ -216,6 +216,27 @@
   .no-scrollbar::-webkit-scrollbar {
     display: none; /* Chrome, Safari, Opera*/
   }
+  
+  /* Nascondi scrollbar per gallery mobile */
+  .scrollbar-hide {
+    -ms-overflow-style: none !important;
+    scrollbar-width: none !important;
+    overflow-x: auto !important;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+  }
+  .scrollbar-hide::-webkit-scrollbar-track {
+    display: none !important;
+  }
+  .scrollbar-hide::-webkit-scrollbar-thumb {
+    display: none !important;
+  }
+  .scrollbar-hide::-webkit-scrollbar-corner {
+    display: none !important;
+  }
   .text-gradient {
     @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent;
   }

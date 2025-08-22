@@ -140,18 +140,18 @@ function DashboardContent() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-8">
+        <div className="grid grid-cols-4 gap-2 md:grid-cols-4 md:gap-6 mb-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="stats-card"
+            className="stats-card p-2 md:p-6"
           >
-            <div className="flex items-center justify-between mb-2">
-              <MessageSquare className="w-8 h-8 text-primary" />
-              <span className="text-3xl font-bold">{totalStats.totalBots}</span>
+            <div className="flex items-center justify-between mb-1 md:mb-2">
+              <MessageSquare className="w-4 h-4 md:w-8 md:h-8 text-primary" />
+              <span className="text-sm md:text-3xl font-bold">{totalStats.totalBots}</span>
             </div>
-            <p className="text-gray-600">Chatbot Totali</p>
-            <p className="text-sm text-green-600 mt-1">
+            <p className="text-gray-600 text-xs md:text-base">Chatbot Totali</p>
+            <p className="text-xs md:text-sm text-green-600 mt-1">
               {totalStats.activeBots} attivi
             </p>
           </motion.div>
@@ -160,42 +160,42 @@ function DashboardContent() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="stats-card"
+            className="stats-card p-2 md:p-6"
           >
-            <div className="flex items-center justify-between mb-2">
-              <Users className="w-8 h-8 text-primary" />
-              <span className="text-3xl font-bold">{totalStats.totalConversations}</span>
+            <div className="flex items-center justify-between mb-1 md:mb-2">
+              <Users className="w-4 h-4 md:w-8 md:h-8 text-primary" />
+              <span className="text-sm md:text-3xl font-bold">{totalStats.totalConversations}</span>
             </div>
-            <p className="text-gray-600">Conversazioni</p>
-            <p className="text-sm text-gray-500 mt-1">Totale storico</p>
+            <p className="text-gray-600 text-xs md:text-base">Conversazioni</p>
+            <p className="text-xs md:text-sm text-gray-500 mt-1">Totale storico</p>
           </motion.div>
 
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="stats-card"
+            className="stats-card p-2 md:p-6"
           >
-            <div className="flex items-center justify-between mb-2">
-              <TrendingUp className="w-8 h-8 text-primary" />
-              <span className="text-3xl font-bold">{totalStats.totalMessages}</span>
+            <div className="flex items-center justify-between mb-1 md:mb-2">
+              <TrendingUp className="w-4 h-4 md:w-8 md:h-8 text-primary" />
+              <span className="text-sm md:text-3xl font-bold">{totalStats.totalMessages}</span>
             </div>
-            <p className="text-gray-600">Messaggi Totali</p>
-            <p className="text-sm text-gray-500 mt-1">Tutti i chatbot</p>
+            <p className="text-gray-600 text-xs md:text-base">Messaggi Totali</p>
+            <p className="text-xs md:text-sm text-gray-500 mt-1">Tutti i chatbot</p>
           </motion.div>
 
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="stats-card"
+            className="stats-card p-2 md:p-6"
           >
-            <div className="flex items-center justify-between mb-2">
-              <Clock className="w-8 h-8 text-primary" />
-              <span className="text-3xl font-bold">24/7</span>
+            <div className="flex items-center justify-between mb-1 md:mb-2">
+              <Clock className="w-4 h-4 md:w-8 md:h-8 text-primary" />
+              <span className="text-sm md:text-3xl font-bold">24/7</span>
             </div>
-            <p className="text-gray-600">Disponibilità</p>
-            <p className="text-sm text-green-600 mt-1">Sempre online</p>
+            <p className="text-gray-600 text-xs md:text-base">Disponibilità</p>
+            <p className="text-xs md:text-sm text-green-600 mt-1">Sempre online</p>
           </motion.div>
         </div>
 
@@ -254,26 +254,29 @@ function DashboardContent() {
                       className="flex-1 cursor-pointer"
                       onClick={() => router.push(`/dashboard/chatbots/${bot.id}`)}
                     >
-                      <div className="flex items-center flex-wrap gap-2">
-                        <h3 className="font-semibold text-lg">{bot.property_name}</h3>
+                      {/* Nome e status in alto */}
+                      <div className="flex items-center justify-between mb-1">
+                        <h3 className="font-semibold text-base md:text-lg">{bot.property_name}</h3>
                         {bot.is_active ? (
-                          <span className="ml-2 px-2 py-1 bg-green-100 text-green-600 text-xs rounded-full">
+                          <span className="px-2 py-1 bg-green-100 text-green-600 text-xs rounded-full">
                             Attivo
                           </span>
                         ) : (
-                          <span className="ml-2 px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
+                          <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
                             Inattivo
                           </span>
                         )}
                       </div>
-                      <p className="text-sm text-gray-500 mt-1">{bot.property_city}</p>
-                      <div className="flex items-center gap-4 mt-2 text-sm text-gray-600 flex-wrap">
+                      {/* Città sotto */}
+                      <p className="text-sm text-gray-500 mb-2">{bot.property_city}</p>
+                      {/* Statistiche in una riga in basso */}
+                      <div className="flex items-center gap-3 text-xs md:text-sm text-gray-600">
                         <span className="flex items-center">
-                          <Users className="w-4 h-4 mr-1" />
+                          <Users className="w-3 h-3 md:w-4 md:h-4 mr-1" />
                           {bot.total_conversations} conversazioni
                         </span>
                         <span className="flex items-center">
-                          <MessageSquare className="w-4 h-4 mr-1" />
+                          <MessageSquare className="w-3 h-3 md:w-4 md:h-4 mr-1" />
                           {bot.total_messages} messaggi
                         </span>
                       </div>

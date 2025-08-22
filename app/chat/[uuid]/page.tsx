@@ -263,7 +263,7 @@ export default function ChatWidgetPage() {
           {/* Messages Area */}
           {(!showWelcome || messages.length > 1) && (
             <>
-              <div className="max-h-[calc(100svh-260px)] md:h-[500px] overflow-y-auto p-4 md:p-6 space-y-4">
+              <div className="max-h-[calc(90vh-200px)] md:h-[500px] overflow-y-auto p-4 md:p-6 space-y-4">
                 {messages.map((message, index) => (
                   <motion.div
                     key={message.id}
@@ -272,7 +272,7 @@ export default function ChatWidgetPage() {
                     transition={{ delay: index * 0.1 }}
                     className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
                   >
-                    <div className={`flex items-start max-w-[70%] ${
+                    <div className={`flex items-start max-w-[85%] md:max-w-[70%] ${
                       message.role === 'user' ? 'flex-row-reverse' : ''
                     }`}>
                       <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
@@ -322,7 +322,7 @@ export default function ChatWidgetPage() {
               </div>
 
               {/* Input Area */}
-              <div className="border-t p-3 md:p-4 safe-bottom">
+              <div className="border-t p-3 md:p-4 pb-6 md:pb-4 safe-bottom">
                 <form onSubmit={handleSendMessage} className="flex items-center gap-2 md:gap-3">
                   <input
                     ref={inputRef}

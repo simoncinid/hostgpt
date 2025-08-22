@@ -80,37 +80,41 @@ export default function ChatbotDetailPage() {
         <div className="bg-white shadow-sm">
           <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <h1 className="text-xl font-semibold">{currentChatbot.property_name}</h1>
+              <h1 className="text-xl font-semibold flex-1 min-w-0">{currentChatbot.property_name}</h1>
             </div>
             <div className="flex items-center gap-2">
-              <Link href={`/dashboard/chatbots/${currentChatbot.id}/edit`} className="btn-secondary">Modifica</Link>
-              <a href={chatUrl} target="_blank" rel="noopener noreferrer" className="btn-primary">Apri Chat</a>
+              <Link href={`/dashboard/chatbots/${currentChatbot.id}/edit`} className="p-2 hover:bg-gray-100 rounded-lg" title="Modifica">
+                <Edit className="w-5 h-5" />
+              </Link>
+              <a href={chatUrl} target="_blank" rel="noopener noreferrer" className="p-2 hover:bg-gray-100 rounded-lg" title="Apri Chat">
+                <ExternalLink className="w-5 h-5" />
+              </a>
             </div>
           </div>
         </div>
 
         <div className="max-w-6xl mx-auto px-4 py-8 space-y-8">
-          <div className="grid md:grid-cols-3 gap-6">
-            <div className="stats-card">
-              <div className="flex items-center justify-between mb-2">
-                <MessageSquare className="w-8 h-8 text-primary" />
-                <span className="text-3xl font-bold">{currentChatbot.total_messages}</span>
+          <div className="grid grid-cols-3 gap-4 md:gap-6">
+            <div className="stats-card p-3 md:p-6">
+              <div className="flex items-center justify-between mb-1 md:mb-2">
+                <MessageSquare className="w-5 h-5 md:w-8 md:h-8 text-primary" />
+                <span className="text-lg md:text-3xl font-bold">{currentChatbot.total_messages}</span>
               </div>
-              <p className="text-gray-600">Messaggi Totali</p>
+              <p className="text-gray-600 text-xs md:text-base">Messaggi</p>
             </div>
-            <div className="stats-card">
-              <div className="flex items-center justify-between mb-2">
-                <Users className="w-8 h-8 text-primary" />
-                <span className="text-3xl font-bold">{currentChatbot.total_conversations}</span>
+            <div className="stats-card p-3 md:p-6">
+              <div className="flex items-center justify-between mb-1 md:mb-2">
+                <Users className="w-5 h-5 md:w-8 md:h-8 text-primary" />
+                <span className="text-lg md:text-3xl font-bold">{currentChatbot.total_conversations}</span>
               </div>
-              <p className="text-gray-600">Conversazioni Totali</p>
+              <p className="text-gray-600 text-xs md:text-base">Conversazioni</p>
             </div>
-            <div className="stats-card">
-              <div className="flex items-center justify-between mb-2">
-                <BarChart3 className="w-8 h-8 text-primary" />
-                <span className="text-3xl font-bold">{Math.round((analytics?.avg_messages_per_conversation || 0) * 10) / 10}</span>
+            <div className="stats-card p-3 md:p-6">
+              <div className="flex items-center justify-between mb-1 md:mb-2">
+                <BarChart3 className="w-5 h-5 md:w-8 md:h-8 text-primary" />
+                <span className="text-lg md:text-3xl font-bold">{Math.round((analytics?.avg_messages_per_conversation || 0) * 10) / 10}</span>
               </div>
-              <p className="text-gray-600">Messaggi medi per conversazione</p>
+              <p className="text-gray-600 text-xs md:text-base">Media per chat</p>
             </div>
           </div>
 
@@ -118,6 +122,11 @@ export default function ChatbotDetailPage() {
             <div className="bg-white rounded-2xl shadow p-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold">Anteprima & Azioni</h2>
+                <button className="p-2 hover:bg-gray-100 rounded-lg" title="Scarica QR Code">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </button>
               </div>
               <div className="bg-gray-50 p-4 rounded-lg">
                 <div className="flex items-center justify-between mb-3">

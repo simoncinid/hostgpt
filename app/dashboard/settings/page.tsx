@@ -104,136 +104,141 @@ export default function SettingsPage() {
       <Sidebar currentPath="/dashboard/settings" onLogout={handleLogout} isSidebarCollapsed={isSidebarCollapsed} setIsSidebarCollapsed={setIsSidebarCollapsed} />
       
       {/* Main Content Wrapper */}
-      <div className={`transition-all duration-200 ${isSidebarCollapsed ? 'md:ml-16' : 'md:ml-64'} p-4 md:p-8`}>
+      <div className={`transition-all duration-200 ${isSidebarCollapsed ? 'md:ml-16' : 'md:ml-64'}`}>
         <div className="bg-white shadow-sm">
           <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
             <h1 className="text-xl font-semibold">Impostazioni</h1>
           </div>
         </div>
 
-        <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
-          <div className="bg-white rounded-2xl shadow p-6">
-            <h2 className="text-lg font-semibold mb-4">Profilo</h2>
-            <div className="grid md:grid-cols-2 gap-4">
-              <div className="flex items-center gap-3">
-                <User className="w-5 h-5 text-gray-600" />
-                <div>
-                  <p className="text-sm text-gray-500">Nome</p>
-                  <p className="font-medium">{user?.full_name}</p>
+        <div className="p-4 md:p-8">
+          <div className="max-w-4xl mx-auto space-y-6">
+            <div className="bg-white rounded-2xl shadow p-6">
+              <h2 className="text-lg font-semibold mb-4">Profilo</h2>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="flex items-center gap-3">
+                  <User className="w-5 h-5 text-gray-600" />
+                  <div>
+                    <p className="text-sm text-gray-500">Nome</p>
+                    <p className="font-medium">{user?.full_name}</p>
+                  </div>
                 </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <Mail className="w-5 h-5 text-gray-600" />
-                <div>
-                  <p className="text-sm text-gray-500">Email</p>
-                  <p className="font-medium">{user?.email}</p>
+                <div className="flex items-center gap-3">
+                  <Mail className="w-5 h-5 text-gray-600" />
+                  <div>
+                    <p className="text-sm text-gray-500">Email</p>
+                    <p className="font-medium">{user?.email}</p>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          <div className="bg-white rounded-2xl shadow p-6">
-            <h2 className="text-lg font-semibold mb-4">Abbonamento</h2>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium">Stato: <span className={
-                    user?.subscription_status === 'active' ? 'text-green-600' : 
-                    user?.subscription_status === 'cancelling' ? 'text-orange-600' : 
-                    'text-red-600'
-                  }>{user?.subscription_status || 'inactive'}</span></p>
-                  {user?.subscription_end_date && (
-                    <p className="text-sm text-gray-500">
-                      {user?.subscription_status === 'cancelling' ? 'Fine abbonamento: ' : 'Prossimo rinnovo: '}
-                      {new Date(user.subscription_end_date).toLocaleDateString('it-IT')}
-                    </p>
+            <div className="bg-white rounded-2xl shadow p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold">Abbonamento</h2>
+                <CreditCard className="w-5 h-5 text-gray-600" />
+              </div>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium">Stato: <span className={
+                      user?.subscription_status === 'active' ? 'text-green-600' : 
+                      user?.subscription_status === 'cancelling' ? 'text-orange-600' : 
+                      'text-red-600'
+                    }>{user?.subscription_status || 'inactive'}</span></p>
+                    {user?.subscription_end_date && (
+                      <p className="text-sm text-gray-500">
+                        {user?.subscription_status === 'cancelling' ? 'Fine abbonamento: ' : 'Prossimo rinnovo: '}
+                        {new Date(user.subscription_end_date).toLocaleDateString('it-IT')}
+                      </p>
+                    )}
+                  </div>
+                  {!['active', 'cancelling'].includes(user?.subscription_status || '') && (
+                    <button onClick={handleStartCheckout} disabled={isCheckoutLoading} className="btn-primary inline-flex items-center">
+                      {isCheckoutLoading ? (
+                        <>
+                          <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                          Reindirizzamento...
+                        </>
+                      ) : (
+                        <>
+                          <CreditCard className="w-5 h-5 mr-2" />
+                          Attiva Abbonamento
+                        </>
+                      )}
+                    </button>
                   )}
                 </div>
-                {!['active', 'cancelling'].includes(user?.subscription_status || '') && (
-                  <button onClick={handleStartCheckout} disabled={isCheckoutLoading} className="btn-primary inline-flex items-center">
-                    {isCheckoutLoading ? (
-                      <>
-                        <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                        Reindirizzamento...
-                      </>
-                    ) : (
-                      <>
-                        <CreditCard className="w-5 h-5 mr-2" />
-                        Attiva Abbonamento
-                      </>
-                    )}
-                  </button>
+                
+                {user?.subscription_status === 'active' && (
+                  <div className="border-t pt-4">
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                      <div className="flex items-start gap-3">
+                        <AlertTriangle className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
+                        <div className="flex-1">
+                          <h3 className="font-medium text-red-800 mb-1">Annulla Abbonamento</h3>
+                          <p className="text-sm text-red-700 mb-3">
+                            Annullando l'abbonamento il servizio verrà disattivato, ma tutti i tuoi dati (chatbot, conversazioni, messaggi) rimarranno nel database.
+                          </p>
+                          <button 
+                            onClick={() => setShowCancelModal(true)} 
+                            disabled={isCancellingSubscription}
+                            className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center"
+                          >
+                            {isCancellingSubscription ? (
+                              <>
+                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                Annullamento...
+                              </>
+                            ) : (
+                              'Annulla Abbonamento'
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                {user?.subscription_status === 'cancelling' && (
+                  <div className="border-t pt-4">
+                    <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                      <div className="flex items-start gap-3">
+                        <AlertTriangle className="w-5 h-5 text-orange-600 mt-0.5 flex-shrink-0" />
+                        <div className="flex-1">
+                          <h3 className="font-medium text-orange-800 mb-1">Abbonamento in Fase di Annullamento</h3>
+                          <p className="text-sm text-orange-700 mb-3">
+                            Il tuo abbonamento è in fase di annullamento e rimarrà attivo fino alla fine del periodo corrente. Puoi riattivarlo in qualsiasi momento.
+                          </p>
+                          <button 
+                            onClick={handleStartCheckout} 
+                            disabled={isCheckoutLoading}
+                            className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center"
+                          >
+                            {isCheckoutLoading ? (
+                              <>
+                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                Riattivazione...
+                              </>
+                            ) : (
+                              'Riattiva Abbonamento (Gratis)'
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 )}
               </div>
-              
-              {user?.subscription_status === 'active' && (
-                <div className="border-t pt-4">
-                  <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                    <div className="flex items-start gap-3">
-                      <AlertTriangle className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
-                      <div className="flex-1">
-                        <h3 className="font-medium text-red-800 mb-1">Annulla Abbonamento</h3>
-                        <p className="text-sm text-red-700 mb-3">
-                          Annullando l'abbonamento il servizio verrà disattivato, ma tutti i tuoi dati (chatbot, conversazioni, messaggi) rimarranno nel database.
-                        </p>
-                        <button 
-                          onClick={() => setShowCancelModal(true)} 
-                          disabled={isCancellingSubscription}
-                          className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center"
-                        >
-                          {isCancellingSubscription ? (
-                            <>
-                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                              Annullamento...
-                            </>
-                          ) : (
-                            'Annulla Abbonamento'
-                          )}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-              
-              {user?.subscription_status === 'cancelling' && (
-                <div className="border-t pt-4">
-                  <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
-                    <div className="flex items-start gap-3">
-                      <AlertTriangle className="w-5 h-5 text-orange-600 mt-0.5 flex-shrink-0" />
-                      <div className="flex-1">
-                        <h3 className="font-medium text-orange-800 mb-1">Abbonamento in Fase di Annullamento</h3>
-                        <p className="text-sm text-orange-700 mb-3">
-                          Il tuo abbonamento è in fase di annullamento e rimarrà attivo fino alla fine del periodo corrente. Puoi riattivarlo in qualsiasi momento.
-                        </p>
-                                                 <button 
-                           onClick={handleStartCheckout} 
-                           disabled={isCheckoutLoading}
-                           className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center"
-                         >
-                           {isCheckoutLoading ? (
-                             <>
-                               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                               Riattivazione...
-                             </>
-                           ) : (
-                             'Riattiva Abbonamento (Gratis)'
-                           )}
-                         </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
-          </div>
 
-          <div className="bg-white rounded-2xl shadow p-6">
-            <h2 className="text-lg font-semibold mb-4">Sicurezza</h2>
-            <button onClick={() => { logout(); router.push('/login') }} className="btn-secondary inline-flex items-center">
-              <LogOut className="w-5 h-5 mr-2" />
-              Esci
-            </button>
+            <div className="bg-white rounded-2xl shadow p-6">
+              <h2 className="text-lg font-semibold mb-4">Sicurezza</h2>
+              <button onClick={() => { logout(); router.push('/login') }} className="btn-secondary inline-flex items-center">
+                <LogOut className="w-5 h-5 mr-2" />
+                Esci
+              </button>
+            </div>
           </div>
         </div>
       </div>
