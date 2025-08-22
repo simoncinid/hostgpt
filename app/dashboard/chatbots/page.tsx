@@ -71,7 +71,7 @@ export default function ChatbotsListPage() {
       <Sidebar currentPath="/dashboard/chatbots" onLogout={handleLogout} isSidebarCollapsed={isSidebarCollapsed} setIsSidebarCollapsed={setIsSidebarCollapsed} />
       
       {/* Main Content Wrapper */}
-      <div className={`transition-all duration-200 ${isSidebarCollapsed ? 'md:ml-16' : 'md:ml-64'} p-4 md:p-8`}>
+      <div className={`transition-all duration-200 ${isSidebarCollapsed ? 'md:ml-16' : 'md:ml-64'}`}>
         <div className="bg-white shadow-sm">
           <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
             <h1 className="text-xl font-semibold">I Miei Chatbot</h1>
@@ -82,7 +82,8 @@ export default function ChatbotsListPage() {
           </div>
         </div>
 
-        <div className="max-w-6xl mx-auto px-4 py-8">
+        <div className="p-4 md:p-8">
+          <div className="max-w-6xl mx-auto">
           {isLoading ? (
             <div className="flex items-center justify-center py-20 text-gray-600">
               <Loader2 className="w-6 h-6 animate-spin mr-2" /> Caricamento...
@@ -94,20 +95,18 @@ export default function ChatbotsListPage() {
               <Link href="/dashboard/chatbots/create" className="btn-primary">Crea il tuo primo chatbot</Link>
             </div>
           ) : (
-            <div className="space-y-4">
-              {chatbots.map((bot) => (
-                <motion.div
-                  key={bot.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="bg-white rounded-xl border p-5 flex items-center justify-between hover:shadow-md transition"
-                >
-                  <div 
-                    className="flex-1 cursor-pointer"
+            <div className="bg-white rounded-2xl shadow">
+              <div className="divide-y">
+                {chatbots.map((bot) => (
+                  <motion.div
+                    key={bot.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="p-4 hover:bg-gray-50 transition cursor-pointer"
                     onClick={() => router.push(`/dashboard/chatbots/${bot.id}`)}
                   >
-                    {/* Nome e status in alto */}
-                    <div className="flex items-center justify-between mb-1">
+                    {/* Prima riga: Nome e Status */}
+                    <div className="flex items-center justify-between mb-2">
                       <h3 className="font-semibold text-base md:text-lg">{bot.property_name}</h3>
                       {bot.is_active ? (
                         <span className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full">Attivo</span>
@@ -115,39 +114,77 @@ export default function ChatbotsListPage() {
                         <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">Inattivo</span>
                       )}
                     </div>
-                    {/* Città sotto */}
-                    <p className="text-sm text-gray-500 mb-2">{bot.property_city}</p>
-                    {/* Statistiche in una riga in basso */}
-                    <div className="flex items-center gap-3 text-xs md:text-sm text-gray-600">
-                      <span className="flex items-center">
+                    
+                    {/* Seconda riga: Luogo */}
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-sm text-gray-500">{bot.property_city}</p>
+                      <div></div>
+                    </div>
+                    
+                    {/* Terza riga: Statistiche */}
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="flex items-center text-xs md:text-sm text-gray-600">
                         <Users className="w-3 h-3 md:w-4 md:h-4 mr-1" />
                         {bot.total_conversations} conversazioni
                       </span>
-                      <span className="flex items-center">
+                      <span className="flex items-center text-xs md:text-sm text-gray-600">
                         <MessageSquare className="w-3 h-3 md:w-4 md:h-4 mr-1" />
                         {bot.total_messages} messaggi
                       </span>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-2 ml-4">
-                    <button onClick={() => showQRCode(bot.chat_url, bot.qr_code)} className="p-2 hover:bg-gray-100 rounded-lg" title="QR Code">
-                      <QrCode className="w-5 h-5 text-gray-700" />
-                    </button>
-                    <a href={bot.chat_url} target="_blank" rel="noopener noreferrer" className="p-2 hover:bg-gray-100 rounded-lg" title="Apri Chat">
-                      <ExternalLink className="w-5 h-5 text-gray-700" />
-                    </a>
-                    <Link href={`/dashboard/chatbots/${bot.id}`} className="p-2 hover:bg-gray-100 rounded-lg" title="Dettagli">
-                      <Eye className="w-5 h-5 text-gray-700" />
-                    </Link>
-                    <Link href={`/dashboard/chatbots/${bot.id}/edit`} className="p-2 hover:bg-gray-100 rounded-lg" title="Modifica">
-                      <Edit className="w-5 h-5 text-gray-700" />
-                    </Link>
-                    <button onClick={() => handleDelete(bot.id)} className="p-2 hover:bg-red-50 rounded-lg" title="Elimina">
-                      <Trash2 className="w-5 h-5 text-red-600" />
-                    </button>
-                  </div>
-                </motion.div>
-              ))}
+                    
+                    {/* Quarta riga: Icone */}
+                    <div className="flex items-center justify-center gap-2">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          showQRCode(bot.chat_url, bot.qr_code)
+                        }}
+                        className="p-2 hover:bg-gray-100 rounded-lg transition"
+                        title="QR Code"
+                      >
+                        <QrCode className="w-4 h-4 md:w-5 md:h-5 text-gray-700" />
+                      </button>
+                      <a
+                        href={bot.chat_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        className="p-2 hover:bg-gray-100 rounded-lg transition"
+                        title="Apri Chat"
+                      >
+                        <ExternalLink className="w-4 h-4 md:w-5 md:h-5 text-gray-700" />
+                      </a>
+                      <Link
+                        href={`/dashboard/chatbots/${bot.id}`}
+                        onClick={(e) => e.stopPropagation()}
+                        className="p-2 hover:bg-gray-100 rounded-lg transition"
+                        title="Dettagli"
+                      >
+                        <Eye className="w-4 h-4 md:w-5 md:h-5 text-gray-700" />
+                      </Link>
+                      <Link
+                        href={`/dashboard/chatbots/${bot.id}/edit`}
+                        onClick={(e) => e.stopPropagation()}
+                        className="p-2 hover:bg-gray-100 rounded-lg transition"
+                        title="Modifica"
+                      >
+                        <Edit className="w-4 h-4 md:w-5 md:h-5 text-gray-700" />
+                      </Link>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleDelete(bot.id)
+                        }}
+                        className="p-2 hover:bg-red-50 rounded-lg transition"
+                        title="Elimina"
+                      >
+                        <Trash2 className="w-4 h-4 md:w-5 md:h-5 text-red-600" />
+                      </button>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
             </div>
           )}
         </div>
@@ -179,8 +216,9 @@ export default function ChatbotsListPage() {
                 <button onClick={() => setShowQRModal(false)} className="flex-1 btn-primary">Chiudi</button>
               </div>
             </motion.div>
-          </div>
-        )}
+                      </div>
+          )}
+        </div>
       </div>
     </div>
   )

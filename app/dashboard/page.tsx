@@ -150,9 +150,13 @@ function DashboardContent() {
               <MessageSquare className="w-4 h-4 md:w-8 md:h-8 text-primary" />
               <span className="text-sm md:text-3xl font-bold">{totalStats.totalBots}</span>
             </div>
-            <p className="text-gray-600 text-xs md:text-base">Chatbot Totali</p>
+            <p className="text-gray-600 text-xs md:text-base">
+              <span className="md:hidden">Chatbot</span>
+              <span className="hidden md:inline">Chatbot Totali</span>
+            </p>
             <p className="text-xs md:text-sm text-green-600 mt-1">
-              {totalStats.activeBots} attivi
+              <span className="md:hidden">{totalStats.activeBots} attivi</span>
+              <span className="hidden md:inline">{totalStats.activeBots} attivi</span>
             </p>
           </motion.div>
 
@@ -166,8 +170,13 @@ function DashboardContent() {
               <Users className="w-4 h-4 md:w-8 md:h-8 text-primary" />
               <span className="text-sm md:text-3xl font-bold">{totalStats.totalConversations}</span>
             </div>
-            <p className="text-gray-600 text-xs md:text-base">Conversazioni</p>
-            <p className="text-xs md:text-sm text-gray-500 mt-1">Totale storico</p>
+            <p className="text-gray-600 text-xs md:text-base">
+              <span className="md:hidden">Conversaz.</span>
+              <span className="hidden md:inline">Conversazioni</span>
+            </p>
+            <p className="text-xs md:text-sm text-gray-500 mt-1">
+              <span className="hidden md:inline">Totale storico</span>
+            </p>
           </motion.div>
 
           <motion.div
@@ -180,8 +189,13 @@ function DashboardContent() {
               <TrendingUp className="w-4 h-4 md:w-8 md:h-8 text-primary" />
               <span className="text-sm md:text-3xl font-bold">{totalStats.totalMessages}</span>
             </div>
-            <p className="text-gray-600 text-xs md:text-base">Messaggi Totali</p>
-            <p className="text-xs md:text-sm text-gray-500 mt-1">Tutti i chatbot</p>
+            <p className="text-gray-600 text-xs md:text-base">
+              <span className="md:hidden">Messaggi</span>
+              <span className="hidden md:inline">Messaggi Totali</span>
+            </p>
+            <p className="text-xs md:text-sm text-gray-500 mt-1">
+              <span className="hidden md:inline">Tutti i chatbot</span>
+            </p>
           </motion.div>
 
           <motion.div
@@ -192,32 +206,21 @@ function DashboardContent() {
           >
             <div className="flex items-center justify-between mb-1 md:mb-2">
               <Clock className="w-4 h-4 md:w-8 md:h-8 text-primary" />
-              <span className="text-sm md:text-3xl font-bold">24/7</span>
+              <span className="text-sm md:text-3xl font-bold">
+                <span className="md:hidden">24/7</span>
+                <span className="hidden md:inline">24/7</span>
+              </span>
             </div>
-            <p className="text-gray-600 text-xs md:text-base">Disponibilità</p>
+            <p className="text-gray-600 text-xs md:text-base">
+              <span className="md:hidden">Online</span>
+              <span className="hidden md:inline">Disponibilità</span>
+            </p>
             <p className="text-xs md:text-sm text-green-600 mt-1">Sempre online</p>
           </motion.div>
         </div>
 
-        {/* Box informativo: limite 1 chatbot + CTA WhatsApp */}
-        <div className="bg-gradient-to-r from-primary to-accent rounded-2xl p-6 md:p-8 mb-8 text-white">
-          <h2 className="text-2xl font-bold mb-4">Hai più strutture?</h2>
-          <p className="mb-6 text-white/90">
-            Ogni account può avere un solo chatbot. Se ti servono più chatbot perché gestisci più strutture, contattami al <strong>3391797616</strong>.
-          </p>
-          <a
-            href="https://wa.me/393391797616"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center bg-white text-primary px-6 py-3 rounded-lg font-semibold hover:shadow-lg transition"
-          >
-            <Plus className="w-5 h-5 mr-2" />
-            Scrivimi su WhatsApp
-          </a>
-        </div>
-
         {/* Chatbots List */}
-        <div className="bg-white rounded-2xl shadow-lg p-4 md:p-6">
+        <div className="bg-white rounded-2xl shadow-lg p-4 md:p-6 mb-8">
           <div className="flex items-center justify-between mb-4 md:mb-6">
             <h2 className="text-xl font-bold text-dark">I Tuoi Chatbot</h2>
             <Link 
@@ -243,89 +246,115 @@ function DashboardContent() {
           ) : (
             <div className="space-y-3 md:space-y-4">
               {chatbots.slice(0, 5).map((bot) => (
-                <motion.div
-                  key={bot.id}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  className="border rounded-lg p-4 hover:shadow-md transition"
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    <div 
-                      className="flex-1 cursor-pointer"
-                      onClick={() => router.push(`/dashboard/chatbots/${bot.id}`)}
-                    >
-                      {/* Nome e status in alto */}
-                      <div className="flex items-center justify-between mb-1">
-                        <h3 className="font-semibold text-base md:text-lg">{bot.property_name}</h3>
-                        {bot.is_active ? (
-                          <span className="px-2 py-1 bg-green-100 text-green-600 text-xs rounded-full">
-                            Attivo
-                          </span>
-                        ) : (
-                          <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
-                            Inattivo
-                          </span>
-                        )}
-                      </div>
-                      {/* Città sotto */}
-                      <p className="text-sm text-gray-500 mb-2">{bot.property_city}</p>
-                      {/* Statistiche in una riga in basso */}
-                      <div className="flex items-center gap-3 text-xs md:text-sm text-gray-600">
-                        <span className="flex items-center">
-                          <Users className="w-3 h-3 md:w-4 md:h-4 mr-1" />
-                          {bot.total_conversations} conversazioni
-                        </span>
-                        <span className="flex items-center">
-                          <MessageSquare className="w-3 h-3 md:w-4 md:h-4 mr-1" />
-                          {bot.total_messages} messaggi
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-1 sm:gap-2">
-                      <button
-                        onClick={() => showQRCode(bot.chat_url, bot.qr_code)}
-                        className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition"
-                        title="QR Code"
-                      >
-                        <QrCode className="w-5 h-5" />
-                      </button>
-                      <a
-                        href={bot.chat_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition"
-                        title="Apri Chat"
-                      >
-                        <ExternalLink className="w-5 h-5" />
-                      </a>
-                      <Link
-                        href={`/dashboard/chatbots/${bot.id}`}
-                        className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition"
-                        title="Dettagli"
-                      >
-                        <Eye className="w-5 h-5" />
-                      </Link>
-                      <Link
-                        href={`/dashboard/chatbots/${bot.id}/edit`}
-                        className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition"
-                        title="Modifica"
-                      >
-                        <Edit className="w-5 h-5" />
-                      </Link>
-                      <button
-                        onClick={() => handleDeleteBot(bot.id)}
-                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition"
-                        title="Elimina"
-                      >
-                        <Trash2 className="w-5 h-5" />
-                      </button>
-                    </div>
-                  </div>
-                </motion.div>
+                                 <motion.div
+                   key={bot.id}
+                   initial={{ opacity: 0, x: -20 }}
+                   animate={{ opacity: 1, x: 0 }}
+                   className="border rounded-lg p-4 hover:shadow-md transition cursor-pointer"
+                   onClick={() => router.push(`/dashboard/chatbots/${bot.id}`)}
+                 >
+                   {/* Prima riga: Nome e Status */}
+                   <div className="flex items-center justify-between mb-2">
+                     <h3 className="font-semibold text-base md:text-lg">{bot.property_name}</h3>
+                     {bot.is_active ? (
+                       <span className="px-2 py-1 bg-green-100 text-green-600 text-xs rounded-full">
+                         Attivo
+                       </span>
+                     ) : (
+                       <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
+                         Inattivo
+                       </span>
+                     )}
+                   </div>
+                   
+                   {/* Seconda riga: Luogo */}
+                   <div className="flex items-center justify-between mb-2">
+                     <p className="text-sm text-gray-500">{bot.property_city}</p>
+                     <div></div>
+                   </div>
+                   
+                   {/* Terza riga: Statistiche */}
+                   <div className="flex items-center justify-between mb-3">
+                     <span className="flex items-center text-xs md:text-sm text-gray-600">
+                       <Users className="w-3 h-3 md:w-4 md:h-4 mr-1" />
+                       {bot.total_conversations} conversazioni
+                     </span>
+                     <span className="flex items-center text-xs md:text-sm text-gray-600">
+                       <MessageSquare className="w-3 h-3 md:w-4 md:h-4 mr-1" />
+                       {bot.total_messages} messaggi
+                     </span>
+                   </div>
+                   
+                   {/* Quarta riga: Icone */}
+                   <div className="flex items-center justify-center gap-2">
+                     <button
+                       onClick={(e) => {
+                         e.stopPropagation()
+                         showQRCode(bot.chat_url, bot.qr_code)
+                       }}
+                       className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition"
+                       title="QR Code"
+                     >
+                       <QrCode className="w-4 h-4 md:w-5 md:h-5" />
+                     </button>
+                     <a
+                       href={bot.chat_url}
+                       target="_blank"
+                       rel="noopener noreferrer"
+                       onClick={(e) => e.stopPropagation()}
+                       className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition"
+                       title="Apri Chat"
+                     >
+                       <ExternalLink className="w-4 h-4 md:w-5 md:h-5" />
+                     </a>
+                     <Link
+                       href={`/dashboard/chatbots/${bot.id}`}
+                       onClick={(e) => e.stopPropagation()}
+                       className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition"
+                       title="Dettagli"
+                     >
+                       <Eye className="w-4 h-4 md:w-5 md:h-5" />
+                     </Link>
+                     <Link
+                       href={`/dashboard/chatbots/${bot.id}/edit`}
+                       onClick={(e) => e.stopPropagation()}
+                       className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition"
+                       title="Modifica"
+                     >
+                       <Edit className="w-4 h-4 md:w-5 md:h-5" />
+                     </Link>
+                     <button
+                       onClick={(e) => {
+                         e.stopPropagation()
+                         handleDeleteBot(bot.id)
+                       }}
+                       className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition"
+                       title="Elimina"
+                     >
+                       <Trash2 className="w-4 h-4 md:w-5 md:h-5" />
+                     </button>
+                   </div>
+                 </motion.div>
               ))}
             </div>
           )}
+        </div>
+
+        {/* Box informativo: limite 1 chatbot + CTA WhatsApp */}
+        <div className="bg-gradient-to-r from-primary to-accent rounded-2xl p-6 md:p-8 mb-8 text-white">
+          <h2 className="text-2xl font-bold mb-4">Hai più strutture?</h2>
+          <p className="mb-6 text-white/90">
+            Ogni account può avere un solo chatbot. Se ti servono più chatbot perché gestisci più strutture, contattami al <strong>3391797616</strong>.
+          </p>
+          <a
+            href="https://wa.me/393391797616"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center bg-white text-primary px-6 py-3 rounded-lg font-semibold hover:shadow-lg transition"
+          >
+            <Plus className="w-5 h-5 mr-2" />
+            Scrivimi su WhatsApp
+          </a>
         </div>
       </div>
 
