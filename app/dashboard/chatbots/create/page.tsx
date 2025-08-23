@@ -48,7 +48,6 @@ interface ChatbotFormData {
   special_instructions: string
   faq: { question: string; answer: string }[]
   welcome_message: string
-  language: string
 }
 
 const steps = [
@@ -90,7 +89,6 @@ export default function CreateChatbotPage() {
   
   const { register, control, handleSubmit, watch, formState: { errors }, setValue } = useForm<ChatbotFormData>({
     defaultValues: {
-      language: 'it',
       amenities: [],
       nearby_attractions: [{ name: '', distance: '', description: '' }],
       restaurants_bars: [{ name: '', type: '', distance: '' }],
@@ -569,20 +567,6 @@ export default function CreateChatbotPage() {
                 placeholder="Es. Ciao! Sono l'assistente virtuale di Casa Bella Vista. Come posso aiutarti?"
               />
               {errors.welcome_message && <p className="error-text">{errors.welcome_message.message}</p>}
-            </div>
-
-            <div>
-              <label className="label">Lingua del Chatbot</label>
-              <select
-                {...register('language')}
-                className="input-field"
-              >
-                <option value="it">Italiano</option>
-                <option value="en">English</option>
-                <option value="es">Español</option>
-                <option value="fr">Français</option>
-                <option value="de">Deutsch</option>
-              </select>
             </div>
 
             <div className="bg-green-50 border border-green-200 rounded-lg p-6">

@@ -108,7 +108,6 @@ class ChatbotCreate(BaseModel):
     special_instructions: str
     faq: List[dict]
     welcome_message: str
-    language: str = "it"
 
 class ChatbotUpdate(BaseModel):
     name: Optional[str] = None
@@ -132,7 +131,6 @@ class ChatbotUpdate(BaseModel):
     special_instructions: Optional[str] = None
     faq: Optional[List[dict]] = None
     welcome_message: Optional[str] = None
-    language: Optional[str] = None
 
 class MessageCreate(BaseModel):
     content: str
@@ -270,7 +268,7 @@ async def create_openai_assistant(chatbot_data: dict) -> str:
         
         Messaggio di benvenuto: {chatbot_data['welcome_message']}
         
-        Rispondi sempre in {chatbot_data['language']}.
+        IMPORTANTE: Rispondi sempre nella stessa lingua in cui l'utente ti scrive. Se l'utente scrive in italiano, rispondi in italiano. Se scrive in inglese, rispondi in inglese. Se scrive in spagnolo, rispondi in spagnolo, e così via per qualsiasi lingua.
         Sii cordiale, utile e fornisci informazioni accurate basate sui dati forniti.
         Se non hai informazioni su qualcosa, suggerisci di contattare direttamente l'host.
         """
@@ -334,7 +332,7 @@ def build_assistant_instructions_from_model(chatbot: Chatbot) -> str:
 
         Messaggio di benvenuto: {chatbot.welcome_message}
 
-        Rispondi sempre in {chatbot.language}.
+        IMPORTANTE: Rispondi sempre nella stessa lingua in cui l'utente ti scrive. Se l'utente scrive in italiano, rispondi in italiano. Se scrive in inglese, rispondi in inglese. Se scrive in spagnolo, rispondi in spagnolo, e così via per qualsiasi lingua.
         Sii cordiale, utile e fornisci informazioni accurate basate sui dati forniti.
         Se non hai informazioni su qualcosa, suggerisci di contattare direttamente l'host.
         """
@@ -1265,7 +1263,7 @@ async def get_chat_info(uuid: str, db: Session = Depends(get_db)):
         "name": chatbot.name,
         "property_name": chatbot.property_name,
         "welcome_message": chatbot.welcome_message,
-        "language": chatbot.language
+
     }
 
 @app.post("/api/chat/{uuid}/message")

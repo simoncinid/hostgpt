@@ -64,7 +64,6 @@ class Chatbot(Base):
     
     # Configurazione chatbot
     welcome_message = Column(Text)
-    language = Column(String(10), default="it")
     
     # Statistiche
     total_conversations = Column(Integer, default=0)

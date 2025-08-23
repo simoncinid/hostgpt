@@ -27,7 +27,6 @@ interface ChatInfo {
   name: string
   property_name: string
   welcome_message: string
-  language: string
 }
 
 export default function ChatWidgetPage() {

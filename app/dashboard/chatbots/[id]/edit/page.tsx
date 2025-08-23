@@ -39,7 +39,6 @@ interface FormValues {
   special_instructions?: string
   faq?: { question: string; answer: string }[]
   welcome_message?: string
-  language?: string
 }
 
 export default function EditChatbotPage() {
@@ -87,7 +86,7 @@ export default function EditChatbotPage() {
           special_instructions: res.data.special_instructions,
           faq: res.data.faq || [],
           welcome_message: res.data.welcome_message,
-          language: res.data.language || 'it'
+
         })
       } catch (e: any) {
         toast.error(e.response?.data?.detail || 'Errore nel caricamento')
@@ -568,20 +567,7 @@ export default function EditChatbotPage() {
               </div>
             </div>
 
-            {/* Lingua */}
-            <div className="pb-6">
-              <h2 className="text-lg font-semibold mb-4">Lingua</h2>
-              <div>
-                <label className="label">Lingua del Chatbot</label>
-                <select {...register('language')} className="input-field">
-                  <option value="it">Italiano</option>
-                  <option value="en">English</option>
-                  <option value="es">Español</option>
-                  <option value="fr">Français</option>
-                  <option value="de">Deutsch</option>
-                </select>
-              </div>
-            </div>
+
 
             {/* Submit Button */}
             <div className="pt-2">
