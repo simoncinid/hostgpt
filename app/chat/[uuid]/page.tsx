@@ -24,6 +24,7 @@ interface Message {
 }
 
 interface ChatInfo {
+  name: string
   property_name: string
   welcome_message: string
   language: string
@@ -178,7 +179,7 @@ export default function ChatWidgetPage() {
                 <Home className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h1 className="font-semibold text-lg">{chatInfo?.property_name}</h1>
+                <h1 className="font-semibold text-lg">{chatInfo?.name}</h1>
                 <p className="text-sm text-gray-500">Assistente Virtuale</p>
               </div>
             </div>

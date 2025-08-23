@@ -1262,6 +1262,7 @@ async def get_chat_info(uuid: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Chatbot non trovato")
     
     return {
+        "name": chatbot.name,
         "property_name": chatbot.property_name,
         "welcome_message": chatbot.welcome_message,
         "language": chatbot.language
