@@ -275,22 +275,22 @@ export default function ChatWidgetPage() {
                     <div className={`flex items-start max-w-[85%] md:max-w-[70%] ${
                       message.role === 'user' ? 'flex-row-reverse' : ''
                     }`}>
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                        message.role === 'user' 
-                          ? 'bg-gradient-to-r from-orange-500 to-amber-500 text-white ml-3' 
-                          : 'bg-gray-200 text-gray-600 mr-3'
-                      }`}>
+                                             <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                         message.role === 'user' 
+                           ? 'bg-gradient-to-r from-rose-500 to-pink-600 text-white ml-3' 
+                           : 'bg-gray-200 text-gray-600 mr-3'
+                       }`}>
                         {message.role === 'user' ? (
                           <User className="w-4 h-4" />
                         ) : (
                           <Bot className="w-4 h-4" />
                         )}
                       </div>
-                      <div className={`rounded-2xl px-4 py-3 ${
-                        message.role === 'user'
-                          ? 'bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-br-sm'
-                          : 'bg-gray-100 text-gray-900 rounded-bl-sm'
-                      }`}>
+                                             <div className={`rounded-2xl px-4 py-3 ${
+                         message.role === 'user'
+                           ? 'bg-gradient-to-r from-rose-500 to-pink-600 text-white rounded-br-sm'
+                           : 'bg-gray-100 text-gray-900 rounded-bl-sm'
+                       }`}>
                         <p className="whitespace-pre-wrap">{message.content}</p>
                         <p className={`text-xs mt-1 ${
                           message.role === 'user' ? 'text-white/70' : 'text-gray-400'

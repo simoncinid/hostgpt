@@ -101,13 +101,13 @@ export default function ConversationItem({ conversation }: ConversationItemProps
                     <div 
                                               className={`max-w-xs md:max-w-sm px-3 py-2 md:px-6 md:py-4 rounded-2xl shadow-lg ${
                           message.role === 'user'
-                            ? 'bg-gradient-to-r from-orange-500 to-amber-500 text-white'
+                            ? 'bg-gradient-to-r from-rose-500 to-pink-600 text-white'
                             : 'bg-gray-100 text-gray-900'
                         }`}
                     >
-                      <div className="relative font-medium leading-relaxed text-sm md:text-base">
-                        {message.content}
-                      </div>
+                                             <div className="relative font-medium leading-relaxed text-sm md:text-base whitespace-pre-wrap break-words">
+                         {message.content}
+                       </div>
                                               <div className={`text-xs mt-2 ${
                           message.role === 'user' ? 'text-white/70' : 'text-gray-400'
                         }`}>

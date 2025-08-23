@@ -5,10 +5,17 @@ import { useForm } from 'react-hook-form'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { ArrowLeft, Loader2, Save, Plus, X } from 'lucide-react'
+import { ArrowLeft, Loader2, Save, Plus, X, Check } from 'lucide-react'
 import { chatbots as chatbotsApi } from '@/lib/api'
 import { useChatbotStore } from '@/lib/store'
 import toast from 'react-hot-toast'
+
+const amenitiesList = [
+  'WiFi', 'Aria Condizionata', 'Riscaldamento', 'TV', 'Netflix',
+  'Cucina', 'Lavastoviglie', 'Lavatrice', 'Asciugatrice', 'Ferro da stiro',
+  'Parcheggio', 'Piscina', 'Palestra', 'Balcone', 'Giardino',
+  'Ascensore', 'Cassaforte', 'Allarme', 'Animali ammessi', 'Fumatori ammessi'
+]
 
 interface FormValues {
   name?: string
@@ -27,7 +34,7 @@ interface FormValues {
   restaurants_bars?: { name: string; description: string; distance: string }[]
   shopping_info?: string
   emergency_contacts?: { name: string; phone: string; type: string }[]
-  wifi_info?: { network_name: string; password: string }
+  wifi_info?: { network: string; password: string }
   parking_info?: string
   special_instructions?: string
   faq?: { question: string; answer: string }[]
@@ -41,6 +48,7 @@ export default function EditChatbotPage() {
   const id = Number(params.id)
   const { currentChatbot, setCurrentChatbot, updateChatbot } = useChatbotStore()
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [showServicesModal, setShowServicesModal] = useState(false)
 
   const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<FormValues>()
   const watchedAmenities = watch('amenities') || []
@@ -71,7 +79,7 @@ export default function EditChatbotPage() {
           restaurants_bars: res.data.restaurants_bars || [],
           shopping_info: res.data.shopping_info,
           emergency_contacts: res.data.emergency_contacts || [],
-          wifi_info: res.data.wifi_info || { network_name: '', password: '' },
+          wifi_info: res.data.wifi_info || { network: '', password: '' },
           parking_info: res.data.parking_info,
           special_instructions: res.data.special_instructions,
           faq: res.data.faq || [],
@@ -89,11 +97,13 @@ export default function EditChatbotPage() {
   const onSubmit = async (data: FormValues) => {
     setIsSubmitting(true)
     try {
+      console.log('Dati da inviare:', data)
       await chatbotsApi.update(id, data)
       updateChatbot(id, data as any)
       toast.success('Chatbot aggiornato e riallenato con successo')
       router.push(`/dashboard/chatbots/${id}`)
     } catch (e: any) {
+      console.error('Errore aggiornamento:', e)
       toast.error(e.response?.data?.detail || 'Errore nell\'aggiornamento')
     } finally {
       setIsSubmitting(false)
@@ -141,6 +151,25 @@ export default function EditChatbotPage() {
 
   const removeFaq = (index: number) => {
     setValue('faq', watchedFaq.filter((_, i) => i !== index))
+  }
+
+  const selectedAmenities = watch('amenities') || []
+
+  const toggleAmenity = (amenity: string) => {
+    const current = selectedAmenities || []
+    if (current.includes(amenity)) {
+      setValue('amenities', current.filter(a => a !== amenity))
+    } else {
+      setValue('amenities', [...current, amenity])
+    }
+  }
+
+  const openServicesModal = () => {
+    setShowServicesModal(true)
+  }
+
+  const closeServicesModal = () => {
+    setShowServicesModal(false)
   }
 
   if (!currentChatbot) {
@@ -232,7 +261,7 @@ export default function EditChatbotPage() {
             <div className="border-b pb-6">
               <h2 className="text-lg font-semibold mb-4">Servizi Disponibili</h2>
               <div className="space-y-2">
-                {watchedAmenities.map((amenity, index) => (
+                {watchedAmenities.filter(amenity => amenity && amenity.trim()).map((amenity, index) => (
                   <div key={index} className="flex items-center gap-2">
                     <input
                       {...register(`amenities.${index}`)}
@@ -250,11 +279,11 @@ export default function EditChatbotPage() {
                 ))}
                 <button
                   type="button"
-                  onClick={addAmenity}
-                  className="btn-secondary text-sm"
+                  onClick={openServicesModal}
+                  className="w-full py-3 px-4 border-2 border-rose-500 text-rose-500 rounded-lg hover:bg-rose-50 transition-colors font-medium"
                 >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Aggiungi Servizio
+                  <Plus className="w-4 h-4 mr-2 inline" />
+                  Gestisci Servizi
                 </button>
               </div>
             </div>
@@ -265,7 +294,7 @@ export default function EditChatbotPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="label">Nome Rete</label>
-                  <input {...register('wifi_info.network_name')} className="input-field" />
+                  <input {...register('wifi_info.network')} className="input-field" />
                 </div>
                 <div>
                   <label className="label">Password</label>
@@ -324,9 +353,22 @@ export default function EditChatbotPage() {
             <div className="border-b pb-6">
               <h2 className="text-lg font-semibold mb-4">Attrazioni Vicine</h2>
               <div className="space-y-4">
-                {watchedAttractions.map((attraction, index) => (
-                  <div key={index} className="border rounded-lg p-4">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {watchedAttractions
+                  .filter(attraction => 
+                    attraction.name?.trim() || 
+                    attraction.distance?.trim() || 
+                    attraction.description?.trim()
+                  )
+                  .map((attraction, index) => (
+                  <div key={index} className="border rounded-lg p-4 relative">
+                    <button
+                      type="button"
+                      onClick={() => removeAttraction(index)}
+                      className="absolute top-2 right-2 p-1 text-red-500 hover:bg-red-50 rounded"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <label className="label">Nome</label>
                         <input {...register(`nearby_attractions.${index}.name`)} className="input-field" />
@@ -334,16 +376,6 @@ export default function EditChatbotPage() {
                       <div>
                         <label className="label">Distanza</label>
                         <input {...register(`nearby_attractions.${index}.distance`)} className="input-field" placeholder="es. 500m" />
-                      </div>
-                      <div className="flex items-end">
-                        <button
-                          type="button"
-                          onClick={() => removeAttraction(index)}
-                          className="btn-secondary text-sm"
-                        >
-                          <X className="w-4 h-4 mr-2" />
-                          Rimuovi
-                        </button>
                       </div>
                     </div>
                     <div className="mt-2">
@@ -355,9 +387,9 @@ export default function EditChatbotPage() {
                 <button
                   type="button"
                   onClick={addAttraction}
-                  className="btn-secondary"
+                  className="w-full py-3 px-4 border-2 border-rose-500 text-rose-500 rounded-lg hover:bg-rose-50 transition-colors font-medium"
                 >
-                  <Plus className="w-4 h-4 mr-2" />
+                  <Plus className="w-4 h-4 mr-2 inline" />
                   Aggiungi Attrazione
                 </button>
               </div>
@@ -367,9 +399,22 @@ export default function EditChatbotPage() {
             <div className="border-b pb-6">
               <h2 className="text-lg font-semibold mb-4">Ristoranti e Bar</h2>
               <div className="space-y-4">
-                {watchedRestaurants.map((restaurant, index) => (
-                  <div key={index} className="border rounded-lg p-4">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {watchedRestaurants
+                  .filter(restaurant => 
+                    restaurant.name?.trim() || 
+                    restaurant.distance?.trim() || 
+                    restaurant.description?.trim()
+                  )
+                  .map((restaurant, index) => (
+                  <div key={index} className="border rounded-lg p-4 relative">
+                    <button
+                      type="button"
+                      onClick={() => removeRestaurant(index)}
+                      className="absolute top-2 right-2 p-1 text-red-500 hover:bg-red-50 rounded"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <label className="label">Nome</label>
                         <input {...register(`restaurants_bars.${index}.name`)} className="input-field" />
@@ -377,16 +422,6 @@ export default function EditChatbotPage() {
                       <div>
                         <label className="label">Distanza</label>
                         <input {...register(`restaurants_bars.${index}.distance`)} className="input-field" placeholder="es. 300m" />
-                      </div>
-                      <div className="flex items-end">
-                        <button
-                          type="button"
-                          onClick={() => removeRestaurant(index)}
-                          className="btn-secondary text-sm"
-                        >
-                          <X className="w-4 h-4 mr-2" />
-                          Rimuovi
-                        </button>
                       </div>
                     </div>
                     <div className="mt-2">
@@ -398,9 +433,9 @@ export default function EditChatbotPage() {
                 <button
                   type="button"
                   onClick={addRestaurant}
-                  className="btn-secondary"
+                  className="w-full py-3 px-4 border-2 border-rose-500 text-rose-500 rounded-lg hover:bg-rose-50 transition-colors font-medium"
                 >
-                  <Plus className="w-4 h-4 mr-2" />
+                  <Plus className="w-4 h-4 mr-2 inline" />
                   Aggiungi Ristorante/Bar
                 </button>
               </div>
@@ -410,8 +445,21 @@ export default function EditChatbotPage() {
             <div className="border-b pb-6">
               <h2 className="text-lg font-semibold mb-4">Contatti di Emergenza</h2>
               <div className="space-y-4">
-                {watchedContacts.map((contact, index) => (
-                  <div key={index} className="border rounded-lg p-4">
+                {watchedContacts
+                  .filter(contact => 
+                    contact.name?.trim() || 
+                    contact.phone?.trim() || 
+                    contact.type?.trim()
+                  )
+                  .map((contact, index) => (
+                  <div key={index} className="border rounded-lg p-4 relative">
+                    <button
+                      type="button"
+                      onClick={() => removeContact(index)}
+                      className="absolute top-2 right-2 p-1 text-red-500 hover:bg-red-50 rounded"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div>
                         <label className="label">Nome</label>
@@ -432,24 +480,14 @@ export default function EditChatbotPage() {
                         </select>
                       </div>
                     </div>
-                    <div className="mt-2 flex justify-end">
-                      <button
-                        type="button"
-                        onClick={() => removeContact(index)}
-                        className="btn-secondary text-sm"
-                      >
-                        <X className="w-4 h-4 mr-2" />
-                        Rimuovi
-                      </button>
-                    </div>
                   </div>
                 ))}
                 <button
                   type="button"
                   onClick={addContact}
-                  className="btn-secondary"
+                  className="w-full py-3 px-4 border-2 border-rose-500 text-rose-500 rounded-lg hover:bg-rose-50 transition-colors font-medium"
                 >
-                  <Plus className="w-4 h-4 mr-2" />
+                  <Plus className="w-4 h-4 mr-2 inline" />
                   Aggiungi Contatto
                 </button>
               </div>
@@ -459,18 +497,22 @@ export default function EditChatbotPage() {
             <div className="border-b pb-6">
               <h2 className="text-lg font-semibold mb-4">FAQ Personalizzate</h2>
               <div className="space-y-4">
-                {watchedFaq.map((faq, index) => (
-                  <div key={index} className="border rounded-lg p-4">
-                    <div className="flex justify-between items-start mb-2">
+                {watchedFaq
+                  .filter(faq => 
+                    faq.question?.trim() || 
+                    faq.answer?.trim()
+                  )
+                  .map((faq, index) => (
+                  <div key={index} className="border rounded-lg p-4 relative">
+                    <button
+                      type="button"
+                      onClick={() => removeFaq(index)}
+                      className="absolute top-2 right-2 p-1 text-red-500 hover:bg-red-50 rounded"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                    <div className="mb-2">
                       <label className="label">Domanda {index + 1}</label>
-                      <button
-                        type="button"
-                        onClick={() => removeFaq(index)}
-                        className="btn-secondary text-sm"
-                      >
-                        <X className="w-4 h-4 mr-2" />
-                        Rimuovi
-                      </button>
                     </div>
                     <input {...register(`faq.${index}.question`)} className="input-field mb-2" placeholder="Domanda..." />
                     <textarea {...register(`faq.${index}.answer`)} className="input-field min-h-16" placeholder="Risposta..." />
@@ -479,9 +521,9 @@ export default function EditChatbotPage() {
                 <button
                   type="button"
                   onClick={addFaq}
-                  className="btn-secondary"
+                  className="w-full py-3 px-4 border-2 border-rose-500 text-rose-500 rounded-lg hover:bg-rose-50 transition-colors font-medium"
                 >
-                  <Plus className="w-4 h-4 mr-2" />
+                  <Plus className="w-4 h-4 mr-2 inline" />
                   Aggiungi FAQ
                 </button>
               </div>
@@ -526,12 +568,60 @@ export default function EditChatbotPage() {
                   </>
                 )}
               </button>
-            </div>
-          </motion.form>
-        </div>
-      </div>
-    </div>
-  )
-}
+                         </div>
+           </motion.form>
+         </div>
+       </div>
+
+       {/* Modal Servizi */}
+       {showServicesModal && (
+         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+           <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+             <div className="p-6">
+               <div className="flex justify-between items-center mb-6">
+                 <h2 className="text-2xl font-bold">Seleziona Servizi</h2>
+                 <button
+                   onClick={closeServicesModal}
+                   className="text-gray-500 hover:text-gray-700"
+                 >
+                   <X className="w-6 h-6" />
+                 </button>
+               </div>
+               
+               <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
+                 {amenitiesList.map((amenity) => (
+                   <button
+                     key={amenity}
+                     type="button"
+                     onClick={() => toggleAmenity(amenity)}
+                     className={`p-3 rounded-lg border-2 transition ${
+                       selectedAmenities?.includes(amenity)
+                         ? 'border-rose-500 bg-rose-50 text-rose-600'
+                         : 'border-gray-200 hover:border-gray-300'
+                     }`}
+                   >
+                     <span className="flex items-center justify-center">
+                       {selectedAmenities?.includes(amenity) && <Check className="w-4 h-4 mr-2" />}
+                       {amenity}
+                     </span>
+                   </button>
+                 ))}
+               </div>
+               
+               <div className="flex justify-end">
+                 <button
+                   onClick={closeServicesModal}
+                   className="btn-primary"
+                 >
+                   Fatto
+                 </button>
+               </div>
+             </div>
+           </div>
+         </div>
+       )}
+     </div>
+   )
+ }
 
 
