@@ -82,7 +82,7 @@ export default function ConversationItem({ conversation }: ConversationItemProps
         </div>
       </div>
 
-      {/* Messaggi espansi */}
+      {/* Messaggi espansi - Stile come demo homepage */}
       {isExpanded && (
         <div className="bg-gray-50 border-t border-gray-200">
           <div className="max-h-96 overflow-y-auto">
@@ -97,31 +97,16 @@ export default function ConversationItem({ conversation }: ConversationItemProps
             ) : (
               <div className="p-4 space-y-4">
                 {messages.map((message) => (
-                  <div key={message.id} className="flex gap-3">
-                    <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
-                      message.role === 'user' 
-                        ? 'bg-blue-100 text-blue-600' 
-                        : 'bg-green-100 text-green-600'
-                    }`}>
-                      {message.role === 'user' ? (
-                        <User className="w-4 h-4" />
-                      ) : (
-                        <Bot className="w-4 h-4" />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-sm font-medium text-gray-900">
-                          {message.role === 'user' ? conversation.guest_name : 'Chatbot'}
-                        </span>
-                        <span className="text-xs text-gray-400">
-                          {new Date(message.timestamp).toLocaleString('it-IT')}
-                        </span>
-                      </div>
-                      <div className="bg-white rounded-lg p-3 shadow-sm">
-                        <p className="text-sm text-gray-800 whitespace-pre-wrap">
-                          {message.content}
-                        </p>
+                  <div key={message.id} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                    <div 
+                      className={`max-w-xs md:max-w-sm px-3 py-2 md:px-6 md:py-4 rounded-2xl shadow-lg ${
+                        message.role === 'user'
+                          ? 'bg-gradient-to-r from-rose-500 to-pink-600 text-white'
+                          : 'bg-white/80 backdrop-blur-xl border border-white/50 text-gray-800'
+                      }`}
+                    >
+                      <div className="relative font-medium leading-relaxed text-sm md:text-base">
+                        {message.content}
                       </div>
                     </div>
                   </div>
