@@ -134,7 +134,7 @@ export default function ChatWidgetPage() {
 
   if (!chatInfo && !subscriptionCancelled) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
+      <div className="h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-12 h-12 text-primary animate-spin mx-auto mb-4" />
           <p className="text-gray-600">Caricamento chatbot...</p>
@@ -145,7 +145,7 @@ export default function ChatWidgetPage() {
 
   if (subscriptionCancelled) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
+      <div className="h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
         <div className="max-w-md mx-auto text-center px-4">
           <div className="bg-white rounded-2xl shadow-xl p-8">
             <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -168,19 +168,19 @@ export default function ChatWidgetPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 to-accent/5">
-      {/* Header */}
-      <div className="bg-white shadow-sm sticky top-0 z-40">
+    <div className="h-screen bg-gradient-to-br from-primary/5 to-accent/5 flex flex-col overflow-hidden">
+      {/* Header - FISSO */}
+      <div className="bg-white shadow-sm flex-shrink-0">
         <div className="max-w-4xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
               <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center mr-3">
                 <Home className="w-5 h-5 text-white" />
               </div>
-                             <div>
-                 <h1 className="font-semibold text-lg">{chatInfo?.property_name}</h1>
-                 <p className="text-sm text-gray-500">Assistente Virtuale</p>
-               </div>
+              <div>
+                <h1 className="font-semibold text-lg">{chatInfo?.property_name}</h1>
+                <p className="text-sm text-gray-500">Assistente Virtuale</p>
+              </div>
             </div>
             <button
               onClick={() => setShowInfo(!showInfo)}
@@ -192,12 +192,12 @@ export default function ChatWidgetPage() {
         </div>
       </div>
 
-      {/* Info Panel */}
+      {/* Info Panel - FISSO */}
       {showInfo && (
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-blue-50 border-b border-blue-200"
+          className="bg-blue-50 border-b border-blue-200 flex-shrink-0"
         >
           <div className="max-w-4xl mx-auto px-4 py-4">
             <div className="flex items-start justify-between">
@@ -224,15 +224,15 @@ export default function ChatWidgetPage() {
         </motion.div>
       )}
 
-      {/* Main Chat Area */}
-      <div className="max-w-4xl mx-auto px-4 py-4 md:py-6">
-        <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+      {/* Main Chat Area - FISSA */}
+      <div className="flex-1 flex flex-col max-w-4xl mx-auto w-full px-4 py-4 md:py-6">
+        <div className="bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col h-full">
           {/* Welcome Screen */}
           {showWelcome && messages.length <= 1 && (
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="p-8 text-center"
+              className="p-8 text-center flex-1 flex flex-col justify-center"
             >
               <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
                 <MessageSquare className="w-10 h-10 text-primary" />
@@ -260,10 +260,10 @@ export default function ChatWidgetPage() {
             </motion.div>
           )}
 
-          {/* Messages Area */}
+          {/* Messages Area - FISSA */}
           {(!showWelcome || messages.length > 1) && (
             <>
-              <div className="max-h-[calc(90vh-200px)] md:h-[500px] overflow-y-auto p-4 md:p-6 space-y-4">
+              <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4">
                 {messages.map((message, index) => (
                   <motion.div
                     key={message.id}
@@ -277,8 +277,8 @@ export default function ChatWidgetPage() {
                     }`}>
                       <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
                         message.role === 'user' 
-                          ? 'bg-gray-200 ml-3' 
-                          : 'bg-primary text-white mr-3'
+                          ? 'bg-gradient-to-r from-orange-500 to-amber-500 text-white ml-3' 
+                          : 'bg-gray-200 text-gray-600 mr-3'
                       }`}>
                         {message.role === 'user' ? (
                           <User className="w-4 h-4" />
@@ -288,8 +288,8 @@ export default function ChatWidgetPage() {
                       </div>
                       <div className={`rounded-2xl px-4 py-3 ${
                         message.role === 'user'
-                          ? 'bg-primary text-white rounded-br-sm'
-                          : 'bg-gray-100 text-dark rounded-bl-sm'
+                          ? 'bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-br-sm'
+                          : 'bg-gray-100 text-gray-900 rounded-bl-sm'
                       }`}>
                         <p className="whitespace-pre-wrap">{message.content}</p>
                         <p className={`text-xs mt-1 ${
@@ -321,8 +321,8 @@ export default function ChatWidgetPage() {
                 <div ref={messagesEndRef} />
               </div>
 
-              {/* Input Area */}
-              <div className="border-t p-3 md:p-4 pb-6 md:pb-4 safe-bottom">
+              {/* Input Area - FISSA */}
+              <div className="border-t p-3 md:p-4 pb-6 md:pb-4 safe-bottom flex-shrink-0">
                 <form onSubmit={handleSendMessage} className="flex items-center gap-2 md:gap-3">
                   <input
                     ref={inputRef}
@@ -346,8 +346,8 @@ export default function ChatWidgetPage() {
           )}
         </div>
 
-        {/* Footer */}
-        <div className="text-center mt-6">
+        {/* Footer - FISSO */}
+        <div className="text-center mt-6 flex-shrink-0">
           <p className="text-sm text-gray-500">
             Powered by{' '}
             <a

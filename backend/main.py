@@ -112,12 +112,27 @@ class ChatbotCreate(BaseModel):
 
 class ChatbotUpdate(BaseModel):
     name: Optional[str] = None
+    property_name: Optional[str] = None
+    property_type: Optional[str] = None
+    property_address: Optional[str] = None
+    property_city: Optional[str] = None
     property_description: Optional[str] = None
-    neighborhood_description: Optional[str] = None
+    check_in_time: Optional[str] = None
+    check_out_time: Optional[str] = None
     house_rules: Optional[str] = None
+    amenities: Optional[List[str]] = None
+    neighborhood_description: Optional[str] = None
+    nearby_attractions: Optional[List[dict]] = None
+    transportation_info: Optional[str] = None
+    restaurants_bars: Optional[List[dict]] = None
+    shopping_info: Optional[str] = None
+    emergency_contacts: Optional[List[dict]] = None
+    wifi_info: Optional[dict] = None
+    parking_info: Optional[str] = None
     special_instructions: Optional[str] = None
-    welcome_message: Optional[str] = None
     faq: Optional[List[dict]] = None
+    welcome_message: Optional[str] = None
+    language: Optional[str] = None
 
 class MessageCreate(BaseModel):
     content: str
