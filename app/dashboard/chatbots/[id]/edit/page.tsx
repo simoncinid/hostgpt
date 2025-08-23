@@ -49,6 +49,9 @@ export default function EditChatbotPage() {
   const { currentChatbot, setCurrentChatbot, updateChatbot } = useChatbotStore()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showServicesModal, setShowServicesModal] = useState(false)
+  const [showAttractionsModal, setShowAttractionsModal] = useState(false)
+  const [showRestaurantsModal, setShowRestaurantsModal] = useState(false)
+  const [showFaqModal, setShowFaqModal] = useState(false)
 
   const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<FormValues>()
   const watchedAmenities = watch('amenities') || []
@@ -98,12 +101,15 @@ export default function EditChatbotPage() {
     setIsSubmitting(true)
     try {
       console.log('Dati da inviare:', data)
+      console.log('Property name:', data.property_name)
+      console.log('Name:', data.name)
       await chatbotsApi.update(id, data)
       updateChatbot(id, data as any)
       toast.success('Chatbot aggiornato e riallenato con successo')
       router.push(`/dashboard/chatbots/${id}`)
     } catch (e: any) {
       console.error('Errore aggiornamento:', e)
+      console.error('Response data:', e.response?.data)
       toast.error(e.response?.data?.detail || 'Errore nell\'aggiornamento')
     } finally {
       setIsSubmitting(false)
@@ -170,6 +176,30 @@ export default function EditChatbotPage() {
 
   const closeServicesModal = () => {
     setShowServicesModal(false)
+  }
+
+  const openAttractionsModal = () => {
+    setShowAttractionsModal(true)
+  }
+
+  const closeAttractionsModal = () => {
+    setShowAttractionsModal(false)
+  }
+
+  const openRestaurantsModal = () => {
+    setShowRestaurantsModal(true)
+  }
+
+  const closeRestaurantsModal = () => {
+    setShowRestaurantsModal(false)
+  }
+
+  const openFaqModal = () => {
+    setShowFaqModal(true)
+  }
+
+  const closeFaqModal = () => {
+    setShowFaqModal(false)
   }
 
   if (!currentChatbot) {
@@ -386,11 +416,11 @@ export default function EditChatbotPage() {
                 ))}
                 <button
                   type="button"
-                  onClick={addAttraction}
+                  onClick={openAttractionsModal}
                   className="w-full py-3 px-4 border-2 border-rose-500 text-rose-500 rounded-lg hover:bg-rose-50 transition-colors font-medium"
                 >
                   <Plus className="w-4 h-4 mr-2 inline" />
-                  Aggiungi Attrazione
+                  Gestisci Attrazioni
                 </button>
               </div>
             </div>
@@ -432,11 +462,11 @@ export default function EditChatbotPage() {
                 ))}
                 <button
                   type="button"
-                  onClick={addRestaurant}
+                  onClick={openRestaurantsModal}
                   className="w-full py-3 px-4 border-2 border-rose-500 text-rose-500 rounded-lg hover:bg-rose-50 transition-colors font-medium"
                 >
                   <Plus className="w-4 h-4 mr-2 inline" />
-                  Aggiungi Ristorante/Bar
+                  Gestisci Ristoranti/Bar
                 </button>
               </div>
             </div>
@@ -520,11 +550,11 @@ export default function EditChatbotPage() {
                 ))}
                 <button
                   type="button"
-                  onClick={addFaq}
+                  onClick={openFaqModal}
                   className="w-full py-3 px-4 border-2 border-rose-500 text-rose-500 rounded-lg hover:bg-rose-50 transition-colors font-medium"
                 >
                   <Plus className="w-4 h-4 mr-2 inline" />
-                  Aggiungi FAQ
+                  Gestisci FAQ
                 </button>
               </div>
             </div>
@@ -573,53 +603,215 @@ export default function EditChatbotPage() {
          </div>
        </div>
 
-       {/* Modal Servizi */}
-       {showServicesModal && (
-         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-           <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-             <div className="p-6">
-               <div className="flex justify-between items-center mb-6">
-                 <h2 className="text-2xl font-bold">Seleziona Servizi</h2>
-                 <button
-                   onClick={closeServicesModal}
-                   className="text-gray-500 hover:text-gray-700"
-                 >
-                   <X className="w-6 h-6" />
-                 </button>
-               </div>
-               
-               <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
-                 {amenitiesList.map((amenity) => (
-                   <button
-                     key={amenity}
-                     type="button"
-                     onClick={() => toggleAmenity(amenity)}
-                     className={`p-3 rounded-lg border-2 transition ${
-                       selectedAmenities?.includes(amenity)
-                         ? 'border-rose-500 bg-rose-50 text-rose-600'
-                         : 'border-gray-200 hover:border-gray-300'
-                     }`}
-                   >
-                     <span className="flex items-center justify-center">
-                       {selectedAmenities?.includes(amenity) && <Check className="w-4 h-4 mr-2" />}
-                       {amenity}
-                     </span>
-                   </button>
-                 ))}
-               </div>
-               
-               <div className="flex justify-end">
-                 <button
-                   onClick={closeServicesModal}
-                   className="btn-primary"
-                 >
-                   Fatto
-                 </button>
-               </div>
-             </div>
-           </div>
-         </div>
-       )}
+               {/* Modal Servizi */}
+        {showServicesModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-6">
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-2xl font-bold">Seleziona Servizi</h2>
+                  <button
+                    onClick={closeServicesModal}
+                    className="text-gray-500 hover:text-gray-700"
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
+                </div>
+                
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
+                  {amenitiesList.map((amenity) => (
+                    <button
+                      key={amenity}
+                      type="button"
+                      onClick={() => toggleAmenity(amenity)}
+                      className={`p-3 rounded-lg border-2 transition ${
+                        selectedAmenities?.includes(amenity)
+                          ? 'border-rose-500 bg-rose-50 text-rose-600'
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      <span className="flex items-center justify-center">
+                        {selectedAmenities?.includes(amenity) && <Check className="w-4 h-4 mr-2" />}
+                        {amenity}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+                
+                <div className="flex justify-end">
+                  <button
+                    onClick={closeServicesModal}
+                    className="btn-primary"
+                  >
+                    Fatto
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Modal Attrazioni */}
+        {showAttractionsModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-6">
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-2xl font-bold">Gestisci Attrazioni</h2>
+                  <button
+                    onClick={closeAttractionsModal}
+                    className="text-gray-500 hover:text-gray-700"
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
+                </div>
+                
+                <div className="space-y-4 mb-6">
+                  {watchedAttractions.map((attraction, index) => (
+                    <div key={index} className="border rounded-lg p-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="label">Nome</label>
+                          <input {...register(`nearby_attractions.${index}.name`)} className="input-field" />
+                        </div>
+                        <div>
+                          <label className="label">Distanza</label>
+                          <input {...register(`nearby_attractions.${index}.distance`)} className="input-field" placeholder="es. 500m" />
+                        </div>
+                      </div>
+                      <div className="mt-2">
+                        <label className="label">Descrizione</label>
+                        <textarea {...register(`nearby_attractions.${index}.description`)} className="input-field min-h-16" />
+                      </div>
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={addAttraction}
+                    className="w-full py-3 px-4 border-2 border-rose-500 text-rose-500 rounded-lg hover:bg-rose-50 transition-colors font-medium"
+                  >
+                    <Plus className="w-4 h-4 mr-2 inline" />
+                    Aggiungi Attrazione
+                  </button>
+                </div>
+                
+                <div className="flex justify-end">
+                  <button
+                    onClick={closeAttractionsModal}
+                    className="btn-primary"
+                  >
+                    Fatto
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Modal Ristoranti */}
+        {showRestaurantsModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-6">
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-2xl font-bold">Gestisci Ristoranti e Bar</h2>
+                  <button
+                    onClick={closeRestaurantsModal}
+                    className="text-gray-500 hover:text-gray-700"
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
+                </div>
+                
+                <div className="space-y-4 mb-6">
+                  {watchedRestaurants.map((restaurant, index) => (
+                    <div key={index} className="border rounded-lg p-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="label">Nome</label>
+                          <input {...register(`restaurants_bars.${index}.name`)} className="input-field" />
+                        </div>
+                        <div>
+                          <label className="label">Distanza</label>
+                          <input {...register(`restaurants_bars.${index}.distance`)} className="input-field" placeholder="es. 300m" />
+                        </div>
+                      </div>
+                      <div className="mt-2">
+                        <label className="label">Descrizione</label>
+                        <textarea {...register(`restaurants_bars.${index}.description`)} className="input-field min-h-16" />
+                      </div>
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={addRestaurant}
+                    className="w-full py-3 px-4 border-2 border-rose-500 text-rose-500 rounded-lg hover:bg-rose-50 transition-colors font-medium"
+                  >
+                    <Plus className="w-4 h-4 mr-2 inline" />
+                    Aggiungi Ristorante/Bar
+                  </button>
+                </div>
+                
+                <div className="flex justify-end">
+                  <button
+                    onClick={closeRestaurantsModal}
+                    className="btn-primary"
+                  >
+                    Fatto
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Modal FAQ */}
+        {showFaqModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-6">
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-2xl font-bold">Gestisci FAQ</h2>
+                  <button
+                    onClick={closeFaqModal}
+                    className="text-gray-500 hover:text-gray-700"
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
+                </div>
+                
+                <div className="space-y-4 mb-6">
+                  {watchedFaq.map((faq, index) => (
+                    <div key={index} className="border rounded-lg p-4">
+                      <div className="mb-2">
+                        <label className="label">Domanda {index + 1}</label>
+                      </div>
+                      <input {...register(`faq.${index}.question`)} className="input-field mb-2" placeholder="Domanda..." />
+                      <textarea {...register(`faq.${index}.answer`)} className="input-field min-h-16" placeholder="Risposta..." />
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={addFaq}
+                    className="w-full py-3 px-4 border-2 border-rose-500 text-rose-500 rounded-lg hover:bg-rose-50 transition-colors font-medium"
+                  >
+                    <Plus className="w-4 h-4 mr-2 inline" />
+                    Aggiungi FAQ
+                  </button>
+                </div>
+                
+                <div className="flex justify-end">
+                  <button
+                    onClick={closeFaqModal}
+                    className="btn-primary"
+                  >
+                    Fatto
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
      </div>
    )
  }

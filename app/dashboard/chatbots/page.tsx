@@ -107,7 +107,7 @@ export default function ChatbotsListPage() {
                   >
                     {/* Prima riga: Nome e Status */}
                     <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-semibold text-base md:text-lg">{bot.property_name}</h3>
+                      <h3 className="font-semibold text-base md:text-lg">{bot.name}</h3>
                       {bot.is_active ? (
                         <span className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full">Attivo</span>
                       ) : (

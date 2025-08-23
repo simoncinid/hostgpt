@@ -234,8 +234,8 @@ export default function ChatWidgetPage() {
               animate={{ opacity: 1, scale: 1 }}
               className="p-8 text-center flex-1 flex flex-col justify-center"
             >
-              <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
-                <MessageSquare className="w-10 h-10 text-primary" />
+              <div className="w-20 h-20 bg-rose-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                <MessageSquare className="w-10 h-10 text-rose-500" />
               </div>
               <h2 className="text-2xl font-bold mb-2">Benvenuto!</h2>
               <p className="text-gray-600 mb-6 max-w-md mx-auto">
@@ -253,7 +253,7 @@ export default function ChatWidgetPage() {
               </div>
               <button
                 onClick={handleStartChat}
-                className="btn-primary"
+                className="px-6 py-3 bg-gradient-to-r from-rose-500 to-pink-600 text-white rounded-2xl font-semibold hover:from-rose-600 hover:to-pink-700 transition-all duration-200"
               >
                 Inizia la Chat
               </button>
@@ -331,12 +331,12 @@ export default function ChatWidgetPage() {
                     onChange={(e) => setInputMessage(e.target.value)}
                     placeholder="Scrivi un messaggio..."
                     disabled={isLoading}
-                    className="flex-1 px-4 py-3 rounded-full border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition"
+                    className="flex-1 px-4 py-3 rounded-full border border-gray-300 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20 outline-none transition"
                   />
                   <button
                     type="submit"
                     disabled={isLoading || !inputMessage.trim()}
-                    className="w-11 h-11 md:w-12 md:h-12 bg-primary text-white rounded-full flex items-center justify-center hover:bg-secondary transition disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-11 h-11 md:w-12 md:h-12 bg-gradient-to-r from-rose-500 to-pink-600 text-white rounded-full flex items-center justify-center hover:from-rose-600 hover:to-pink-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <Send className="w-5 h-5" />
                   </button>
@@ -354,7 +354,7 @@ export default function ChatWidgetPage() {
               href="https://hostgpt.com"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-primary hover:text-secondary"
+              className="text-rose-500 hover:text-rose-600"
             >
               HostGPT
             </a>
