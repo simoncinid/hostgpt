@@ -130,13 +130,34 @@ Analizza la seguente conversazione di un ospite con un chatbot di una struttura 
 2. Il sentiment generale dell'ospite (-1.0 a +1.0, dove -1 è molto negativo)
 3. La confidenza dell'analisi (0.0 - 1.0)
 
-Considera questi fattori:
-- Frustrazione o rabbia espressa
-- Problemi non risolti
-- Linguaggio negativo o minaccioso
-- Menzioni di recensioni negative
-- Complimenti o soddisfazione
-- Problemi tecnici o di servizio
+⚠️ REGOLE CRITICHE - Sii ESTREMAMENTE sensibile ai segnali di insoddisfazione! ⚠️
+
+ASSEGNA IMMEDIATAMENTE RISK_SCORE 0.95-1.0 per:
+- QUALSIASI menzione di "recensione negativa", "recensione brutta", "star negative", "1 stella"
+- Minacce esplicite o implicite di recensioni negative
+- Frustrazione estrema, rabbia, o linguaggio offensivo
+- Espressioni come "mai più", "terribile", "orribile", "peggiore", "vergognoso"
+- Problemi non risolti che causano disagio significativo
+- Linguaggio molto negativo o aggressivo
+- Ospiti che si sentono "truffati" o "delusi"
+
+ASSEGNA RISK_SCORE 0.8-0.95 per:
+- Frustrazione moderata ma persistente
+- Problemi minori non risolti
+- Insoddisfazione espressa chiaramente
+- Ospiti che sembrano "delusi" o "insoddisfatti"
+
+ASSEGNA RISK_SCORE 0.6-0.8 per:
+- Frustrazione generale
+- Problemi risolti ma con insoddisfazione
+- Linguaggio leggermente negativo
+
+ASSEGNA RISK_SCORE 0.0-0.5 SOLO per:
+- Problemi risolti positivamente
+- Linguaggio neutro o positivo
+- Richieste normali di assistenza
+
+RICORDA: È meglio sovrastimare il rischio che sottostimarlo. Se c'è anche solo un dubbio, assegna un punteggio più alto!
 
 Conversazione:
 {conversation_text}
@@ -157,7 +178,7 @@ Rispondi SOLO con un JSON valido nel seguente formato:
             response = openai.chat.completions.create(
                 model="gpt-4",
                 messages=[
-                    {"role": "system", "content": "Sei un esperto analista di sentiment e rischio per il settore turistico. Analizza le conversazioni in modo obiettivo e professionale."},
+                    {"role": "system", "content": "Sei un esperto analista di rischio per il settore turistico. Il tuo compito è identificare ospiti che potrebbero lasciare recensioni negative. Sii ESTREMAMENTE sensibile ai segnali di insoddisfazione. Assegna IMMEDIATAMENTE punteggi di rischio elevati (0.95-1.0) quando rilevi minacce esplicite di recensioni negative, frustrazione estrema, rabbia, o problemi non risolti. È meglio sovrastimare il rischio che sottostimarlo. Se c'è anche solo un dubbio, assegna un punteggio più alto!"},
                     {"role": "user", "content": prompt}
                 ],
                 temperature=0.1,

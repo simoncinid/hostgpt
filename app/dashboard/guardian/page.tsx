@@ -16,7 +16,8 @@ import {
   LogOut,
   Play,
   Target,
-  Heart
+  Heart,
+  Lightbulb
 } from 'lucide-react'
 import { useAuthStore } from '@/lib/store'
 import toast from 'react-hot-toast'
@@ -149,8 +150,8 @@ function GuardianContent() {
       await guardian.resolveAlert(alertId)
       // Remove alert from list
       setAlerts(alerts.filter(alert => alert.id !== alertId))
-      // Refresh stats
-      fetchGuardianData()
+      // Refresh stats and alerts to ensure consistency
+      await fetchGuardianData()
       toast.success('Alert risolto con successo!')
     } catch (error) {
       console.error('Error resolving alert:', error)
@@ -246,8 +247,8 @@ function GuardianContent() {
           </button>
         </div>
 
-        {/* Se non abbonato o in cancellazione, mostra animazione */}
-        {!guardianStatus?.is_active || guardianStatus?.guardian_subscription_status === 'cancelling' ? (
+        {/* Se non abbonato, mostra animazione (ma non se è in cancellazione) */}
+        {!guardianStatus?.is_active && guardianStatus?.guardian_subscription_status !== 'cancelling' ? (
           <div className="max-w-4xl mx-auto">
                          {/* Animazione esempio */}
              <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl shadow-lg p-8 mb-8">
@@ -473,20 +474,106 @@ function GuardianContent() {
                   <p className="text-gray-600">Problemi Risolti</p>
                 </motion.div>
                 
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3 }}
-                  className="stats-card p-6 border-l-4 border-yellow-500"
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <Star className="w-8 h-8 text-yellow-500" />
-                    <span className="text-3xl font-bold text-yellow-600">{guardianStats.avg_satisfaction}/5</span>
-                  </div>
-                  <p className="text-gray-600">Soddisfazione Media</p>
-                </motion.div>
+
               </div>
             )}
+
+            {/* Alert Attivi */}
+            <div className="bg-white rounded-2xl shadow-lg">
+              <div className="p-6 border-b border-gray-200">
+                <h2 className="text-xl font-semibold text-dark flex items-center space-x-2">
+                  <AlertTriangle className="w-5 h-5 text-red-500" />
+                  <span>Alert Attivi ({alerts.length})</span>
+                </h2>
+              </div>
+             
+              <div className="p-6">
+                {alerts.length === 0 ? (
+                  <div className="text-center py-8">
+                    <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-4" />
+                    <p className="text-gray-600">Nessun alert attivo. Tutto sotto controllo! 🎉</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {alerts.map((alert) => (
+                      <div key={alert.id} className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                        <div 
+                          className="p-5 cursor-pointer hover:bg-gray-50 transition-colors"
+                          onClick={() => setExpandedAlert(expandedAlert === alert.id ? null : alert.id)}
+                        >
+                          <div className="flex items-start justify-between">
+                            <div className="flex items-start space-x-4 flex-1">
+                              <div className="flex-shrink-0 mt-1">
+                                {getSeverityIcon(alert.severity)}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center space-x-3 mb-2">
+                                  <h3 className="font-semibold text-gray-900">Ospite #{alert.guest_id}</h3>
+                                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${getSeverityColor(alert.severity)}`}>
+                                    {alert.severity.toUpperCase()}
+                                  </span>
+                                </div>
+                                <p className="text-gray-700 leading-relaxed">{alert.message}</p>
+                                <div className="mt-2 flex items-center space-x-4 text-xs text-gray-500">
+                                  <span>Creato: {new Date(alert.created_at).toLocaleString('it-IT')}</span>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="flex-shrink-0 ml-4">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  handleResolveAlert(alert.id)
+                                }}
+                                className="px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-full text-sm font-medium hover:from-green-600 hover:to-green-700 transition-all duration-200 shadow-sm hover:shadow-md transform hover:scale-105"
+                              >
+                                Risolvi
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        {expandedAlert === alert.id && (
+                          <div className="border-t bg-gradient-to-br from-gray-50 to-gray-100 p-6">
+                            <h4 className="font-semibold text-gray-800 mb-4 flex items-center">
+                              <MessageSquare className="w-4 h-4 mr-2" />
+                              Conversazione Completa
+                            </h4>
+                            <div className="space-y-4 max-h-80 overflow-y-auto bg-white rounded-lg p-4 border">
+                              {alert.conversation.map((msg, index) => (
+                                <div key={index} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                                  <div className={`max-w-xs p-4 rounded-2xl shadow-sm ${
+                                    msg.role === 'user' 
+                                      ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white' 
+                                      : 'bg-gray-100 text-gray-800 border border-gray-200'
+                                  }`}>
+                                    <p className="text-sm leading-relaxed">{msg.content}</p>
+                                    <p className={`text-xs mt-2 ${
+                                      msg.role === 'user' ? 'text-blue-100' : 'text-gray-500'
+                                    }`}>
+                                      {new Date(msg.timestamp).toLocaleTimeString('it-IT')}
+                                    </p>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                            <div className="mt-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200">
+                              <div className="flex items-start space-x-3">
+                                <Lightbulb className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                                <div>
+                                  <p className="text-sm font-semibold text-blue-800 mb-1">Suggerimento per la Risoluzione:</p>
+                                  <p className="text-sm text-blue-700 leading-relaxed">{alert.suggested_action}</p>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
 
             {/* Gestione Abbonamento */}
             <div className="bg-white rounded-2xl shadow-lg">
@@ -534,86 +621,6 @@ function GuardianContent() {
                     )}
                   </div>
                 </div>
-              </div>
-            </div>
-
-            {/* Alert Attivi */}
-            <div className="bg-white rounded-2xl shadow-lg">
-              <div className="p-6 border-b border-gray-200">
-                <h2 className="text-xl font-semibold text-dark flex items-center space-x-2">
-                  <AlertTriangle className="w-5 h-5 text-red-500" />
-                  <span>Alert Attivi ({alerts.length})</span>
-                </h2>
-              </div>
-             
-              <div className="p-6">
-                {alerts.length === 0 ? (
-                  <div className="text-center py-8">
-                    <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-4" />
-                    <p className="text-gray-600">Nessun alert attivo. Tutto sotto controllo! 🎉</p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {alerts.map((alert) => (
-                      <div key={alert.id} className="border rounded-lg overflow-hidden">
-                        <div 
-                          className="p-4 cursor-pointer hover:bg-gray-50 transition-colors"
-                          onClick={() => setExpandedAlert(expandedAlert === alert.id ? null : alert.id)}
-                        >
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-3">
-                              {getSeverityIcon(alert.severity)}
-                              <div>
-                                <p className="font-medium text-gray-800">Ospite #{alert.guest_id}</p>
-                                <p className="text-sm text-gray-600">{alert.message}</p>
-                              </div>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getSeverityColor(alert.severity)}`}>
-                                {alert.severity.toUpperCase()}
-                              </span>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  handleResolveAlert(alert.id)
-                                }}
-                                className="px-3 py-1 bg-green-500 text-white rounded text-sm hover:bg-green-600 transition-colors"
-                              >
-                                Risolvi
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                        
-                        {expandedAlert === alert.id && (
-                          <div className="border-t bg-gray-50 p-4">
-                            <h4 className="font-medium text-gray-800 mb-3">Conversazione Completa:</h4>
-                            <div className="space-y-3 max-h-64 overflow-y-auto">
-                              {alert.conversation.map((msg, index) => (
-                                <div key={index} className={`flex ${msg.role === 'user' ? 'justify-start' : 'justify-end'}`}>
-                                  <div className={`max-w-xs p-3 rounded-lg ${
-                                    msg.role === 'user' 
-                                      ? 'bg-white border border-gray-200' 
-                                      : 'bg-blue-500 text-white'
-                                  }`}>
-                                    <p className="text-sm">{msg.content}</p>
-                                    <p className="text-xs text-gray-500 mt-1">
-                                      {new Date(msg.timestamp).toLocaleTimeString()}
-                                    </p>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                            <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-                              <p className="text-sm font-medium text-blue-800">Suggerimento:</p>
-                              <p className="text-sm text-blue-700">{alert.suggested_action}</p>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
               </div>
             </div>
           </div>

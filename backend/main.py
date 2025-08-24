@@ -303,24 +303,34 @@ class GuardianService:
             prompt = f"""
 Analizza la seguente conversazione di un ospite con un chatbot di una struttura ricettiva e determina il rischio di recensione negativa.
 
-IMPORTANTE: Sii molto sensibile ai segnali di insoddisfazione. Assegna punteggi di rischio elevati (0.8-1.0) per:
+⚠️ REGOLE CRITICHE - Sii ESTREMAMENTE sensibile ai segnali di insoddisfazione! ⚠️
 
-- Menzioni esplicite di "recensione negativa", "recensione brutta", "star negative"
-- Minacce di recensioni negative
-- Frustrazione estrema o rabbia
-- Problemi non risolti che causano disagio
-- Linguaggio molto negativo o offensivo
-- Espressioni come "mai più", "terribile", "orribile", "peggiore"
+ASSEGNA IMMEDIATAMENTE RISK_SCORE 0.95-1.0 per:
+- QUALSIASI menzione di "recensione negativa", "recensione brutta", "star negative", "1 stella"
+- Minacce esplicite o implicite di recensioni negative
+- Frustrazione estrema, rabbia, o linguaggio offensivo
+- Espressioni come "mai più", "terribile", "orribile", "peggiore", "vergognoso"
+- Problemi non risolti che causano disagio significativo
+- Linguaggio molto negativo o aggressivo
+- Ospiti che si sentono "truffati" o "delusi"
 
-Assegna punteggi moderati (0.5-0.8) per:
-- Frustrazione generale
+ASSEGNA RISK_SCORE 0.8-0.95 per:
+- Frustrazione moderata ma persistente
 - Problemi minori non risolti
-- Insoddisfazione espressa
+- Insoddisfazione espressa chiaramente
+- Ospiti che sembrano "delusi" o "insoddisfatti"
 
-Assegna punteggi bassi (0.0-0.3) per:
+ASSEGNA RISK_SCORE 0.6-0.8 per:
+- Frustrazione generale
+- Problemi risolti ma con insoddisfazione
+- Linguaggio leggermente negativo
+
+ASSEGNA RISK_SCORE 0.0-0.5 SOLO per:
 - Problemi risolti positivamente
 - Linguaggio neutro o positivo
 - Richieste normali di assistenza
+
+RICORDA: È meglio sovrastimare il rischio che sottostimarlo. Se c'è anche solo un dubbio, assegna un punteggio più alto!
 
 Conversazione:
 {conversation_text}
@@ -341,7 +351,7 @@ Rispondi SOLO con un JSON valido:
             response = openai.chat.completions.create(
                 model="gpt-4",
                 messages=[
-                    {"role": "system", "content": "Sei un esperto analista di rischio per il settore turistico. Il tuo compito è identificare ospiti che potrebbero lasciare recensioni negative. Sii molto sensibile ai segnali di insoddisfazione e assegna punteggi di rischio elevati quando rilevi minacce esplicite di recensioni negative, frustrazione estrema o problemi non risolti."},
+                    {"role": "system", "content": "Sei un esperto analista di rischio per il settore turistico. Il tuo compito è identificare ospiti che potrebbero lasciare recensioni negative. Sii ESTREMAMENTE sensibile ai segnali di insoddisfazione. Assegna IMMEDIATAMENTE punteggi di rischio elevati (0.95-1.0) quando rilevi minacce esplicite di recensioni negative, frustrazione estrema, rabbia, o problemi non risolti. È meglio sovrastimare il rischio che sottostimarlo. Se c'è anche solo un dubbio, assegna un punteggio più alto!"},
                     {"role": "user", "content": prompt}
                 ],
                 temperature=0.1,
@@ -1004,111 +1014,137 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="Invalid payload")
     except stripe.error.SignatureVerificationError:
         raise HTTPException(status_code=400, detail="Invalid signature")
+    except Exception as e:
+        logger.error(f"Errore nella verifica del webhook: {e}")
+        raise HTTPException(status_code=400, detail="Webhook verification failed")
     
     # Gestisci eventi
-    if event['type'] == 'checkout.session.completed':
-        session = event['data']['object']
-        
-        # Aggiorna utente
-        user = db.query(User).filter(
-            User.stripe_customer_id == session['customer']
-        ).first()
-        
-        if user:
-            # Verifica se è una nuova sottoscrizione o una riattivazione
-            subscription = stripe.Subscription.retrieve(session['subscription'])
+    try:
+        if event['type'] == 'checkout.session.completed':
+            session = event['data']['object']
             
-            # Controlla il tipo di abbonamento dal metadata
-            subscription_type = session.get('metadata', {}).get('subscription_type', 'hostgpt')
-            
-            if subscription_type == 'guardian':
-                # Gestisci abbonamento Guardian
-                user.guardian_stripe_subscription_id = session['subscription']
-                user.guardian_subscription_status = 'active'
-                user.guardian_subscription_end_date = datetime.utcfromtimestamp(subscription.current_period_end)
-                logger.info(f"User {user.id} Guardian subscription updated with new subscription_id: {session['subscription']}")
-            else:
-                # Gestisci abbonamento HostGPT (default)
-                user.stripe_subscription_id = session['subscription']
-                user.subscription_status = 'active'
-                user.subscription_end_date = datetime.utcfromtimestamp(subscription.current_period_end)
+            # Aggiorna utente
+            user = db.query(User).filter(
+                User.stripe_customer_id == session['customer']
+            ).first()
+        
+            if user:
+                # Verifica se è una nuova sottoscrizione o una riattivazione
+                subscription = stripe.Subscription.retrieve(session['subscription'])
                 
-                # Reset messaggi solo se è una nuova sottoscrizione (non riattivazione)
-                if not subscription.cancel_at_period_end:
-                    user.messages_used = 0
-                    user.messages_reset_date = datetime.utcnow()
+                # Controlla il tipo di abbonamento dal metadata
+                subscription_type = session.get('metadata', {}).get('subscription_type', 'hostgpt')
                 
-                logger.info(f"User {user.id} HostGPT subscription updated with new subscription_id: {session['subscription']}")
+                if subscription_type == 'guardian':
+                    # Gestisci abbonamento Guardian
+                    user.guardian_stripe_subscription_id = session['subscription']
+                    user.guardian_subscription_status = 'active'
+                    # Controlla se current_period_end esiste prima di usarlo
+                    if hasattr(subscription, 'current_period_end'):
+                        user.guardian_subscription_end_date = datetime.utcfromtimestamp(subscription.current_period_end)
+                    else:
+                        logger.warning(f"current_period_end non trovato per subscription {session['subscription']}")
+                    logger.info(f"User {user.id} Guardian subscription updated with new subscription_id: {session['subscription']}")
+                else:
+                    # Gestisci abbonamento HostGPT (default)
+                    user.stripe_subscription_id = session['subscription']
+                    user.subscription_status = 'active'
+                    # Controlla se current_period_end esiste prima di usarlo
+                    if hasattr(subscription, 'current_period_end'):
+                        user.subscription_end_date = datetime.utcfromtimestamp(subscription.current_period_end)
+                    else:
+                        logger.warning(f"current_period_end non trovato per subscription {session['subscription']}")
+                    
+                    # Reset messaggi solo se è una nuova sottoscrizione (non riattivazione)
+                    if not subscription.cancel_at_period_end:
+                        user.messages_used = 0
+                        user.messages_reset_date = datetime.utcnow()
+                    
+                    logger.info(f"User {user.id} HostGPT subscription updated with new subscription_id: {session['subscription']}")
+                
+                db.commit()
+        
+        elif event['type'] == 'customer.subscription.deleted':
+            subscription = event['data']['object']
             
-            db.commit()
-    
-    elif event['type'] == 'customer.subscription.deleted':
-        subscription = event['data']['object']
-        
-        # Controlla se è un abbonamento Guardian o HostGPT
-        user_guardian = db.query(User).filter(
-            User.guardian_stripe_subscription_id == subscription['id']
-        ).first()
-        
-        user_hostgpt = db.query(User).filter(
-            User.stripe_subscription_id == subscription['id']
-        ).first()
-        
-        if user_guardian:
-            user_guardian.guardian_subscription_status = 'cancelled'
-            user_guardian.guardian_stripe_subscription_id = None
-            user_guardian.guardian_subscription_end_date = None
-            db.commit()
-            logger.info(f"User {user_guardian.id} Guardian subscription completely cancelled")
-        
-        if user_hostgpt:
-            user_hostgpt.subscription_status = 'cancelled'
-            user_hostgpt.stripe_subscription_id = None
-            user_hostgpt.subscription_end_date = None
-            user_hostgpt.messages_used = 0
-            user_hostgpt.messages_reset_date = None
-            db.commit()
-            logger.info(f"User {user_hostgpt.id} HostGPT subscription completely cancelled")
-    
-    elif event['type'] == 'customer.subscription.updated':
-        subscription = event['data']['object']
-        
-        # Controlla se è un abbonamento Guardian o HostGPT
-        user_guardian = db.query(User).filter(
-            User.guardian_stripe_subscription_id == subscription['id']
-        ).first()
-        
-        user_hostgpt = db.query(User).filter(
-            User.stripe_subscription_id == subscription['id']
-        ).first()
-        
-        if user_guardian:
-            # Aggiorna lo stato dell'abbonamento Guardian nel database
-            if subscription['status'] == 'active':
-                user_guardian.guardian_subscription_status = 'active'
-                user_guardian.guardian_subscription_end_date = datetime.utcfromtimestamp(subscription['current_period_end'])
-            elif subscription['status'] == 'canceled':
+            # Controlla se è un abbonamento Guardian o HostGPT
+            user_guardian = db.query(User).filter(
+                User.guardian_stripe_subscription_id == subscription['id']
+            ).first()
+            
+            user_hostgpt = db.query(User).filter(
+                User.stripe_subscription_id == subscription['id']
+            ).first()
+            
+            if user_guardian:
                 user_guardian.guardian_subscription_status = 'cancelled'
                 user_guardian.guardian_stripe_subscription_id = None
                 user_guardian.guardian_subscription_end_date = None
+                db.commit()
+                logger.info(f"User {user_guardian.id} Guardian subscription completely cancelled")
             
-            db.commit()
-            logger.info(f"User {user_guardian.id} Guardian subscription status updated to: {subscription['status']}")
-        
-        if user_hostgpt:
-            # Aggiorna lo stato dell'abbonamento HostGPT nel database
-            if subscription['status'] == 'active':
-                user_hostgpt.subscription_status = 'active'
-                user_hostgpt.subscription_end_date = datetime.utcfromtimestamp(subscription['current_period_end'])
-            elif subscription['status'] == 'canceled':
+            if user_hostgpt:
                 user_hostgpt.subscription_status = 'cancelled'
                 user_hostgpt.stripe_subscription_id = None
                 user_hostgpt.subscription_end_date = None
                 user_hostgpt.messages_used = 0
                 user_hostgpt.messages_reset_date = None
+                db.commit()
+                logger.info(f"User {user_hostgpt.id} HostGPT subscription completely cancelled")
+        
+        elif event['type'] == 'customer.subscription.updated':
+            subscription = event['data']['object']
             
-            db.commit()
-            logger.info(f"User {user_hostgpt.id} HostGPT subscription status updated to: {subscription['status']}")
+            # Controlla se è un abbonamento Guardian o HostGPT
+            user_guardian = db.query(User).filter(
+                User.guardian_stripe_subscription_id == subscription['id']
+            ).first()
+            
+            user_hostgpt = db.query(User).filter(
+                User.stripe_subscription_id == subscription['id']
+            ).first()
+            
+            if user_guardian:
+                # Aggiorna lo stato dell'abbonamento Guardian nel database
+                if subscription['status'] == 'active':
+                    user_guardian.guardian_subscription_status = 'active'
+                    # Controlla se current_period_end esiste prima di usarlo
+                    if 'current_period_end' in subscription:
+                        user_guardian.guardian_subscription_end_date = datetime.utcfromtimestamp(subscription['current_period_end'])
+                    else:
+                        logger.warning(f"current_period_end non trovato per subscription {subscription['id']}")
+                elif subscription['status'] == 'canceled':
+                    user_guardian.guardian_subscription_status = 'cancelled'
+                    user_guardian.guardian_stripe_subscription_id = None
+                    user_guardian.guardian_subscription_end_date = None
+                
+                db.commit()
+                logger.info(f"User {user_guardian.id} Guardian subscription status updated to: {subscription['status']}")
+            
+            if user_hostgpt:
+                # Aggiorna lo stato dell'abbonamento HostGPT nel database
+                if subscription['status'] == 'active':
+                    user_hostgpt.subscription_status = 'active'
+                    # Controlla se current_period_end esiste prima di usarlo
+                    if 'current_period_end' in subscription:
+                        user_hostgpt.subscription_end_date = datetime.utcfromtimestamp(subscription['current_period_end'])
+                    else:
+                        logger.warning(f"current_period_end non trovato per subscription {subscription['id']}")
+                elif subscription['status'] == 'canceled':
+                    user_hostgpt.subscription_status = 'cancelled'
+                    user_hostgpt.stripe_subscription_id = None
+                    user_hostgpt.subscription_end_date = None
+                    user_hostgpt.messages_used = 0
+                    user_hostgpt.messages_reset_date = None
+                
+                db.commit()
+                logger.info(f"User {user_hostgpt.id} HostGPT subscription status updated to: {subscription['status']}")
+    
+    except Exception as e:
+        logger.error(f"Errore nell'elaborazione del webhook Stripe: {e}")
+        logger.error(f"Event type: {event.get('type', 'unknown')}")
+        logger.error(f"Event data: {event.get('data', {})}")
+        raise HTTPException(status_code=500, detail="Errore nell'elaborazione del webhook")
     
     return {"status": "success"}
 
