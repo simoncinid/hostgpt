@@ -126,6 +126,15 @@ function GuardianContent() {
   const handleSubscribe = async () => {
     try {
       const response = await guardian.createCheckout()
+      
+      // Se la risposta indica riattivazione, gestiscila
+      if (response.data.status === 'reactivated') {
+        toast.success(response.data.message)
+        await fetchGuardianStatus()
+        return
+      }
+      
+      // Altrimenti, reindirizza al checkout
       if (response.data.checkout_url) {
         window.location.href = response.data.checkout_url
       }
@@ -237,8 +246,8 @@ function GuardianContent() {
           </button>
         </div>
 
-        {/* Se non abbonato, mostra animazione */}
-        {!guardianStatus?.is_active ? (
+        {/* Se non abbonato o in cancellazione, mostra animazione */}
+        {!guardianStatus?.is_active || guardianStatus?.guardian_subscription_status === 'cancelling' ? (
           <div className="max-w-4xl mx-auto">
                          {/* Animazione esempio */}
              <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl shadow-lg p-8 mb-8">
@@ -411,7 +420,12 @@ function GuardianContent() {
                 className="bg-green-500 hover:bg-green-600 text-white font-bold py-4 px-8 rounded-xl text-lg transition-all duration-200 transform hover:scale-105 shadow-lg flex items-center space-x-2 mx-auto"
               >
                 <Shield className="w-5 h-5" />
-                <span>Attiva Guardian - 9€/mese</span>
+                <span>
+                  {guardianStatus?.guardian_subscription_status === 'cancelling' 
+                    ? 'Riattiva Guardian' 
+                    : 'Attiva Guardian - 9€/mese'
+                  }
+                </span>
               </button>
             </div>
           </div>

@@ -271,6 +271,10 @@ class GuardianService:
             if analysis_result['risk_score'] >= self.risk_threshold:
                 conversation.guardian_alert_triggered = True
                 logger.warning(f"🚨 ALERT GUARDIAN: Conversazione {conversation.id} ha rischio {analysis_result['risk_score']:.3f}")
+            else:
+                # Se il rischio è basso, rimuovi il flag di alert (nel caso di ri-analisi)
+                conversation.guardian_alert_triggered = False
+                logger.info(f"✅ Rischio basso per conversazione {conversation.id}: {analysis_result['risk_score']:.3f}")
             
             db.commit()
             
@@ -297,30 +301,37 @@ class GuardianService:
         """Analizza il testo della conversazione con OpenAI"""
         try:
             prompt = f"""
-Analizza la seguente conversazione di un ospite con un chatbot di una struttura ricettiva e determina:
+Analizza la seguente conversazione di un ospite con un chatbot di una struttura ricettiva e determina il rischio di recensione negativa.
 
-1. Il rischio che l'ospite lasci una recensione negativa (0.0 - 1.0)
-2. Il sentiment generale dell'ospite (-1.0 a +1.0, dove -1 è molto negativo)
-3. La confidenza dell'analisi (0.0 - 1.0)
+IMPORTANTE: Sii molto sensibile ai segnali di insoddisfazione. Assegna punteggi di rischio elevati (0.8-1.0) per:
 
-Considera questi fattori:
-- Frustrazione o rabbia espressa
-- Problemi non risolti
-- Linguaggio negativo o minaccioso
-- Menzioni di recensioni negative
-- Complimenti o soddisfazione
-- Problemi tecnici o di servizio
+- Menzioni esplicite di "recensione negativa", "recensione brutta", "star negative"
+- Minacce di recensioni negative
+- Frustrazione estrema o rabbia
+- Problemi non risolti che causano disagio
+- Linguaggio molto negativo o offensivo
+- Espressioni come "mai più", "terribile", "orribile", "peggiore"
+
+Assegna punteggi moderati (0.5-0.8) per:
+- Frustrazione generale
+- Problemi minori non risolti
+- Insoddisfazione espressa
+
+Assegna punteggi bassi (0.0-0.3) per:
+- Problemi risolti positivamente
+- Linguaggio neutro o positivo
+- Richieste normali di assistenza
 
 Conversazione:
 {conversation_text}
 
-Rispondi SOLO con un JSON valido nel seguente formato:
+Rispondi SOLO con un JSON valido:
 {{
     "risk_score": 0.123,
     "sentiment_score": -0.456,
     "confidence_score": 0.789,
     "analysis_details": {{
-        "reasoning": "Spiegazione del punteggio di rischio",
+        "reasoning": "Spiegazione dettagliata del punteggio di rischio",
         "key_issues": ["problema1", "problema2"],
         "sentiment_factors": ["fattore1", "fattore2"]
     }}
@@ -330,7 +341,7 @@ Rispondi SOLO con un JSON valido nel seguente formato:
             response = openai.ChatCompletion.create(
                 model="gpt-4",
                 messages=[
-                    {"role": "system", "content": "Sei un esperto analista di sentiment e rischio per il settore turistico. Analizza le conversazioni in modo obiettivo e professionale."},
+                    {"role": "system", "content": "Sei un esperto analista di rischio per il settore turistico. Il tuo compito è identificare ospiti che potrebbero lasciare recensioni negative. Sii molto sensibile ai segnali di insoddisfazione e assegna punteggi di rischio elevati quando rilevi minacce esplicite di recensioni negative, frustrazione estrema o problemi non risolti."},
                     {"role": "user", "content": prompt}
                 ],
                 temperature=0.1,
@@ -1998,7 +2009,7 @@ async def get_knowledge_base(
 
 def is_guardian_active(guardian_status: str) -> bool:
     """Verifica se l'abbonamento Guardian è attivo"""
-    return guardian_status in ['active']
+    return guardian_status in ['active', 'cancelling']
 
 @app.get("/api/guardian/status")
 async def get_guardian_status(current_user: User = Depends(get_current_user)):
@@ -2682,10 +2693,14 @@ async def analyze_conversation_with_guardian(conversation_id: int, db: Session):
             logger.info(f"Utente {user.id if user else 'N/A'} non ha Guardian attivo, salto analisi")
             return
         
-        # Verifica che la conversazione non sia già stata analizzata
-        if conversation.guardian_analyzed:
-            logger.info(f"Conversazione {conversation_id} già analizzata da Guardian")
+        # Verifica che la conversazione non sia già stata analizzata E non abbia un alert attivo
+        if conversation.guardian_analyzed and conversation.guardian_alert_triggered:
+            logger.info(f"Conversazione {conversation_id} già analizzata da Guardian e ha alert attivo, salto")
             return
+        
+        # Se è già stata analizzata ma non ha alert, ri-analizza (nuovi messaggi potrebbero aver cambiato la situazione)
+        if conversation.guardian_analyzed and not conversation.guardian_alert_triggered:
+            logger.info(f"Conversazione {conversation_id} già analizzata ma senza alert, ri-analizzo per nuovi messaggi")
         
         # Analizza la conversazione
         analysis_result = guardian_service.analyze_conversation(conversation, db)
