@@ -154,7 +154,7 @@ Rispondi SOLO con un JSON valido nel seguente formato:
 }}
 """
 
-            response = openai.ChatCompletion.create(
+            response = openai.chat.completions.create(
                 model="gpt-4",
                 messages=[
                     {"role": "system", "content": "Sei un esperto analista di sentiment e rischio per il settore turistico. Analizza le conversazioni in modo obiettivo e professionale."},

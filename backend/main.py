@@ -338,7 +338,7 @@ Rispondi SOLO con un JSON valido:
 }}
 """
 
-            response = openai.ChatCompletion.create(
+            response = openai.chat.completions.create(
                 model="gpt-4",
                 messages=[
                     {"role": "system", "content": "Sei un esperto analista di rischio per il settore turistico. Il tuo compito è identificare ospiti che potrebbero lasciare recensioni negative. Sii molto sensibile ai segnali di insoddisfazione e assegna punteggi di rischio elevati quando rilevi minacce esplicite di recensioni negative, frustrazione estrema o problemi non risolti."},
