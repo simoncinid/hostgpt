@@ -482,6 +482,15 @@ async def create_checkout_session(current_user: User = Depends(get_current_user)
             logger.error(f"User {current_user.id} already has active subscription")
             raise HTTPException(status_code=400, detail="Hai già un abbonamento attivo")
         
+        # Se l'abbonamento è completamente cancellato, assicurati che tutti i campi dell'abbonamento siano resettati
+        if current_user.subscription_status == 'cancelled' and current_user.stripe_subscription_id:
+            logger.info(f"User {current_user.id} has cancelled status but still has subscription fields, resetting them")
+            current_user.stripe_subscription_id = None
+            current_user.subscription_end_date = None
+            current_user.messages_used = 0
+            current_user.messages_reset_date = None
+            db.commit()
+        
         # Se l'abbonamento è in fase di cancellazione, riattivalo automaticamente
         if current_user.subscription_status == 'cancelling':
             logger.info(f"User {current_user.id} has cancelling subscription, reactivating automatically")
@@ -565,9 +574,15 @@ async def create_checkout_session(current_user: User = Depends(get_current_user)
                 # Se la sottoscrizione è completamente cancellata, permette la creazione di uno nuovo
                 elif sub.status == 'canceled':
                     logger.info(f"User {current_user.id} has canceled subscription, allowing new subscription creation")
-                    # Aggiorna il subscription_id nel database per la nuova sottoscrizione
-                    current_user.stripe_subscription_id = None
-                    db.commit()
+                    # Resetta tutti i campi dell'abbonamento per permettere la creazione di un nuovo abbonamento
+                    if current_user.stripe_subscription_id:
+                        current_user.stripe_subscription_id = None
+                        current_user.subscription_status = 'cancelled'
+                        current_user.subscription_end_date = None
+                        current_user.messages_used = 0
+                        current_user.messages_reset_date = None
+                        db.commit()
+                        logger.info(f"User {current_user.id} all subscription fields reset for new subscription")
             else:
                 logger.info(f"No subscriptions found for customer {current_user.stripe_customer_id}")
         
@@ -625,6 +640,7 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
             # Verifica se è una nuova sottoscrizione o una riattivazione
             subscription = stripe.Subscription.retrieve(session['subscription'])
             
+            # Aggiorna sempre il subscription_id con quello nuovo
             user.stripe_subscription_id = session['subscription']
             user.subscription_status = 'active'
             user.subscription_end_date = datetime.utcfromtimestamp(subscription.current_period_end)
@@ -635,6 +651,7 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
                 user.messages_reset_date = datetime.utcnow()
             
             db.commit()
+            logger.info(f"User {user.id} subscription updated with new subscription_id: {session['subscription']}")
     
     elif event['type'] == 'customer.subscription.deleted':
         subscription = event['data']['object']
@@ -645,7 +662,35 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
         
         if user:
             user.subscription_status = 'cancelled'
+            # Reset completo dei campi dell'abbonamento per permettere la creazione di un nuovo abbonamento
+            user.stripe_subscription_id = None
+            user.subscription_end_date = None
+            user.messages_used = 0
+            user.messages_reset_date = None
             db.commit()
+            logger.info(f"User {user.id} subscription completely cancelled, all subscription fields reset")
+    
+    elif event['type'] == 'customer.subscription.updated':
+        subscription = event['data']['object']
+        
+        user = db.query(User).filter(
+            User.stripe_subscription_id == subscription['id']
+        ).first()
+        
+        if user:
+            # Aggiorna lo stato dell'abbonamento nel database
+            if subscription['status'] == 'active':
+                user.subscription_status = 'active'
+                user.subscription_end_date = datetime.utcfromtimestamp(subscription['current_period_end'])
+            elif subscription['status'] == 'canceled':
+                user.subscription_status = 'cancelled'
+                user.stripe_subscription_id = None
+                user.subscription_end_date = None
+                user.messages_used = 0
+                user.messages_reset_date = None
+            
+            db.commit()
+            logger.info(f"User {user.id} subscription status updated to: {subscription['status']}")
     
     return {"status": "success"}
 

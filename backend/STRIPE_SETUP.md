@@ -24,6 +24,7 @@
    - `customer.subscription.deleted`
    - `customer.subscription.updated`
    - `invoice.payment_failed`
+   - `customer.subscription.created`
 5. Copia il **Signing secret** (inizia con `whsec_`)
 
 ### 3. Configura le Variabili d'Ambiente
@@ -71,6 +72,10 @@ python test_config.py
 ### 7. Gestione Abbonamenti
 
 - **Cancellazione**: Gli utenti possono cancellare da Stripe Customer Portal
+- **Riabbonamento**: Quando un utente riabbona dopo aver annullato completamente, il sistema:
+  - Resetta automaticamente tutti i campi dell'abbonamento (`stripe_subscription_id`, `subscription_end_date`, `messages_used`, `messages_reset_date`)
+  - Aggiorna il database con il nuovo subscription ID
+  - Mantiene la cronologia dei dati dell'utente (chatbot, conversazioni, etc.)
 - **Aggiornamento Carte**: Gestito tramite Stripe Customer Portal
 - **Fatture**: Inviate automaticamente da Stripe
 
