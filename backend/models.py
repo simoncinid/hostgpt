@@ -22,11 +22,19 @@ class User(Base):
     messages_limit = Column(Integer, default=1000)  # Limite mensile di messaggi
     messages_used = Column(Integer, default=0)  # Messaggi utilizzati nel mese corrente
     messages_reset_date = Column(DateTime)  # Data ultimo reset dei messaggi
+    
+    # Nuovo servizio Guardian
+    guardian_subscription_status = Column(String(50), default="inactive")  # inactive, active, cancelled
+    guardian_subscription_end_date = Column(DateTime)
+    guardian_stripe_subscription_id = Column(String(255))
+    
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, onupdate=func.now())
     
     # Relationships
     chatbots = relationship("Chatbot", back_populates="owner", cascade="all, delete-orphan")
+    guest_satisfaction = relationship("GuestSatisfaction", back_populates="user", cascade="all, delete-orphan")
+    guardian_alerts = relationship("GuardianAlert", back_populates="user", cascade="all, delete-orphan")
     
 class Chatbot(Base):
     __tablename__ = "chatbots"
@@ -89,9 +97,15 @@ class Conversation(Base):
     ended_at = Column(DateTime)
     message_count = Column(Integer, default=0)
     
+    # Guardian fields
+    guardian_analyzed = Column(Boolean, default=False)  # Se la conversazione è già stata analizzata
+    guardian_risk_score = Column(Float, default=0.0)  # Punteggio di rischio (0.0 - 1.0)
+    guardian_alert_triggered = Column(Boolean, default=False)  # Se è stato generato un alert
+    
     # Relationships
     chatbot = relationship("Chatbot", back_populates="conversations")
     messages = relationship("Message", back_populates="conversation", cascade="all, delete-orphan")
+    guardian_alerts = relationship("GuardianAlert", back_populates="conversation", cascade="all, delete-orphan")
     
 class Message(Base):
     __tablename__ = "messages"
@@ -128,3 +142,107 @@ class Analytics(Base):
     unique_users = Column(Integer, default=0)
     avg_messages_per_conversation = Column(Float, default=0)
     most_asked_topics = Column(JSON)  # Lista dei topic più richiesti
+
+class GuestSatisfaction(Base):
+    __tablename__ = "guest_satisfaction"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    chatbot_id = Column(Integer, ForeignKey("chatbots.id"), nullable=False)
+    guest_identifier = Column(String(255))
+    
+    # Metriche di soddisfazione
+    satisfaction_score = Column(Float, default=5.0)  # 1-5
+    sentiment_score = Column(Float, default=0.0)  # -1 to +1
+    risk_level = Column(String(20), default="low")  # low, medium, high, critical
+    
+    # Problemi rilevati
+    detected_issues = Column(JSON)  # lista problemi identificati
+    resolution_status = Column(String(20), default="pending")  # pending, resolved, escalated
+    
+    # Interventi
+    interventions_made = Column(JSON)  # interventi dell'host
+    recovery_offers = Column(JSON)  # offerte di compensazione
+    
+    created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, onupdate=func.now())
+    
+    # Relationships
+    user = relationship("User", back_populates="guest_satisfaction")
+    chatbot = relationship("Chatbot")
+    alerts = relationship("SatisfactionAlert", back_populates="satisfaction", cascade="all, delete-orphan")
+
+class SatisfactionAlert(Base):
+    __tablename__ = "satisfaction_alerts"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    satisfaction_id = Column(Integer, ForeignKey("guest_satisfaction.id"), nullable=False)
+    
+    alert_type = Column(String(50))  # negative_sentiment, complaint, technical_issue
+    severity = Column(String(20))  # low, medium, high, critical
+    message = Column(Text)
+    suggested_action = Column(Text)
+    
+    is_resolved = Column(Boolean, default=False)
+    resolved_at = Column(DateTime)
+    
+    created_at = Column(DateTime, server_default=func.now())
+    
+    # Relationships
+    satisfaction = relationship("GuestSatisfaction", back_populates="alerts")
+
+# Nuovi modelli per il sistema Guardian
+class GuardianAlert(Base):
+    __tablename__ = "guardian_alerts"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    conversation_id = Column(Integer, ForeignKey("conversations.id"), nullable=False)
+    
+    # Dettagli dell'alert
+    alert_type = Column(String(50), default="negative_review_risk")  # negative_review_risk, complaint, frustration
+    severity = Column(String(20), default="high")  # low, medium, high, critical
+    risk_score = Column(Float, nullable=False)  # Punteggio di rischio (0.0 - 1.0)
+    
+    # Contenuto dell'alert
+    message = Column(Text, nullable=False)
+    suggested_action = Column(Text)
+    conversation_summary = Column(Text)  # Riassunto della conversazione problematica
+    
+    # Stato dell'alert
+    is_resolved = Column(Boolean, default=False)
+    resolved_at = Column(DateTime)
+    resolved_by = Column(String(255))  # Chi ha risolto l'alert
+    
+    # Email inviata
+    email_sent = Column(Boolean, default=False)
+    email_sent_at = Column(DateTime)
+    
+    created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, onupdate=func.now())
+    
+    # Relationships
+    user = relationship("User", back_populates="guardian_alerts")
+    conversation = relationship("Conversation", back_populates="guardian_alerts")
+
+class GuardianAnalysis(Base):
+    __tablename__ = "guardian_analyses"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    conversation_id = Column(Integer, ForeignKey("conversations.id"), nullable=False)
+    
+    # Risultati dell'analisi
+    risk_score = Column(Float, nullable=False)  # Punteggio di rischio (0.0 - 1.0)
+    sentiment_score = Column(Float, default=0.0)  # -1 to +1
+    confidence_score = Column(Float, default=0.0)  # 0.0 to 1.0
+    
+    # Dettagli dell'analisi
+    analysis_details = Column(JSON)  # Dettagli dell'analisi OpenAI
+    user_messages_analyzed = Column(Integer, default=0)  # Numero di messaggi utente analizzati
+    conversation_length = Column(Integer, default=0)  # Lunghezza totale della conversazione
+    
+    # Timestamp
+    analyzed_at = Column(DateTime, server_default=func.now())
+    
+    # Relationships
+    conversation = relationship("Conversation")

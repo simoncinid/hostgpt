@@ -6,6 +6,8 @@ interface User {
   full_name: string
   subscription_status: string
   subscription_end_date: string | null
+  guardian_subscription_status: string
+  guardian_subscription_end_date: string | null
 }
 
 interface AuthState {

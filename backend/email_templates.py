@@ -392,3 +392,79 @@ def create_chatbot_ready_email(user_name: str, property_name: str, chat_url: str
     """
     
     return get_base_email_template(content)
+
+def create_guardian_alert_email(user_name: str, alert, conversation_summary: str) -> str:
+    """Template email per alert Guardian"""
+    
+    # Determina il colore e l'emoji in base alla severità
+    severity_colors = {
+        'critical': HOSTGPT_COLORS['error'],
+        'high': '#ff6b6b',
+        'medium': '#f093fb',
+        'low': '#4facfe'
+    }
+    
+    severity_emojis = {
+        'critical': '🚨',
+        'high': '⚠️',
+        'medium': '⚠️',
+        'low': 'ℹ️'
+    }
+    
+    severity_color = severity_colors.get(alert.severity, HOSTGPT_COLORS['warning'])
+    severity_emoji = severity_emojis.get(alert.severity, '⚠️')
+    
+    content = f"""
+        <div class="greeting">{severity_emoji} ALERT GUARDIAN: Ospite insoddisfatto rilevato</div>
+        
+        <div class="message">
+            Ciao <strong>{user_name}</strong>, il sistema Guardian ha rilevato un ospite potenzialmente insoddisfatto che potrebbe lasciare una recensione negativa.
+        </div>
+        
+        <div class="highlight-box" style="border-left-color: {severity_color};">
+            <h3 style="color: {severity_color}; margin-bottom: 15px;">📊 Dettagli dell'Alert:</h3>
+            <ul class="feature-list">
+                <li><strong>Rischio recensione negativa:</strong> {alert.risk_score:.1%}</li>
+                <li><strong>Severità:</strong> {alert.severity.upper()}</li>
+                <li><strong>Conversazione:</strong> #{alert.conversation_id}</li>
+                <li><strong>Data rilevamento:</strong> {alert.created_at.strftime('%d/%m/%Y alle %H:%M')}</li>
+            </ul>
+        </div>
+        
+        <div class="highlight-box" style="border-left-color: {HOSTGPT_COLORS['success']};">
+            <h3 style="color: {HOSTGPT_COLORS['success']}; margin-bottom: 15px;">💡 Azione Suggerita:</h3>
+            <p style="margin: 0; font-style: italic;">{alert.suggested_action}</p>
+        </div>
+        
+        <div style="background: {HOSTGPT_COLORS['light']}; padding: 15px; border-radius: 8px; margin: 15px 0;">
+            <h3 style="color: {HOSTGPT_COLORS['primary']}; margin-bottom: 10px;">💬 Riassunto Conversazione:</h3>
+            <pre style="background: #f5f5f5; padding: 10px; border-radius: 5px; white-space: pre-wrap; font-size: 12px; margin: 0;">{conversation_summary}</pre>
+        </div>
+        
+        <div style="text-align: center;">
+            <a href="https://hostgpt.com/dashboard/guardian" class="cta-button">
+                🛡️ Gestisci Alert nella Dashboard Guardian
+            </a>
+        </div>
+        
+        <div class="message">
+            <strong>Agisci rapidamente!</strong> Contattare l'ospite entro le prossime ore può fare la differenza tra una recensione negativa e un'esperienza positiva risolta.
+        </div>
+        
+        <div style="background: {HOSTGPT_COLORS['light']}; padding: 15px; border-radius: 8px; margin: 15px 0;">
+            <h3 style="color: {HOSTGPT_COLORS['primary']}; margin-bottom: 10px;">🎯 Suggerimenti per la risoluzione:</h3>
+            <ul class="feature-list">
+                <li>Contatta l'ospite personalmente</li>
+                <li>Offri una soluzione immediata al problema</li>
+                <li>Considera un'offerta di compensazione (sconto, upgrade, ecc.)</li>
+                <li>Segui l'ospite per assicurarti che sia soddisfatto</li>
+                <li>Una volta risolto, marca l'alert come "Risolto" nella dashboard</li>
+            </ul>
+        </div>
+        
+        <div class="message">
+            Grazie per aver scelto HostGPT Guardian per proteggere la soddisfazione dei tuoi ospiti! 🛡️
+        </div>
+    """
+    
+    return get_base_email_template(content)

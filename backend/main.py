@@ -23,13 +23,14 @@ import secrets
 import logging
 
 from database import get_db, engine
-from models import Base, User, Chatbot, Conversation, Message, KnowledgeBase, Analytics
+from models import Base, User, Chatbot, Conversation, Message, KnowledgeBase, Analytics, GuardianAlert, GuardianAnalysis
 from config import settings
 from email_templates import (
     create_welcome_email,
     create_subscription_activation_email,
     create_subscription_cancellation_email,
-    create_chatbot_ready_email
+    create_chatbot_ready_email,
+    create_guardian_alert_email
 )
 
 # Configurazione logging
@@ -213,7 +214,373 @@ async def send_email(to_email: str, subject: str, body: str, attachments: Option
     except Exception as e:
         logger.error(f"Failed to send email: {e}")
 
+# ============= Guardian Service =============
 
+class GuardianService:
+    """Servizio per l'analisi Guardian delle conversazioni"""
+    
+    def __init__(self):
+        self.risk_threshold = 0.851  # Soglia di rischio per generare alert
+        
+    def analyze_conversation(self, conversation: Conversation, db: Session) -> dict:
+        """
+        Analizza una conversazione per determinare il rischio di recensione negativa
+        """
+        try:
+            logger.info(f"Avvio analisi Guardian per conversazione {conversation.id}")
+            
+            # Recupera tutti i messaggi dell'utente nella conversazione
+            user_messages = db.query(Message).filter(
+                Message.conversation_id == conversation.id,
+                Message.role == 'user'
+            ).order_by(Message.timestamp).all()
+            
+            if not user_messages:
+                logger.info(f"Nessun messaggio utente trovato per conversazione {conversation.id}")
+                return {
+                    'risk_score': 0.0,
+                    'sentiment_score': 0.0,
+                    'confidence_score': 0.0,
+                    'analysis_details': {'reason': 'Nessun messaggio utente da analizzare'}
+                }
+            
+            # Prepara il testo per l'analisi
+            conversation_text = self._prepare_conversation_text(user_messages)
+            
+            # Analizza con OpenAI
+            analysis_result = self._analyze_with_openai(conversation_text)
+            
+            # Salva l'analisi nel database
+            guardian_analysis = GuardianAnalysis(
+                conversation_id=conversation.id,
+                risk_score=analysis_result['risk_score'],
+                sentiment_score=analysis_result['sentiment_score'],
+                confidence_score=analysis_result['confidence_score'],
+                analysis_details=analysis_result['analysis_details'],
+                user_messages_analyzed=len(user_messages),
+                conversation_length=len(conversation_text)
+            )
+            
+            db.add(guardian_analysis)
+            
+            # Aggiorna la conversazione
+            conversation.guardian_analyzed = True
+            conversation.guardian_risk_score = analysis_result['risk_score']
+            
+            # Controlla se generare un alert
+            if analysis_result['risk_score'] >= self.risk_threshold:
+                conversation.guardian_alert_triggered = True
+                logger.warning(f"🚨 ALERT GUARDIAN: Conversazione {conversation.id} ha rischio {analysis_result['risk_score']:.3f}")
+            
+            db.commit()
+            
+            logger.info(f"Analisi Guardian completata per conversazione {conversation.id}: rischio {analysis_result['risk_score']:.3f}")
+            
+            return analysis_result
+            
+        except Exception as e:
+            logger.error(f"Errore durante l'analisi Guardian della conversazione {conversation.id}: {e}")
+            db.rollback()
+            raise
+    
+    def _prepare_conversation_text(self, user_messages: list) -> str:
+        """Prepara il testo della conversazione per l'analisi"""
+        conversation_lines = []
+        
+        for i, message in enumerate(user_messages, 1):
+            timestamp = message.timestamp.strftime("%H:%M")
+            conversation_lines.append(f"Messaggio {i} ({timestamp}): {message.content}")
+        
+        return "\n\n".join(conversation_lines)
+    
+    def _analyze_with_openai(self, conversation_text: str) -> dict:
+        """Analizza il testo della conversazione con OpenAI"""
+        try:
+            prompt = f"""
+Analizza la seguente conversazione di un ospite con un chatbot di una struttura ricettiva e determina:
+
+1. Il rischio che l'ospite lasci una recensione negativa (0.0 - 1.0)
+2. Il sentiment generale dell'ospite (-1.0 a +1.0, dove -1 è molto negativo)
+3. La confidenza dell'analisi (0.0 - 1.0)
+
+Considera questi fattori:
+- Frustrazione o rabbia espressa
+- Problemi non risolti
+- Linguaggio negativo o minaccioso
+- Menzioni di recensioni negative
+- Complimenti o soddisfazione
+- Problemi tecnici o di servizio
+
+Conversazione:
+{conversation_text}
+
+Rispondi SOLO con un JSON valido nel seguente formato:
+{{
+    "risk_score": 0.123,
+    "sentiment_score": -0.456,
+    "confidence_score": 0.789,
+    "analysis_details": {{
+        "reasoning": "Spiegazione del punteggio di rischio",
+        "key_issues": ["problema1", "problema2"],
+        "sentiment_factors": ["fattore1", "fattore2"]
+    }}
+}}
+"""
+
+            response = openai.ChatCompletion.create(
+                model="gpt-4",
+                messages=[
+                    {"role": "system", "content": "Sei un esperto analista di sentiment e rischio per il settore turistico. Analizza le conversazioni in modo obiettivo e professionale."},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.1,
+                max_tokens=500
+            )
+            
+            # Estrai la risposta JSON
+            response_text = response.choices[0].message.content.strip()
+            
+            # Pulisci la risposta se contiene markdown
+            if response_text.startswith("```json"):
+                response_text = response_text[7:]
+            if response_text.endswith("```"):
+                response_text = response_text[:-3]
+            
+            analysis_result = json.loads(response_text)
+            
+            # Valida i punteggi
+            analysis_result['risk_score'] = max(0.0, min(1.0, float(analysis_result['risk_score'])))
+            analysis_result['sentiment_score'] = max(-1.0, min(1.0, float(analysis_result['sentiment_score'])))
+            analysis_result['confidence_score'] = max(0.0, min(1.0, float(analysis_result['confidence_score'])))
+            
+            return analysis_result
+            
+        except Exception as e:
+            logger.error(f"Errore nell'analisi OpenAI: {e}")
+            # Fallback con valori di default
+            return {
+                'risk_score': 0.5,
+                'sentiment_score': 0.0,
+                'confidence_score': 0.5,
+                'analysis_details': {
+                    'reasoning': 'Errore nell\'analisi automatica',
+                    'key_issues': ['Errore tecnico'],
+                    'sentiment_factors': ['Analisi non disponibile']
+                }
+            }
+    
+    def create_alert(self, conversation: Conversation, analysis_result: dict, db: Session) -> GuardianAlert:
+        """Crea un alert Guardian per una conversazione problematica"""
+        try:
+            # Recupera il proprietario del chatbot
+            chatbot = db.query(Chatbot).filter(Chatbot.id == conversation.chatbot_id).first()
+            if not chatbot:
+                raise ValueError(f"Chatbot non trovato per conversazione {conversation.id}")
+            
+            # Determina la severità basata sul punteggio di rischio
+            risk_score = analysis_result['risk_score']
+            if risk_score >= 0.95:
+                severity = 'critical'
+            elif risk_score >= 0.90:
+                severity = 'high'
+            elif risk_score >= 0.85:
+                severity = 'medium'
+            else:
+                severity = 'low'
+            
+            # Crea il messaggio dell'alert
+            message = self._create_alert_message(conversation, analysis_result)
+            suggested_action = self._create_suggested_action(analysis_result)
+            conversation_summary = self._create_conversation_summary(conversation, db)
+            
+            # Crea l'alert
+            alert = GuardianAlert(
+                user_id=chatbot.user_id,
+                conversation_id=conversation.id,
+                alert_type='negative_review_risk',
+                severity=severity,
+                risk_score=risk_score,
+                message=message,
+                suggested_action=suggested_action,
+                conversation_summary=conversation_summary
+            )
+            
+            db.add(alert)
+            db.commit()
+            
+            logger.info(f"Alert Guardian creato: ID {alert.id} per conversazione {conversation.id}")
+            
+            return alert
+            
+        except Exception as e:
+            logger.error(f"Errore nella creazione dell'alert Guardian: {e}")
+            db.rollback()
+            raise
+    
+    def _create_alert_message(self, conversation: Conversation, analysis_result: dict) -> str:
+        """Crea il messaggio dell'alert"""
+        risk_score = analysis_result['risk_score']
+        sentiment_score = analysis_result['sentiment_score']
+        
+        if risk_score >= 0.95:
+            urgency = "CRITICO"
+            emoji = "🚨"
+        elif risk_score >= 0.90:
+            urgency = "ALTO"
+            emoji = "⚠️"
+        else:
+            urgency = "MEDIO"
+            emoji = "⚠️"
+        
+        return f"{emoji} ALERT {urgency}: Ospite insoddisfatto rilevato nella conversazione #{conversation.id}. Rischio recensione negativa: {risk_score:.1%}. Sentiment: {sentiment_score:.2f}"
+    
+    def _create_suggested_action(self, analysis_result: dict) -> str:
+        """Crea l'azione suggerita basata sull'analisi"""
+        key_issues = analysis_result.get('analysis_details', {}).get('key_issues', [])
+        
+        if not key_issues:
+            return "Contatta immediatamente l'ospite per verificare la soddisfazione e offrire assistenza."
+        
+        if 'wifi' in ' '.join(key_issues).lower():
+            return "Problema WiFi rilevato. Invia immediatamente le credenziali corrette o contatta il tecnico."
+        elif 'pulizia' in ' '.join(key_issues).lower():
+            return "Problema di pulizia rilevato. Organizza immediatamente una pulizia straordinaria."
+        elif 'rumore' in ' '.join(key_issues).lower():
+            return "Problema di rumore rilevato. Contatta i vicini o offre un cambio stanza."
+        else:
+            return "Contatta immediatamente l'ospite per risolvere il problema e offrire una compensazione."
+    
+    def _create_conversation_summary(self, conversation: Conversation, db: Session) -> str:
+        """Crea un riassunto della conversazione"""
+        messages = db.query(Message).filter(
+            Message.conversation_id == conversation.id
+        ).order_by(Message.timestamp).limit(10).all()  # Ultimi 10 messaggi
+        
+        if not messages:
+            return "Nessun messaggio disponibile"
+        
+        summary_lines = []
+        for msg in messages:
+            role = "Ospite" if msg.role == 'user' else "Chatbot"
+            time = msg.timestamp.strftime("%H:%M")
+            content = msg.content[:100] + "..." if len(msg.content) > 100 else msg.content
+            summary_lines.append(f"[{time}] {role}: {content}")
+        
+        return "\n".join(summary_lines)
+    
+    def send_alert_email(self, alert: GuardianAlert, db: Session) -> bool:
+        """Invia email di alert al proprietario del chatbot"""
+        try:
+            # Recupera l'utente proprietario
+            user = db.query(User).filter(User.id == alert.user_id).first()
+            if not user:
+                logger.error(f"Utente non trovato per alert {alert.id}")
+                return False
+            
+            # Crea il contenuto dell'email
+            email_body = create_guardian_alert_email(
+                user_name=user.full_name,
+                alert=alert,
+                conversation_summary=alert.conversation_summary
+            )
+            
+            # Invia l'email
+            import asyncio
+            asyncio.create_task(send_email(
+                to_email=user.email,
+                subject=f"🚨 ALERT GUARDIAN: Ospite insoddisfatto rilevato",
+                body=email_body
+            ))
+            
+            # Marca l'email come inviata
+            alert.email_sent = True
+            alert.email_sent_at = datetime.utcnow()
+            db.commit()
+            
+            logger.info(f"Email di alert inviata a {user.email} per alert {alert.id}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Errore nell'invio dell'email di alert: {e}")
+            return False
+    
+    def resolve_alert(self, alert_id: int, resolved_by: str, db: Session) -> bool:
+        """Risolve un alert Guardian"""
+        try:
+            alert = db.query(GuardianAlert).filter(GuardianAlert.id == alert_id).first()
+            if not alert:
+                logger.error(f"Alert {alert_id} non trovato")
+                return False
+            
+            alert.is_resolved = True
+            alert.resolved_at = datetime.utcnow()
+            alert.resolved_by = resolved_by
+            
+            db.commit()
+            
+            logger.info(f"Alert {alert_id} risolto da {resolved_by}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Errore nella risoluzione dell'alert {alert_id}: {e}")
+            db.rollback()
+            return False
+    
+    def get_guardian_statistics(self, user_id: int, db: Session) -> dict:
+        """Ottiene le statistiche Guardian per un utente"""
+        try:
+            # Conta le conversazioni totali
+            total_conversations = db.query(Conversation).join(Chatbot).filter(
+                Chatbot.user_id == user_id
+            ).count()
+            
+            # Conta le conversazioni ad alto rischio
+            high_risk_conversations = db.query(Conversation).join(Chatbot).filter(
+                Chatbot.user_id == user_id,
+                Conversation.guardian_risk_score >= self.risk_threshold
+            ).count()
+            
+            # Conta gli alert risolti
+            resolved_alerts = db.query(GuardianAlert).filter(
+                GuardianAlert.user_id == user_id,
+                GuardianAlert.is_resolved == True
+            ).count()
+            
+            # Calcola la soddisfazione media (inversa del rischio)
+            avg_risk = db.query(Conversation.guardian_risk_score).join(Chatbot).filter(
+                Chatbot.user_id == user_id,
+                Conversation.guardian_analyzed == True
+            ).all()
+            
+            if avg_risk:
+                avg_satisfaction = 5.0 - (sum([r[0] for r in avg_risk]) / len(avg_risk)) * 4.0
+                avg_satisfaction = max(1.0, min(5.0, avg_satisfaction))
+            else:
+                avg_satisfaction = 5.0
+            
+            # Conta le recensioni negative prevenute (alert risolti)
+            negative_reviews_prevented = resolved_alerts
+            
+            return {
+                'total_guests': total_conversations,
+                'high_risk_guests': high_risk_conversations,
+                'resolved_issues': resolved_alerts,
+                'avg_satisfaction': round(avg_satisfaction, 1),
+                'negative_reviews_prevented': negative_reviews_prevented
+            }
+            
+        except Exception as e:
+            logger.error(f"Errore nel calcolo delle statistiche Guardian per utente {user_id}: {e}")
+            return {
+                'total_guests': 0,
+                'high_risk_guests': 0,
+                'resolved_issues': 0,
+                'avg_satisfaction': 5.0,
+                'negative_reviews_prevented': 0
+            }
+
+# Istanza globale del servizio Guardian
+guardian_service = GuardianService()
 
 def generate_qr_code(url: str) -> str:
     """Genera QR code e ritorna come base64"""
@@ -640,57 +1007,97 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
             # Verifica se è una nuova sottoscrizione o una riattivazione
             subscription = stripe.Subscription.retrieve(session['subscription'])
             
-            # Aggiorna sempre il subscription_id con quello nuovo
-            user.stripe_subscription_id = session['subscription']
-            user.subscription_status = 'active'
-            user.subscription_end_date = datetime.utcfromtimestamp(subscription.current_period_end)
+            # Controlla il tipo di abbonamento dal metadata
+            subscription_type = session.get('metadata', {}).get('subscription_type', 'hostgpt')
             
-            # Reset messaggi solo se è una nuova sottoscrizione (non riattivazione)
-            if not subscription.cancel_at_period_end:
-                user.messages_used = 0
-                user.messages_reset_date = datetime.utcnow()
+            if subscription_type == 'guardian':
+                # Gestisci abbonamento Guardian
+                user.guardian_stripe_subscription_id = session['subscription']
+                user.guardian_subscription_status = 'active'
+                user.guardian_subscription_end_date = datetime.utcfromtimestamp(subscription.current_period_end)
+                logger.info(f"User {user.id} Guardian subscription updated with new subscription_id: {session['subscription']}")
+            else:
+                # Gestisci abbonamento HostGPT (default)
+                user.stripe_subscription_id = session['subscription']
+                user.subscription_status = 'active'
+                user.subscription_end_date = datetime.utcfromtimestamp(subscription.current_period_end)
+                
+                # Reset messaggi solo se è una nuova sottoscrizione (non riattivazione)
+                if not subscription.cancel_at_period_end:
+                    user.messages_used = 0
+                    user.messages_reset_date = datetime.utcnow()
+                
+                logger.info(f"User {user.id} HostGPT subscription updated with new subscription_id: {session['subscription']}")
             
             db.commit()
-            logger.info(f"User {user.id} subscription updated with new subscription_id: {session['subscription']}")
     
     elif event['type'] == 'customer.subscription.deleted':
         subscription = event['data']['object']
         
-        user = db.query(User).filter(
+        # Controlla se è un abbonamento Guardian o HostGPT
+        user_guardian = db.query(User).filter(
+            User.guardian_stripe_subscription_id == subscription['id']
+        ).first()
+        
+        user_hostgpt = db.query(User).filter(
             User.stripe_subscription_id == subscription['id']
         ).first()
         
-        if user:
-            user.subscription_status = 'cancelled'
-            # Reset completo dei campi dell'abbonamento per permettere la creazione di un nuovo abbonamento
-            user.stripe_subscription_id = None
-            user.subscription_end_date = None
-            user.messages_used = 0
-            user.messages_reset_date = None
+        if user_guardian:
+            user_guardian.guardian_subscription_status = 'cancelled'
+            user_guardian.guardian_stripe_subscription_id = None
+            user_guardian.guardian_subscription_end_date = None
             db.commit()
-            logger.info(f"User {user.id} subscription completely cancelled, all subscription fields reset")
+            logger.info(f"User {user_guardian.id} Guardian subscription completely cancelled")
+        
+        if user_hostgpt:
+            user_hostgpt.subscription_status = 'cancelled'
+            user_hostgpt.stripe_subscription_id = None
+            user_hostgpt.subscription_end_date = None
+            user_hostgpt.messages_used = 0
+            user_hostgpt.messages_reset_date = None
+            db.commit()
+            logger.info(f"User {user_hostgpt.id} HostGPT subscription completely cancelled")
     
     elif event['type'] == 'customer.subscription.updated':
         subscription = event['data']['object']
         
-        user = db.query(User).filter(
+        # Controlla se è un abbonamento Guardian o HostGPT
+        user_guardian = db.query(User).filter(
+            User.guardian_stripe_subscription_id == subscription['id']
+        ).first()
+        
+        user_hostgpt = db.query(User).filter(
             User.stripe_subscription_id == subscription['id']
         ).first()
         
-        if user:
-            # Aggiorna lo stato dell'abbonamento nel database
+        if user_guardian:
+            # Aggiorna lo stato dell'abbonamento Guardian nel database
             if subscription['status'] == 'active':
-                user.subscription_status = 'active'
-                user.subscription_end_date = datetime.utcfromtimestamp(subscription['current_period_end'])
+                user_guardian.guardian_subscription_status = 'active'
+                user_guardian.guardian_subscription_end_date = datetime.utcfromtimestamp(subscription['current_period_end'])
             elif subscription['status'] == 'canceled':
-                user.subscription_status = 'cancelled'
-                user.stripe_subscription_id = None
-                user.subscription_end_date = None
-                user.messages_used = 0
-                user.messages_reset_date = None
+                user_guardian.guardian_subscription_status = 'cancelled'
+                user_guardian.guardian_stripe_subscription_id = None
+                user_guardian.guardian_subscription_end_date = None
             
             db.commit()
-            logger.info(f"User {user.id} subscription status updated to: {subscription['status']}")
+            logger.info(f"User {user_guardian.id} Guardian subscription status updated to: {subscription['status']}")
+        
+        if user_hostgpt:
+            # Aggiorna lo stato dell'abbonamento HostGPT nel database
+            if subscription['status'] == 'active':
+                user_hostgpt.subscription_status = 'active'
+                user_hostgpt.subscription_end_date = datetime.utcfromtimestamp(subscription['current_period_end'])
+            elif subscription['status'] == 'canceled':
+                user_hostgpt.subscription_status = 'cancelled'
+                user_hostgpt.stripe_subscription_id = None
+                user_hostgpt.subscription_end_date = None
+                user_hostgpt.messages_used = 0
+                user_hostgpt.messages_reset_date = None
+            
+            db.commit()
+            logger.info(f"User {user_hostgpt.id} HostGPT subscription status updated to: {subscription['status']}")
     
     return {"status": "success"}
 
@@ -1434,6 +1841,10 @@ async def send_message(
         
         db.commit()
         
+        # Analizza la conversazione con Guardian (in background)
+        import asyncio
+        asyncio.create_task(analyze_conversation_with_guardian(conversation.id, db))
+        
         return {
             "thread_id": thread_id,
             "message": assistant_message,
@@ -1583,27 +1994,710 @@ async def get_knowledge_base(
     
     return knowledge
 
-@app.post("/api/chatbots/{chatbot_id}/retrain")
-async def retrain_chatbot(
-    chatbot_id: int,
+# --- Guardian System ---
+
+def is_guardian_active(guardian_status: str) -> bool:
+    """Verifica se l'abbonamento Guardian è attivo"""
+    return guardian_status in ['active']
+
+@app.get("/api/guardian/status")
+async def get_guardian_status(current_user: User = Depends(get_current_user)):
+    """Ottieni lo stato dell'abbonamento Guardian"""
+    return {
+        "guardian_subscription_status": current_user.guardian_subscription_status,
+        "guardian_subscription_end_date": current_user.guardian_subscription_end_date,
+        "is_active": is_guardian_active(current_user.guardian_subscription_status)
+    }
+
+@app.post("/api/guardian/subscribe")
+async def subscribe_guardian(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Riallena il chatbot con i dati aggiornati"""
-    chatbot = db.query(Chatbot).filter(
-        Chatbot.id == chatbot_id,
-        Chatbot.user_id == current_user.id
-    ).first()
-    
-    if not chatbot:
-        raise HTTPException(status_code=404, detail="Chatbot non trovato")
-    
-    # Ricostruisci e aggiorna l'assistant
+    """Sottoscrivi l'abbonamento Guardian (placeholder per ora)"""
+    # Per ora non fa nulla come richiesto
+    return {"message": "Funzionalità in sviluppo"}
+
+@app.post("/api/guardian/create-checkout")
+async def create_guardian_checkout_session(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Crea sessione di checkout Stripe per Guardian - 9€/mese"""
     try:
-        await create_openai_assistant(chatbot.__dict__)
-        return {"message": "Chatbot riallenato con successo"}
+        logger.info(f"Starting Guardian checkout process for user {current_user.id} (email: {current_user.email})")
+        logger.info(f"User Guardian subscription status: {current_user.guardian_subscription_status}")
+        
+        # Verifica che l'utente abbia un abbonamento HostGPT attivo
+        if not is_subscription_active(current_user.subscription_status):
+            raise HTTPException(
+                status_code=400,
+                detail="Devi avere un abbonamento HostGPT attivo per sottoscrivere Guardian"
+            )
+        
+        # Se ha già un abbonamento Guardian attivo, non permettere un nuovo checkout
+        if current_user.guardian_subscription_status == 'active':
+            logger.error(f"User {current_user.id} already has active Guardian subscription")
+            raise HTTPException(status_code=400, detail="Hai già un abbonamento Guardian attivo")
+        
+        # Se l'abbonamento è completamente cancellato, assicurati che tutti i campi dell'abbonamento siano resettati
+        if current_user.guardian_subscription_status == 'cancelled' and current_user.guardian_stripe_subscription_id:
+            logger.info(f"User {current_user.id} has cancelled Guardian status but still has subscription fields, resetting them")
+            current_user.guardian_stripe_subscription_id = None
+            current_user.guardian_subscription_end_date = None
+            db.commit()
+        
+        # Se l'abbonamento è in fase di cancellazione, riattivalo automaticamente
+        if current_user.guardian_subscription_status == 'cancelling':
+            logger.info(f"User {current_user.id} has cancelling Guardian subscription, reactivating automatically")
+            try:
+                # Verifica che ci sia un subscription_id su Stripe
+                if not current_user.guardian_stripe_subscription_id:
+                    raise HTTPException(status_code=400, detail="Non è possibile riattivare l'abbonamento Guardian")
+                
+                # Riattiva l'abbonamento su Stripe
+                stripe_subscription = stripe.Subscription.retrieve(current_user.guardian_stripe_subscription_id)
+                if not stripe_subscription.cancel_at_period_end:
+                    raise HTTPException(status_code=400, detail="L'abbonamento Guardian non è in fase di cancellazione")
+                
+                reactivated_sub = stripe.Subscription.modify(
+                    current_user.guardian_stripe_subscription_id,
+                    cancel_at_period_end=False
+                )
+                
+                # Aggiorna il database
+                current_user.guardian_subscription_status = 'active'
+                current_user.guardian_subscription_end_date = datetime.utcfromtimestamp(reactivated_sub.current_period_end)
+                db.commit()
+                
+                logger.info(f"User {current_user.id} Guardian subscription reactivated successfully")
+                return {"status": "reactivated", "message": "Abbonamento Guardian riattivato con successo"}
+                
+            except stripe.error.StripeError as e:
+                logger.error(f"Stripe error reactivating Guardian subscription: {e}")
+                raise HTTPException(status_code=500, detail="Errore nella riattivazione dell'abbonamento Guardian")
+            except Exception as e:
+                logger.error(f"Error reactivating Guardian subscription: {e}")
+                raise HTTPException(status_code=500, detail="Errore nella riattivazione dell'abbonamento Guardian")
+        
+        # Crea o recupera customer Stripe
+        if not current_user.stripe_customer_id:
+            customer = stripe.Customer.create(
+                email=current_user.email,
+                name=current_user.full_name
+            )
+            current_user.stripe_customer_id = customer.id
+            db.commit()
+        
+        # Crea sessione checkout per abbonamento Guardian mensile a 9€
+        logger.info(f"Creating Guardian checkout session for user {current_user.id}")
+        
+        # Per ora usa un price ID placeholder - dovrai crearlo su Stripe
+        guardian_price_id = "price_guardian_monthly_9eur"  # Sostituisci con il tuo Price ID
+        
+        checkout_session = stripe.checkout.Session.create(
+            customer=current_user.stripe_customer_id,
+            payment_method_types=['card'],
+            line_items=[{
+                'price': guardian_price_id,  # Questo dovrà essere configurato per 9€/mese
+                'quantity': 1,
+            }],
+            mode='subscription',
+            success_url=f"{settings.FRONTEND_URL}/dashboard/guardian?subscription=success&session_id={{CHECKOUT_SESSION_ID}}",
+            cancel_url=f"{settings.FRONTEND_URL}/dashboard/guardian?subscription=cancelled",
+            metadata={
+                'user_id': str(current_user.id),
+                'subscription_type': 'guardian'
+            }
+        )
+        
+        logger.info(f"Guardian checkout session created successfully: {checkout_session.id}")
+        return {"checkout_url": checkout_session.url}
+        
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Errore nel riallenamento: {str(e)}")
+        logger.error(f"Guardian Stripe checkout error: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.post("/api/guardian/webhook")
+async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
+    """Webhook per eventi Stripe per Guardian"""
+    payload = await request.body()
+    sig_header = request.headers.get('stripe-signature')
+    
+    try:
+        event = stripe.Webhook.construct_event(
+            payload, sig_header, settings.STRIPE_WEBHOOK_SECRET
+        )
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid payload")
+    except stripe.error.SignatureVerificationError:
+        raise HTTPException(status_code=400, detail="Invalid signature")
+    
+    # Gestisci eventi
+    if event['type'] == 'checkout.session.completed':
+        session = event['data']['object']
+        
+        # Aggiorna utente
+        user = db.query(User).filter(
+            User.stripe_customer_id == session['customer']
+        ).first()
+        
+        if user:
+            # Verifica se è una nuova sottoscrizione o una riattivazione
+            subscription = stripe.Subscription.retrieve(session['subscription'])
+            
+            # Aggiorna sempre il subscription_id con quello nuovo
+            user.guardian_stripe_subscription_id = session['subscription']
+            user.guardian_subscription_status = 'active'
+            user.guardian_subscription_end_date = datetime.utcfromtimestamp(subscription.current_period_end)
+            
+            # Reset messaggi solo se è una nuova sottoscrizione (non riattivazione)
+            if not subscription.cancel_at_period_end:
+                user.guardian_messages_used = 0
+                user.guardian_messages_reset_date = datetime.utcnow()
+            
+            db.commit()
+            logger.info(f"User {user.id} Guardian subscription updated with new subscription_id: {session['subscription']}")
+    
+    elif event['type'] == 'customer.subscription.deleted':
+        subscription = event['data']['object']
+        
+        user = db.query(User).filter(
+            User.guardian_stripe_subscription_id == subscription['id']
+        ).first()
+        
+        if user:
+            user.guardian_subscription_status = 'cancelled'
+            # Reset completo dei campi dell'abbonamento per permettere la creazione di un nuovo abbonamento
+            user.guardian_stripe_subscription_id = None
+            user.guardian_subscription_end_date = None
+            user.guardian_messages_used = 0
+            user.guardian_messages_reset_date = None
+            db.commit()
+            logger.info(f"User {user.id} Guardian subscription completely cancelled, all subscription fields reset")
+    
+    elif event['type'] == 'customer.subscription.updated':
+        subscription = event['data']['object']
+        
+        user = db.query(User).filter(
+            User.guardian_stripe_subscription_id == subscription['id']
+        ).first()
+        
+        if user:
+            # Aggiorna lo stato dell'abbonamento nel database
+            if subscription['status'] == 'active':
+                user.guardian_subscription_status = 'active'
+                user.guardian_subscription_end_date = datetime.utcfromtimestamp(subscription['current_period_end'])
+            elif subscription['status'] == 'canceled':
+                user.guardian_subscription_status = 'cancelled'
+                user.guardian_stripe_subscription_id = None
+                user.guardian_subscription_end_date = None
+                user.guardian_messages_used = 0
+                user.guardian_messages_reset_date = None
+            
+            db.commit()
+            logger.info(f"User {user.id} Guardian subscription status updated to: {subscription['status']}")
+    
+    return {"status": "success"}
+
+@app.post("/api/guardian/confirm")
+async def confirm_guardian_subscription(
+    payload: SubscriptionConfirm, 
+    background_tasks: BackgroundTasks,
+    current_user: User = Depends(get_current_user), 
+    db: Session = Depends(get_db)
+):
+    """Conferma lato backend lo stato dell'abbonamento Guardian dopo il redirect di successo da Stripe."""
+    try:
+        session_id = payload.session_id
+        # Se viene passato un session_id, recupera i dettagli della sessione
+        if session_id:
+            session = stripe.checkout.Session.retrieve(session_id)
+            if session and session.get('customer') == current_user.stripe_customer_id and session.get('subscription'):
+                current_user.guardian_stripe_subscription_id = session['subscription']
+                current_user.guardian_subscription_status = 'active'
+                current_user.guardian_subscription_end_date = datetime.utcnow() + timedelta(days=30)
+                current_user.guardian_messages_used = 0
+                current_user.guardian_messages_reset_date = datetime.utcnow()
+                db.commit()
+                
+                # Invia email di attivazione abbonamento
+                email_body = create_subscription_activation_email(current_user.full_name or current_user.email)
+                background_tasks.add_task(
+                    send_email, 
+                    current_user.email, 
+                    "🎉 Abbonamento HostGPT Attivato!", 
+                    email_body
+                )
+                
+                return {"status": "active"}
+
+        # Fallback: controlla lo stato su Stripe dal customer
+        if current_user.stripe_customer_id:
+            subs = stripe.Subscription.list(customer=current_user.stripe_customer_id, status='all', limit=1)
+            if subs.data:
+                sub = subs.data[0]
+                # Verifica che l'abbonamento sia attivo e non in fase di cancellazione
+                if sub.status in ['active', 'trialing'] and not sub.cancel_at_period_end:
+                    current_user.guardian_stripe_subscription_id = sub.id
+                    current_user.guardian_subscription_status = 'active'
+                    current_user.guardian_subscription_end_date = datetime.utcfromtimestamp(sub.current_period_end)
+                    current_user.guardian_messages_used = 0
+                    current_user.guardian_messages_reset_date = datetime.utcnow()
+                    db.commit()
+                    
+                    # Invia email di attivazione abbonamento (solo se non già inviata)
+                    if not is_guardian_active(current_user.guardian_subscription_status):
+                        email_body = create_subscription_activation_email(current_user.full_name or current_user.email)
+                        background_tasks.add_task(
+                            send_email, 
+                            current_user.email, 
+                            "🎉 Abbonamento HostGPT Attivato!", 
+                            email_body
+                        )
+                    
+                    return {"status": "active"}
+                elif sub.status in ['active', 'trialing'] and sub.cancel_at_period_end:
+                    # L'abbonamento è attivo ma in fase di cancellazione
+                    logger.info(f"User {current_user.id} has subscription in cancellation phase")
+                    return {"status": "cancelling"}
+
+        return {"status": current_user.guardian_subscription_status or 'inactive'}
+    except Exception as e:
+        logger.error(f"Guardian subscription confirm error: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.post("/api/guardian/reactivate")
+async def reactivate_guardian_subscription(
+    background_tasks: BackgroundTasks,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Riattiva l'abbonamento Guardian dell'utente se è in fase di cancellazione"""
+    try:
+        # Verifica che l'utente abbia un abbonamento Guardian in fase di cancellazione
+        if not current_user.guardian_stripe_subscription_id:
+            raise HTTPException(
+                status_code=400,
+                detail="Non hai un abbonamento Guardian da riattivare"
+            )
+        
+        # Verifica lo stato dell'abbonamento su Stripe
+        try:
+            stripe_subscription = stripe.Subscription.retrieve(current_user.guardian_stripe_subscription_id)
+            
+            # Verifica se l'abbonamento è in fase di cancellazione
+            if not stripe_subscription.cancel_at_period_end:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Il tuo abbonamento Guardian non è in fase di cancellazione"
+                )
+            
+            # Riattiva l'abbonamento
+            reactivated_sub = stripe.Subscription.modify(
+                current_user.guardian_stripe_subscription_id,
+                cancel_at_period_end=False
+            )
+            
+            # Aggiorna il database
+            current_user.guardian_subscription_status = 'active'
+            current_user.guardian_subscription_end_date = datetime.utcfromtimestamp(reactivated_sub.current_period_end)
+            db.commit()
+            
+            # Invia email di conferma riattivazione
+            email_body = create_subscription_activation_email(current_user.full_name or current_user.email)
+            background_tasks.add_task(
+                send_email, 
+                current_user.email, 
+                "🎉 Abbonamento HostGPT Riattivato!", 
+                email_body
+            )
+            
+            logger.info(f"User {current_user.id} Guardian subscription reactivated successfully")
+            return {"status": "reactivated", "message": "Abbonamento Guardian riattivato con successo"}
+            
+        except stripe.error.StripeError as e:
+            logger.error(f"Stripe error reactivating Guardian subscription: {e}")
+            raise HTTPException(
+                status_code=500,
+                detail=f"Errore nella riattivazione dell'abbonamento Guardian: {str(e)}"
+            )
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Guardian subscription reactivate error: {e}")
+        raise HTTPException(status_code=500, detail="Errore durante la riattivazione dell'abbonamento Guardian")
+
+@app.get("/api/guardian/subscription-status")
+async def get_guardian_subscription_status(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Ottieni lo stato dettagliato dell'abbonamento Guardian dell'utente"""
+    try:
+        subscription_info = {
+            "status": current_user.guardian_subscription_status,
+            "end_date": current_user.guardian_subscription_end_date.isoformat() if current_user.guardian_subscription_end_date else None,
+            "is_canceling": False,
+            "can_reactivate": False
+        }
+        
+        # Se c'è un subscription_id su Stripe, verifica lo stato dettagliato
+        if current_user.guardian_stripe_subscription_id:
+            try:
+                stripe_subscription = stripe.Subscription.retrieve(current_user.guardian_stripe_subscription_id)
+                subscription_info["is_canceling"] = stripe_subscription.cancel_at_period_end
+                subscription_info["can_reactivate"] = (
+                    stripe_subscription.status == 'active' and 
+                    stripe_subscription.cancel_at_period_end
+                )
+            except stripe.error.StripeError as e:
+                logger.error(f"Stripe error retrieving Guardian subscription status: {e}")
+                # Se non riusciamo a recuperare da Stripe, usiamo i dati del database
+                pass
+        
+        return subscription_info
+        
+    except Exception as e:
+        logger.error(f"Error getting Guardian subscription status: {e}")
+        raise HTTPException(status_code=500, detail="Errore nel recupero dello stato dell'abbonamento Guardian")
+
+@app.post("/api/guardian/cancel")
+async def cancel_guardian_subscription(
+    background_tasks: BackgroundTasks,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Annulla l'abbonamento Guardian dell'utente"""
+    logger.info(f"=== GUARDIAN CANCELLATION REQUEST STARTED ===")
+    logger.info(f"User {current_user.id} ({current_user.email}) requesting Guardian subscription cancellation")
+    logger.info(f"Current Guardian subscription status: {current_user.guardian_subscription_status}")
+    logger.info(f"Current guardian_stripe_subscription_id: {current_user.guardian_stripe_subscription_id}")
+    
+    try:
+        # Verifica che l'utente abbia un abbonamento Guardian attivo
+        if not is_guardian_active(current_user.guardian_subscription_status):
+            raise HTTPException(
+                status_code=400,
+                detail="Non hai un abbonamento Guardian attivo da annullare"
+            )
+        
+        # Se c'è un subscription_id su Stripe, cancella anche lì PRIMA di aggiornare il DB
+        if current_user.guardian_stripe_subscription_id:
+            try:
+                # Prima recupera l'abbonamento per verificare lo stato attuale
+                current_stripe_sub = stripe.Subscription.retrieve(current_user.guardian_stripe_subscription_id)
+                logger.info(f"Current Guardian Stripe subscription status: {current_stripe_sub.status}, cancel_at_period_end: {current_stripe_sub.cancel_at_period_end}")
+                
+                # Verifica se l'abbonamento è già in fase di cancellazione
+                if current_stripe_sub.cancel_at_period_end:
+                    logger.info(f"Guardian subscription {current_user.guardian_stripe_subscription_id} is already being canceled")
+                    # Aggiorna il database per riflettere lo stato corretto
+                    current_user.guardian_subscription_status = 'cancelling'
+                    current_user.guardian_subscription_end_date = datetime.utcfromtimestamp(current_stripe_sub.current_period_end)
+                    db.commit()
+                    logger.info(f"User {current_user.id} Guardian subscription already cancelling, database updated")
+                    return {
+                        "status": "already_cancelling", 
+                        "message": "Il tuo abbonamento Guardian è già in fase di annullamento."
+                    }
+                
+                # Chiama Stripe per annullare l'abbonamento
+                stripe_subscription = stripe.Subscription.modify(
+                    current_user.guardian_stripe_subscription_id,
+                    cancel_at_period_end=True  # Cancella alla fine del periodo corrente
+                )
+                logger.info(f"Guardian Stripe subscription {current_user.guardian_stripe_subscription_id} marked for cancellation")
+                
+            except stripe.error.StripeError as e:
+                logger.error(f"Stripe error cancelling Guardian subscription: {e}")
+                raise HTTPException(
+                    status_code=500,
+                    detail=f"Errore nella cancellazione dell'abbonamento Guardian: {str(e)}"
+                )
+            except Exception as e:
+                logger.error(f"Unexpected error cancelling Guardian Stripe subscription: {e}")
+                raise HTTPException(
+                    status_code=500,
+                    detail="Errore imprevisto nella cancellazione dell'abbonamento Guardian"
+                )
+        else:
+            logger.warning(f"User {current_user.id} has no guardian_stripe_subscription_id")
+            # Se non c'è abbonamento su Stripe, aggiorna solo il database
+            current_user.guardian_subscription_status = 'cancelled'
+            db.commit()
+            return {
+                "status": "cancelled", 
+                "message": "Abbonamento Guardian annullato con successo."
+            }
+        
+        # SOLO DOPO aver ricevuto conferma da Stripe, aggiorna il database
+        current_user.guardian_subscription_status = 'cancelling'
+        current_user.guardian_subscription_end_date = datetime.utcfromtimestamp(stripe_subscription.current_period_end)
+        db.commit()
+        
+        # Invia email di annullamento abbonamento Guardian
+        end_date = current_user.guardian_subscription_end_date.strftime("%d/%m/%Y") if current_user.guardian_subscription_end_date else "fine del periodo corrente"
+        email_body = f"""
+        <h2>Abbonamento Guardian Annullato</h2>
+        <p>Ciao {current_user.full_name},</p>
+        <p>Il tuo abbonamento HostGPT Guardian è stato annullato con successo.</p>
+        <p>Il servizio rimarrà attivo fino al {end_date}.</p>
+        <p>Grazie per aver utilizzato HostGPT Guardian!</p>
+        """
+        background_tasks.add_task(
+            send_email, 
+            current_user.email, 
+            "😔 Abbonamento Guardian Annullato", 
+            email_body
+        )
+        
+        logger.info(f"User {current_user.id} Guardian subscription cancelled successfully")
+        logger.info(f"=== GUARDIAN CANCELLATION REQUEST COMPLETED ===")
+        return {
+            "status": "cancelling", 
+            "message": "Abbonamento Guardian annullato con successo. Il tuo abbonamento rimarrà attivo fino alla fine del periodo corrente."
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Guardian subscription cancel error: {e}")
+        raise HTTPException(status_code=500, detail="Errore durante l'annullamento dell'abbonamento Guardian")
+
+@app.post("/api/guardian/reactivate")
+async def reactivate_guardian_subscription(
+    background_tasks: BackgroundTasks,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Riattiva l'abbonamento Guardian dell'utente se è in fase di cancellazione"""
+    try:
+        # Verifica che l'utente abbia un abbonamento Guardian in fase di cancellazione
+        if not current_user.guardian_stripe_subscription_id:
+            raise HTTPException(
+                status_code=400,
+                detail="Non hai un abbonamento Guardian da riattivare"
+            )
+        
+        # Verifica lo stato dell'abbonamento su Stripe
+        try:
+            stripe_subscription = stripe.Subscription.retrieve(current_user.guardian_stripe_subscription_id)
+            
+            # Verifica se l'abbonamento è in fase di cancellazione
+            if not stripe_subscription.cancel_at_period_end:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Il tuo abbonamento Guardian non è in fase di cancellazione"
+                )
+            
+            # Riattiva l'abbonamento
+            reactivated_sub = stripe.Subscription.modify(
+                current_user.guardian_stripe_subscription_id,
+                cancel_at_period_end=False
+            )
+            
+            # Aggiorna il database
+            current_user.guardian_subscription_status = 'active'
+            current_user.guardian_subscription_end_date = datetime.utcfromtimestamp(reactivated_sub.current_period_end)
+            db.commit()
+            
+            # Invia email di conferma riattivazione
+            email_body = f"""
+            <h2>Abbonamento Guardian Riattivato</h2>
+            <p>Ciao {current_user.full_name},</p>
+            <p>Il tuo abbonamento HostGPT Guardian è stato riattivato con successo!</p>
+            <p>Ora puoi continuare a utilizzare tutte le funzionalità Guardian per proteggere la soddisfazione dei tuoi ospiti.</p>
+            <p>Grazie per aver scelto HostGPT Guardian!</p>
+            """
+            background_tasks.add_task(
+                send_email, 
+                current_user.email, 
+                "🎉 Abbonamento Guardian Riattivato!", 
+                email_body
+            )
+            
+            logger.info(f"User {current_user.id} Guardian subscription reactivated successfully")
+            return {"status": "reactivated", "message": "Abbonamento Guardian riattivato con successo"}
+            
+        except stripe.error.StripeError as e:
+            logger.error(f"Stripe error reactivating Guardian subscription: {e}")
+            raise HTTPException(
+                status_code=500,
+                detail=f"Errore nella riattivazione dell'abbonamento Guardian: {str(e)}"
+            )
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Guardian subscription reactivate error: {e}")
+        raise HTTPException(status_code=500, detail="Errore durante la riattivazione dell'abbonamento Guardian")
+
+# ============= Guardian Analytics APIs =============
+
+@app.get("/api/guardian/statistics")
+async def get_guardian_statistics(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Ottieni le statistiche Guardian per l'utente corrente"""
+    try:
+        # Verifica che l'utente abbia un abbonamento Guardian attivo
+        if not is_guardian_active(current_user.guardian_subscription_status):
+            raise HTTPException(
+                status_code=403,
+                detail="Abbonamento Guardian richiesto per accedere alle statistiche"
+            )
+        
+        # Ottieni le statistiche
+        stats = guardian_service.get_guardian_statistics(current_user.id, db)
+        
+        return stats
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting Guardian statistics: {e}")
+        raise HTTPException(status_code=500, detail="Errore nel recupero delle statistiche Guardian")
+
+@app.get("/api/guardian/alerts")
+async def get_guardian_alerts(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Ottieni gli alert Guardian attivi per l'utente corrente"""
+    try:
+        # Verifica che l'utente abbia un abbonamento Guardian attivo
+        if not is_guardian_active(current_user.guardian_subscription_status):
+            raise HTTPException(
+                status_code=403,
+                detail="Abbonamento Guardian richiesto per accedere agli alert"
+            )
+        
+        # Ottieni gli alert non risolti
+        alerts = db.query(GuardianAlert).filter(
+            GuardianAlert.user_id == current_user.id,
+            GuardianAlert.is_resolved == False
+        ).order_by(GuardianAlert.created_at.desc()).all()
+        
+        # Formatta gli alert per il frontend
+        formatted_alerts = []
+        for alert in alerts:
+            # Recupera i messaggi della conversazione per il frontend
+            messages = db.query(Message).filter(
+                Message.conversation_id == alert.conversation_id
+            ).order_by(Message.timestamp).all()
+            
+            conversation_data = []
+            for msg in messages:
+                conversation_data.append({
+                    'role': msg.role,
+                    'content': msg.content,
+                    'timestamp': msg.timestamp.isoformat()
+                })
+            
+            formatted_alerts.append({
+                'id': alert.id,
+                'guest_id': f"#{alert.conversation_id}",
+                'alert_type': alert.alert_type,
+                'severity': alert.severity,
+                'message': alert.message,
+                'suggested_action': alert.suggested_action,
+                'created_at': alert.created_at.isoformat(),
+                'conversation': conversation_data
+            })
+        
+        return formatted_alerts
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting Guardian alerts: {e}")
+        raise HTTPException(status_code=500, detail="Errore nel recupero degli alert Guardian")
+
+@app.post("/api/guardian/alerts/{alert_id}/resolve")
+async def resolve_guardian_alert(
+    alert_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Risolve un alert Guardian"""
+    try:
+        # Verifica che l'utente abbia un abbonamento Guardian attivo
+        if not is_guardian_active(current_user.guardian_subscription_status):
+            raise HTTPException(
+                status_code=403,
+                detail="Abbonamento Guardian richiesto per gestire gli alert"
+            )
+        
+        # Verifica che l'alert appartenga all'utente
+        alert = db.query(GuardianAlert).filter(
+            GuardianAlert.id == alert_id,
+            GuardianAlert.user_id == current_user.id
+        ).first()
+        
+        if not alert:
+            raise HTTPException(
+                status_code=404,
+                detail="Alert non trovato"
+            )
+        
+        # Risolve l'alert
+        success = guardian_service.resolve_alert(alert_id, current_user.email, db)
+        
+        if not success:
+            raise HTTPException(
+                status_code=500,
+                detail="Errore nella risoluzione dell'alert"
+            )
+        
+        return {"message": "Alert risolto con successo"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error resolving Guardian alert: {e}")
+        raise HTTPException(status_code=500, detail="Errore nella risoluzione dell'alert")
+
+# ============= Guardian Analysis Integration =============
+
+async def analyze_conversation_with_guardian(conversation_id: int, db: Session):
+    """
+    Funzione per analizzare una conversazione con Guardian
+    Viene chiamata automaticamente quando viene aggiunto un nuovo messaggio
+    """
+    try:
+        # Recupera la conversazione
+        conversation = db.query(Conversation).filter(Conversation.id == conversation_id).first()
+        if not conversation:
+            logger.error(f"Conversazione {conversation_id} non trovata per analisi Guardian")
+            return
+        
+        # Verifica che il proprietario del chatbot abbia Guardian attivo
+        chatbot = db.query(Chatbot).filter(Chatbot.id == conversation.chatbot_id).first()
+        if not chatbot:
+            logger.error(f"Chatbot non trovato per conversazione {conversation_id}")
+            return
+        
+        user = db.query(User).filter(User.id == chatbot.user_id).first()
+        if not user or not is_guardian_active(user.guardian_subscription_status):
+            logger.info(f"Utente {user.id if user else 'N/A'} non ha Guardian attivo, salto analisi")
+            return
+        
+        # Verifica che la conversazione non sia già stata analizzata
+        if conversation.guardian_analyzed:
+            logger.info(f"Conversazione {conversation_id} già analizzata da Guardian")
+            return
+        
+        # Analizza la conversazione
+        analysis_result = guardian_service.analyze_conversation(conversation, db)
+        
+        # Se il rischio è alto, crea un alert e invia email
+        if analysis_result['risk_score'] >= guardian_service.risk_threshold:
+            alert = guardian_service.create_alert(conversation, analysis_result, db)
+            guardian_service.send_alert_email(alert, db)
+            logger.warning(f"🚨 ALERT GUARDIAN CREATO: Conversazione {conversation_id}, rischio {analysis_result['risk_score']:.3f}")
+        
+    except Exception as e:
+        logger.error(f"Errore nell'analisi Guardian della conversazione {conversation_id}: {e}")
 
 if __name__ == "__main__":
     import uvicorn
