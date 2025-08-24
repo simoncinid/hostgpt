@@ -2089,8 +2089,8 @@ async def create_guardian_checkout_session(current_user: User = Depends(get_curr
         # Crea sessione checkout per abbonamento Guardian mensile a 9€
         logger.info(f"Creating Guardian checkout session for user {current_user.id}")
         
-        # Per ora usa un price ID placeholder - dovrai crearlo su Stripe
-        guardian_price_id = "price_guardian_monthly_9eur"  # Sostituisci con il tuo Price ID
+        # Price ID per Guardian - 9€/mese
+        guardian_price_id = "price_1RzYheClR9LCJ8qE7OMhCmlH"
         
         checkout_session = stripe.checkout.Session.create(
             customer=current_user.stripe_customer_id,

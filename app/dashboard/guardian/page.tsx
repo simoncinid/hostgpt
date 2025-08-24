@@ -21,6 +21,7 @@ import {
 import { useAuthStore } from '@/lib/store'
 import toast from 'react-hot-toast'
 import Sidebar from '@/app/components/Sidebar'
+import { guardian } from '@/lib/api'
 
 interface GuardianStatus {
   guardian_subscription_status: string
@@ -79,19 +80,12 @@ function GuardianContent() {
 
   const fetchGuardianStatus = async () => {
     try {
-      const response = await fetch('/api/guardian/status', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      })
+      const response = await guardian.getStatus()
+      const status = response.data
+      setGuardianStatus(status)
       
-      if (response.ok) {
-        const status = await response.json()
-        setGuardianStatus(status)
-        
-        if (status.is_active) {
-          fetchGuardianData()
-        }
+      if (status.is_active) {
+        fetchGuardianData()
       }
     } catch (error) {
       console.error('Error fetching guardian status:', error)
@@ -103,28 +97,12 @@ function GuardianContent() {
   const fetchGuardianData = async () => {
     try {
       // Fetch statistics
-      const statsResponse = await fetch('/api/guardian/statistics', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      })
-      
-      if (statsResponse.ok) {
-        const stats = await statsResponse.json()
-        setGuardianStats(stats)
-      }
+      const statsResponse = await guardian.getStatistics()
+      setGuardianStats(statsResponse.data)
 
       // Fetch alerts
-      const alertsResponse = await fetch('/api/guardian/alerts', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      })
-      
-      if (alertsResponse.ok) {
-        const alertsData = await alertsResponse.json()
-        setAlerts(alertsData)
-      }
+      const alertsResponse = await guardian.getAlerts()
+      setAlerts(alertsResponse.data)
     } catch (error) {
       console.error('Error fetching guardian data:', error)
     }
@@ -147,44 +125,24 @@ function GuardianContent() {
 
   const handleSubscribe = async () => {
     try {
-      const response = await fetch('/api/guardian/create-checkout', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      })
-      
-      if (response.ok) {
-        const data = await response.json()
-        if (data.checkout_url) {
-          window.location.href = data.checkout_url
-        }
-      } else {
-        const errorData = await response.json()
-        toast.error(errorData.detail || 'Errore durante la creazione del checkout')
+      const response = await guardian.createCheckout()
+      if (response.data.checkout_url) {
+        window.location.href = response.data.checkout_url
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error subscribing to guardian:', error)
-      toast.error('Errore durante la sottoscrizione')
+      toast.error(error.response?.data?.detail || 'Errore durante la sottoscrizione')
     }
   }
 
   const handleResolveAlert = async (alertId: number) => {
     try {
-      const response = await fetch(`/api/guardian/alerts/${alertId}/resolve`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      })
-      
-      if (response.ok) {
-        // Remove alert from list
-        setAlerts(alerts.filter(alert => alert.id !== alertId))
-        // Refresh stats
-        fetchGuardianData()
-        toast.success('Alert risolto con successo!')
-      }
+      await guardian.resolveAlert(alertId)
+      // Remove alert from list
+      setAlerts(alerts.filter(alert => alert.id !== alertId))
+      // Refresh stats
+      fetchGuardianData()
+      toast.success('Alert risolto con successo!')
     } catch (error) {
       console.error('Error resolving alert:', error)
       toast.error('Errore durante la risoluzione dell\'alert')
@@ -194,50 +152,26 @@ function GuardianContent() {
   const handleCancelGuardian = async () => {
     if (confirm('Sei sicuro di voler annullare l\'abbonamento Guardian? Il servizio rimarrà attivo fino alla fine del periodo corrente.')) {
       try {
-        const response = await fetch('/api/guardian/cancel', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          }
-        })
-        
-        if (response.ok) {
-          const data = await response.json()
-          toast.success(data.message)
-          // Ricarica lo stato
-          await fetchGuardianStatus()
-        } else {
-          const errorData = await response.json()
-          toast.error(errorData.detail || 'Errore durante la cancellazione')
-        }
-      } catch (error) {
+        const response = await guardian.cancel()
+        toast.success(response.data.message)
+        // Ricarica lo stato
+        await fetchGuardianStatus()
+      } catch (error: any) {
         console.error('Error cancelling guardian subscription:', error)
-        toast.error('Errore durante la cancellazione')
+        toast.error(error.response?.data?.detail || 'Errore durante la cancellazione')
       }
     }
   }
 
   const handleReactivateGuardian = async () => {
     try {
-      const response = await fetch('/api/guardian/reactivate', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      })
-      
-      if (response.ok) {
-        const data = await response.json()
-        toast.success(data.message)
-        // Ricarica lo stato
-        await fetchGuardianStatus()
-      } else {
-        const errorData = await response.json()
-        toast.error(errorData.detail || 'Errore durante la riattivazione')
-      }
-    } catch (error) {
+      const response = await guardian.reactivate()
+      toast.success(response.data.message)
+      // Ricarica lo stato
+      await fetchGuardianStatus()
+    } catch (error: any) {
       console.error('Error reactivating guardian subscription:', error)
-      toast.error('Errore durante la riattivazione')
+      toast.error(error.response?.data?.detail || 'Errore durante la riattivazione')
     }
   }
 

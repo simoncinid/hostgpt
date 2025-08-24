@@ -100,3 +100,26 @@ export const chat = {
   sendMessage: (uuid: string, data: any) =>
     api.post(`/chat/${uuid}/message`, data),
 }
+
+export const guardian = {
+  getStatus: () =>
+    api.get('/guardian/status'),
+  
+  createCheckout: () =>
+    api.post('/guardian/create-checkout'),
+  
+  cancel: () =>
+    api.post('/guardian/cancel'),
+  
+  reactivate: () =>
+    api.post('/guardian/reactivate'),
+  
+  getStatistics: () =>
+    api.get('/guardian/statistics'),
+  
+  getAlerts: () =>
+    api.get('/guardian/alerts'),
+  
+  resolveAlert: (alertId: number) =>
+    api.post(`/guardian/alerts/${alertId}/resolve`),
+}
