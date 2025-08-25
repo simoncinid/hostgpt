@@ -1077,11 +1077,13 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
             ).first()
             
             if user_guardian:
+                # Gestisci l'evento Guardian deletion qui (webhook unificato)
+                logger.info(f"WEBHOOK UNIFICATO: User {user_guardian.id} Guardian subscription deleted")
                 user_guardian.guardian_subscription_status = 'cancelled'
                 user_guardian.guardian_stripe_subscription_id = None
                 user_guardian.guardian_subscription_end_date = None
                 db.commit()
-                logger.info(f"User {user_guardian.id} Guardian subscription completely cancelled")
+                logger.info(f"WEBHOOK UNIFICATO: User {user_guardian.id} Guardian subscription completely cancelled")
             
             if user_hostgpt:
                 user_hostgpt.subscription_status = 'cancelled'
@@ -1105,9 +1107,19 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
             ).first()
             
             if user_guardian:
+                # Gestisci l'evento Guardian qui (webhook unificato)
+                logger.info(f"WEBHOOK UNIFICATO: User {user_guardian.id} Guardian subscription updated - status: {subscription['status']}, cancel_at_period_end: {subscription.get('cancel_at_period_end', False)}")
+                
                 # Aggiorna lo stato dell'abbonamento Guardian nel database
                 if subscription['status'] == 'active':
-                    user_guardian.guardian_subscription_status = 'active'
+                    # Se l'abbonamento è attivo ma ha cancel_at_period_end=True, è in fase di cancellazione
+                    if subscription.get('cancel_at_period_end', False):
+                        user_guardian.guardian_subscription_status = 'cancelling'
+                        logger.info(f"WEBHOOK UNIFICATO: User {user_guardian.id} Guardian subscription marked as cancelling (cancel_at_period_end=True)")
+                    else:
+                        user_guardian.guardian_subscription_status = 'active'
+                        logger.info(f"WEBHOOK UNIFICATO: User {user_guardian.id} Guardian subscription reactivated (cancel_at_period_end=False)")
+                    
                     # Controlla se current_period_end esiste prima di usarlo
                     if 'current_period_end' in subscription:
                         user_guardian.guardian_subscription_end_date = datetime.utcfromtimestamp(subscription['current_period_end'])
@@ -1117,9 +1129,10 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
                     user_guardian.guardian_subscription_status = 'cancelled'
                     user_guardian.guardian_stripe_subscription_id = None
                     user_guardian.guardian_subscription_end_date = None
+                    logger.info(f"WEBHOOK UNIFICATO: User {user_guardian.id} Guardian subscription completely cancelled")
                 
                 db.commit()
-                logger.info(f"User {user_guardian.id} Guardian subscription status updated to: {subscription['status']}")
+                logger.info(f"WEBHOOK UNIFICATO: User {user_guardian.id} Guardian subscription status updated to: {subscription['status']}")
             
             if user_hostgpt:
                 # Aggiorna lo stato dell'abbonamento HostGPT nel database
