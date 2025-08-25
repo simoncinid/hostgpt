@@ -2420,74 +2420,60 @@ async def cancel_guardian_subscription(
     logger.info(f"Current guardian_stripe_subscription_id: {current_user.guardian_stripe_subscription_id}")
     
     try:
+        logger.info(f"STEP 1: Verificando se l'utente ha un abbonamento Guardian attivo")
         # Verifica che l'utente abbia un abbonamento Guardian attivo
         if not is_guardian_active(current_user.guardian_subscription_status):
+            logger.info(f"STEP 1 FAILED: User {current_user.id} non ha un abbonamento Guardian attivo")
             raise HTTPException(
                 status_code=400,
                 detail="Non hai un abbonamento Guardian attivo da annullare"
             )
+        logger.info(f"STEP 1 PASSED: User {current_user.id} ha un abbonamento Guardian attivo")
         
+        logger.info(f"STEP 2: Controllando se c'è un guardian_stripe_subscription_id")
         # Se c'è un subscription_id su Stripe, cancella anche lì PRIMA di aggiornare il DB
         if current_user.guardian_stripe_subscription_id:
+            logger.info(f"STEP 2 PASSED: User {current_user.id} ha guardian_stripe_subscription_id: {current_user.guardian_stripe_subscription_id}")
             try:
+                logger.info(f"STEP 3: Recuperando l'abbonamento Stripe")
                 # Prima recupera l'abbonamento per verificare lo stato attuale
                 current_stripe_sub = stripe.Subscription.retrieve(current_user.guardian_stripe_subscription_id)
-                logger.info(f"Current Guardian Stripe subscription status: {current_stripe_sub.status}, cancel_at_period_end: {current_stripe_sub.cancel_at_period_end}")
+                logger.info(f"STEP 3 PASSED: Current Guardian Stripe subscription status: {current_stripe_sub.status}, cancel_at_period_end: {current_stripe_sub.cancel_at_period_end}")
                 
+                logger.info(f"STEP 4: Verificando se l'abbonamento è già in fase di cancellazione")
                 # Verifica se l'abbonamento è già in fase di cancellazione
                 if current_stripe_sub.cancel_at_period_end:
-                    logger.info(f"Guardian subscription {current_user.guardian_stripe_subscription_id} is already being canceled")
+                    logger.info(f"STEP 4 PASSED: Guardian subscription {current_user.guardian_stripe_subscription_id} is already being canceled")
                     # Aggiorna il database per riflettere lo stato corretto
+                    logger.info(f"STEP 4a: Aggiornando database per abbonamento già in cancellazione")
                     current_user.guardian_subscription_status = 'cancelling'
                     current_user.guardian_subscription_end_date = datetime.utcfromtimestamp(current_stripe_sub.current_period_end)
                     db.commit()
-                    logger.info(f"User {current_user.id} Guardian subscription already cancelling, database updated")
+                    logger.info(f"STEP 4a PASSED: User {current_user.id} Guardian subscription already cancelling, database updated")
                     return {
                         "status": "already_cancelling", 
                         "message": "Il tuo abbonamento Guardian è già in fase di annullamento."
                     }
+                logger.info(f"STEP 4 PASSED: Abbonamento non è già in fase di cancellazione, procedendo con la cancellazione")
                 
+                logger.info(f"STEP 5: Chiamando Stripe per annullare l'abbonamento")
                 # Chiama Stripe per annullare l'abbonamento
                 stripe_subscription = stripe.Subscription.modify(
                     current_user.guardian_stripe_subscription_id,
                     cancel_at_period_end=True  # Cancella alla fine del periodo corrente
                 )
-                logger.info(f"Guardian Stripe subscription {current_user.guardian_stripe_subscription_id} marked for cancellation")
+                logger.info(f"STEP 5 PASSED: Guardian Stripe subscription {current_user.guardian_stripe_subscription_id} marked for cancellation")
+                logger.info(f"STEP 5a: Updated Stripe subscription status: {stripe_subscription.status}, cancel_at_period_end: {stripe_subscription.cancel_at_period_end}")
                 
-                # SOLO DOPO aver ricevuto conferma da Stripe, aggiorna il database
-                logger.info(f"BEFORE DB UPDATE: User {current_user.id} status = {current_user.guardian_subscription_status}")
-                current_user.guardian_subscription_status = 'cancelling'
-                current_user.guardian_subscription_end_date = datetime.utcfromtimestamp(stripe_subscription.current_period_end)
-                logger.info(f"AFTER DB UPDATE: User {current_user.id} status = {current_user.guardian_subscription_status}")
-                db.commit()
-                logger.info(f"AFTER COMMIT: User {current_user.id} Guardian subscription status updated to 'cancelling' in database")
-                
-                # Verifica che l'aggiornamento sia stato salvato
-                db.refresh(current_user)
-                logger.info(f"AFTER REFRESH: User {current_user.id} status = {current_user.guardian_subscription_status}")
-                
-                # Invia email di annullamento abbonamento Guardian
-                end_date = current_user.guardian_subscription_end_date.strftime("%d/%m/%Y") if current_user.guardian_subscription_end_date else "fine del periodo corrente"
-                email_body = f"""
-                <h2>Abbonamento Guardian Annullato</h2>
-                <p>Ciao {current_user.full_name},</p>
-                <p>Il tuo abbonamento HostGPT Guardian è stato annullato con successo.</p>
-                <p>Il servizio rimarrà attivo fino al {end_date}.</p>
-                <p>Grazie per aver utilizzato HostGPT Guardian!</p>
-                """
-                background_tasks.add_task(
-                    send_email, 
-                    current_user.email, 
-                    "😔 Abbonamento Guardian Annullato", 
-                    email_body
-                )
-                
-                logger.info(f"User {current_user.id} Guardian subscription cancelled successfully")
-                logger.info(f"=== GUARDIAN CANCELLATION REQUEST COMPLETED ===")
-                return {
-                    "status": "cancelling", 
-                    "message": "Abbonamento Guardian annullato con successo. Il tuo abbonamento rimarrà attivo fino alla fine del periodo corrente."
-                }
+                logger.info(f"STEP 6: Verificando che la cancellazione sia stata accettata da Stripe")
+                # Verifica che la cancellazione sia stata accettata da Stripe
+                if stripe_subscription.status not in ['active', 'canceled']:
+                    logger.info(f"STEP 6 FAILED: Stripe subscription status non valido: {stripe_subscription.status}")
+                    raise HTTPException(
+                        status_code=500,
+                        detail="Errore nella cancellazione dell'abbonamento Guardian su Stripe"
+                    )
+                logger.info(f"STEP 6 PASSED: Stripe subscription status valido: {stripe_subscription.status}")
                 
             except stripe.error.StripeError as e:
                 logger.error(f"Stripe error cancelling Guardian subscription: {e}")
@@ -2502,14 +2488,58 @@ async def cancel_guardian_subscription(
                     detail="Errore imprevisto nella cancellazione dell'abbonamento Guardian"
                 )
         else:
-            logger.warning(f"User {current_user.id} has no guardian_stripe_subscription_id")
+            logger.info(f"STEP 2 FAILED: User {current_user.id} has no guardian_stripe_subscription_id")
             # Se non c'è abbonamento su Stripe, aggiorna solo il database
+            logger.info(f"STEP 2a: Aggiornando database a 'cancelled' per utente senza subscription_id")
             current_user.guardian_subscription_status = 'cancelled'
             db.commit()
+            logger.info(f"STEP 2a PASSED: User {current_user.id} Guardian subscription status updated to 'cancelled'")
             return {
                 "status": "cancelled", 
                 "message": "Abbonamento Guardian annullato con successo."
             }
+        
+        logger.info(f"STEP 7: Aggiornando il database a 'cancelling'")
+        # SOLO DOPO aver ricevuto conferma da Stripe, aggiorna il database
+        # Imposta lo stato come 'cancelling' per indicare che è in fase di annullamento
+        logger.info(f"STEP 7a: BEFORE DB UPDATE - User {current_user.id} status = {current_user.guardian_subscription_status}")
+        current_user.guardian_subscription_status = 'cancelling'  # Stato per abbonamento in fase di annullamento
+        current_user.guardian_subscription_end_date = datetime.utcfromtimestamp(stripe_subscription.current_period_end)
+        logger.info(f"STEP 7a: AFTER DB UPDATE - User {current_user.id} status = {current_user.guardian_subscription_status}")
+        # I dati rimangono nel database come richiesto
+        db.commit()
+        logger.info(f"STEP 7 PASSED: Database commit completato")
+        
+        logger.info(f"STEP 8: Verificando che l'aggiornamento sia stato salvato")
+        # Verifica che l'aggiornamento sia stato salvato
+        db.refresh(current_user)
+        logger.info(f"STEP 8 PASSED: AFTER REFRESH - User {current_user.id} status = {current_user.guardian_subscription_status}")
+        
+        logger.info(f"STEP 9: Inviando email di annullamento")
+        # Invia email di annullamento abbonamento Guardian
+        end_date = current_user.guardian_subscription_end_date.strftime("%d/%m/%Y") if current_user.guardian_subscription_end_date else "fine del periodo corrente"
+        email_body = f"""
+        <h2>Abbonamento Guardian Annullato</h2>
+        <p>Ciao {current_user.full_name},</p>
+        <p>Il tuo abbonamento HostGPT Guardian è stato annullato con successo.</p>
+        <p>Il servizio rimarrà attivo fino al {end_date}.</p>
+        <p>Grazie per aver utilizzato HostGPT Guardian!</p>
+        """
+        background_tasks.add_task(
+            send_email, 
+            current_user.email, 
+            "😔 Abbonamento Guardian Annullato", 
+            email_body
+        )
+        logger.info(f"STEP 9 PASSED: Email inviata in background")
+        
+        logger.info(f"STEP 10: Completando la cancellazione")
+        logger.info(f"User {current_user.id} Guardian subscription cancelled successfully")
+        logger.info(f"=== GUARDIAN CANCELLATION REQUEST COMPLETED ===")
+        return {
+            "status": "cancelling", 
+            "message": "Abbonamento Guardian annullato con successo. Il tuo abbonamento rimarrà attivo fino alla fine del periodo corrente."
+        }
         
     except HTTPException:
         raise
