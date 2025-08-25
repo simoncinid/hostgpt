@@ -17,7 +17,9 @@ import {
   Play,
   Target,
   Heart,
-  Lightbulb
+  Lightbulb,
+  CreditCard,
+  Loader2
 } from 'lucide-react'
 import { useAuthStore } from '@/lib/store'
 import toast from 'react-hot-toast'
@@ -64,6 +66,7 @@ function GuardianContent() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
   const [showCancelModal, setShowCancelModal] = useState(false)
   const [isCancellingSubscription, setIsCancellingSubscription] = useState(false)
+  const [isCheckoutLoading, setIsCheckoutLoading] = useState(false)
   
   // Controlla se c'è un parametro di successo nell'URL
   useEffect(() => {
@@ -131,6 +134,7 @@ function GuardianContent() {
   }
 
   const handleSubscribe = async () => {
+    setIsCheckoutLoading(true)
     try {
       const response = await guardian.createCheckout()
       
@@ -148,6 +152,8 @@ function GuardianContent() {
     } catch (error: any) {
       console.error('Error subscribing to guardian:', error)
       toast.error(error.response?.data?.detail || 'Errore durante la sottoscrizione')
+    } finally {
+      setIsCheckoutLoading(false)
     }
   }
 
@@ -238,413 +244,463 @@ function GuardianContent() {
     <div className="min-h-screen bg-gray-50">
       <Sidebar currentPath="/dashboard/guardian" onLogout={handleLogout} isSidebarCollapsed={isSidebarCollapsed} setIsSidebarCollapsed={setIsSidebarCollapsed} />
       
-      {/* Main Content */}
-      <div className={`transition-all duration-200 ${isSidebarCollapsed ? 'md:ml-16' : 'md:ml-64'} p-4 md:p-8`}>
-        {/* Header */}
-        <div className="mb-8 flex justify-between items-center">
-          <div className="flex items-center space-x-3">
-            <div className="w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center">
-              <Shield className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <h1 className="text-3xl font-bold text-dark">Guardian</h1>
-              <p className="text-gray-600">Proteggi la tua reputazione, massimizza la soddisfazione degli ospiti</p>
+      {/* Main Content Wrapper */}
+      <div className={`transition-all duration-200 ${isSidebarCollapsed ? 'md:ml-16' : 'md:ml-64'}`}>
+        <div className="bg-white shadow-sm">
+          <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center">
+                <Shield className="w-5 h-5 text-white" />
+              </div>
+              <h1 className="text-xl font-semibold">Guardian</h1>
             </div>
           </div>
-          <button
-            onClick={handleLogout}
-            className="hidden md:flex items-center text-gray-600 hover:text-red-600 transition px-3 py-2 rounded-lg hover:bg-gray-100"
-          >
-            <LogOut className="w-5 h-5 mr-2" />
-            ESCI
-          </button>
         </div>
 
-        {/* Se non abbonato, mostra animazione (ma non se è in cancellazione) */}
-        {!guardianStatus?.is_active ? (
-          <div className="max-w-4xl mx-auto">
-                         {/* Animazione esempio */}
-             <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl shadow-lg p-8 mb-8">
-               <div className="bg-white rounded-xl p-6 relative overflow-hidden">
-                                   <div className="text-left min-h-[280px]">
-                                     {/* Fase 1: Chat normale con messaggi che arrivano uno per volta (0-6s) */}
-                   <motion.div
-                     initial={{ opacity: 1 }}
-                     animate={{ opacity: [1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] }}
-                     transition={{ duration: 24, repeat: Infinity, ease: "easeInOut" }}
-                     className="space-y-4"
-                   >
-                                         {/* Messaggio 1 - User (0-1s) */}
-                     <motion.div
-                       initial={{ opacity: 0, y: 20 }}
-                       animate={{ opacity: [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1] }}
-                       transition={{ duration: 24, repeat: Infinity, ease: "easeInOut" }}
-                       className="flex items-start justify-end"
-                     >
-                      <div className="flex items-start max-w-[70%] flex-row-reverse">
-                        <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-gradient-to-r from-rose-500 to-pink-600 text-white ml-3">
-                          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-                          </svg>
+                <div className="p-4 md:p-8">
+          <div className="max-w-4xl mx-auto space-y-6">
+            {/* Header Description */}
+            <div className="text-center mb-8">
+              <p className="text-gray-600">Proteggi la tua reputazione, massimizza la soddisfazione degli ospiti</p>
+            </div>
+
+            {/* Se non abbonato, mostra animazione (ma non se è in cancellazione) */}
+            {!guardianStatus?.is_active ? (
+              <div className="max-w-4xl mx-auto">
+                {/* Animazione esempio */}
+                <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl shadow-lg p-8 mb-8">
+                  <div className="bg-white rounded-xl p-6 relative overflow-hidden">
+                    <div className="text-left min-h-[280px]">
+                      {/* Fase 1: Chat normale con messaggi che arrivano uno per volta (0-6s) */}
+                      <motion.div
+                        initial={{ opacity: 1 }}
+                        animate={{ opacity: [1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] }}
+                        transition={{ duration: 24, repeat: Infinity, ease: "easeInOut" }}
+                        className="space-y-4"
+                      >
+                        {/* Messaggio 1 - User (0-1s) */}
+                        <motion.div
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1] }}
+                          transition={{ duration: 24, repeat: Infinity, ease: "easeInOut" }}
+                          className="flex items-start justify-end"
+                        >
+                          <div className="flex items-start max-w-[70%] flex-row-reverse">
+                            <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-gradient-to-r from-rose-500 to-pink-600 text-white ml-3">
+                              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                              </svg>
+                            </div>
+                            <div className="rounded-2xl px-4 py-3 bg-gradient-to-r from-rose-500 to-pink-600 text-white rounded-br-sm">
+                              <p className="whitespace-pre-wrap">Ciao! Ho un problema con il WiFi, non riesco a connettermi</p>
+                              <p className="text-xs mt-1 text-white/70">14:32</p>
+                            </div>
+                          </div>
+                        </motion.div>
+                        
+                        {/* Messaggio 2 - Assistant (1-2s) */}
+                        <motion.div
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: [0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1] }}
+                          transition={{ duration: 24, repeat: Infinity, ease: "easeInOut" }}
+                          className="flex items-start justify-start"
+                        >
+                          <div className="flex items-start max-w-[70%]">
+                            <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-gray-200 text-gray-600 mr-3">
+                              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                            </div>
+                            <div className="rounded-2xl px-4 py-3 bg-gray-100 text-gray-900 rounded-bl-sm">
+                              <p className="whitespace-pre-wrap">Ciao! Mi dispiace per il problema. Prova a riavviare il router</p>
+                              <p className="text-xs mt-1 text-gray-400">14:33</p>
+                            </div>
+                          </div>
+                        </motion.div>
+                        
+                        {/* Messaggio 3 - User frustrato (2-3s) */}
+                        <motion.div
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: [0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1] }}
+                          transition={{ duration: 24, repeat: Infinity, ease: "easeInOut" }}
+                          className="flex items-start justify-end"
+                        >
+                          <div className="flex items-start max-w-[70%] flex-row-reverse">
+                            <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-gradient-to-r from-rose-500 to-pink-600 text-white ml-3">
+                              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                              </svg>
+                            </div>
+                            <div className="rounded-2xl px-4 py-3 bg-gradient-to-r from-rose-500 to-pink-600 text-white rounded-br-sm">
+                              <p className="whitespace-pre-wrap">Ho già provato, ma non funziona. Sono molto frustrato!</p>
+                              <p className="text-xs mt-1 text-white/70">14:34</p>
+                            </div>
+                          </div>
+                        </motion.div>
+                      </motion.div>
+                      
+                      {/* Fase 2: Alert Critico (7-12s) */}
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ 
+                          opacity: [0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                          scale: [0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 1, 1, 1, 1, 1, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8]
+                        }}
+                        transition={{ duration: 24, repeat: Infinity, ease: "easeInOut" }}
+                        className="absolute inset-0 flex items-center justify-center z-10"
+                      >
+                        <div className="bg-gradient-to-br from-red-500 via-red-600 to-red-700 text-white px-10 py-8 rounded-3xl shadow-2xl flex items-center space-x-6 animate-pulse border-4 border-red-300 transform rotate-1">
+                          <div className="relative">
+                            <div className="absolute inset-0 bg-red-400 rounded-full blur-lg opacity-50 animate-ping"></div>
+                            <AlertTriangle className="w-10 h-10 relative z-10" />
+                          </div>
+                          <div className="text-center">
+                            <p className="text-2xl font-black tracking-wider">🚨 ALERT CRITICO</p>
+                            <p className="text-lg font-semibold mt-1">Ospite insoddisfatto rilevato</p>
+                            <div className="flex space-x-2 mt-3 justify-center">
+                              <div className="w-2 h-2 bg-red-300 rounded-full animate-bounce"></div>
+                              <div className="w-2 h-2 bg-red-300 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+                              <div className="w-2 h-2 bg-red-300 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                            </div>
+                          </div>
                         </div>
-                        <div className="rounded-2xl px-4 py-3 bg-gradient-to-r from-rose-500 to-pink-600 text-white rounded-br-sm">
-                          <p className="whitespace-pre-wrap">Ciao! Ho un problema con il WiFi, non riesco a connettermi</p>
-                          <p className="text-xs mt-1 text-white/70">14:32</p>
+                      </motion.div>
+                      
+                      {/* Fase 3: Telefono Host (13-20s) */}
+                      <motion.div
+                        initial={{ opacity: 0, x: -100, scale: 0.8 }}
+                        animate={{ 
+                          opacity: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0],
+                          x: [-100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, 0, 0, 0, 0, 0, 0, 0, 0, -100, -100, -100],
+                          scale: [0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 1, 1, 1, 1, 1, 1, 1, 1, 0.8, 0.8, 0.8]
+                        }}
+                        transition={{ duration: 24, repeat: Infinity, ease: "easeInOut" }}
+                        className="absolute inset-0 flex items-center justify-center z-10"
+                      >
+                        <div className="bg-gradient-to-br from-white via-green-50 to-emerald-50 rounded-3xl p-8 shadow-2xl max-w-lg border-4 border-green-200 transform -rotate-1">
+                          <div className="flex items-center space-x-6">
+                            <div className="relative">
+                              <div className="absolute inset-0 bg-green-400 rounded-full blur-lg opacity-30 animate-pulse"></div>
+                              <div className="w-20 h-20 bg-gradient-to-br from-green-500 via-green-600 to-emerald-600 rounded-full flex items-center justify-center relative z-10 shadow-lg">
+                                <svg className="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                  <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
+                                </svg>
+                              </div>
+                            </div>
+                            <div className="flex-1">
+                              <div className="flex items-center space-x-2 mb-3">
+                                <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                                <p className="text-xl font-black text-gray-800">📞 Host chiama l'ospite</p>
+                              </div>
+                              <div className="bg-white rounded-2xl p-4 shadow-inner border-l-4 border-green-500">
+                                <p className="text-gray-700 italic">"Mi scusi per il problema! Le mando subito il tecnico e le offro uno sconto del 20% sul soggiorno"</p>
+                              </div>
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    </motion.div>
-                    
-                                         {/* Messaggio 2 - Assistant (1-2s) */}
-                     <motion.div
-                       initial={{ opacity: 0, y: 20 }}
-                       animate={{ opacity: [0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1] }}
-                       transition={{ duration: 24, repeat: Infinity, ease: "easeInOut" }}
-                       className="flex items-start justify-start"
-                     >
-                      <div className="flex items-start max-w-[70%]">
-                        <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-gray-200 text-gray-600 mr-3">
-                          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
+                      </motion.div>
+                      
+                      {/* Fase 4: Problema Risolto (21-24s) */}
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ 
+                          opacity: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0],
+                          scale: [0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 1, 1, 0.8]
+                        }}
+                        transition={{ duration: 24, repeat: Infinity, ease: "easeInOut" }}
+                        className="absolute inset-0 flex items-center justify-center z-10"
+                      >
+                        <div className="bg-gradient-to-br from-green-500 via-emerald-500 to-green-600 text-white px-12 py-10 rounded-3xl shadow-2xl flex items-center space-x-6 border-4 border-green-300 transform rotate-1">
+                          <div className="relative">
+                            <div className="absolute inset-0 bg-green-400 rounded-full blur-lg opacity-50 animate-ping"></div>
+                            <CheckCircle className="w-12 h-12 relative z-10" />
+                          </div>
+                          <div className="text-center">
+                            <p className="text-3xl font-black tracking-wider">🎉 Problema risolto!</p>
+                            <p className="text-xl font-semibold mt-2">Recensione negativa evitata</p>
+                            <div className="flex space-x-3 mt-4 justify-center">
+                              <div className="w-3 h-3 bg-green-300 rounded-full animate-bounce"></div>
+                              <div className="w-3 h-3 bg-green-300 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+                              <div className="w-3 h-3 bg-green-300 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                              <div className="w-3 h-3 bg-green-300 rounded-full animate-bounce" style={{animationDelay: '0.3s'}}></div>
+                            </div>
+                          </div>
                         </div>
-                        <div className="rounded-2xl px-4 py-3 bg-gray-100 text-gray-900 rounded-bl-sm">
-                          <p className="whitespace-pre-wrap">Ciao! Mi dispiace per il problema. Prova a riavviare il router</p>
-                          <p className="text-xs mt-1 text-gray-400">14:33</p>
-                        </div>
-                      </div>
-                    </motion.div>
-                    
-                                         {/* Messaggio 3 - User frustrato (2-3s) */}
-                     <motion.div
-                       initial={{ opacity: 0, y: 20 }}
-                       animate={{ opacity: [0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1] }}
-                       transition={{ duration: 24, repeat: Infinity, ease: "easeInOut" }}
-                       className="flex items-start justify-end"
-                     >
-                      <div className="flex items-start max-w-[70%] flex-row-reverse">
-                        <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-gradient-to-r from-rose-500 to-pink-600 text-white ml-3">
-                          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-                          </svg>
-                        </div>
-                        <div className="rounded-2xl px-4 py-3 bg-gradient-to-r from-rose-500 to-pink-600 text-white rounded-br-sm">
-                          <p className="whitespace-pre-wrap">Ho già provato, ma non funziona. Sono molto frustrato!</p>
-                          <p className="text-xs mt-1 text-white/70">14:34</p>
-                        </div>
-                      </div>
-                    </motion.div>
-                  </motion.div>
-                  
-                                     {/* Fase 2: Alert Critico (7-12s) */}
-                   <motion.div
-                     initial={{ opacity: 0, scale: 0.8 }}
-                     animate={{ 
-                       opacity: [0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                       scale: [0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 1, 1, 1, 1, 1, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8]
-                     }}
-                     transition={{ duration: 24, repeat: Infinity, ease: "easeInOut" }}
-                     className="absolute inset-0 flex items-center justify-center z-10"
-                   >
-                     <div className="bg-gradient-to-br from-red-500 via-red-600 to-red-700 text-white px-10 py-8 rounded-3xl shadow-2xl flex items-center space-x-6 animate-pulse border-4 border-red-300 transform rotate-1">
-                       <div className="relative">
-                         <div className="absolute inset-0 bg-red-400 rounded-full blur-lg opacity-50 animate-ping"></div>
-                         <AlertTriangle className="w-10 h-10 relative z-10" />
-                       </div>
-                       <div className="text-center">
-                         <p className="text-2xl font-black tracking-wider">🚨 ALERT CRITICO</p>
-                         <p className="text-lg font-semibold mt-1">Ospite insoddisfatto rilevato</p>
-                         <div className="flex space-x-2 mt-3 justify-center">
-                           <div className="w-2 h-2 bg-red-300 rounded-full animate-bounce"></div>
-                           <div className="w-2 h-2 bg-red-300 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
-                           <div className="w-2 h-2 bg-red-300 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
-                         </div>
-                       </div>
-                     </div>
-                   </motion.div>
-                  
-                                     {/* Fase 3: Telefono Host (13-20s) */}
-                   <motion.div
-                     initial={{ opacity: 0, x: -100, scale: 0.8 }}
-                     animate={{ 
-                       opacity: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0],
-                       x: [-100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, 0, 0, 0, 0, 0, 0, 0, 0, -100, -100, -100],
-                       scale: [0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 1, 1, 1, 1, 1, 1, 1, 1, 0.8, 0.8, 0.8]
-                     }}
-                     transition={{ duration: 24, repeat: Infinity, ease: "easeInOut" }}
-                     className="absolute inset-0 flex items-center justify-center z-10"
-                   >
-                     <div className="bg-gradient-to-br from-white via-green-50 to-emerald-50 rounded-3xl p-8 shadow-2xl max-w-lg border-4 border-green-200 transform -rotate-1">
-                       <div className="flex items-center space-x-6">
-                         <div className="relative">
-                           <div className="absolute inset-0 bg-green-400 rounded-full blur-lg opacity-30 animate-pulse"></div>
-                           <div className="w-20 h-20 bg-gradient-to-br from-green-500 via-green-600 to-emerald-600 rounded-full flex items-center justify-center relative z-10 shadow-lg">
-                             <svg className="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 20 20">
-                               <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
-                             </svg>
-                           </div>
-                         </div>
-                         <div className="flex-1">
-                           <div className="flex items-center space-x-2 mb-3">
-                             <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-                             <p className="text-xl font-black text-gray-800">📞 Host chiama l'ospite</p>
-                           </div>
-                           <div className="bg-white rounded-2xl p-4 shadow-inner border-l-4 border-green-500">
-                             <p className="text-gray-700 italic">"Mi scusi per il problema! Le mando subito il tecnico e le offro uno sconto del 20% sul soggiorno"</p>
-                           </div>
-                         </div>
-                       </div>
-                     </div>
-                   </motion.div>
-                  
-                                     {/* Fase 4: Problema Risolto (21-24s) */}
-                   <motion.div
-                     initial={{ opacity: 0, scale: 0.8 }}
-                     animate={{ 
-                       opacity: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0],
-                       scale: [0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 1, 1, 0.8]
-                     }}
-                     transition={{ duration: 24, repeat: Infinity, ease: "easeInOut" }}
-                     className="absolute inset-0 flex items-center justify-center z-10"
-                   >
-                     <div className="bg-gradient-to-br from-green-500 via-emerald-500 to-green-600 text-white px-12 py-10 rounded-3xl shadow-2xl flex items-center space-x-6 border-4 border-green-300 transform rotate-1">
-                       <div className="relative">
-                         <div className="absolute inset-0 bg-green-400 rounded-full blur-lg opacity-50 animate-ping"></div>
-                         <CheckCircle className="w-12 h-12 relative z-10" />
-                       </div>
-                       <div className="text-center">
-                         <p className="text-3xl font-black tracking-wider">🎉 Problema risolto!</p>
-                         <p className="text-xl font-semibold mt-2">Recensione negativa evitata</p>
-                         <div className="flex space-x-3 mt-4 justify-center">
-                           <div className="w-3 h-3 bg-green-300 rounded-full animate-bounce"></div>
-                           <div className="w-3 h-3 bg-green-300 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
-                           <div className="w-3 h-3 bg-green-300 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
-                           <div className="w-3 h-3 bg-green-300 rounded-full animate-bounce" style={{animationDelay: '0.3s'}}></div>
-                         </div>
-                       </div>
-                     </div>
-                   </motion.div>
+                      </motion.div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Button */}
+                <div className="text-center">
+                  <button
+                    onClick={handleSubscribe}
+                    disabled={isCheckoutLoading}
+                    className="bg-green-500 hover:bg-green-600 text-white font-bold py-4 px-8 rounded-xl text-lg transition-all duration-200 transform hover:scale-105 shadow-lg flex items-center space-x-2 mx-auto disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isCheckoutLoading ? (
+                      <>
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        <span>Reindirizzamento...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Shield className="w-5 h-5" />
+                        <span>
+                          {guardianStatus?.guardian_subscription_status === 'cancelling' 
+                            ? 'Riattiva Guardian' 
+                            : 'Attiva Guardian - 9€/mese'
+                          }
+                        </span>
+                      </>
+                    )}
+                  </button>
                 </div>
               </div>
-            </div>
+            ) : (
+              /* Se abbonato, mostra dashboard */
+              <div className="space-y-6">
+                {/* Statistiche */}
+                {guardianStats && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="stats-card p-6 border-l-4 border-blue-500"
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <Users className="w-8 h-8 text-blue-500" />
+                        <span className="text-3xl font-bold text-blue-600">{guardianStats.total_guests}</span>
+                      </div>
+                      <p className="text-gray-600">Ospiti Totali</p>
+                    </motion.div>
+                    
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.1 }}
+                      className="stats-card p-6 border-l-4 border-red-500"
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <AlertTriangle className="w-8 h-8 text-red-500" />
+                        <span className="text-3xl font-bold text-red-600">{guardianStats.high_risk_guests}</span>
+                      </div>
+                      <p className="text-gray-600">Ospiti a Rischio</p>
+                    </motion.div>
+                    
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.2 }}
+                      className="stats-card p-6 border-l-4 border-green-500"
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <CheckCircle className="w-8 h-8 text-green-500" />
+                        <span className="text-3xl font-bold text-green-600">{guardianStats.resolved_issues}</span>
+                      </div>
+                      <p className="text-gray-600">Problemi Risolti</p>
+                    </motion.div>
+                    
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.3 }}
+                      className="stats-card p-6 border-l-4 border-yellow-500"
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <Star className="w-8 h-8 text-yellow-500" />
+                        <span className="text-3xl font-bold text-yellow-600">{guardianStats.avg_satisfaction}</span>
+                      </div>
+                      <p className="text-gray-600">Soddisfazione Media</p>
+                    </motion.div>
+                  </div>
+                )}
 
-            {/* Button */}
-            <div className="text-center">
-              <button
-                onClick={handleSubscribe}
-                className="bg-green-500 hover:bg-green-600 text-white font-bold py-4 px-8 rounded-xl text-lg transition-all duration-200 transform hover:scale-105 shadow-lg flex items-center space-x-2 mx-auto"
-              >
-                <Shield className="w-5 h-5" />
-                <span>
-                  {guardianStatus?.guardian_subscription_status === 'cancelling' 
-                    ? 'Riattiva Guardian' 
-                    : 'Attiva Guardian - 9€/mese'
-                  }
-                </span>
-              </button>
-            </div>
-          </div>
-        ) : (
-          /* Se abbonato, mostra dashboard */
-          <div className="space-y-6">
-            {/* Statistiche */}
-            {guardianStats && (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="stats-card p-6 border-l-4 border-blue-500"
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <Users className="w-8 h-8 text-blue-500" />
-                    <span className="text-3xl font-bold text-blue-600">{guardianStats.total_guests}</span>
+                {/* Alert Attivi */}
+                <div className="bg-white rounded-2xl shadow-lg">
+                  <div className="p-6 border-b border-gray-200">
+                    <h2 className="text-xl font-semibold text-dark flex items-center space-x-2">
+                      <AlertTriangle className="w-5 h-5 text-red-500" />
+                      <span>Alert Attivi ({alerts.length})</span>
+                    </h2>
                   </div>
-                  <p className="text-gray-600">Ospiti Totali</p>
-                </motion.div>
-                
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.1 }}
-                  className="stats-card p-6 border-l-4 border-red-500"
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <AlertTriangle className="w-8 h-8 text-red-500" />
-                    <span className="text-3xl font-bold text-red-600">{guardianStats.high_risk_guests}</span>
-                  </div>
-                  <p className="text-gray-600">Ospiti a Rischio</p>
-                </motion.div>
-                
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2 }}
-                  className="stats-card p-6 border-l-4 border-green-500"
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <CheckCircle className="w-8 h-8 text-green-500" />
-                    <span className="text-3xl font-bold text-green-600">{guardianStats.resolved_issues}</span>
-                  </div>
-                  <p className="text-gray-600">Problemi Risolti</p>
-                </motion.div>
-                
-
-              </div>
-            )}
-
-            {/* Alert Attivi */}
-            <div className="bg-white rounded-2xl shadow-lg">
-              <div className="p-6 border-b border-gray-200">
-                <h2 className="text-xl font-semibold text-dark flex items-center space-x-2">
-                  <AlertTriangle className="w-5 h-5 text-red-500" />
-                  <span>Alert Attivi ({alerts.length})</span>
-                </h2>
-              </div>
-             
-              <div className="p-6">
-                {alerts.length === 0 ? (
-                  <div className="text-center py-8">
-                    <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-4" />
-                    <p className="text-gray-600">Nessun alert attivo. Tutto sotto controllo! 🎉</p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {alerts.map((alert) => (
-                      <div key={alert.id} className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-                        <div 
-                          className="p-5 cursor-pointer hover:bg-gray-50 transition-colors"
-                          onClick={() => setExpandedAlert(expandedAlert === alert.id ? null : alert.id)}
-                        >
-                          <div className="flex items-start justify-between">
-                            <div className="flex items-start space-x-4 flex-1">
-                              <div className="flex-shrink-0 mt-1">
-                                {getSeverityIcon(alert.severity)}
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center space-x-3 mb-2">
-                                  <h3 className="font-semibold text-gray-900">Ospite #{alert.guest_id}</h3>
-                                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${getSeverityColor(alert.severity)}`}>
-                                    {alert.severity.toUpperCase()}
-                                  </span>
+                 
+                  <div className="p-6">
+                    {alerts.length === 0 ? (
+                      <div className="text-center py-8">
+                        <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-4" />
+                        <p className="text-gray-600">Nessun alert attivo. Tutto sotto controllo! 🎉</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {alerts.map((alert) => (
+                          <div key={alert.id} className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                            <div 
+                              className="p-5 cursor-pointer hover:bg-gray-50 transition-colors"
+                              onClick={() => setExpandedAlert(expandedAlert === alert.id ? null : alert.id)}
+                            >
+                              <div className="flex items-start justify-between">
+                                <div className="flex items-start space-x-4 flex-1">
+                                  <div className="flex-shrink-0 mt-1">
+                                    {getSeverityIcon(alert.severity)}
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center space-x-3 mb-2">
+                                      <h3 className="font-semibold text-gray-900">Ospite #{alert.guest_id}</h3>
+                                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${getSeverityColor(alert.severity)}`}>
+                                        {alert.severity.toUpperCase()}
+                                      </span>
+                                    </div>
+                                    <p className="text-gray-700 leading-relaxed">{alert.message}</p>
+                                    <div className="mt-2 flex items-center space-x-4 text-xs text-gray-500">
+                                      <span>Creato: {new Date(alert.created_at).toLocaleString('it-IT')}</span>
+                                    </div>
+                                  </div>
                                 </div>
-                                <p className="text-gray-700 leading-relaxed">{alert.message}</p>
-                                <div className="mt-2 flex items-center space-x-4 text-xs text-gray-500">
-                                  <span>Creato: {new Date(alert.created_at).toLocaleString('it-IT')}</span>
+                                <div className="flex-shrink-0 ml-4">
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      handleResolveAlert(alert.id)
+                                    }}
+                                    className="px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-full text-sm font-medium hover:from-green-600 hover:to-green-700 transition-all duration-200 shadow-sm hover:shadow-md transform hover:scale-105"
+                                  >
+                                    Risolvi
+                                  </button>
                                 </div>
                               </div>
                             </div>
-                            <div className="flex-shrink-0 ml-4">
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  handleResolveAlert(alert.id)
-                                }}
-                                className="px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-full text-sm font-medium hover:from-green-600 hover:to-green-700 transition-all duration-200 shadow-sm hover:shadow-md transform hover:scale-105"
+                            
+                            {expandedAlert === alert.id && (
+                              <div className="border-t bg-gradient-to-br from-gray-50 to-gray-100 p-6">
+                                <h4 className="font-semibold text-gray-800 mb-4 flex items-center">
+                                  <MessageSquare className="w-4 h-4 mr-2" />
+                                  Conversazione Completa
+                                </h4>
+                                <div className="space-y-4 max-h-80 overflow-y-auto bg-white rounded-lg p-4 border">
+                                  {alert.conversation.map((msg, index) => (
+                                    <div key={index} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                                      <div className={`max-w-xs p-4 rounded-2xl shadow-sm ${
+                                        msg.role === 'user' 
+                                          ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white' 
+                                          : 'bg-gray-100 text-gray-800 border border-gray-200'
+                                      }`}>
+                                        <p className="text-sm leading-relaxed">{msg.content}</p>
+                                        <p className={`text-xs mt-2 ${
+                                          msg.role === 'user' ? 'text-blue-100' : 'text-gray-500'
+                                        }`}>
+                                          {new Date(msg.timestamp).toLocaleTimeString('it-IT')}
+                                        </p>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                                <div className="mt-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200">
+                                  <div className="flex items-start space-x-3">
+                                    <Lightbulb className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                                    <div>
+                                      <p className="text-sm font-semibold text-blue-800 mb-1">Suggerimento per la Risoluzione:</p>
+                                      <p className="text-sm text-blue-700 leading-relaxed">{alert.suggested_action}</p>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Gestione Abbonamento - Stile come in settings */}
+                <div className="bg-white rounded-2xl shadow p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-lg font-semibold">Abbonamento Guardian</h2>
+                    <CreditCard className="w-5 h-5 text-gray-600" />
+                  </div>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium">Stato: <span className={
+                          guardianStatus?.guardian_subscription_status === 'active' ? 'text-green-600' : 
+                          guardianStatus?.guardian_subscription_status === 'cancelling' ? 'text-orange-600' : 
+                          'text-red-600'
+                        }>{guardianStatus?.guardian_subscription_status || 'inactive'}</span></p>
+                        {guardianStatus?.guardian_subscription_end_date && (
+                          <p className="text-sm text-gray-500">
+                            {guardianStatus?.guardian_subscription_status === 'cancelling' ? 'Fine abbonamento: ' : 'Prossimo rinnovo: '}
+                            {new Date(guardianStatus.guardian_subscription_end_date).toLocaleDateString('it-IT')}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    
+                    {guardianStatus?.guardian_subscription_status === 'active' && (
+                      <div className="border-t pt-4">
+                        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                          <div className="flex items-start gap-3">
+                            <AlertTriangle className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
+                            <div className="flex-1">
+                              <h3 className="font-medium text-red-800 mb-1">Annulla Abbonamento Guardian</h3>
+                              <p className="text-sm text-red-700 mb-3">
+                                Annullando l'abbonamento il servizio verrà disattivato, ma tutti i tuoi dati rimarranno nel database.
+                              </p>
+                              <button 
+                                onClick={() => setShowCancelModal(true)} 
+                                disabled={isCancellingSubscription}
+                                className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center"
                               >
-                                Risolvi
+                                {isCancellingSubscription ? (
+                                  <>
+                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                    Annullamento...
+                                  </>
+                                ) : (
+                                  'Annulla Abbonamento'
+                                )}
                               </button>
                             </div>
                           </div>
                         </div>
-                        
-                        {expandedAlert === alert.id && (
-                          <div className="border-t bg-gradient-to-br from-gray-50 to-gray-100 p-6">
-                            <h4 className="font-semibold text-gray-800 mb-4 flex items-center">
-                              <MessageSquare className="w-4 h-4 mr-2" />
-                              Conversazione Completa
-                            </h4>
-                            <div className="space-y-4 max-h-80 overflow-y-auto bg-white rounded-lg p-4 border">
-                              {alert.conversation.map((msg, index) => (
-                                <div key={index} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                                  <div className={`max-w-xs p-4 rounded-2xl shadow-sm ${
-                                    msg.role === 'user' 
-                                      ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white' 
-                                      : 'bg-gray-100 text-gray-800 border border-gray-200'
-                                  }`}>
-                                    <p className="text-sm leading-relaxed">{msg.content}</p>
-                                    <p className={`text-xs mt-2 ${
-                                      msg.role === 'user' ? 'text-blue-100' : 'text-gray-500'
-                                    }`}>
-                                      {new Date(msg.timestamp).toLocaleTimeString('it-IT')}
-                                    </p>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                            <div className="mt-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200">
-                              <div className="flex items-start space-x-3">
-                                <Lightbulb className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
-                                <div>
-                                  <p className="text-sm font-semibold text-blue-800 mb-1">Suggerimento per la Risoluzione:</p>
-                                  <p className="text-sm text-blue-700 leading-relaxed">{alert.suggested_action}</p>
-                                </div>
-                              </div>
+                      </div>
+                    )}
+                    
+                    {guardianStatus?.guardian_subscription_status === 'cancelling' && (
+                      <div className="border-t pt-4">
+                        <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                          <div className="flex items-start gap-3">
+                            <AlertTriangle className="w-5 h-5 text-orange-600 mt-0.5 flex-shrink-0" />
+                            <div className="flex-1">
+                              <h3 className="font-medium text-orange-800 mb-1">Abbonamento Guardian in Fase di Annullamento</h3>
+                              <p className="text-sm text-orange-700 mb-3">
+                                Il tuo abbonamento è in fase di annullamento e rimarrà attivo fino alla fine del periodo corrente. Puoi riattivarlo in qualsiasi momento.
+                              </p>
+                              <button 
+                                onClick={handleReactivateGuardian} 
+                                disabled={isCheckoutLoading}
+                                className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center"
+                              >
+                                {isCheckoutLoading ? (
+                                  <>
+                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                    Riattivazione...
+                                  </>
+                                ) : (
+                                  'Riattiva Abbonamento (Gratis)'
+                                )}
+                              </button>
                             </div>
                           </div>
-                        )}
+                        </div>
                       </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Gestione Abbonamento */}
-            <div className="bg-white rounded-2xl shadow-lg">
-              <div className="p-6 border-b border-gray-200">
-                <h2 className="text-xl font-semibold text-dark flex items-center space-x-2">
-                  <Shield className="w-5 h-5 text-green-500" />
-                  <span>Gestione Abbonamento Guardian</span>
-                </h2>
-              </div>
-              <div className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-600">Stato abbonamento:</p>
-                    <p className={`font-medium ${
-                      guardianStatus?.guardian_subscription_status === 'active' ? 'text-green-600' : 
-                      guardianStatus?.guardian_subscription_status === 'cancelling' ? 'text-orange-600' : 
-                      'text-red-600'
-                    }`}>
-                      {guardianStatus?.guardian_subscription_status === 'active' ? 'Attivo' : 
-                       guardianStatus?.guardian_subscription_status === 'cancelling' ? 'In Annullamento' : 
-                       'Inattivo'}
-                    </p>
-                    {guardianStatus?.guardian_subscription_end_date && (
-                      <p className="text-xs text-gray-500 mt-1">
-                        Scade il: {new Date(guardianStatus.guardian_subscription_end_date).toLocaleDateString('it-IT')}
-                      </p>
-                    )}
-                    {guardianStatus?.guardian_subscription_status === 'cancelling' && (
-                      <div className="mt-3 p-3 bg-orange-50 border border-orange-200 rounded-lg">
-                        <p className="text-sm text-orange-700">
-                          ⚠️ Il tuo abbonamento è in fase di annullamento. I servizi Guardian rimangono attivi fino alla fine del periodo corrente.
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex space-x-2">
-                    {guardianStatus?.guardian_subscription_status === 'active' && (
-                      <button
-                        onClick={() => setShowCancelModal(true)}
-                        className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
-                      >
-                        Annulla Abbonamento
-                      </button>
-                    )}
-                    {guardianStatus?.guardian_subscription_status === 'cancelling' && (
-                      <button
-                        onClick={handleReactivateGuardian}
-                        className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
-                      >
-                        Riattiva Abbonamento
-                      </button>
                     )}
                   </div>
                 </div>
               </div>
-            </div>
+            )}
           </div>
-        )}
+        </div>
       </div>
 
       {/* Modal di conferma annullamento Guardian */}

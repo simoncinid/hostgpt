@@ -106,15 +106,18 @@ export default function Sidebar({ currentPath, onLogout, isSidebarCollapsed: ext
                    user?.subscription_status === 'cancelling' ? 'HostGPT In Annullamento' : 
                    'HostGPT Annullato'}
                 </p>
-                <p className={`text-xs mt-1 ${
-                  user?.guardian_subscription_status === 'active' ? 'text-green-600' : 
-                  user?.guardian_subscription_status === 'cancelling' ? 'text-orange-600' : 
-                  'text-gray-500'
-                }`}>
+                <Link 
+                  href="/dashboard/guardian"
+                  className={`text-xs mt-1 cursor-pointer hover:underline transition-colors ${
+                    user?.guardian_subscription_status === 'active' ? 'text-green-600' : 
+                    user?.guardian_subscription_status === 'cancelling' ? 'text-orange-600' : 
+                    'text-red-600'
+                  }`}
+                >
                   {user?.guardian_subscription_status === 'active' ? 'Guardian Attivo' : 
                    user?.guardian_subscription_status === 'cancelling' ? 'Guardian In Annullamento' : 
                    'Guardian Inattivo'}
-                </p>
+                </Link>
               </>
             )}
           </div>
