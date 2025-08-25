@@ -11,7 +11,10 @@ import {
   Loader2,
   MessageSquare,
   Info,
-  X
+  X,
+  RefreshCw,
+  Moon,
+  Sun
 } from 'lucide-react'
 import { chat } from '@/lib/api'
 import toast from 'react-hot-toast'
@@ -42,9 +45,102 @@ export default function ChatWidgetPage() {
   const [showWelcome, setShowWelcome] = useState(true)
   const [showInfo, setShowInfo] = useState(false)
   const [subscriptionCancelled, setSubscriptionCancelled] = useState(false)
+  const [language, setLanguage] = useState<'IT' | 'ENG'>('IT')
+  const [isDarkMode, setIsDarkMode] = useState(false)
   
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+
+  // Testi multilingua
+  const texts = {
+    IT: {
+      assistant: 'Assistente Virtuale',
+      suggestedMessages: [
+        "Voglio contattare l'host. Come faccio?",
+        "Vorrei visitare la zona, che attrazioni ci sono e come posso raggiungerle?",
+        "Quali sono gli orari di check-in e check-out?"
+      ],
+      placeholder: "Scrivi un messaggio...",
+      welcome: "Benvenuto!",
+      welcomeSubtitle: "Sono qui per aiutarti con qualsiasi domanda sulla casa e sulla zona. Come posso esserti utile?",
+      startChat: "Inizia la Chat",
+      namePlaceholder: "Il tuo nome (opzionale)",
+      writing: "Sto scrivendo...",
+      loading: "Caricamento chatbot...",
+      error: "Errore nell'invio del messaggio",
+      notFound: "Chatbot non trovato",
+      serviceUnavailable: "Servizio Non Disponibile",
+      serviceUnavailableDesc: "L'host di questa struttura non utilizza più il servizio HostGPT. Il chatbot non è più disponibile.",
+      contactHost: "Per assistenza, contatta direttamente l'host della struttura.",
+      howCanIHelp: "Come posso aiutarti:",
+      helpItems: [
+        "Informazioni sulla casa e i servizi",
+        "Orari di check-in e check-out", 
+        "Consigli su ristoranti e attrazioni",
+        "Informazioni sui trasporti",
+        "Contatti di emergenza"
+      ]
+    },
+    ENG: {
+      assistant: 'Virtual Assistant',
+      suggestedMessages: [
+        "I want to contact the host. How can I do it?",
+        "I'd like to visit the area, what attractions are there and how can I reach them?",
+        "What are the check-in and check-out times?"
+      ],
+      placeholder: "Write a message...",
+      welcome: "Welcome!",
+      welcomeSubtitle: "I'm here to help you with any questions about the house and the area. How can I be useful?",
+      startChat: "Start Chat",
+      namePlaceholder: "Your name (optional)",
+      writing: "I'm writing...",
+      loading: "Loading chatbot...",
+      error: "Error sending message",
+      notFound: "Chatbot not found",
+      serviceUnavailable: "Service Unavailable",
+      serviceUnavailableDesc: "The host of this property no longer uses the HostGPT service. The chatbot is no longer available.",
+      contactHost: "For assistance, contact the property host directly.",
+      howCanIHelp: "How can I help you:",
+      helpItems: [
+        "Information about the house and services",
+        "Check-in and check-out times",
+        "Restaurant and attraction recommendations", 
+        "Transportation information",
+        "Emergency contacts"
+      ]
+    }
+  }
+
+  const currentTexts = texts[language]
+
+  const handleSuggestedMessage = (message: string) => {
+    setInputMessage(message)
+    inputRef.current?.focus()
+  }
+
+  const toggleLanguage = () => {
+    setLanguage(language === 'IT' ? 'ENG' : 'IT')
+  }
+
+  const toggleDarkMode = () => {
+    setIsDarkMode(!isDarkMode)
+  }
+
+  const handleNewConversation = () => {
+    setMessages([])
+    setThreadId(null)
+    setInputMessage('')
+    setShowWelcome(true)
+    // Ricarica il messaggio di benvenuto
+    if (chatInfo?.welcome_message) {
+      setMessages([{
+        id: 'welcome',
+        role: 'assistant',
+        content: chatInfo.welcome_message,
+        timestamp: new Date()
+      }])
+    }
+  }
 
   useEffect(() => {
     loadChatInfo()
@@ -72,7 +168,7 @@ export default function ChatWidgetPage() {
       if (error.response?.status === 403) {
         setSubscriptionCancelled(true)
       } else {
-        toast.error('Chatbot non trovato')
+        toast.error(currentTexts.notFound)
       }
     }
   }
@@ -120,7 +216,7 @@ export default function ChatWidgetPage() {
       if (error.response?.status === 403) {
         setSubscriptionCancelled(true)
       } else {
-        toast.error('Errore nell\'invio del messaggio')
+        toast.error(currentTexts.error)
       }
     } finally {
       setIsLoading(false)
@@ -137,7 +233,7 @@ export default function ChatWidgetPage() {
       <div className="h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-12 h-12 text-primary animate-spin mx-auto mb-4" />
-          <p className="text-gray-600">Caricamento chatbot...</p>
+          <p className="text-gray-600">{currentTexts.loading}</p>
         </div>
       </div>
     )
@@ -151,14 +247,13 @@ export default function ChatWidgetPage() {
             <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
               <X className="w-8 h-8 text-red-600" />
             </div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-4">Servizio Non Disponibile</h1>
+            <h1 className="text-2xl font-bold text-gray-900 mb-4">{currentTexts.serviceUnavailable}</h1>
             <p className="text-gray-600 mb-6">
-              L'host di questa struttura non utilizza più il servizio HostGPT. 
-              Il chatbot non è più disponibile.
+              {currentTexts.serviceUnavailableDesc}
             </p>
             <div className="bg-gray-50 rounded-lg p-4">
               <p className="text-sm text-gray-500">
-                Per assistenza, contatta direttamente l'host della struttura.
+                {currentTexts.contactHost}
               </p>
             </div>
           </div>
@@ -168,9 +263,13 @@ export default function ChatWidgetPage() {
   }
 
   return (
-    <div className="h-screen bg-gradient-to-br from-primary/5 to-accent/5 flex flex-col overflow-hidden">
+    <div className={`h-screen flex flex-col overflow-hidden transition-colors duration-300 ${
+      isDarkMode 
+        ? 'bg-gradient-to-br from-gray-900 to-gray-800' 
+        : 'bg-gradient-to-br from-primary/5 to-accent/5'
+    }`}>
       {/* Header - FISSO */}
-      <div className="bg-white shadow-sm flex-shrink-0">
+      <div className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'} shadow-sm flex-shrink-0 border-b transition-colors duration-300`}>
         <div className="max-w-4xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
@@ -179,15 +278,55 @@ export default function ChatWidgetPage() {
               </div>
               <div>
                 <h1 className="font-semibold text-lg">{chatInfo?.name}</h1>
-                <p className="text-sm text-gray-500">Assistente Virtuale</p>
+                <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-500'} transition-colors duration-300`}>{currentTexts.assistant}</p>
               </div>
             </div>
-            <button
-              onClick={() => setShowInfo(!showInfo)}
-              className="p-2 hover:bg-gray-100 rounded-lg transition"
-            >
-              <Info className="w-5 h-5 text-gray-600" />
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleNewConversation}
+                className={`p-2 rounded-lg transition-colors duration-200 group ${
+                  isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
+                }`}
+                title="Nuova conversazione"
+              >
+                <RefreshCw className={`w-5 h-5 transition-colors duration-200 ${
+                  isDarkMode ? 'text-gray-300 group-hover:text-primary' : 'text-gray-600 group-hover:text-primary'
+                }`} />
+              </button>
+              <button
+                onClick={toggleLanguage}
+                className="px-3 py-1.5 bg-gradient-to-r from-primary/10 to-accent/10 text-primary border border-primary/20 rounded-lg text-sm font-medium hover:from-primary/20 hover:to-accent/20 hover:border-primary/40 transition-all duration-200"
+              >
+                {language}
+              </button>
+              <button
+                onClick={toggleDarkMode}
+                className={`p-2 rounded-lg transition-colors duration-200 group ${
+                  isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
+                }`}
+                title={isDarkMode ? "Passa alla modalità chiara" : "Passa alla modalità scura"}
+              >
+                {isDarkMode ? (
+                  <Sun className={`w-5 h-5 transition-colors duration-200 ${
+                    isDarkMode ? 'text-gray-300 group-hover:text-primary' : 'text-gray-600 group-hover:text-primary'
+                  }`} />
+                ) : (
+                  <Moon className={`w-5 h-5 transition-colors duration-200 ${
+                    isDarkMode ? 'text-gray-300 group-hover:text-primary' : 'text-gray-600 group-hover:text-primary'
+                  }`} />
+                )}
+              </button>
+              <button
+                onClick={() => setShowInfo(!showInfo)}
+                className={`p-2 rounded-lg transition ${
+                  isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
+                }`}
+              >
+                <Info className={`w-5 h-5 transition-colors duration-300 ${
+                  isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                }`} />
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -203,14 +342,12 @@ export default function ChatWidgetPage() {
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-sm text-blue-800 mb-2">
-                  <strong>Come posso aiutarti:</strong>
+                  <strong>{currentTexts.howCanIHelp}</strong>
                 </p>
                 <ul className="text-sm text-blue-700 space-y-1">
-                  <li>• Informazioni sulla casa e i servizi</li>
-                  <li>• Orari di check-in e check-out</li>
-                  <li>• Consigli su ristoranti e attrazioni</li>
-                  <li>• Informazioni sui trasporti</li>
-                  <li>• Contatti di emergenza</li>
+                  {currentTexts.helpItems.map((item, index) => (
+                    <li key={index}>• {item}</li>
+                  ))}
                 </ul>
               </div>
               <button
@@ -226,7 +363,7 @@ export default function ChatWidgetPage() {
 
       {/* Main Chat Area - FISSA */}
       <div className="flex-1 flex flex-col max-w-4xl mx-auto w-full px-4 py-4 md:py-6">
-        <div className="bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col h-full">
+        <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl shadow-xl overflow-hidden flex flex-col h-full transition-colors duration-300`}>
           {/* Welcome Screen */}
           {showWelcome && messages.length <= 1 && (
             <motion.div
@@ -237,25 +374,28 @@ export default function ChatWidgetPage() {
               <div className="w-20 h-20 bg-rose-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
                 <MessageSquare className="w-10 h-10 text-rose-500" />
               </div>
-              <h2 className="text-2xl font-bold mb-2">Benvenuto!</h2>
-              <p className="text-gray-600 mb-6 max-w-md mx-auto">
-                Sono qui per aiutarti con qualsiasi domanda sulla casa e sulla zona. 
-                Come posso esserti utile?
+              <h2 className={`text-2xl font-bold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'} transition-colors duration-300`}>{currentTexts.welcome}</h2>
+              <p className={`mb-6 max-w-md mx-auto transition-colors duration-300 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                {currentTexts.welcomeSubtitle}
               </p>
               <div className="mb-6">
                 <input
                   type="text"
                   value={guestName}
                   onChange={(e) => setGuestName(e.target.value)}
-                  placeholder="Il tuo nome (opzionale)"
-                  className="input-field max-w-xs mx-auto"
+                  placeholder={currentTexts.namePlaceholder}
+                  className={`max-w-xs mx-auto px-4 py-3 rounded-lg border transition-all duration-200 ${
+                    isDarkMode 
+                      ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-primary focus:ring-2 focus:ring-primary/20' 
+                      : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-primary focus:ring-2 focus:ring-primary/20'
+                  } outline-none`}
                 />
               </div>
               <button
                 onClick={handleStartChat}
-                className="px-6 py-3 bg-gradient-to-r from-rose-500 to-pink-600 text-white rounded-2xl font-semibold hover:from-rose-600 hover:to-pink-700 transition-all duration-200"
+                className="px-6 py-3 bg-gradient-to-r from-primary to-secondary text-white rounded-2xl font-semibold hover:from-secondary hover:to-accent transition-all duration-200"
               >
-                Inizia la Chat
+                {currentTexts.startChat}
               </button>
             </motion.div>
           )}
@@ -313,7 +453,7 @@ export default function ChatWidgetPage() {
                   >
                     <div className="flex items-center bg-gray-100 rounded-2xl rounded-bl-sm px-4 py-3">
                       <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                      <span className="text-gray-600">Sto scrivendo...</span>
+                      <span className="text-gray-600">{currentTexts.writing}</span>
                     </div>
                   </motion.div>
                 )}
@@ -321,22 +461,48 @@ export default function ChatWidgetPage() {
                 <div ref={messagesEndRef} />
               </div>
 
+              {/* Messaggi Suggeriti */}
+              <div className={`border-t p-3 md:p-4 transition-colors duration-300 ${
+                isDarkMode ? 'border-gray-700' : 'border-gray-100'
+              }`}>
+                <div className="flex flex-wrap gap-2">
+                  {currentTexts.suggestedMessages.map((message: string, index: number) => (
+                    <motion.button
+                      key={index}
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: index * 0.1 }}
+                      onClick={() => handleSuggestedMessage(message)}
+                      className="px-4 py-2 bg-gradient-to-r from-primary/10 to-accent/10 text-primary border border-primary/20 rounded-full text-sm font-medium hover:from-primary/20 hover:to-accent/20 hover:border-primary/40 transition-all duration-200 hover:scale-105 active:scale-95"
+                    >
+                      {message}
+                    </motion.button>
+                  ))}
+                </div>
+              </div>
+
               {/* Input Area - FISSA */}
-              <div className="border-t p-3 md:p-4 pb-6 md:pb-4 safe-bottom flex-shrink-0">
+              <div className={`border-t p-3 md:p-4 pb-6 md:pb-4 safe-bottom flex-shrink-0 transition-colors duration-300 ${
+                isDarkMode ? 'border-gray-700' : 'border-gray-200'
+              }`}>
                 <form onSubmit={handleSendMessage} className="flex items-center gap-2 md:gap-3">
                   <input
                     ref={inputRef}
                     type="text"
                     value={inputMessage}
                     onChange={(e) => setInputMessage(e.target.value)}
-                    placeholder="Scrivi un messaggio..."
+                    placeholder={currentTexts.placeholder}
                     disabled={isLoading}
-                    className="flex-1 px-4 py-3 rounded-full border border-gray-300 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20 outline-none transition"
+                    className={`flex-1 px-4 py-3 rounded-full border outline-none transition ${
+                      isDarkMode 
+                        ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-primary focus:ring-2 focus:ring-primary/20' 
+                        : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-primary focus:ring-2 focus:ring-primary/20'
+                    }`}
                   />
                   <button
                     type="submit"
                     disabled={isLoading || !inputMessage.trim()}
-                    className="w-11 h-11 md:w-12 md:h-12 bg-gradient-to-r from-rose-500 to-pink-600 text-white rounded-full flex items-center justify-center hover:from-rose-600 hover:to-pink-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-11 h-11 md:w-12 md:h-12 bg-gradient-to-r from-primary to-secondary text-white rounded-full flex items-center justify-center hover:from-secondary hover:to-accent transition disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <Send className="w-5 h-5" />
                   </button>
@@ -348,7 +514,7 @@ export default function ChatWidgetPage() {
 
         {/* Footer - FISSO */}
         <div className="text-center mt-6 flex-shrink-0">
-          <p className="text-sm text-gray-500">
+          <p className={`text-sm transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
             Powered by{' '}
             <a
               href="https://hostgpt.com"
