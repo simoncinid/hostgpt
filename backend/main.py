@@ -2455,9 +2455,39 @@ async def cancel_guardian_subscription(
                 logger.info(f"Guardian Stripe subscription {current_user.guardian_stripe_subscription_id} marked for cancellation")
                 
                 # SOLO DOPO aver ricevuto conferma da Stripe, aggiorna il database
+                logger.info(f"BEFORE DB UPDATE: User {current_user.id} status = {current_user.guardian_subscription_status}")
                 current_user.guardian_subscription_status = 'cancelling'
                 current_user.guardian_subscription_end_date = datetime.utcfromtimestamp(stripe_subscription.current_period_end)
+                logger.info(f"AFTER DB UPDATE: User {current_user.id} status = {current_user.guardian_subscription_status}")
                 db.commit()
+                logger.info(f"AFTER COMMIT: User {current_user.id} Guardian subscription status updated to 'cancelling' in database")
+                
+                # Verifica che l'aggiornamento sia stato salvato
+                db.refresh(current_user)
+                logger.info(f"AFTER REFRESH: User {current_user.id} status = {current_user.guardian_subscription_status}")
+                
+                # Invia email di annullamento abbonamento Guardian
+                end_date = current_user.guardian_subscription_end_date.strftime("%d/%m/%Y") if current_user.guardian_subscription_end_date else "fine del periodo corrente"
+                email_body = f"""
+                <h2>Abbonamento Guardian Annullato</h2>
+                <p>Ciao {current_user.full_name},</p>
+                <p>Il tuo abbonamento HostGPT Guardian è stato annullato con successo.</p>
+                <p>Il servizio rimarrà attivo fino al {end_date}.</p>
+                <p>Grazie per aver utilizzato HostGPT Guardian!</p>
+                """
+                background_tasks.add_task(
+                    send_email, 
+                    current_user.email, 
+                    "😔 Abbonamento Guardian Annullato", 
+                    email_body
+                )
+                
+                logger.info(f"User {current_user.id} Guardian subscription cancelled successfully")
+                logger.info(f"=== GUARDIAN CANCELLATION REQUEST COMPLETED ===")
+                return {
+                    "status": "cancelling", 
+                    "message": "Abbonamento Guardian annullato con successo. Il tuo abbonamento rimarrà attivo fino alla fine del periodo corrente."
+                }
                 
             except stripe.error.StripeError as e:
                 logger.error(f"Stripe error cancelling Guardian subscription: {e}")
@@ -2480,29 +2510,6 @@ async def cancel_guardian_subscription(
                 "status": "cancelled", 
                 "message": "Abbonamento Guardian annullato con successo."
             }
-        
-        # Invia email di annullamento abbonamento Guardian
-        end_date = current_user.guardian_subscription_end_date.strftime("%d/%m/%Y") if current_user.guardian_subscription_end_date else "fine del periodo corrente"
-        email_body = f"""
-        <h2>Abbonamento Guardian Annullato</h2>
-        <p>Ciao {current_user.full_name},</p>
-        <p>Il tuo abbonamento HostGPT Guardian è stato annullato con successo.</p>
-        <p>Il servizio rimarrà attivo fino al {end_date}.</p>
-        <p>Grazie per aver utilizzato HostGPT Guardian!</p>
-        """
-        background_tasks.add_task(
-            send_email, 
-            current_user.email, 
-            "😔 Abbonamento Guardian Annullato", 
-            email_body
-        )
-        
-        logger.info(f"User {current_user.id} Guardian subscription cancelled successfully")
-        logger.info(f"=== GUARDIAN CANCELLATION REQUEST COMPLETED ===")
-        return {
-            "status": "cancelling", 
-            "message": "Abbonamento Guardian annullato con successo. Il tuo abbonamento rimarrà attivo fino alla fine del periodo corrente."
-        }
         
     except HTTPException:
         raise
