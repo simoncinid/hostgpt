@@ -62,6 +62,8 @@ function GuardianContent() {
   const [expandedAlert, setExpandedAlert] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
+  const [showCancelModal, setShowCancelModal] = useState(false)
+  const [isCancellingSubscription, setIsCancellingSubscription] = useState(false)
   
   // Controlla se c'è un parametro di successo nell'URL
   useEffect(() => {
@@ -169,16 +171,18 @@ function GuardianContent() {
   }
 
   const handleCancelGuardian = async () => {
-    if (confirm('Sei sicuro di voler annullare l\'abbonamento Guardian? Il servizio rimarrà attivo fino alla fine del periodo corrente.')) {
-      try {
-        const response = await guardian.cancel()
-        toast.success(response.data.message)
-        // Ricarica lo stato
-        await fetchGuardianStatus()
-      } catch (error: any) {
-        console.error('Error cancelling guardian subscription:', error)
-        toast.error(error.response?.data?.detail || 'Errore durante la cancellazione')
-      }
+    setShowCancelModal(false)
+    setIsCancellingSubscription(true)
+    try {
+      const response = await guardian.cancel()
+      toast.success(response.data.message)
+      // Ricarica lo stato
+      await fetchGuardianStatus()
+    } catch (error: any) {
+      console.error('Error cancelling guardian subscription:', error)
+      toast.error(error.response?.data?.detail || 'Errore durante la cancellazione')
+    } finally {
+      setIsCancellingSubscription(false)
     }
   }
 
@@ -257,7 +261,7 @@ function GuardianContent() {
         </div>
 
         {/* Se non abbonato, mostra animazione (ma non se è in cancellazione) */}
-        {!guardianStatus?.is_active && guardianStatus?.guardian_subscription_status !== 'cancelling' ? (
+        {!guardianStatus?.is_active ? (
           <div className="max-w-4xl mx-auto">
                          {/* Animazione esempio */}
              <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl shadow-lg p-8 mb-8">
@@ -439,32 +443,6 @@ function GuardianContent() {
               </button>
             </div>
           </div>
-        ) : guardianStatus?.guardian_subscription_status === 'cancelling' ? (
-          /* Se in cancellazione, mostra stato speciale */
-          <div className="max-w-4xl mx-auto">
-            <div className="bg-gradient-to-r from-orange-50 to-amber-50 rounded-2xl shadow-lg p-8 mb-8">
-              <div className="text-center">
-                <div className="w-20 h-20 bg-orange-500 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <AlertTriangle className="w-10 h-10 text-white" />
-                </div>
-                <h2 className="text-2xl font-bold text-orange-800 mb-4">Abbonamento in Annullamento</h2>
-                <p className="text-orange-700 mb-6">
-                  Il tuo abbonamento Guardian è in fase di annullamento. Il servizio rimarrà attivo fino al{' '}
-                  {guardianStatus?.guardian_subscription_end_date 
-                    ? new Date(guardianStatus.guardian_subscription_end_date).toLocaleDateString('it-IT')
-                    : 'fine del periodo corrente'
-                  }.
-                </p>
-                <button
-                  onClick={handleReactivateGuardian}
-                  className="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-xl transition-all duration-200 transform hover:scale-105 shadow-lg flex items-center space-x-2 mx-auto"
-                >
-                  <Play className="w-5 h-5" />
-                  <span>Riattiva Abbonamento</span>
-                </button>
-              </div>
-            </div>
-          </div>
         ) : (
           /* Se abbonato, mostra dashboard */
           <div className="space-y-6">
@@ -636,11 +614,18 @@ function GuardianContent() {
                         Scade il: {new Date(guardianStatus.guardian_subscription_end_date).toLocaleDateString('it-IT')}
                       </p>
                     )}
+                    {guardianStatus?.guardian_subscription_status === 'cancelling' && (
+                      <div className="mt-3 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                        <p className="text-sm text-orange-700">
+                          ⚠️ Il tuo abbonamento è in fase di annullamento. I servizi Guardian rimangono attivi fino alla fine del periodo corrente.
+                        </p>
+                      </div>
+                    )}
                   </div>
                   <div className="flex space-x-2">
                     {guardianStatus?.guardian_subscription_status === 'active' && (
                       <button
-                        onClick={handleCancelGuardian}
+                        onClick={() => setShowCancelModal(true)}
                         className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
                       >
                         Annulla Abbonamento
@@ -661,6 +646,47 @@ function GuardianContent() {
           </div>
         )}
       </div>
+
+      {/* Modal di conferma annullamento Guardian */}
+      {showCancelModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
+            <div className="flex items-start gap-3 mb-4">
+              <AlertTriangle className="w-6 h-6 text-red-600 mt-0.5 flex-shrink-0" />
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-1">Conferma Annullamento Guardian</h3>
+                <p className="text-sm text-gray-600">
+                  Sei sicuro di voler annullare l'abbonamento Guardian? Il servizio rimarrà attivo fino alla fine del periodo corrente, ma non riceverai più alert per le conversazioni problematiche.
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setShowCancelModal(false)}
+                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                disabled={isCancellingSubscription}
+              >
+                Annulla
+              </button>
+              <button
+                onClick={handleCancelGuardian}
+                disabled={isCancellingSubscription}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center"
+              >
+                {isCancellingSubscription ? (
+                  <>
+                    <div className="loading-spinner w-4 h-4 mr-2"></div>
+                    Annullamento...
+                  </>
+                ) : (
+                  'Conferma Annullamento'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

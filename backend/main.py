@@ -1135,9 +1135,17 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
                 logger.info(f"WEBHOOK UNIFICATO: User {user_guardian.id} Guardian subscription status updated to: {subscription['status']}")
             
             if user_hostgpt:
+                logger.info(f"WEBHOOK HOSTGPT: User {user_hostgpt.id} HostGPT subscription updated - status: {subscription['status']}, cancel_at_period_end: {subscription.get('cancel_at_period_end', False)}")
                 # Aggiorna lo stato dell'abbonamento HostGPT nel database
                 if subscription['status'] == 'active':
-                    user_hostgpt.subscription_status = 'active'
+                    # Se l'abbonamento è attivo ma ha cancel_at_period_end=True, è in fase di cancellazione
+                    if subscription.get('cancel_at_period_end', False):
+                        user_hostgpt.subscription_status = 'cancelling'
+                        logger.info(f"WEBHOOK HOSTGPT: User {user_hostgpt.id} HostGPT subscription marked as cancelling (cancel_at_period_end=True)")
+                    else:
+                        user_hostgpt.subscription_status = 'active'
+                        logger.info(f"WEBHOOK HOSTGPT: User {user_hostgpt.id} HostGPT subscription reactivated (cancel_at_period_end=False)")
+                    
                     # Controlla se current_period_end esiste prima di usarlo
                     if 'current_period_end' in subscription:
                         user_hostgpt.subscription_end_date = datetime.utcfromtimestamp(subscription['current_period_end'])
@@ -1149,9 +1157,10 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
                     user_hostgpt.subscription_end_date = None
                     user_hostgpt.messages_used = 0
                     user_hostgpt.messages_reset_date = None
+                    logger.info(f"WEBHOOK HOSTGPT: User {user_hostgpt.id} HostGPT subscription completely cancelled")
                 
                 db.commit()
-                logger.info(f"User {user_hostgpt.id} HostGPT subscription status updated to: {subscription['status']}")
+                logger.info(f"WEBHOOK HOSTGPT: User {user_hostgpt.id} HostGPT subscription status updated to: {subscription['status']}")
     
     except Exception as e:
         logger.error(f"Errore nell'elaborazione del webhook Stripe: {e}")
