@@ -836,7 +836,9 @@ async def get_me(current_user: User = Depends(get_current_user)):
         "messages_limit": current_user.messages_limit,
         "messages_used": current_user.messages_used,
         "messages_remaining": current_user.messages_limit - current_user.messages_used,
-        "is_verified": current_user.is_verified
+        "is_verified": current_user.is_verified,
+        "guardian_subscription_status": current_user.guardian_subscription_status,
+        "guardian_subscription_end_date": current_user.guardian_subscription_end_date
     }
 
 # --- Subscription/Payment ---
@@ -2072,7 +2074,6 @@ def is_guardian_active(guardian_status: str) -> bool:
 @app.get("/api/guardian/status")
 async def get_guardian_status(current_user: User = Depends(get_current_user)):
     """Ottieni lo stato dell'abbonamento Guardian"""
-    logger.info(f"Guardian status request for user {current_user.id}: guardian_subscription_status={current_user.guardian_subscription_status}, is_active={is_guardian_active(current_user.guardian_subscription_status)}")
     return {
         "guardian_subscription_status": current_user.guardian_subscription_status,
         "guardian_subscription_end_date": current_user.guardian_subscription_end_date,

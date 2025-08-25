@@ -57,7 +57,7 @@ interface GuardianAlert {
 
 function GuardianContent() {
   const router = useRouter()
-  const { user, logout } = useAuthStore()
+  const { user, logout, setUser } = useAuthStore()
   const [guardianStatus, setGuardianStatus] = useState<GuardianStatus | null>(null)
   const [guardianStats, setGuardianStats] = useState<GuardianStats | null>(null)
   const [alerts, setAlerts] = useState<GuardianAlert[]>([])
@@ -81,15 +81,26 @@ function GuardianContent() {
   }, [])
 
   useEffect(() => {
-    fetchGuardianStatus()
-  }, [])
+    if (user) {
+      fetchGuardianStatus()
+    }
+  }, [user])
 
   const fetchGuardianStatus = async () => {
     try {
       const response = await guardian.getStatus()
       const status = response.data
-      console.log('Guardian status received:', status)
       setGuardianStatus(status)
+      
+      // Aggiorna lo store dell'utente con i dati Guardian
+      if (user) {
+        const updatedUser = {
+          ...user,
+          guardian_subscription_status: status.guardian_subscription_status,
+          guardian_subscription_end_date: status.guardian_subscription_end_date
+        }
+        setUser(updatedUser)
+      }
       
       if (status.is_active) {
         fetchGuardianData()
@@ -183,7 +194,7 @@ function GuardianContent() {
     try {
       const response = await guardian.cancel()
       toast.success(response.data.message)
-      // Ricarica lo stato
+      // Ricarica lo stato e aggiorna lo store
       await fetchGuardianStatus()
     } catch (error: any) {
       console.error('Error cancelling guardian subscription:', error)
@@ -197,7 +208,7 @@ function GuardianContent() {
     try {
       const response = await guardian.reactivate()
       toast.success(response.data.message)
-      // Ricarica lo stato
+      // Ricarica lo stato e aggiorna lo store
       await fetchGuardianStatus()
     } catch (error: any) {
       console.error('Error reactivating guardian subscription:', error)
