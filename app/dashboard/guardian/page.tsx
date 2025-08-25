@@ -97,12 +97,16 @@ function GuardianContent() {
 
   const fetchGuardianData = async () => {
     try {
+      console.log('Fetching guardian data...')
+      
       // Fetch statistics
       const statsResponse = await guardian.getStatistics()
       setGuardianStats(statsResponse.data)
+      console.log('Stats aggiornate:', statsResponse.data)
 
       // Fetch alerts
       const alertsResponse = await guardian.getAlerts()
+      console.log('Alert ricevuti dal server:', alertsResponse.data)
       setAlerts(alertsResponse.data)
     } catch (error) {
       console.error('Error fetching guardian data:', error)
@@ -147,11 +151,16 @@ function GuardianContent() {
 
   const handleResolveAlert = async (alertId: number) => {
     try {
+      console.log('Risolvendo alert:', alertId)
       await guardian.resolveAlert(alertId)
-      // Remove alert from list
+      
+      // Remove alert from list immediately for better UX
       setAlerts(alerts.filter(alert => alert.id !== alertId))
-      // Refresh stats and alerts to ensure consistency
+      
+      // Refresh data from server to ensure consistency
+      console.log('Aggiornando dati dal server...')
       await fetchGuardianData()
+      
       toast.success('Alert risolto con successo!')
     } catch (error) {
       console.error('Error resolving alert:', error)
@@ -428,6 +437,32 @@ function GuardianContent() {
                   }
                 </span>
               </button>
+            </div>
+          </div>
+        ) : guardianStatus?.guardian_subscription_status === 'cancelling' ? (
+          /* Se in cancellazione, mostra stato speciale */
+          <div className="max-w-4xl mx-auto">
+            <div className="bg-gradient-to-r from-orange-50 to-amber-50 rounded-2xl shadow-lg p-8 mb-8">
+              <div className="text-center">
+                <div className="w-20 h-20 bg-orange-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <AlertTriangle className="w-10 h-10 text-white" />
+                </div>
+                <h2 className="text-2xl font-bold text-orange-800 mb-4">Abbonamento in Annullamento</h2>
+                <p className="text-orange-700 mb-6">
+                  Il tuo abbonamento Guardian è in fase di annullamento. Il servizio rimarrà attivo fino al{' '}
+                  {guardianStatus?.guardian_subscription_end_date 
+                    ? new Date(guardianStatus.guardian_subscription_end_date).toLocaleDateString('it-IT')
+                    : 'fine del periodo corrente'
+                  }.
+                </p>
+                <button
+                  onClick={handleReactivateGuardian}
+                  className="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-xl transition-all duration-200 transform hover:scale-105 shadow-lg flex items-center space-x-2 mx-auto"
+                >
+                  <Play className="w-5 h-5" />
+                  <span>Riattiva Abbonamento</span>
+                </button>
+              </div>
             </div>
           </div>
         ) : (

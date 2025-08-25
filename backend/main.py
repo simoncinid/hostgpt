@@ -2454,6 +2454,11 @@ async def cancel_guardian_subscription(
                 )
                 logger.info(f"Guardian Stripe subscription {current_user.guardian_stripe_subscription_id} marked for cancellation")
                 
+                # SOLO DOPO aver ricevuto conferma da Stripe, aggiorna il database
+                current_user.guardian_subscription_status = 'cancelling'
+                current_user.guardian_subscription_end_date = datetime.utcfromtimestamp(stripe_subscription.current_period_end)
+                db.commit()
+                
             except stripe.error.StripeError as e:
                 logger.error(f"Stripe error cancelling Guardian subscription: {e}")
                 raise HTTPException(
@@ -2475,11 +2480,6 @@ async def cancel_guardian_subscription(
                 "status": "cancelled", 
                 "message": "Abbonamento Guardian annullato con successo."
             }
-        
-        # SOLO DOPO aver ricevuto conferma da Stripe, aggiorna il database
-        current_user.guardian_subscription_status = 'cancelling'
-        current_user.guardian_subscription_end_date = datetime.utcfromtimestamp(stripe_subscription.current_period_end)
-        db.commit()
         
         # Invia email di annullamento abbonamento Guardian
         end_date = current_user.guardian_subscription_end_date.strftime("%d/%m/%Y") if current_user.guardian_subscription_end_date else "fine del periodo corrente"
@@ -2625,6 +2625,20 @@ async def get_guardian_alerts(
             GuardianAlert.is_resolved == False
         ).order_by(GuardianAlert.created_at.desc()).all()
         
+        logger.info(f"User {current_user.id}: trovati {len(alerts)} alert attivi (non risolti)")
+        
+        # Debug: mostra tutti gli alert dell'utente
+        all_alerts = db.query(GuardianAlert).filter(
+            GuardianAlert.user_id == current_user.id
+        ).all()
+        logger.info(f"User {current_user.id}: totale alert nel DB: {len(all_alerts)}")
+        for alert in all_alerts:
+            logger.info(f"Alert {alert.id}: is_resolved={alert.is_resolved}, created_at={alert.created_at}")
+        
+        # Debug aggiuntivo: verifica il tipo di dati di is_resolved
+        for alert in all_alerts:
+            logger.info(f"Alert {alert.id}: is_resolved type={type(alert.is_resolved)}, value={alert.is_resolved}, bool conversion={bool(alert.is_resolved)}")
+        
         # Formatta gli alert per il frontend
         formatted_alerts = []
         for alert in alerts:
@@ -2696,6 +2710,20 @@ async def resolve_guardian_alert(
                 detail="Errore nella risoluzione dell'alert"
             )
         
+        # Verifica che l'alert sia stato effettivamente risolto
+        resolved_alert = db.query(GuardianAlert).filter(
+            GuardianAlert.id == alert_id,
+            GuardianAlert.user_id == current_user.id
+        ).first()
+        
+        if resolved_alert and not resolved_alert.is_resolved:
+            logger.error(f"Alert {alert_id} non è stato risolto correttamente")
+            raise HTTPException(
+                status_code=500,
+                detail="Errore nella risoluzione dell'alert"
+            )
+        
+        logger.info(f"Alert {alert_id} risolto con successo, is_resolved={resolved_alert.is_resolved if resolved_alert else 'N/A'}")
         return {"message": "Alert risolto con successo"}
         
     except HTTPException:

@@ -390,13 +390,17 @@ Rispondi SOLO con un JSON valido nel seguente formato:
                 logger.error(f"Alert {alert_id} non trovato")
                 return False
             
+            logger.info(f"Risolvendo alert {alert_id}: is_resolved={alert.is_resolved} -> True")
+            
             alert.is_resolved = True
             alert.resolved_at = datetime.utcnow()
             alert.resolved_by = resolved_by
             
             db.commit()
             
-            logger.info(f"Alert {alert_id} risolto da {resolved_by}")
+            # Verifica che l'aggiornamento sia stato salvato
+            db.refresh(alert)
+            logger.info(f"Alert {alert_id} risolto da {resolved_by}, is_resolved confermato: {alert.is_resolved}")
             return True
             
         except Exception as e:
