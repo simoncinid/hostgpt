@@ -2228,19 +2228,29 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
         ).first()
         
         if user:
+            logger.info(f"WEBHOOK: User {user.id} Guardian subscription updated - status: {subscription['status']}, cancel_at_period_end: {subscription.get('cancel_at_period_end', False)}")
+            
             # Aggiorna lo stato dell'abbonamento nel database
             if subscription['status'] == 'active':
-                user.guardian_subscription_status = 'active'
-                user.guardian_subscription_end_date = datetime.utcfromtimestamp(subscription['current_period_end'])
+                # Se l'abbonamento è attivo ma ha cancel_at_period_end=True, è in fase di cancellazione
+                if subscription.get('cancel_at_period_end', False):
+                    user.guardian_subscription_status = 'cancelling'
+                    user.guardian_subscription_end_date = datetime.utcfromtimestamp(subscription['current_period_end'])
+                    logger.info(f"WEBHOOK: User {user.id} Guardian subscription marked as cancelling (cancel_at_period_end=True)")
+                else:
+                    user.guardian_subscription_status = 'active'
+                    user.guardian_subscription_end_date = datetime.utcfromtimestamp(subscription['current_period_end'])
+                    logger.info(f"WEBHOOK: User {user.id} Guardian subscription reactivated (cancel_at_period_end=False)")
             elif subscription['status'] == 'canceled':
                 user.guardian_subscription_status = 'cancelled'
                 user.guardian_stripe_subscription_id = None
                 user.guardian_subscription_end_date = None
                 user.guardian_messages_used = 0
                 user.guardian_messages_reset_date = None
+                logger.info(f"WEBHOOK: User {user.id} Guardian subscription completely cancelled")
             
             db.commit()
-            logger.info(f"User {user.id} Guardian subscription status updated to: {subscription['status']}")
+            logger.info(f"WEBHOOK: User {user.id} Guardian subscription status updated to: {subscription['status']}")
     
     return {"status": "success"}
 
