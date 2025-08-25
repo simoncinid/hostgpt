@@ -2072,6 +2072,7 @@ def is_guardian_active(guardian_status: str) -> bool:
 @app.get("/api/guardian/status")
 async def get_guardian_status(current_user: User = Depends(get_current_user)):
     """Ottieni lo stato dell'abbonamento Guardian"""
+    logger.info(f"Guardian status request for user {current_user.id}: guardian_subscription_status={current_user.guardian_subscription_status}, is_active={is_guardian_active(current_user.guardian_subscription_status)}")
     return {
         "guardian_subscription_status": current_user.guardian_subscription_status,
         "guardian_subscription_end_date": current_user.guardian_subscription_end_date,

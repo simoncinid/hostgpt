@@ -88,6 +88,7 @@ function GuardianContent() {
     try {
       const response = await guardian.getStatus()
       const status = response.data
+      console.log('Guardian status received:', status)
       setGuardianStatus(status)
       
       if (status.is_active) {
@@ -259,10 +260,6 @@ function GuardianContent() {
 
                 <div className="p-4 md:p-8">
           <div className="max-w-4xl mx-auto space-y-6">
-            {/* Header Description */}
-            <div className="text-center mb-8">
-              <p className="text-gray-600">Proteggi la tua reputazione, massimizza la soddisfazione degli ospiti</p>
-            </div>
 
             {/* Se non abbonato, mostra animazione (ma non se è in cancellazione) */}
             {!guardianStatus?.is_active ? (
@@ -462,56 +459,84 @@ function GuardianContent() {
               <div className="space-y-6">
                 {/* Statistiche */}
                 {guardianStats && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  <div className="grid grid-cols-4 gap-2 md:grid-cols-4 md:gap-6 mb-8">
                     <motion.div
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="stats-card p-6 border-l-4 border-blue-500"
+                      className="stats-card p-2 md:p-6"
                     >
-                      <div className="flex items-center justify-between mb-2">
-                        <Users className="w-8 h-8 text-blue-500" />
-                        <span className="text-3xl font-bold text-blue-600">{guardianStats.total_guests}</span>
+                      <div className="flex items-center justify-between mb-1 md:mb-2">
+                        <Users className="w-4 h-4 md:w-8 md:h-8 text-primary" />
+                        <span className="text-sm md:text-3xl font-bold">{guardianStats.total_guests}</span>
                       </div>
-                      <p className="text-gray-600">Ospiti Totali</p>
+                      <p className="text-gray-600 text-xs md:text-base">
+                        <span className="md:hidden">Ospiti</span>
+                        <span className="hidden md:inline">Ospiti Totali</span>
+                      </p>
+                      <p className="text-xs md:text-sm text-green-600 mt-1">
+                        <span className="md:hidden">Monitorati</span>
+                        <span className="hidden md:inline">Monitorati</span>
+                      </p>
                     </motion.div>
                     
                     <motion.div
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.1 }}
-                      className="stats-card p-6 border-l-4 border-red-500"
+                      className="stats-card p-2 md:p-6"
                     >
-                      <div className="flex items-center justify-between mb-2">
-                        <AlertTriangle className="w-8 h-8 text-red-500" />
-                        <span className="text-3xl font-bold text-red-600">{guardianStats.high_risk_guests}</span>
+                      <div className="flex items-center justify-between mb-1 md:mb-2">
+                        <AlertTriangle className="w-4 h-4 md:w-8 md:h-8 text-red-500" />
+                        <span className="text-sm md:text-3xl font-bold text-red-600">{guardianStats.high_risk_guests}</span>
                       </div>
-                      <p className="text-gray-600">Ospiti a Rischio</p>
+                      <p className="text-gray-600 text-xs md:text-base">
+                        <span className="md:hidden">A Rischio</span>
+                        <span className="hidden md:inline">Ospiti a Rischio</span>
+                      </p>
+                      <p className="text-xs md:text-sm text-red-600 mt-1">
+                        <span className="md:hidden">Rilevati</span>
+                        <span className="hidden md:inline">Rilevati</span>
+                      </p>
                     </motion.div>
                     
                     <motion.div
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.2 }}
-                      className="stats-card p-6 border-l-4 border-green-500"
+                      className="stats-card p-2 md:p-6"
                     >
-                      <div className="flex items-center justify-between mb-2">
-                        <CheckCircle className="w-8 h-8 text-green-500" />
-                        <span className="text-3xl font-bold text-green-600">{guardianStats.resolved_issues}</span>
+                      <div className="flex items-center justify-between mb-1 md:mb-2">
+                        <CheckCircle className="w-4 h-4 md:w-8 md:h-8 text-green-500" />
+                        <span className="text-sm md:text-3xl font-bold text-green-600">{guardianStats.resolved_issues}</span>
                       </div>
-                      <p className="text-gray-600">Problemi Risolti</p>
+                      <p className="text-gray-600 text-xs md:text-base">
+                        <span className="md:hidden">Risolti</span>
+                        <span className="hidden md:inline">Problemi Risolti</span>
+                      </p>
+                      <p className="text-xs md:text-sm text-green-600 mt-1">
+                        <span className="md:hidden">Gestiti</span>
+                        <span className="hidden md:inline">Gestiti</span>
+                      </p>
                     </motion.div>
                     
                     <motion.div
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.3 }}
-                      className="stats-card p-6 border-l-4 border-yellow-500"
+                      className="stats-card p-2 md:p-6"
                     >
-                      <div className="flex items-center justify-between mb-2">
-                        <Star className="w-8 h-8 text-yellow-500" />
-                        <span className="text-3xl font-bold text-yellow-600">{guardianStats.avg_satisfaction}</span>
+                      <div className="flex items-center justify-between mb-1 md:mb-2">
+                        <Star className="w-4 h-4 md:w-8 md:h-8 text-yellow-500" />
+                        <span className="text-sm md:text-3xl font-bold text-yellow-600">{guardianStats.avg_satisfaction}</span>
                       </div>
-                      <p className="text-gray-600">Soddisfazione Media</p>
+                      <p className="text-gray-600 text-xs md:text-base">
+                        <span className="md:hidden">Soddisf.</span>
+                        <span className="hidden md:inline">Soddisfazione Media</span>
+                      </p>
+                      <p className="text-xs md:text-sm text-yellow-600 mt-1">
+                        <span className="md:hidden">Punteggio</span>
+                        <span className="hidden md:inline">Punteggio</span>
+                      </p>
                     </motion.div>
                   </div>
                 )}
