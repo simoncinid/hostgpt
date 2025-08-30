@@ -165,6 +165,9 @@ class SubscriptionCreate(BaseModel):
 class SubscriptionConfirm(BaseModel):
     session_id: Optional[str] = None
 
+class ConfirmPaymentRequest(BaseModel):
+    payment_intent_id: str
+
 # ============= Utility Functions =============
 
 def verify_password(plain_password, hashed_password):
@@ -1086,10 +1089,11 @@ async def create_checkout_session(current_user: User = Depends(get_current_user)
 
 @app.post("/api/subscription/confirm-payment")
 async def confirm_payment(
-    payment_intent_id: str,
+    request: ConfirmPaymentRequest,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+    payment_intent_id = request.payment_intent_id
     """Conferma il pagamento e crea la sottoscrizione"""
     try:
         logger.info(f"Confirming payment for user {current_user.id}, payment_intent_id: {payment_intent_id}")

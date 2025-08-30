@@ -19,6 +19,125 @@ import {
 import { subscription } from '@/lib/api'
 import { useAuthStore } from '@/lib/store'
 import toast from 'react-hot-toast'
+import { loadStripe } from '@stripe/stripe-js'
+import {
+  Elements,
+  CardElement,
+  useStripe,
+  useElements,
+} from '@stripe/react-stripe-js'
+
+// Inizializza Stripe
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
+
+// Componente per il form di pagamento
+function CheckoutForm({ clientSecret, onSuccess }: { clientSecret: string, onSuccess: () => void }) {
+  const stripe = useStripe()
+  const elements = useElements()
+  const [isProcessing, setIsProcessing] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault()
+
+    if (!stripe || !elements) {
+      return
+    }
+
+    setIsProcessing(true)
+    setError(null)
+
+    const cardElement = elements.getElement(CardElement)
+    if (!cardElement) {
+      setError('Elemento carta non trovato')
+      setIsProcessing(false)
+      return
+    }
+
+    try {
+      const { error: stripeError, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
+        payment_method: {
+          card: cardElement,
+        },
+      })
+
+      if (stripeError) {
+        setError(stripeError.message || 'Errore durante il pagamento')
+        toast.error(stripeError.message || 'Errore durante il pagamento')
+      } else if (paymentIntent.status === 'succeeded') {
+        // Pagamento completato con successo
+        toast.success('Pagamento completato con successo!')
+        onSuccess()
+      } else {
+        setError('Pagamento non completato')
+        toast.error('Pagamento non completato')
+      }
+    } catch (err: any) {
+      setError(err.message || 'Errore durante il pagamento')
+      toast.error(err.message || 'Errore durante il pagamento')
+    } finally {
+      setIsProcessing(false)
+    }
+  }
+
+  const cardElementOptions = {
+    style: {
+      base: {
+        fontSize: '16px',
+        color: '#424770',
+        '::placeholder': {
+          color: '#aab7c4',
+        },
+      },
+      invalid: {
+        color: '#9e2146',
+      },
+    },
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="space-y-4">
+        <div className="border border-gray-200 rounded-lg p-4 bg-white">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium text-gray-700">Dati carta</span>
+            <div className="flex space-x-1">
+              <div className="w-8 h-5 bg-gray-300 rounded"></div>
+              <div className="w-8 h-5 bg-gray-300 rounded"></div>
+              <div className="w-8 h-5 bg-gray-300 rounded"></div>
+              <div className="w-8 h-5 bg-gray-300 rounded"></div>
+            </div>
+          </div>
+          <CardElement options={cardElementOptions} />
+        </div>
+      </div>
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+          <p className="text-sm text-red-600">{error}</p>
+        </div>
+      )}
+
+      <button
+        type="submit"
+        disabled={!stripe || isProcessing}
+        className="w-full bg-gradient-to-r from-primary to-purple-600 text-white py-4 px-6 rounded-lg font-semibold hover:from-primary/90 hover:to-purple-600/90 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+      >
+        {isProcessing ? (
+          <>
+            <Loader2 className="w-5 h-5 animate-spin" />
+            <span>Elaborazione pagamento...</span>
+          </>
+        ) : (
+          <>
+            <CreditCard className="w-5 h-5" />
+            <span>Paga 29€/mese</span>
+          </>
+        )}
+      </button>
+    </form>
+  )
+}
 
 // Componente separato che utilizza useSearchParams
 function CheckoutContent() {
@@ -29,8 +148,7 @@ function CheckoutContent() {
   const [status, setStatus] = useState<'idle' | 'processing' | 'error' | 'cancelled' | 'success' | 'checkout'>('idle')
   const [errorMessage, setErrorMessage] = useState<string>('')
   const [clientSecret, setClientSecret] = useState<string>('')
-  const [isPaymentProcessing, setIsPaymentProcessing] = useState(false)
-  const [paymentMethod, setPaymentMethod] = useState<'card' | 'sepa'>('card')
+  const [paymentIntentId, setPaymentIntentId] = useState<string>('')
 
   useEffect(() => {
     const cancelled = searchParams.get('subscription') === 'cancelled'
@@ -72,6 +190,7 @@ function CheckoutContent() {
         // Se abbiamo un client_secret, mostra il checkout personalizzato
         if (resp.data.client_secret) {
           setClientSecret(resp.data.client_secret)
+          setPaymentIntentId(resp.data.payment_intent_id)
           setStatus('checkout')
         } else if (resp.data.checkout_url) {
           // Fallback al redirect Stripe se non abbiamo client_secret
@@ -90,24 +209,20 @@ function CheckoutContent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams])
 
-  const handlePaymentSubmit = async (event: React.FormEvent) => {
-    event.preventDefault()
-    setIsPaymentProcessing(true)
-    
+  const handlePaymentSuccess = async () => {
     try {
-      // Qui implementeremo la logica di pagamento con Stripe Elements
-      // Per ora simuliamo un successo
+      // Conferma il pagamento con il backend
+      await subscription.confirmPayment(paymentIntentId)
+      
+      setStatus('success')
+      setErrorMessage('Pagamento completato con successo! Il tuo abbonamento è ora attivo. Reindirizzamento alla dashboard...')
+      
       setTimeout(() => {
-        setStatus('success')
-        setIsPaymentProcessing(false)
-        toast.success('Pagamento completato con successo!')
-        setTimeout(() => {
-          window.location.href = '/dashboard'
-        }, 2000)
-      }, 2000)
-    } catch (error) {
-      setIsPaymentProcessing(false)
-      toast.error('Errore durante il pagamento')
+        window.location.href = '/dashboard'
+      }, 3000)
+    } catch (error: any) {
+      console.error('Errore nella conferma del pagamento:', error)
+      toast.error('Errore nella conferma del pagamento. Contatta il supporto.')
     }
   }
 
@@ -151,7 +266,7 @@ function CheckoutContent() {
               </p>
             </motion.div>
 
-            {status === 'checkout' && (
+            {status === 'checkout' && clientSecret && (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -166,71 +281,12 @@ function CheckoutContent() {
                   </div>
                 </div>
 
-                <form onSubmit={handlePaymentSubmit} className="space-y-4">
-                  {/* Stripe Elements verrà inserito qui */}
-                  <div className="space-y-4">
-                    <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-medium text-gray-700">Numero carta</span>
-                        <div className="flex space-x-1">
-                          <div className="w-8 h-5 bg-gray-300 rounded"></div>
-                          <div className="w-8 h-5 bg-gray-300 rounded"></div>
-                          <div className="w-8 h-5 bg-gray-300 rounded"></div>
-                          <div className="w-8 h-5 bg-gray-300 rounded"></div>
-                        </div>
-                      </div>
-                      <input 
-                        type="text" 
-                        placeholder="1234 5678 9012 3456"
-                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                        disabled
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Scadenza
-                        </label>
-                        <input 
-                          type="text" 
-                          placeholder="MM/AA"
-                          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                          disabled
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          CVV
-                        </label>
-                        <input 
-                          type="text" 
-                          placeholder="123"
-                          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                          disabled
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  <button
-                    type="submit"
-                    disabled={isPaymentProcessing}
-                    className="w-full bg-gradient-to-r from-primary to-purple-600 text-white py-4 px-6 rounded-lg font-semibold hover:from-primary/90 hover:to-purple-600/90 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
-                  >
-                    {isPaymentProcessing ? (
-                      <>
-                        <Loader2 className="w-5 h-5 animate-spin" />
-                        <span>Elaborazione pagamento...</span>
-                      </>
-                    ) : (
-                      <>
-                        <CreditCard className="w-5 h-5" />
-                        <span>Paga 29€/mese</span>
-                      </>
-                    )}
-                  </button>
-                </form>
+                <Elements stripe={stripePromise} options={{ clientSecret }}>
+                  <CheckoutForm 
+                    clientSecret={clientSecret} 
+                    onSuccess={handlePaymentSuccess}
+                  />
+                </Elements>
 
                 <div className="mt-4 text-center">
                   <p className="text-xs text-gray-500">
