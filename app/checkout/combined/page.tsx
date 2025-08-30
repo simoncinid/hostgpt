@@ -15,9 +15,10 @@ import {
   Zap,
   Star,
   AlertTriangle,
-  Eye
+  Eye,
+  Gift
 } from 'lucide-react'
-import { subscription } from '@/lib/api'
+import { subscription, referral } from '@/lib/api'
 import { useAuthStore } from '@/lib/store'
 import toast from 'react-hot-toast'
 import { loadStripe } from '@stripe/stripe-js'
@@ -32,11 +33,64 @@ import {
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
 
 // Componente per il form di pagamento
-function CheckoutForm({ clientSecret, onSuccess }: { clientSecret: string, onSuccess: () => void }) {
+function CheckoutForm({ clientSecret, onSuccess }: { clientSecret: string, onSuccess: (referralCode?: string) => void }) {
   const stripe = useStripe()
   const elements = useElements()
   const [isProcessing, setIsProcessing] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [referralCode, setReferralCode] = useState('')
+  const [referralCodeValid, setReferralCodeValid] = useState<boolean | null>(null)
+  const [referralCodeMessage, setReferralCodeMessage] = useState('')
+  const [validatingCode, setValidatingCode] = useState(false)
+
+  // Funzione per validare il referral code
+  const validateReferralCode = async (code: string) => {
+    if (!code.trim()) {
+      setReferralCodeValid(null)
+      setReferralCodeMessage('')
+      return
+    }
+
+    setValidatingCode(true)
+    try {
+      const response = await referral.validate(code.toUpperCase())
+      const result = response.data
+      
+      if (result.valid) {
+        setReferralCodeValid(true)
+        setReferralCodeMessage(result.message)
+        toast.success(result.message)
+      } else {
+        setReferralCodeValid(false)
+        setReferralCodeMessage(result.message)
+        toast.error(result.message)
+      }
+    } catch (error) {
+      setReferralCodeValid(false)
+      setReferralCodeMessage('Errore nella validazione del codice')
+      toast.error('Errore nella validazione del codice')
+    } finally {
+      setValidatingCode(false)
+    }
+  }
+
+  // Gestisce il cambio del referral code
+  const handleReferralCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const code = e.target.value
+    setReferralCode(code)
+    
+    // Valida il codice dopo un breve delay
+    if (code.trim()) {
+      const timeoutId = setTimeout(() => {
+        validateReferralCode(code)
+      }, 500)
+      
+      return () => clearTimeout(timeoutId)
+    } else {
+      setReferralCodeValid(null)
+      setReferralCodeMessage('')
+    }
+  }
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
@@ -67,7 +121,7 @@ function CheckoutForm({ clientSecret, onSuccess }: { clientSecret: string, onSuc
         toast.error(stripeError.message || 'Errore durante il pagamento')
       } else if (paymentIntent.status === 'succeeded') {
         toast.success('Pagamento completato con successo!')
-        onSuccess()
+        onSuccess(referralCodeValid && referralCode.trim() ? referralCode.toUpperCase() : undefined)
       } else {
         setError('Pagamento non completato')
         toast.error('Pagamento non completato')
@@ -97,6 +151,57 @@ function CheckoutForm({ clientSecret, onSuccess }: { clientSecret: string, onSuc
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {/* Campo Referral Code */}
+      <div className="space-y-2">
+        <label htmlFor="referralCode" className="flex items-center space-x-2 text-sm font-medium text-gray-700">
+          <Gift className="w-4 h-4" />
+          <span>Codice Referral (opzionale)</span>
+        </label>
+        <div className="relative">
+          <input
+            type="text"
+            id="referralCode"
+            value={referralCode}
+            onChange={handleReferralCodeChange}
+            placeholder="Inserisci il codice referral"
+            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent ${
+              referralCodeValid === true 
+                ? 'border-green-300 bg-green-50' 
+                : referralCodeValid === false 
+                ? 'border-red-300 bg-red-50' 
+                : 'border-gray-300'
+            }`}
+          />
+          {validatingCode && (
+            <div className="absolute right-3 top-2">
+              <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+            </div>
+          )}
+          {referralCodeValid === true && (
+            <div className="absolute right-3 top-2">
+              <CheckCircle className="w-5 h-5 text-green-500" />
+            </div>
+          )}
+          {referralCodeValid === false && (
+            <div className="absolute right-3 top-2">
+              <div className="w-5 h-5 text-red-500">✕</div>
+            </div>
+          )}
+        </div>
+        {referralCodeMessage && (
+          <p className={`text-sm ${
+            referralCodeValid === true ? 'text-green-600' : 'text-red-600'
+          }`}>
+            {referralCodeMessage}
+          </p>
+        )}
+        {!referralCodeMessage && (
+          <p className="text-xs text-gray-500">
+            Inserisci un codice referral valido per ricevere messaggi bonus al mese
+          </p>
+        )}
+      </div>
+
       <div className="border border-gray-200 rounded-lg p-4 bg-white">
         <CardElement options={cardElementOptions} />
       </div>
@@ -198,10 +303,14 @@ function CheckoutContent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams])
 
-  const handlePaymentSuccess = async () => {
+  const handlePaymentSuccess = async (referralCode?: string) => {
     try {
-      // Conferma il pagamento combinato con il backend
-      await subscription.confirmCombinedPayment(paymentIntentId)
+      // Conferma il pagamento combinato con il backend, includendo il referral code se presente
+      const confirmData = referralCode 
+        ? { payment_intent_id: paymentIntentId, referral_code: referralCode }
+        : { payment_intent_id: paymentIntentId }
+      
+      await subscription.confirmCombinedPayment(paymentIntentId, confirmData)
       
       // Aggiorna lo stato utente per mostrare abbonamento attivo
       const auth = (await import('@/lib/api')).auth
@@ -209,7 +318,10 @@ function CheckoutContent() {
       setUser(me.data)
       
       setStatus('success')
-      setErrorMessage('Pacchetto completo attivato! Reindirizzamento alla dashboard...')
+      const successMessage = referralCode
+        ? 'Pacchetto completo attivato con messaggi bonus! Reindirizzamento alla dashboard...'
+        : 'Pacchetto completo attivato! Reindirizzamento alla dashboard...'
+      setErrorMessage(successMessage)
       
       // Reindirizza immediatamente alla dashboard con parametro di refresh
       setTimeout(() => {

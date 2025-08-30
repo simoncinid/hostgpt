@@ -61,10 +61,10 @@ export const subscription = {
     api.post('/subscription/create-combined-checkout'),
   confirm: (session_id?: string) =>
     api.post('/subscription/confirm', { session_id }),
-  confirmPayment: (payment_intent_id: string) =>
-    api.post('/subscription/confirm-payment', { payment_intent_id }),
-  confirmCombinedPayment: (payment_intent_id: string) =>
-    api.post('/subscription/confirm-combined-payment', { payment_intent_id }),
+  confirmPayment: (payment_intent_id: string, data?: any) =>
+    api.post('/subscription/confirm-payment', { payment_intent_id, ...data }),
+  confirmCombinedPayment: (payment_intent_id: string, data?: any) =>
+    api.post('/subscription/confirm-combined-payment', { payment_intent_id, ...data }),
   cancel: () =>
     api.post('/subscription/cancel'),
 }
@@ -76,6 +76,13 @@ export const freeTrial = {
     api.post('/free-trial/start'),
   getStatus: () =>
     api.get('/free-trial/status'),
+}
+
+export const referral = {
+  validate: (code: string) =>
+    api.post('/referral/validate', { code }),
+  getStats: () =>
+    api.get('/referral/stats'),
 }
 
 export const chatbots = {
@@ -127,8 +134,8 @@ export const guardian = {
   createCheckout: () =>
     api.post('/guardian/create-checkout'),
   
-  confirmPayment: (payment_intent_id: string) =>
-    api.post('/guardian/confirm-payment', { payment_intent_id }),
+  confirmPayment: (payment_intent_id: string, data?: any) =>
+    api.post('/guardian/confirm-payment', { payment_intent_id, ...data }),
   
   cancel: () =>
     api.post('/guardian/cancel'),
