@@ -72,11 +72,17 @@ function GuardianContent() {
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search)
     const subscription = urlParams.get('subscription')
+    const refresh = urlParams.get('refresh') === 'true'
     const sessionId = urlParams.get('session_id')
     
-    if (subscription === 'success' && sessionId) {
+    if ((subscription === 'success' || refresh) && sessionId) {
       // Conferma la sottoscrizione
       confirmGuardianSubscription(sessionId)
+    } else if (refresh) {
+      // Solo refresh senza sessionId (caso del checkout personalizzato)
+      fetchGuardianStatus()
+      // Rimuovi i parametri dall'URL
+      window.history.replaceState({}, document.title, window.location.pathname)
     }
   }, [])
 
@@ -93,10 +99,12 @@ function GuardianContent() {
       setGuardianStatus(status)
       
       // Aggiorna completamente lo stato utente dal server
-      if (user) {
+      try {
         const auth = (await import('@/lib/api')).auth
         const me = await auth.me()
         setUser(me.data)
+      } catch (error) {
+        console.error('Error updating user data:', error)
       }
       
       if (status.is_active) {

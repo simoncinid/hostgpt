@@ -47,23 +47,35 @@ function DashboardContent() {
       try {
         const me = await auth.me()
         const status = me.data?.subscription_status
-        // Se arriviamo da checkout riuscito, prova una conferma e ri-verifica
+        
+        // Controlla se arriviamo da un checkout riuscito
         const urlParams = new URLSearchParams(window.location.search)
         const subscriptionSuccess = urlParams.get('subscription') === 'success'
+        const refresh = urlParams.get('refresh') === 'true'
         const sessionId = urlParams.get('session_id') || undefined
-        if (subscriptionSuccess) {
+        
+        // Se arriviamo da checkout riuscito, aggiorna i dati
+        if (subscriptionSuccess || refresh) {
           try {
-            const { subscription } = await import('@/lib/api')
-            await subscription.confirm(sessionId)
+            if (sessionId) {
+              const { subscription } = await import('@/lib/api')
+              await subscription.confirm(sessionId)
+            }
             // Ricarica i dati utente dopo la conferma
             const updatedMe = await auth.me()
             setUser(updatedMe.data)
-          } catch {}
+            // Rimuovi i parametri dall'URL
+            window.history.replaceState({}, document.title, window.location.pathname)
+          } catch (error) {
+            console.error('Error confirming subscription:', error)
+          }
         }
+        
         if (!['active', 'cancelling', 'free_trial'].includes(status)) {
           router.replace('/checkout')
           return
         }
+        
         // Aggiorna sempre lo store con i dati più recenti
         setUser(me.data)
         loadChatbots()

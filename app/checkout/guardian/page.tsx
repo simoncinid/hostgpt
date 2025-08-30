@@ -209,9 +209,9 @@ function CheckoutContent() {
       setStatus('success')
       setErrorMessage('Guardian attivato! Reindirizzamento alla dashboard...')
       
-      // Reindirizza immediatamente alla dashboard Guardian
+      // Reindirizza immediatamente alla dashboard Guardian con parametro di refresh
       setTimeout(() => {
-        window.location.href = '/dashboard/guardian'
+        router.push('/dashboard/guardian?refresh=true&subscription=success')
       }, 1500)
     } catch (error: any) {
       console.error('Errore nella conferma del pagamento:', error)

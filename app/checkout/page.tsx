@@ -209,9 +209,9 @@ function CheckoutContent() {
       setStatus('success')
       setErrorMessage('Abbonamento attivato! Reindirizzamento alla dashboard...')
       
-      // Reindirizza immediatamente alla dashboard
+      // Reindirizza immediatamente alla dashboard con parametro di refresh
       setTimeout(() => {
-        window.location.href = '/dashboard'
+        router.push('/dashboard?refresh=true&subscription=success')
       }, 1500)
     } catch (error: any) {
       console.error('Errore nella conferma del pagamento:', error)
