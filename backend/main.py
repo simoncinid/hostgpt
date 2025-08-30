@@ -1110,40 +1110,80 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
             ).first()
         
             if user:
-                # Verifica se è una nuova sottoscrizione o una riattivazione
-                subscription = stripe.Subscription.retrieve(session['subscription'])
-                
-                # Controlla il tipo di abbonamento dal metadata
+                # Verifica se è un checkout combinato (HostGPT + Guardian)
                 subscription_type = session.get('metadata', {}).get('subscription_type', 'hostgpt')
                 
-                if subscription_type == 'guardian':
-                    # Gestisci abbonamento Guardian
-                    user.guardian_stripe_subscription_id = session['subscription']
-                    user.guardian_subscription_status = 'active'
-                    # Controlla se current_period_end esiste prima di usarlo
-                    if hasattr(subscription, 'current_period_end'):
-                        user.guardian_subscription_end_date = datetime.utcfromtimestamp(subscription.current_period_end)
-                    else:
-                        logger.warning(f"current_period_end non trovato per subscription {session['subscription']}")
-                    logger.info(f"User {user.id} Guardian subscription updated with new subscription_id: {session['subscription']}")
+                if subscription_type == 'combined':
+                    # Gestisci checkout combinato
+                    logger.info(f"Processing combined checkout for user {user.id}")
+                    
+                    # Recupera le sottoscrizioni create
+                    subscriptions = stripe.Subscription.list(
+                        customer=session['customer'],
+                        limit=2,
+                        created={'gte': int((datetime.utcnow() - timedelta(minutes=5)).timestamp())}
+                    )
+                    
+                    # Trova le sottoscrizioni per HostGPT e Guardian
+                    hostgpt_subscription = None
+                    guardian_subscription = None
+                    
+                    for sub in subscriptions.data:
+                        if sub.items.data[0].price.id == settings.STRIPE_PRICE_ID:
+                            hostgpt_subscription = sub
+                        elif sub.items.data[0].price.id == "price_1RzYheClR9LCJ8qE7OMhCmlH":
+                            guardian_subscription = sub
+                    
+                    # Aggiorna HostGPT subscription
+                    if hostgpt_subscription:
+                        user.stripe_subscription_id = hostgpt_subscription.id
+                        user.subscription_status = 'active'
+                        user.subscription_end_date = datetime.utcfromtimestamp(hostgpt_subscription.current_period_end)
+                        user.free_trial_converted = True
+                        logger.info(f"User {user.id} HostGPT subscription activated: {hostgpt_subscription.id}")
+                    
+                    # Aggiorna Guardian subscription
+                    if guardian_subscription:
+                        user.guardian_stripe_subscription_id = guardian_subscription.id
+                        user.guardian_subscription_status = 'active'
+                        user.guardian_subscription_end_date = datetime.utcfromtimestamp(guardian_subscription.current_period_end)
+                        logger.info(f"User {user.id} Guardian subscription activated: {guardian_subscription.id}")
+                    
+                    db.commit()
+                    logger.info(f"User {user.id} combined subscription completed successfully")
+                    
                 else:
-                    # Gestisci abbonamento HostGPT (default)
-                    user.stripe_subscription_id = session['subscription']
-                    user.subscription_status = 'active'
-                    # Controlla se current_period_end esiste prima di usarlo
-                    if hasattr(subscription, 'current_period_end'):
-                        user.subscription_end_date = datetime.utcfromtimestamp(subscription.current_period_end)
+                    # Gestisci checkout singolo (comportamento esistente)
+                    subscription = stripe.Subscription.retrieve(session['subscription'])
+                    
+                    if subscription_type == 'guardian':
+                        # Gestisci abbonamento Guardian
+                        user.guardian_stripe_subscription_id = session['subscription']
+                        user.guardian_subscription_status = 'active'
+                        # Controlla se current_period_end esiste prima di usarlo
+                        if hasattr(subscription, 'current_period_end'):
+                            user.guardian_subscription_end_date = datetime.utcfromtimestamp(subscription.current_period_end)
+                        else:
+                            logger.warning(f"current_period_end non trovato per subscription {session['subscription']}")
+                        logger.info(f"User {user.id} Guardian subscription updated with new subscription_id: {session['subscription']}")
                     else:
-                        logger.warning(f"current_period_end non trovato per subscription {session['subscription']}")
+                        # Gestisci abbonamento HostGPT (default)
+                        user.stripe_subscription_id = session['subscription']
+                        user.subscription_status = 'active'
+                        # Controlla se current_period_end esiste prima di usarlo
+                        if hasattr(subscription, 'current_period_end'):
+                            user.subscription_end_date = datetime.utcfromtimestamp(subscription.current_period_end)
+                        else:
+                            logger.warning(f"current_period_end non trovato per subscription {session['subscription']}")
+                        
+                        # Reset messaggi solo se è una nuova sottoscrizione (non riattivazione)
+                        if not subscription.cancel_at_period_end:
+                            user.messages_used = 0
+                            user.messages_reset_date = datetime.utcnow()
+                        
+                        logger.info(f"User {user.id} HostGPT subscription updated with new subscription_id: {session['subscription']}")
                     
-                    # Reset messaggi solo se è una nuova sottoscrizione (non riattivazione)
-                    if not subscription.cancel_at_period_end:
-                        user.messages_used = 0
-                        user.messages_reset_date = datetime.utcnow()
-                    
-                    logger.info(f"User {user.id} HostGPT subscription updated with new subscription_id: {session['subscription']}")
-                
-                db.commit()
+                    db.commit()
         
         elif event['type'] == 'customer.subscription.deleted':
             subscription = event['data']['object']
@@ -2201,12 +2241,9 @@ async def create_guardian_checkout_session(current_user: User = Depends(get_curr
         logger.info(f"Starting Guardian checkout process for user {current_user.id} (email: {current_user.email})")
         logger.info(f"User Guardian subscription status: {current_user.guardian_subscription_status}")
         
-        # Verifica che l'utente abbia un abbonamento HostGPT attivo (non free trial)
+        # Se l'utente è in free trial, reindirizza al checkout combinato
         if current_user.subscription_status == 'free_trial':
-            raise HTTPException(
-                status_code=400,
-                detail="Non puoi attivare Guardian durante il periodo di prova gratuito. Completa il periodo di prova e sottoscrivi l'abbonamento completo per accedere a Guardian."
-            )
+            return await create_combined_checkout_session(current_user, db)
         
         if not is_subscription_active(current_user.subscription_status):
             raise HTTPException(
@@ -2297,6 +2334,55 @@ async def create_guardian_checkout_session(current_user: User = Depends(get_curr
         logger.error(f"Guardian Stripe checkout error: {e}")
         raise HTTPException(status_code=400, detail=str(e))
 
+async def create_combined_checkout_session(current_user: User, db: Session):
+    """Crea sessione di checkout Stripe combinata per HostGPT + Guardian per utenti in free trial"""
+    try:
+        logger.info(f"Creating combined checkout session for free trial user {current_user.id}")
+        
+        # Crea o recupera customer Stripe
+        if not current_user.stripe_customer_id:
+            customer = stripe.Customer.create(
+                email=current_user.email,
+                name=current_user.full_name
+            )
+            current_user.stripe_customer_id = customer.id
+            db.commit()
+        
+        # Price IDs per HostGPT e Guardian
+        hostgpt_price_id = settings.STRIPE_PRICE_ID  # 29€/mese
+        guardian_price_id = "price_1RzYheClR9LCJ8qE7OMhCmlH"  # 9€/mese
+        
+        # Crea sessione checkout con entrambi i prodotti
+        checkout_session = stripe.checkout.Session.create(
+            customer=current_user.stripe_customer_id,
+            payment_method_types=['card'],
+            line_items=[
+                {
+                    'price': hostgpt_price_id,
+                    'quantity': 1,
+                },
+                {
+                    'price': guardian_price_id,
+                    'quantity': 1,
+                }
+            ],
+            mode='subscription',
+            success_url=f"{settings.FRONTEND_URL}/dashboard/guardian?subscription=success&session_id={{CHECKOUT_SESSION_ID}}",
+            cancel_url=f"{settings.FRONTEND_URL}/dashboard/guardian?subscription=cancelled",
+            metadata={
+                'user_id': str(current_user.id),
+                'subscription_type': 'combined',
+                'free_trial_conversion': 'true'
+            }
+        )
+        
+        logger.info(f"Combined checkout session created successfully: {checkout_session.id}")
+        return {"checkout_url": checkout_session.url, "is_combined": True}
+        
+    except Exception as e:
+        logger.error(f"Combined checkout error: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
+
 @app.post("/api/guardian/webhook")
 async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
     """Webhook per eventi Stripe per Guardian"""
@@ -2322,21 +2408,62 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
         ).first()
         
         if user:
-            # Verifica se è una nuova sottoscrizione o una riattivazione
-            subscription = stripe.Subscription.retrieve(session['subscription'])
+            # Verifica se è un checkout combinato (HostGPT + Guardian)
+            subscription_type = session.get('metadata', {}).get('subscription_type', 'guardian')
             
-            # Aggiorna sempre il subscription_id con quello nuovo
-            user.guardian_stripe_subscription_id = session['subscription']
-            user.guardian_subscription_status = 'active'
-            user.guardian_subscription_end_date = datetime.utcfromtimestamp(subscription.current_period_end)
-            
-            # Reset messaggi solo se è una nuova sottoscrizione (non riattivazione)
-            if not subscription.cancel_at_period_end:
-                user.guardian_messages_used = 0
-                user.guardian_messages_reset_date = datetime.utcnow()
-            
-            db.commit()
-            logger.info(f"User {user.id} Guardian subscription updated with new subscription_id: {session['subscription']}")
+            if subscription_type == 'combined':
+                # Gestisci checkout combinato
+                logger.info(f"Processing combined checkout for user {user.id}")
+                
+                # Recupera le sottoscrizioni create
+                subscriptions = stripe.Subscription.list(
+                    customer=session['customer'],
+                    limit=2,
+                    created={'gte': int((datetime.utcnow() - timedelta(minutes=5)).timestamp())}
+                )
+                
+                # Trova le sottoscrizioni per HostGPT e Guardian
+                hostgpt_subscription = None
+                guardian_subscription = None
+                
+                for sub in subscriptions.data:
+                    if sub.items.data[0].price.id == settings.STRIPE_PRICE_ID:
+                        hostgpt_subscription = sub
+                    elif sub.items.data[0].price.id == "price_1RzYheClR9LCJ8qE7OMhCmlH":
+                        guardian_subscription = sub
+                
+                # Aggiorna HostGPT subscription
+                if hostgpt_subscription:
+                    user.stripe_subscription_id = hostgpt_subscription.id
+                    user.subscription_status = 'active'
+                    user.subscription_end_date = datetime.utcfromtimestamp(hostgpt_subscription.current_period_end)
+                    user.free_trial_converted = True
+                    logger.info(f"User {user.id} HostGPT subscription activated: {hostgpt_subscription.id}")
+                
+                # Aggiorna Guardian subscription
+                if guardian_subscription:
+                    user.guardian_stripe_subscription_id = guardian_subscription.id
+                    user.guardian_subscription_status = 'active'
+                    user.guardian_subscription_end_date = datetime.utcfromtimestamp(guardian_subscription.current_period_end)
+                    logger.info(f"User {user.id} Guardian subscription activated: {guardian_subscription.id}")
+                
+                db.commit()
+                logger.info(f"User {user.id} combined subscription completed successfully")
+                
+            else:
+                # Gestisci checkout solo Guardian (comportamento esistente)
+                subscription = stripe.Subscription.retrieve(session['subscription'])
+                
+                # Aggiorna sempre il subscription_id con quello nuovo
+                user.guardian_stripe_subscription_id = session['subscription']
+                user.guardian_subscription_status = 'active'
+                user.guardian_subscription_end_date = datetime.utcfromtimestamp(subscription.current_period_end)
+                
+                # Reset messaggi solo se è una nuova sottoscrizione (non riattivazione)
+                # Nota: guardian_messages_used e guardian_messages_reset_date non esistono nel modello
+                
+                db.commit()
+                logger.info(f"User {user.id} Guardian subscription updated with new subscription_id: {session['subscription']}")
     
     elif event['type'] == 'customer.subscription.deleted':
         subscription = event['data']['object']
@@ -2350,8 +2477,6 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
             # Reset completo dei campi dell'abbonamento per permettere la creazione di un nuovo abbonamento
             user.guardian_stripe_subscription_id = None
             user.guardian_subscription_end_date = None
-            user.guardian_messages_used = 0
-            user.guardian_messages_reset_date = None
             db.commit()
             logger.info(f"User {user.id} Guardian subscription completely cancelled, all subscription fields reset")
     
@@ -2380,8 +2505,6 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
                 user.guardian_subscription_status = 'cancelled'
                 user.guardian_stripe_subscription_id = None
                 user.guardian_subscription_end_date = None
-                user.guardian_messages_used = 0
-                user.guardian_messages_reset_date = None
                 logger.info(f"WEBHOOK: User {user.id} Guardian subscription completely cancelled")
             
             db.commit()
@@ -2406,8 +2529,7 @@ async def confirm_guardian_subscription(
                 current_user.guardian_stripe_subscription_id = session['subscription']
                 current_user.guardian_subscription_status = 'active'
                 current_user.guardian_subscription_end_date = datetime.utcnow() + timedelta(days=30)
-                current_user.guardian_messages_used = 0
-                current_user.guardian_messages_reset_date = datetime.utcnow()
+                # Nota: guardian_messages_used e guardian_messages_reset_date non esistono nel modello
                 db.commit()
                 
                 # Invia email di attivazione abbonamento
@@ -2431,8 +2553,7 @@ async def confirm_guardian_subscription(
                     current_user.guardian_stripe_subscription_id = sub.id
                     current_user.guardian_subscription_status = 'active'
                     current_user.guardian_subscription_end_date = datetime.utcfromtimestamp(sub.current_period_end)
-                    current_user.guardian_messages_used = 0
-                    current_user.guardian_messages_reset_date = datetime.utcnow()
+                    # Nota: guardian_messages_used e guardian_messages_reset_date non esistono nel modello
                     db.commit()
                     
                     # Invia email di attivazione abbonamento (solo se non già inviata)

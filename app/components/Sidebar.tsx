@@ -98,11 +98,13 @@ export default function Sidebar({ currentPath, onLogout, isSidebarCollapsed: ext
                 <p className="text-sm font-semibold text-gray-700">{user?.full_name}</p>
                 <p className="text-xs text-gray-500">{user?.email}</p>
                 <p className={`text-xs mt-1 ${
+                  user?.is_free_trial_active ? 'text-green-600' : 
                   user?.subscription_status === 'active' ? 'text-green-600' : 
                   user?.subscription_status === 'cancelling' ? 'text-orange-600' : 
                   'text-red-600'
                 }`}>
-                  {user?.subscription_status === 'active' ? 'HostGPT Attivo' : 
+                  {user?.is_free_trial_active ? 'HostGPT Prova Gratuita' : 
+                   user?.subscription_status === 'active' ? 'HostGPT Attivo' : 
                    user?.subscription_status === 'cancelling' ? 'HostGPT In Annullamento' : 
                    'HostGPT Annullato'}
                 </p>

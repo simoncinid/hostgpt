@@ -3576,7 +3576,7 @@ export default function LandingPage() {
             exit={{ scale: 0.95, opacity: 0 }}
             className={`relative w-full max-w-4xl mx-auto ${demoIsDarkMode ? 'bg-gray-900' : 'bg-white'} shadow-2xl overflow-hidden rounded-3xl h-[90vh] max-h-[800px]`}
           >
-            {/* Header - FISSO */}
+            {/* Header - FISSO - Non sparisce mai */}
             <div className={`${demoIsDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'} shadow-sm flex-shrink-0 border-b transition-colors duration-300`}>
               <div className="max-w-4xl mx-auto px-2 py-4">
                 <div className="flex items-center justify-between">
@@ -3722,7 +3722,7 @@ export default function LandingPage() {
                 {/* Messages Area - FISSA */}
                 {(!demoShowWelcome || demoMessages.length > 1) && (
                   <>
-                    <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4" style={{ maxHeight: 'calc(100vh - 400px)', minHeight: '300px' }}>
+                    <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4" style={{ maxHeight: 'calc(100vh - 500px)', minHeight: '250px' }}>
                       {demoMessages.map((message, index) => (
                         <motion.div
                           key={index}
@@ -3780,7 +3780,7 @@ export default function LandingPage() {
                       <div ref={demoMessagesEndRef} />
                     </div>
 
-                    {/* Messaggi Suggeriti - SU UNA RIGA SOLA */}
+                    {/* Messaggi Suggeriti - SU UNA RIGA SOLA - Disabilitati durante il caricamento */}
                     <div className={`border-t p-2 transition-colors duration-300 ${
                       demoIsDarkMode ? 'border-gray-700' : 'border-gray-100'
                     }`}>
@@ -3791,8 +3791,13 @@ export default function LandingPage() {
                             initial={{ opacity: 0, scale: 0.9 }}
                             animate={{ opacity: 1, scale: 1 }}
                             transition={{ delay: index * 0.1 }}
-                            onClick={() => handleDemoSuggestedMessage(message)}
-                            className="px-3 py-2 md:px-4 md:py-2 bg-gradient-to-r from-primary/10 to-accent/10 text-primary border border-primary/20 rounded-full text-xs md:text-sm font-medium hover:from-primary/20 hover:to-accent/20 hover:border-primary/40 transition-all duration-200 hover:scale-105 active:scale-95 whitespace-nowrap flex-shrink-0"
+                            onClick={() => !isDemoLoading && handleDemoSuggestedMessage(message)}
+                            disabled={isDemoLoading}
+                            className={`px-3 py-2 md:px-4 md:py-2 rounded-full text-xs md:text-sm font-medium transition-all duration-200 hover:scale-105 active:scale-95 whitespace-nowrap flex-shrink-0 ${
+                              isDemoLoading 
+                                ? 'bg-gray-100 text-gray-400 border border-gray-200 cursor-not-allowed' 
+                                : 'bg-gradient-to-r from-primary/10 to-accent/10 text-primary border border-primary/20 hover:from-primary/20 hover:to-accent/20 hover:border-primary/40'
+                            }`}
                           >
                             {message}
                           </motion.button>
@@ -3831,20 +3836,7 @@ export default function LandingPage() {
                 )}
               </div>
 
-              {/* Footer - FISSO */}
-              <div className="text-center mt-2 flex-shrink-0">
-                <p className={`text-xs transition-colors duration-300 ${demoIsDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                  Powered by{' '}
-                  <a
-                    href="https://hostgpt.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-rose-500 hover:text-rose-600"
-                  >
-                    HostGPT
-                  </a>
-                </p>
-              </div>
+
             </div>
           </motion.div>
         </motion.div>

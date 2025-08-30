@@ -599,7 +599,7 @@ export default function ChatWidgetPage() {
                 <div ref={messagesEndRef} />
               </div>
 
-              {/* Messaggi Suggeriti - SU UNA RIGA SOLA */}
+              {/* Messaggi Suggeriti - SU UNA RIGA SOLA - Disabilitati durante il caricamento */}
               <div className={`border-t p-2 transition-colors duration-300 ${
                 isDarkMode ? 'border-gray-700' : 'border-gray-100'
               }`}>
@@ -610,8 +610,13 @@ export default function ChatWidgetPage() {
                       initial={{ opacity: 0, scale: 0.9 }}
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ delay: index * 0.1 }}
-                      onClick={() => handleSuggestedMessage(message)}
-                      className="px-3 py-2 md:px-4 md:py-2 bg-gradient-to-r from-primary/10 to-accent/10 text-primary border border-primary/20 rounded-full text-xs md:text-sm font-medium hover:from-primary/20 hover:to-accent/20 hover:border-primary/40 transition-all duration-200 hover:scale-105 active:scale-95 whitespace-nowrap flex-shrink-0"
+                      onClick={() => !isLoading && handleSuggestedMessage(message)}
+                      disabled={isLoading}
+                      className={`px-3 py-2 md:px-4 md:py-2 rounded-full text-xs md:text-sm font-medium transition-all duration-200 hover:scale-105 active:scale-95 whitespace-nowrap flex-shrink-0 ${
+                        isLoading 
+                          ? 'bg-gray-100 text-gray-400 border border-gray-200 cursor-not-allowed' 
+                          : 'bg-gradient-to-r from-primary/10 to-accent/10 text-primary border border-primary/20 hover:from-primary/20 hover:to-accent/20 hover:border-primary/40'
+                      }`}
                     >
                       {message}
                     </motion.button>
@@ -650,20 +655,7 @@ export default function ChatWidgetPage() {
           )}
         </div>
 
-        {/* Footer - FISSO */}
-        <div className="text-center mt-2 flex-shrink-0">
-          <p className={`text-xs transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-            Powered by{' '}
-            <a
-              href="https://hostgpt.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-rose-500 hover:text-rose-600"
-            >
-              HostGPT
-            </a>
-          </p>
-        </div>
+
       </div>
     </div>
   )

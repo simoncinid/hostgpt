@@ -157,13 +157,19 @@ function GuardianContent() {
         return
       }
       
+      // Se è un checkout combinato, mostra messaggio informativo
+      if (response.data.is_combined) {
+        toast.success('Reindirizzamento al checkout per HostGPT + Guardian...')
+      }
+      
       // Altrimenti, reindirizza al checkout
       if (response.data.checkout_url) {
         window.location.href = response.data.checkout_url
       }
     } catch (error: any) {
       console.error('Error subscribing to guardian:', error)
-      toast.error(error.response?.data?.detail || 'Errore durante la sottoscrizione')
+      const errorMessage = error.response?.data?.detail || 'Errore durante la sottoscrizione'
+      toast.error(errorMessage)
     } finally {
       setIsCheckoutLoading(false)
     }
