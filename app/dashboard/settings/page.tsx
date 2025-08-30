@@ -50,8 +50,15 @@ export default function SettingsPage() {
         return
       }
       
-      // Altrimenti reindirizza al checkout
-      window.location.href = (res.data as any).checkout_url
+      // Se abbiamo un client_secret, reindirizza al checkout personalizzato
+      if (res.data.client_secret) {
+        router.push('/checkout')
+      } else if (res.data.checkout_url) {
+        // Fallback per checkout Stripe tradizionale
+        window.location.href = res.data.checkout_url
+      } else {
+        throw new Error('URL di checkout non ricevuto')
+      }
     } catch (e: any) {
       toast.error(e.response?.data?.detail || 'Errore nell\'avvio del checkout')
     } finally {

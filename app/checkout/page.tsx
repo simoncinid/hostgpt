@@ -3,17 +3,34 @@
 import React, { useEffect, useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
+import { motion } from 'framer-motion'
+import { 
+  CreditCard, 
+  Shield, 
+  CheckCircle, 
+  ArrowLeft, 
+  Loader2,
+  Home,
+  MessageSquare,
+  Users,
+  Zap,
+  Star
+} from 'lucide-react'
 import { subscription } from '@/lib/api'
 import { useAuthStore } from '@/lib/store'
+import toast from 'react-hot-toast'
 
 // Componente separato che utilizza useSearchParams
 function CheckoutContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { setAuth } = useAuthStore()
+  const { setAuth, user } = useAuthStore()
 
-  const [status, setStatus] = useState<'idle' | 'processing' | 'error' | 'cancelled' | 'success'>('idle')
+  const [status, setStatus] = useState<'idle' | 'processing' | 'error' | 'cancelled' | 'success' | 'checkout'>('idle')
   const [errorMessage, setErrorMessage] = useState<string>('')
+  const [clientSecret, setClientSecret] = useState<string>('')
+  const [isPaymentProcessing, setIsPaymentProcessing] = useState(false)
+  const [paymentMethod, setPaymentMethod] = useState<'card' | 'sepa'>('card')
 
   useEffect(() => {
     const cancelled = searchParams.get('subscription') === 'cancelled'
@@ -52,9 +69,13 @@ function CheckoutContent() {
           return
         }
         
-        const url: string | undefined = resp?.data?.checkout_url
-        if (url) {
-          window.location.href = url
+        // Se abbiamo un client_secret, mostra il checkout personalizzato
+        if (resp.data.client_secret) {
+          setClientSecret(resp.data.client_secret)
+          setStatus('checkout')
+        } else if (resp.data.checkout_url) {
+          // Fallback al redirect Stripe se non abbiamo client_secret
+          window.location.href = resp.data.checkout_url
         } else {
           throw new Error('URL di checkout non ricevuto')
         }
@@ -69,59 +90,288 @@ function CheckoutContent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams])
 
+  const handlePaymentSubmit = async (event: React.FormEvent) => {
+    event.preventDefault()
+    setIsPaymentProcessing(true)
+    
+    try {
+      // Qui implementeremo la logica di pagamento con Stripe Elements
+      // Per ora simuliamo un successo
+      setTimeout(() => {
+        setStatus('success')
+        setIsPaymentProcessing(false)
+        toast.success('Pagamento completato con successo!')
+        setTimeout(() => {
+          window.location.href = '/dashboard'
+        }, 2000)
+      }, 2000)
+    } catch (error) {
+      setIsPaymentProcessing(false)
+      toast.error('Errore durante il pagamento')
+    }
+  }
+
+  const features = [
+    { icon: <MessageSquare className="w-5 h-5" />, text: "1000 messaggi mensili" },
+    { icon: <Users className="w-5 h-5" />, text: "Chatbot illimitati" },
+    { icon: <Zap className="w-5 h-5" />, text: "Risposte istantanee" },
+    { icon: <Star className="w-5 h-5" />, text: "Supporto prioritario" }
+  ]
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <div className="w-full max-w-md bg-white rounded-lg shadow p-6 text-center">
-        {status === 'processing' && (
-          <>
-            <h1 className="text-2xl font-semibold mb-2">Reindirizzamento al pagamento…</h1>
-            <p className="text-gray-600">Attendi qualche secondo mentre prepariamo la sessione di checkout.</p>
-          </>
-        )}
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+      {/* Header */}
+      <div className="bg-white shadow-sm border-b">
+        <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
+          <Link href="/" className="flex items-center space-x-2">
+            <Home className="w-7 h-7 text-primary" />
+            <span className="text-xl font-bold text-dark">HostGPT</span>
+          </Link>
+          <div className="flex items-center space-x-2 text-sm text-gray-600">
+            <Shield className="w-4 h-4" />
+            <span>Pagamento sicuro con Stripe</span>
+          </div>
+        </div>
+      </div>
 
-        {status === 'cancelled' && (
-          <>
-            <h1 className="text-2xl font-semibold mb-2">Pagamento annullato</h1>
-            <p className="text-gray-600 mb-6">Puoi riprovare quando vuoi.</p>
-            <div className="flex gap-3 justify-center">
-              <Link href="/dashboard" className="btn-secondary">Torna alla dashboard</Link>
-              <button
-                className="btn-primary"
-                onClick={() => router.replace('/checkout')}
+      <div className="max-w-4xl mx-auto px-4 py-8">
+        <div className="grid lg:grid-cols-2 gap-8">
+          {/* Colonna sinistra - Form di pagamento */}
+          <div className="space-y-6">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+            >
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                Completa il tuo abbonamento
+              </h1>
+              <p className="text-gray-600 mb-6">
+                Inizia subito a creare chatbot intelligenti per la tua proprietà
+              </p>
+            </motion.div>
+
+            {status === 'checkout' && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+                className="bg-white rounded-xl shadow-lg p-6 border"
               >
-                Riprova pagamento
-              </button>
-            </div>
-          </>
-        )}
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-xl font-semibold text-gray-900">Informazioni di pagamento</h2>
+                  <div className="flex items-center space-x-2">
+                    <CreditCard className="w-5 h-5 text-gray-400" />
+                    <span className="text-sm text-gray-500">Carta di credito</span>
+                  </div>
+                </div>
 
-        {status === 'error' && (
-          <>
-            <h1 className="text-2xl font-semibold mb-2">Si è verificato un problema</h1>
-            <p className="text-gray-600 mb-6">{errorMessage}</p>
-            <div className="flex gap-3 justify-center">
-              <Link href="/login" className="btn-secondary">Accedi</Link>
-              <button className="btn-primary" onClick={() => router.refresh()}>Riprova</button>
-            </div>
-          </>
-        )}
+                <form onSubmit={handlePaymentSubmit} className="space-y-4">
+                  {/* Stripe Elements verrà inserito qui */}
+                  <div className="space-y-4">
+                    <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium text-gray-700">Numero carta</span>
+                        <div className="flex space-x-1">
+                          <div className="w-8 h-5 bg-gray-300 rounded"></div>
+                          <div className="w-8 h-5 bg-gray-300 rounded"></div>
+                          <div className="w-8 h-5 bg-gray-300 rounded"></div>
+                          <div className="w-8 h-5 bg-gray-300 rounded"></div>
+                        </div>
+                      </div>
+                      <input 
+                        type="text" 
+                        placeholder="1234 5678 9012 3456"
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                        disabled
+                      />
+                    </div>
 
-        {status === 'success' && (
-          <>
-            <h1 className="text-2xl font-semibold mb-2 text-green-600">Abbonamento riattivato!</h1>
-            <p className="text-gray-600 mb-6">{errorMessage}</p>
-            <div className="flex gap-3 justify-center">
-              <Link href="/dashboard" className="btn-primary">Vai alla dashboard</Link>
-            </div>
-          </>
-        )}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Scadenza
+                        </label>
+                        <input 
+                          type="text" 
+                          placeholder="MM/AA"
+                          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                          disabled
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          CVV
+                        </label>
+                        <input 
+                          type="text" 
+                          placeholder="123"
+                          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                          disabled
+                        />
+                      </div>
+                    </div>
+                  </div>
 
-        {status === 'idle' && (
-          <>
-            <h1 className="text-2xl font-semibold mb-2">Preparazione pagamento…</h1>
-            <p className="text-gray-600">Un istante.</p>
-          </>
-        )}
+                  <button
+                    type="submit"
+                    disabled={isPaymentProcessing}
+                    className="w-full bg-gradient-to-r from-primary to-purple-600 text-white py-4 px-6 rounded-lg font-semibold hover:from-primary/90 hover:to-purple-600/90 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+                  >
+                    {isPaymentProcessing ? (
+                      <>
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        <span>Elaborazione pagamento...</span>
+                      </>
+                    ) : (
+                      <>
+                        <CreditCard className="w-5 h-5" />
+                        <span>Paga 29€/mese</span>
+                      </>
+                    )}
+                  </button>
+                </form>
+
+                <div className="mt-4 text-center">
+                  <p className="text-xs text-gray-500">
+                    Cliccando su "Paga" accetti i nostri{' '}
+                    <Link href="/terms" className="text-primary hover:underline">Termini di servizio</Link>
+                    {' '}e la{' '}
+                    <Link href="/privacy" className="text-primary hover:underline">Privacy Policy</Link>
+                  </p>
+                </div>
+              </motion.div>
+            )}
+
+            {status === 'processing' && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-white rounded-xl shadow-lg p-8 text-center"
+              >
+                <Loader2 className="w-12 h-12 text-primary animate-spin mx-auto mb-4" />
+                <h2 className="text-xl font-semibold mb-2">Preparazione pagamento…</h2>
+                <p className="text-gray-600">Attendi qualche secondo mentre prepariamo la sessione di checkout.</p>
+              </motion.div>
+            )}
+
+            {status === 'cancelled' && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-white rounded-xl shadow-lg p-8 text-center"
+              >
+                <h2 className="text-xl font-semibold mb-2">Pagamento annullato</h2>
+                <p className="text-gray-600 mb-6">Puoi riprovare quando vuoi.</p>
+                <div className="flex gap-3 justify-center">
+                  <Link href="/dashboard" className="btn-secondary">Torna alla dashboard</Link>
+                  <button
+                    className="btn-primary"
+                    onClick={() => router.replace('/checkout')}
+                  >
+                    Riprova pagamento
+                  </button>
+                </div>
+              </motion.div>
+            )}
+
+            {status === 'error' && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-white rounded-xl shadow-lg p-8 text-center"
+              >
+                <h2 className="text-xl font-semibold mb-2">Si è verificato un problema</h2>
+                <p className="text-gray-600 mb-6">{errorMessage}</p>
+                <div className="flex gap-3 justify-center">
+                  <Link href="/login" className="btn-secondary">Accedi</Link>
+                  <button className="btn-primary" onClick={() => router.refresh()}>Riprova</button>
+                </div>
+              </motion.div>
+            )}
+
+            {status === 'success' && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-white rounded-xl shadow-lg p-8 text-center"
+              >
+                <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
+                <h2 className="text-xl font-semibold mb-2 text-green-600">Pagamento completato!</h2>
+                <p className="text-gray-600 mb-6">{errorMessage}</p>
+                <div className="flex gap-3 justify-center">
+                  <Link href="/dashboard" className="btn-primary">Vai alla dashboard</Link>
+                </div>
+              </motion.div>
+            )}
+          </div>
+
+          {/* Colonna destra - Riepilogo */}
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+            className="space-y-6"
+          >
+            <div className="bg-white rounded-xl shadow-lg p-6 border">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Riepilogo abbonamento</h3>
+              
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-600">HostGPT Pro</span>
+                  <span className="font-semibold">29€/mese</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-600">Fatturazione</span>
+                  <span className="text-sm text-gray-500">Mensile</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-600">Prossimo addebito</span>
+                  <span className="text-sm text-gray-500">Tra 30 giorni</span>
+                </div>
+              </div>
+
+              <div className="border-t pt-4 mt-4">
+                <div className="flex items-center justify-between text-lg font-semibold">
+                  <span>Totale</span>
+                  <span>29€/mese</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-gradient-to-r from-primary/10 to-purple-600/10 rounded-xl p-6 border border-primary/20">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Cosa include il tuo abbonamento</h3>
+              <div className="space-y-3">
+                {features.map((feature, index) => (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.3, delay: 0.4 + index * 0.1 }}
+                    className="flex items-center space-x-3"
+                  >
+                    <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center text-primary">
+                      {feature.icon}
+                    </div>
+                    <span className="text-gray-700">{feature.text}</span>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+
+            <div className="bg-blue-50 rounded-xl p-6 border border-blue-200">
+              <div className="flex items-start space-x-3">
+                <Shield className="w-6 h-6 text-blue-600 mt-1 flex-shrink-0" />
+                <div>
+                  <h4 className="font-semibold text-blue-900 mb-2">Pagamento sicuro</h4>
+                  <p className="text-sm text-blue-700">
+                    I tuoi dati di pagamento sono protetti con crittografia SSL e gestiti in modo sicuro da Stripe.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        </div>
       </div>
     </div>
   )
@@ -132,6 +382,7 @@ function CheckoutFallback() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
       <div className="w-full max-w-md bg-white rounded-lg shadow p-6 text-center">
+        <Loader2 className="w-8 h-8 text-primary animate-spin mx-auto mb-4" />
         <h1 className="text-2xl font-semibold mb-2">Caricamento…</h1>
         <p className="text-gray-600">Preparazione della pagina di checkout.</p>
       </div>

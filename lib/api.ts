@@ -59,6 +59,8 @@ export const subscription = {
     api.post('/subscription/create-checkout'),
   confirm: (session_id?: string) =>
     api.post('/subscription/confirm', { session_id }),
+  confirmPayment: (payment_intent_id: string) =>
+    api.post('/subscription/confirm-payment', { payment_intent_id }),
   cancel: () =>
     api.post('/subscription/cancel'),
 }

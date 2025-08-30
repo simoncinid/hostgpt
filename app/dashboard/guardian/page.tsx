@@ -162,9 +162,14 @@ function GuardianContent() {
         toast.success('Reindirizzamento al checkout per HostGPT + Guardian...')
       }
       
-      // Altrimenti, reindirizza al checkout
-      if (response.data.checkout_url) {
+      // Se abbiamo un client_secret, reindirizza al checkout personalizzato
+      if (response.data.client_secret) {
+        router.push('/checkout')
+      } else if (response.data.checkout_url) {
+        // Fallback per checkout Stripe tradizionale
         window.location.href = response.data.checkout_url
+      } else {
+        throw new Error('URL di checkout non ricevuto')
       }
     } catch (error: any) {
       console.error('Error subscribing to guardian:', error)
