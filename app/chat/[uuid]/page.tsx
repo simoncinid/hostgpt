@@ -56,9 +56,9 @@ export default function ChatWidgetPage() {
     IT: {
       assistant: 'Assistente Virtuale',
       suggestedMessages: [
-        "Voglio contattare l'host. Come faccio?",
-        "Vorrei visitare la zona, che attrazioni ci sono e come posso raggiungerle?",
-        "Quali sono gli orari di check-in e check-out?"
+        "Contatta Host",
+        "Attrazioni", 
+        "Check-in/Check-out"
       ],
       placeholder: "Scrivi un messaggio...",
       welcome: "Benvenuto!",
@@ -84,9 +84,9 @@ export default function ChatWidgetPage() {
     ENG: {
       assistant: 'Virtual Assistant',
       suggestedMessages: [
-        "I want to contact the host. How can I do it?",
-        "I'd like to visit the area, what attractions are there and how can I reach them?",
-        "What are the check-in and check-out times?"
+        "Contact Host",
+        "Attractions",
+        "Check-in/Check-out"
       ],
       placeholder: "Write a message...",
       welcome: "Welcome!",
@@ -113,9 +113,62 @@ export default function ChatWidgetPage() {
 
   const currentTexts = texts[language]
 
-  const handleSuggestedMessage = (message: string) => {
-    setInputMessage(message)
-    inputRef.current?.focus()
+  // Messaggi completi per i suggerimenti
+  const fullMessages = {
+    IT: {
+      "Contatta Host": "Voglio contattare l'host. Come faccio?",
+      "Attrazioni": "Vorrei visitare la zona, che attrazioni ci sono e come posso raggiungerle?",
+      "Check-in/Check-out": "Quali sono gli orari di check-in e check-out?"
+    },
+    ENG: {
+      "Contact Host": "I want to contact the host. How can I do it?",
+      "Attractions": "I'd like to visit the area, what attractions are there and how can I reach them?",
+      "Check-in/Check-out": "What are the check-in and check-out times?"
+    }
+  }
+
+  const handleSuggestedMessage = async (suggestionKey: string) => {
+    const fullMessage = fullMessages[language][suggestionKey as keyof typeof fullMessages[typeof language]]
+    
+    // Invia direttamente il messaggio
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      role: 'user',
+      content: fullMessage,
+      timestamp: new Date()
+    }
+
+    setMessages(prev => [...prev, userMessage])
+    setIsLoading(true)
+
+    try {
+      const response = await chat.sendMessage(uuid, {
+        content: fullMessage,
+        thread_id: threadId,
+        guest_name: guestName || undefined
+      })
+
+      if (!threadId) {
+        setThreadId(response.data.thread_id)
+      }
+
+      const assistantMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: response.data.message,
+        timestamp: new Date()
+      }
+
+      setMessages(prev => [...prev, assistantMessage])
+    } catch (error: any) {
+      if (error.response?.status === 403) {
+        setSubscriptionCancelled(true)
+      } else {
+        toast.error(currentTexts.error)
+      }
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const toggleLanguage = () => {
@@ -362,7 +415,7 @@ export default function ChatWidgetPage() {
       )}
 
       {/* Main Chat Area - FISSA */}
-      <div className="flex-1 flex flex-col max-w-4xl mx-auto w-full px-4 py-4 md:py-6">
+      <div className="flex-1 flex flex-col max-w-4xl mx-auto w-full px-4 py-4 md:py-6 overflow-hidden">
         <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl shadow-xl overflow-hidden flex flex-col h-full transition-colors duration-300`}>
           {/* Welcome Screen */}
           {showWelcome && messages.length <= 1 && (
@@ -415,22 +468,22 @@ export default function ChatWidgetPage() {
                     <div className={`flex items-start max-w-[85%] md:max-w-[70%] ${
                       message.role === 'user' ? 'flex-row-reverse' : ''
                     }`}>
-                                             <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                         message.role === 'user' 
-                           ? 'bg-gradient-to-r from-rose-500 to-pink-600 text-white ml-3' 
-                           : 'bg-gray-200 text-gray-600 mr-3'
-                       }`}>
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                        message.role === 'user' 
+                          ? 'bg-gradient-to-r from-rose-500 to-pink-600 text-white ml-3' 
+                          : 'bg-gray-200 text-gray-600 mr-3'
+                      }`}>
                         {message.role === 'user' ? (
                           <User className="w-4 h-4" />
                         ) : (
                           <Bot className="w-4 h-4" />
                         )}
                       </div>
-                                             <div className={`rounded-2xl px-4 py-3 ${
-                         message.role === 'user'
-                           ? 'bg-gradient-to-r from-rose-500 to-pink-600 text-white rounded-br-sm'
-                           : 'bg-gray-100 text-gray-900 rounded-bl-sm'
-                       }`}>
+                      <div className={`rounded-2xl px-4 py-3 ${
+                        message.role === 'user'
+                          ? 'bg-gradient-to-r from-rose-500 to-pink-600 text-white rounded-br-sm'
+                          : 'bg-gray-100 text-gray-900 rounded-bl-sm'
+                      }`}>
                         <p className="whitespace-pre-wrap">{message.content}</p>
                         <p className={`text-xs mt-1 ${
                           message.role === 'user' ? 'text-white/70' : 'text-gray-400'
@@ -461,11 +514,11 @@ export default function ChatWidgetPage() {
                 <div ref={messagesEndRef} />
               </div>
 
-              {/* Messaggi Suggeriti */}
+              {/* Messaggi Suggeriti - SU UNA RIGA SOLA */}
               <div className={`border-t p-3 md:p-4 transition-colors duration-300 ${
                 isDarkMode ? 'border-gray-700' : 'border-gray-100'
               }`}>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex justify-center gap-2 md:gap-3 overflow-x-auto">
                   {currentTexts.suggestedMessages.map((message: string, index: number) => (
                     <motion.button
                       key={index}
@@ -473,7 +526,7 @@ export default function ChatWidgetPage() {
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ delay: index * 0.1 }}
                       onClick={() => handleSuggestedMessage(message)}
-                      className="px-4 py-2 bg-gradient-to-r from-primary/10 to-accent/10 text-primary border border-primary/20 rounded-full text-sm font-medium hover:from-primary/20 hover:to-accent/20 hover:border-primary/40 transition-all duration-200 hover:scale-105 active:scale-95"
+                      className="px-3 py-2 md:px-4 md:py-2 bg-gradient-to-r from-primary/10 to-accent/10 text-primary border border-primary/20 rounded-full text-xs md:text-sm font-medium hover:from-primary/20 hover:to-accent/20 hover:border-primary/40 transition-all duration-200 hover:scale-105 active:scale-95 whitespace-nowrap flex-shrink-0"
                     >
                       {message}
                     </motion.button>
