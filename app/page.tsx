@@ -38,7 +38,14 @@ import {
   Smartphone as PhoneIcon,
   QrCode,
   Share2,
-  Headphones
+  Headphones,
+  RefreshCw,
+  Sun,
+  Moon,
+  Info,
+  User,
+  Bot,
+  Loader2
 } from 'lucide-react'
 
 export default function LandingPage() {
