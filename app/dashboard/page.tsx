@@ -60,7 +60,7 @@ function DashboardContent() {
             setUser(updatedMe.data)
           } catch {}
         }
-        if (!['active', 'cancelling'].includes(status)) {
+        if (!['active', 'cancelling', 'free_trial'].includes(status)) {
           router.replace('/checkout')
           return
         }
@@ -218,6 +218,36 @@ function DashboardContent() {
             <p className="text-xs md:text-sm text-green-600 mt-1">Sempre online</p>
           </motion.div>
         </div>
+
+        {/* Free Trial Banner */}
+        {user?.subscription_status === 'free_trial' && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-2xl p-4 md:p-6 mb-6"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                  <span className="text-green-600 text-lg">🎉</span>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-green-800">Periodo di prova gratuito attivo</h3>
+                  <p className="text-green-700 text-sm">
+                    Hai {user.messages_remaining} messaggi rimanenti su {user.messages_limit} • 
+                    Scade il {user.free_trial_end_date ? new Date(user.free_trial_end_date).toLocaleDateString('it-IT') : '14 giorni'}
+                  </p>
+                </div>
+              </div>
+              <Link
+                href="/checkout"
+                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+              >
+                Attiva Abbonamento
+              </Link>
+            </div>
+          </motion.div>
+        )}
 
         {/* Chatbots List */}
         <div className="bg-white rounded-2xl shadow-lg p-4 md:p-6 mb-8">

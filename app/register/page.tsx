@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { Home, Mail, Lock, User, Phone, ArrowRight, Eye, EyeOff, Check } from 'lucide-react'
@@ -21,10 +21,14 @@ interface RegisterForm {
 
 export default function RegisterPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const { setAuth } = useAuthStore()
+  
+  // Controlla se l'utente viene dalla landing page per il free trial
+  const isFreeTrial = searchParams.get('free_trial') === 'true'
   
   const { register, handleSubmit, watch, formState: { errors } } = useForm<RegisterForm>()
   const password = watch('password')
@@ -36,12 +40,16 @@ export default function RegisterPage() {
         email: data.email,
         password: data.password,
         full_name: data.full_name,
-        phone: data.phone
+        phone: data.phone,
+        wants_free_trial: isFreeTrial
       })
       
-      // Dopo la registrazione, mandiamo l'utente alla pagina che spiega di verificare l'email
-      toast.success('Registrazione completata! Controlla la tua email per il link di verifica.')
-      router.push('/login?registered=1')
+             // Dopo la registrazione, mandiamo l'utente alla pagina che spiega di verificare l'email
+       const message = isFreeTrial 
+         ? 'Registrazione completata! Controlla la tua email per il link di verifica e inizia la prova gratuita.'
+         : 'Registrazione completata! Controlla la tua email per il link di verifica e completa il pagamento.'
+       toast.success(message)
+       router.push('/login?registered=1')
     } catch (error: any) {
       toast.error(error.response?.data?.detail || 'Errore durante la registrazione')
     } finally {
@@ -71,10 +79,26 @@ export default function RegisterPage() {
         className="w-full max-w-md md:max-w-md"
       >
         <div className="bg-white rounded-2xl shadow-xl p-6 md:p-8 md:min-h-fit min-h-[calc(100vh-2rem)] flex flex-col justify-center">
-          <div className="text-center mb-6 md:mb-8">
-            <h1 className="text-2xl md:text-3xl font-bold text-dark mb-2">Crea il tuo Account</h1>
-            <p className="text-gray-600 text-sm md:text-base">Inizia la prova gratuita di 14 giorni</p>
-          </div>
+                     <div className="text-center mb-6 md:mb-8">
+             <h1 className="text-2xl md:text-3xl font-bold text-dark mb-2">Crea il tuo Account</h1>
+             <p className="text-gray-600 text-sm md:text-base">
+               {isFreeTrial ? 'Inizia la prova gratuita di 14 giorni' : 'Inizia subito con HostGPT'}
+             </p>
+             {isFreeTrial && (
+               <div className="mt-2 p-3 bg-green-50 border border-green-200 rounded-lg">
+                 <p className="text-green-700 text-sm font-medium">
+                   🎉 Hai selezionato la prova gratuita! Dopo la registrazione potrai iniziare subito a creare il tuo chatbot.
+                 </p>
+               </div>
+             )}
+             {!isFreeTrial && (
+               <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                 <p className="text-blue-700 text-sm font-medium">
+                   💳 Dopo la registrazione completerai il pagamento per attivare il tuo abbonamento.
+                 </p>
+               </div>
+             )}
+           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 md:space-y-5 flex-1 flex flex-col justify-center">
             {/* Nome Completo */}

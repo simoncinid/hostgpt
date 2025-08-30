@@ -59,6 +59,13 @@ export const subscription = {
     api.post('/subscription/cancel'),
 }
 
+export const freeTrial = {
+  start: () =>
+    api.post('/free-trial/start'),
+  getStatus: () =>
+    api.get('/free-trial/status'),
+}
+
 export const chatbots = {
   create: (data: any) =>
     api.post('/chatbots/create', data),

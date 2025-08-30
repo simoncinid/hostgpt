@@ -200,50 +200,205 @@ export default function LandingPage() {
   // Stati per il thread della demo
   const [demoThreadId, setDemoThreadId] = useState<string | null>(null)
 
-  // Gestione chat demo popup
-  const handleDemoChat = async (message: string) => {
-    if (!message.trim() || isDemoLoading) return
+  // Demo Chat State
+  const [demoMessages, setDemoMessages] = useState<Array<{role: 'user' | 'assistant', content: string, timestamp: Date}>>([])
+  const [demoInput, setDemoInput] = useState('')
+  const [isDemoLoading, setIsDemoLoading] = useState(false)
+  const [demoThreadId, setDemoThreadId] = useState<string | null>(null)
+  const [demoGuestName, setDemoGuestName] = useState('')
+  const [demoShowWelcome, setDemoShowWelcome] = useState(true)
+  const [demoShowInfo, setDemoShowInfo] = useState(false)
+  const [demoLanguage, setDemoLanguage] = useState<'IT' | 'ENG'>('IT')
+  const [demoIsDarkMode, setDemoIsDarkMode] = useState(false)
+  
+  const demoMessagesEndRef = useRef<HTMLDivElement>(null)
+  const demoInputRef = useRef<HTMLInputElement>(null)
 
+  // Testi multilingua per demo
+  const demoTexts = {
+    IT: {
+      assistant: 'Assistente Virtuale',
+      suggestedMessages: [
+        "Contatta Host",
+        "Attrazioni", 
+        "Check-in/Check-out"
+      ],
+      placeholder: "Scrivi un messaggio...",
+      welcome: "Benvenuto!",
+      welcomeSubtitle: "Sono qui per aiutarti con qualsiasi domanda sulla casa e sulla zona. Come posso esserti utile?",
+      startChat: "Inizia la Chat",
+      namePlaceholder: "Il tuo nome (opzionale)",
+      writing: "Sto scrivendo...",
+      howCanIHelp: "Come posso aiutarti:",
+      helpItems: [
+        "Informazioni sulla casa e i servizi",
+        "Orari di check-in e check-out", 
+        "Consigli su ristoranti e attrazioni",
+        "Informazioni sui trasporti",
+        "Contatti di emergenza"
+      ]
+    },
+    ENG: {
+      assistant: 'Virtual Assistant',
+      suggestedMessages: [
+        "Contact Host",
+        "Attractions",
+        "Check-in/Check-out"
+      ],
+      placeholder: "Write a message...",
+      welcome: "Welcome!",
+      welcomeSubtitle: "I'm here to help you with any questions about the house and the area. How can I be useful?",
+      startChat: "Start Chat",
+      namePlaceholder: "Your name (optional)",
+      writing: "I'm writing...",
+      howCanIHelp: "How can I help you:",
+      helpItems: [
+        "Information about the house and services",
+        "Check-in and check-out times",
+        "Restaurant and attraction recommendations", 
+        "Transportation information",
+        "Emergency contacts"
+      ]
+    }
+  }
+
+  const currentDemoTexts = demoTexts[demoLanguage]
+
+  // Messaggi completi per i suggerimenti demo
+  const fullDemoMessages = {
+    IT: {
+      "Contatta Host": "Voglio contattare l'host. Come faccio?",
+      "Attrazioni": "Vorrei visitare la zona, che attrazioni ci sono e come posso raggiungerle?",
+      "Check-in/Check-out": "Quali sono gli orari di check-in e check-out?"
+    },
+    ENG: {
+      "Contact Host": "I want to contact the host. How can I do it?",
+      "Attractions": "I'd like to visit the area, what attractions are there and how can I reach them?",
+      "Check-in/Check-out": "What are the check-in and check-out times?"
+    }
+  }
+
+  const handleDemoSuggestedMessage = async (suggestionKey: string) => {
+    const fullMessage = fullDemoMessages[demoLanguage][suggestionKey as keyof typeof fullDemoMessages[typeof demoLanguage]]
+    
+    const userMessage = {
+      role: 'user' as const,
+      content: fullMessage,
+      timestamp: new Date()
+    }
+
+    setDemoMessages(prev => [...prev, userMessage])
     setIsDemoLoading(true)
-    setDemoMessages(prev => [...prev, { role: 'user', text: message }])
-    setDemoInput('')
 
     try {
-      console.log('🚀 Invio messaggio demo:', { message, thread_id: demoThreadId })
-      
       const response = await api.post('/demochat', {
-        content: message,
+        content: fullMessage,
         thread_id: demoThreadId
       })
 
-      console.log('✅ Dati ricevuti:', response.data)
-      const data = response.data
-      
-      // Salva il thread_id per i messaggi successivi
-      if (!demoThreadId && data.thread_id) {
-        setDemoThreadId(data.thread_id)
+      if (!demoThreadId) {
+        setDemoThreadId(response.data.thread_id)
       }
-      
-      setDemoMessages(prev => [...prev, { role: 'assistant', text: data.message }])
+
+      const assistantMessage = {
+        role: 'assistant' as const,
+        content: response.data.message,
+        timestamp: new Date()
+      }
+
+      setDemoMessages(prev => [...prev, assistantMessage])
     } catch (error) {
       console.error('Errore nella chat demo:', error)
       setDemoMessages(prev => [...prev, { 
         role: 'assistant', 
-        text: 'Mi dispiace, si è verificato un errore. Riprova più tardi.' 
+        content: 'Mi dispiace, si è verificato un errore. Riprova più tardi.',
+        timestamp: new Date()
       }])
     } finally {
       setIsDemoLoading(false)
     }
   }
 
+  const handleDemoSendMessage = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    if (!demoInput.trim()) return
+
+    const userMessage = {
+      role: 'user' as const,
+      content: demoInput,
+      timestamp: new Date()
+    }
+
+    setDemoMessages(prev => [...prev, userMessage])
+    setDemoInput('')
+    setIsDemoLoading(true)
+
+    try {
+      const response = await api.post('/demochat', {
+        content: demoInput,
+        thread_id: demoThreadId
+      })
+
+      if (!demoThreadId) {
+        setDemoThreadId(response.data.thread_id)
+      }
+
+      const assistantMessage = {
+        role: 'assistant' as const,
+        content: response.data.message,
+        timestamp: new Date()
+      }
+
+      setDemoMessages(prev => [...prev, assistantMessage])
+    } catch (error) {
+      console.error('Errore nella chat demo:', error)
+      setDemoMessages(prev => [...prev, { 
+        role: 'assistant', 
+        content: 'Mi dispiace, si è verificato un errore. Riprova più tardi.',
+        timestamp: new Date()
+      }])
+    } finally {
+      setIsDemoLoading(false)
+    }
+  }
+
+  const handleDemoStartChat = () => {
+    setDemoShowWelcome(false)
+    setTimeout(() => demoInputRef.current?.focus(), 100)
+  }
+
+  const handleDemoNewConversation = () => {
+    setDemoMessages([])
+    setDemoThreadId(null)
+    setDemoInput('')
+    setDemoShowWelcome(true)
+  }
+
+  const toggleDemoLanguage = () => {
+    setDemoLanguage(demoLanguage === 'IT' ? 'ENG' : 'IT')
+  }
+
+  const toggleDemoDarkMode = () => {
+    setDemoIsDarkMode(!demoIsDarkMode)
+  }
+
+  const scrollDemoToBottom = () => {
+    demoMessagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }
+
+  useEffect(() => {
+    scrollDemoToBottom()
+  }, [demoMessages])
+
   const openDemoPopup = () => {
     setIsDemoPopupOpen(true)
-    setDemoMessages([
-      { 
-        role: 'assistant', 
-        text: 'Ciao! Sono l\'assistente AI di Casa Bella Vista. Come posso aiutarti oggi?' 
-      }
-    ])
+    setDemoMessages([{
+      role: 'assistant',
+      content: 'Ciao! Sono l\'assistente AI di Casa Bella Vista. Come posso aiutarti oggi?',
+      timestamp: new Date()
+    }])
+    setDemoShowWelcome(true)
   }
 
   // Intersection Observer per le animazioni "Come funziona"
@@ -350,12 +505,14 @@ export default function LandingPage() {
       period: "/mese",
       features: [
         "1 Chatbot personalizzato",
-        "Conversazioni illimitate",
+        "1000 messaggi/mese",
         "Assistenza 24/7",
-        "Statistiche essenziali",
-        "QR Code e link di condivisione"
+        "Statistiche avanzate",
+        "QR Code e link di condivisione",
+        "Accesso a Guardian (9€/mese)"
       ],
-      highlighted: true
+      highlighted: true,
+      hasFreeTrial: true
     }
   ]
 
@@ -764,6 +921,42 @@ export default function LandingPage() {
                   </motion.div>
                 ))}
                 
+                {/* Bottone Free Trial verde */}
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.5, delay: 0.7 }}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="ml-4"
+                >
+                  <div className="relative group">
+                    <motion.div
+                      className="absolute -inset-1 bg-gradient-to-r from-green-400 to-emerald-500 rounded-2xl blur opacity-0 group-hover:opacity-40 transition-opacity duration-300"
+                      whileHover={{ scale: 1.1 }}
+                    />
+                    <Link
+                      href="/register?free_trial=true"
+                      className="relative inline-flex items-center gap-2 px-6 py-3 text-white font-bold bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl shadow-lg transition-all duration-300 group-hover:shadow-xl overflow-hidden"
+                    >
+                      {/* Effetto shimmer verde */}
+                      <motion.div
+                        className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12"
+                        animate={{
+                          x: ['-100%', '100%'],
+                        }}
+                        transition={{
+                          duration: 2,
+                          repeat: Infinity,
+                          repeatDelay: 3,
+                          ease: "easeInOut",
+                        }}
+                      />
+                      <span className="relative z-10">🎉 Prova Gratis</span>
+                    </Link>
+                  </div>
+                </motion.div>
+
                 {/* Bottone CTA premium */}
                 <motion.div
                   initial={{ opacity: 0, scale: 0.8 }}
@@ -779,7 +972,7 @@ export default function LandingPage() {
                       whileHover={{ scale: 1.1 }}
                     />
                     <Link
-                      href="/register"
+                      href="/register?free_trial=false"
                       className="relative inline-flex items-center gap-2 px-6 py-3 text-white font-bold bg-gradient-to-r from-rose-500 to-pink-600 rounded-2xl shadow-lg transition-all duration-300 group-hover:shadow-xl overflow-hidden"
                     >
                       {/* Effetto shimmer */}
@@ -881,7 +1074,7 @@ export default function LandingPage() {
                     </motion.div>
                   ))}
                   
-                  {/* Bottone mobile CTA */}
+                  {/* Bottone mobile Free Trial */}
                   <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -889,7 +1082,22 @@ export default function LandingPage() {
                     className="pt-3 border-t border-white/20"
                   >
                     <Link 
-                      href="/register" 
+                      href="/register?free_trial=true" 
+                      onClick={() => setIsMenuOpen(false)} 
+                      className="block w-full text-center px-6 py-4 text-white font-bold bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 mb-3"
+                    >
+                      🎉 Prova Gratis
+                    </Link>
+                  </motion.div>
+
+                  {/* Bottone mobile CTA */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: 0.4 }}
+                  >
+                    <Link 
+                      href="/register?free_trial=false" 
                       onClick={() => setIsMenuOpen(false)} 
                       className="block w-full text-center px-6 py-4 text-white font-bold bg-gradient-to-r from-rose-500 to-pink-600 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300"
                     >
@@ -1069,6 +1277,44 @@ export default function LandingPage() {
               transition={{ duration: 0.8, delay: 0.8 }}
               className="flex flex-col sm:flex-row gap-6 justify-center items-center"
             >
+              {/* Bottone Free Trial verde */}
+              <motion.div
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="relative group w-full sm:w-auto"
+              >
+                <motion.div
+                  className="absolute -inset-2 bg-gradient-to-r from-green-400 to-emerald-500 rounded-2xl blur-xl opacity-0 group-hover:opacity-30 transition-opacity duration-300"
+                  whileHover={{ scale: 1.1 }}
+                />
+                <Link
+                  href="/register?free_trial=true"
+                  className="relative flex items-center justify-center gap-3 px-10 py-4 text-base font-bold text-white bg-gradient-to-r from-green-500 via-emerald-500 to-green-600 rounded-2xl shadow-2xl transition-all duration-300 group-hover:shadow-green-500/25 overflow-hidden w-[90%] mx-[5%] sm:w-96 sm:mx-0"
+                >
+                  {/* Effetto shimmer interno verde */}
+                  <motion.div
+                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12"
+                    animate={{
+                      x: ['-100%', '100%'],
+                    }}
+                    transition={{
+                      duration: 2,
+                      repeat: Infinity,
+                      repeatDelay: 3,
+                      ease: "easeInOut",
+                    }}
+                  />
+                  <span className="relative z-10">🎉 Prova Gratis 14 giorni</span>
+                  <motion.div
+                    whileHover={{ x: 5 }}
+                    transition={{ type: "spring", stiffness: 400 }}
+                    className="relative z-10"
+                  >
+                    <ArrowRight className="w-6 h-6" />
+                  </motion.div>
+               </Link>
+              </motion.div>
+
               {/* Bottone principale */}
               <motion.div
                 whileHover={{ scale: 1.02 }}
@@ -1080,7 +1326,7 @@ export default function LandingPage() {
                   whileHover={{ scale: 1.1 }}
                 />
                 <Link
-                  href="/register"
+                  href="/register?free_trial=false"
                   className="relative flex items-center justify-center gap-3 px-10 py-4 text-base font-bold text-white bg-gradient-to-r from-rose-500 via-pink-500 to-rose-600 rounded-2xl shadow-2xl transition-all duration-300 group-hover:shadow-rose-500/25 overflow-hidden w-[90%] mx-[5%] sm:w-96 sm:mx-0"
                 >
                   {/* Effetto shimmer interno */}
@@ -1107,30 +1353,7 @@ export default function LandingPage() {
                </Link>
               </motion.div>
 
-              {/* Bottone Scopri Funzionalità */}
-              <motion.div
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className="relative group w-full sm:w-auto"
-              >
-                <Link
-                  href="#features"
-                  className="flex items-center justify-center gap-3 px-8 py-4 text-base font-semibold text-gray-700 bg-white/60 backdrop-blur-xl border border-white/30 rounded-2xl shadow-lg hover:bg-white/80 hover:shadow-xl transition-all duration-300 w-[90%] mx-[5%] sm:w-96 sm:mx-0"
-                >
-                  <span>Scopri Funzionalità</span>
-                  <motion.div
-                    animate={{ rotate: [0, 10, 0] }}
-                    transition={{
-                      duration: 2,
-                      repeat: Infinity,
-                      repeatDelay: 1,
-                      ease: "easeInOut",
-                    }}
-                  >
-                    <Sparkles className="w-4 h-4 text-rose-500" />
-                  </motion.div>
-               </Link>
-              </motion.div>
+
 
               {/* Bottone PROVA DEMO */}
               <motion.div
@@ -2098,17 +2321,58 @@ export default function LandingPage() {
                         
                         <motion.div 
                           className="mb-8"
-                          initial={{ scale: 0, opacity: 0 }}
-                          whileInView={{ scale: 1, opacity: 1 }}
-                          transition={{ delay: 1.2, duration: 0.8, type: "spring", stiffness: 100 }}
-                          viewport={{ once: true }}
                         >
-                          <span className="text-6xl md:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-rose-600 via-pink-600 to-rose-700">
-                            {plan.price}
-                          </span>
-                          <span className="text-2xl text-gray-500 font-medium">{plan.period}</span>
+                          <div className="text-6xl md:text-7xl font-black mb-2">
+                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-600 to-pink-600">
+                              {plan.price}
+                            </span>
+                            <span className="text-2xl md:text-3xl font-medium text-gray-600">
+                              {plan.period}
+                            </span>
+                          </div>
+                          
+                          {/* Free Trial Button */}
+                          {plan.hasFreeTrial && (
+                            <motion.div
+                              initial={{ opacity: 0, y: 20 }}
+                              whileInView={{ opacity: 1, y: 0 }}
+                              transition={{ delay: 1.5, duration: 0.6 }}
+                              viewport={{ once: true }}
+                              className="mt-4"
+                            >
+                              <Link
+                                href="/register?free_trial=true"
+                                className="inline-block group"
+                              >
+                                <motion.div
+                                  whileHover={{ 
+                                    scale: 1.05,
+                                    boxShadow: "0 15px 30px rgba(34, 197, 94, 0.3)"
+                                  }}
+                                  whileTap={{ scale: 0.95 }}
+                                  className="bg-gradient-to-r from-green-500 to-emerald-600 text-white py-3 px-6 rounded-xl font-bold text-base shadow-lg overflow-hidden relative"
+                                >
+                                  {/* Shimmer effect verde */}
+                                  <motion.div
+                                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12"
+                                    animate={{
+                                      x: ["-100%", "200%"]
+                                    }}
+                                    transition={{
+                                      duration: 2,
+                                      repeat: Infinity,
+                                      repeatDelay: 4,
+                                      ease: "easeInOut"
+                                    }}
+                                  />
+                                  <span className="relative flex items-center justify-center">
+                                    🎉 Prova gratis per 14 giorni
+                                  </span>
+                                </motion.div>
+                              </Link>
+                            </motion.div>
+                          )}
                         </motion.div>
-                </div>
 
                       {/* Lista features ultra-stilizzata */}
                       <motion.ul 
@@ -2118,7 +2382,7 @@ export default function LandingPage() {
                         transition={{ delay: 1.4, duration: 0.8 }}
                         viewport={{ once: true }}
                       >
-                  {plan.features.map((feature, i) => (
+                        {plan.features.map((feature, i) => (
                           <motion.li 
                             key={i} 
                             className="flex items-start group"
@@ -2141,6 +2405,7 @@ export default function LandingPage() {
                           </motion.li>
                         ))}
                       </motion.ul>
+                    </div>
 
                       {/* Bottone CTA spettacolare */}
                       <motion.div
@@ -2155,7 +2420,7 @@ export default function LandingPage() {
                           whileHover={{ scale: 1.05 }}
                         />
                 <Link
-                  href="/register"
+                  href="/register?free_trial=false"
                           className="relative block group"
                         >
                           <motion.div
@@ -3302,127 +3567,298 @@ export default function LandingPage() {
       {/* Cookie Banner */}
       <CookieBanner />
 
-      {/* Demo Chat Popup Modal */}
+      {/* Demo Chat Popup Modal - Replica esatta della pagina chat */}
       {isDemoPopupOpen && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          className="fixed inset-0 z-50"
         >
-          {/* Backdrop blur */}
+          {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 bg-black/30 backdrop-blur-lg"
+            className="absolute inset-0 bg-black/20 backdrop-blur-sm"
             onClick={() => setIsDemoPopupOpen(false)}
           />
           
-          {/* Modal Content */}
+          {/* Modal Content - Replica esatta della pagina chat */}
           <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
+            initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.8, opacity: 0 }}
-            className="relative w-full max-w-2xl max-h-[90vh] bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 overflow-hidden"
+            exit={{ scale: 0.95, opacity: 0 }}
+            className="relative w-full h-full max-w-4xl mx-auto bg-white shadow-2xl overflow-hidden"
           >
-            {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b border-gray-200/50">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-r from-orange-500 to-amber-500 rounded-2xl flex items-center justify-center">
-                  <MessageSquare className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold text-gray-900">Demo Chat</h3>
-                  <p className="text-sm text-gray-600">Casa Bella Vista Bot</p>
-                </div>
-              </div>
-              <button
-                onClick={() => setIsDemoPopupOpen(false)}
-                className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
-              >
-                <X className="w-4 h-4 text-gray-600" />
-              </button>
-            </div>
-
-            {/* Chat Messages */}
-            <div className="flex-1 p-6 space-y-4 max-h-96 overflow-y-auto">
-              {demoMessages.map((message, index) => (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                  className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                >
-                  <div
-                    className={`max-w-xs px-4 py-3 rounded-2xl ${
-                      message.role === 'user'
-                        ? 'bg-gradient-to-r from-orange-500 to-amber-500 text-white'
-                        : 'bg-gray-100 text-gray-900'
-                    }`}
-                  >
-                    <p className="text-sm leading-relaxed">{message.text}</p>
-                  </div>
-                </motion.div>
-              ))}
-              
-              {isDemoLoading && (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="flex justify-start"
-                >
-                  <div className="bg-gray-100 px-4 py-3 rounded-2xl">
-                    <div className="flex space-x-1">
-                      <motion.div
-                        className="w-2 h-2 bg-gray-400 rounded-full"
-                        animate={{ scale: [1, 1.2, 1] }}
-                        transition={{ duration: 0.6, repeat: Infinity, delay: 0 }}
-                      />
-                      <motion.div
-                        className="w-2 h-2 bg-gray-400 rounded-full"
-                        animate={{ scale: [1, 1.2, 1] }}
-                        transition={{ duration: 0.6, repeat: Infinity, delay: 0.2 }}
-                      />
-                      <motion.div
-                        className="w-2 h-2 bg-gray-400 rounded-full"
-                        animate={{ scale: [1, 1.2, 1] }}
-                        transition={{ duration: 0.6, repeat: Infinity, delay: 0.4 }}
-                      />
+            {/* Header - FISSO */}
+            <div className={`${demoIsDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'} shadow-sm flex-shrink-0 border-b transition-colors duration-300`}>
+              <div className="max-w-4xl mx-auto px-2 py-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center mr-3">
+                      <Home className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <h1 className={`font-semibold text-lg transition-colors duration-300 ${demoIsDarkMode ? 'text-white' : 'text-gray-900'}`}>Casa Bella Vista</h1>
+                      <p className={`text-sm ${demoIsDarkMode ? 'text-gray-300' : 'text-gray-500'} transition-colors duration-300`}>{currentDemoTexts.assistant}</p>
                     </div>
                   </div>
-                </motion.div>
-              )}
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={handleDemoNewConversation}
+                      className={`p-2 rounded-lg transition-colors duration-200 group ${
+                        demoIsDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
+                      }`}
+                      title="Nuova conversazione"
+                    >
+                      <RefreshCw className={`w-5 h-5 transition-colors duration-200 ${
+                        demoIsDarkMode ? 'text-gray-300 group-hover:text-primary' : 'text-gray-600 group-hover:text-primary'
+                      }`} />
+                    </button>
+                    <button
+                      onClick={toggleDemoLanguage}
+                      className="px-3 py-1.5 bg-gradient-to-r from-primary/10 to-accent/10 text-primary border border-primary/20 rounded-lg text-sm font-medium hover:from-primary/20 hover:to-accent/20 hover:border-primary/40 transition-all duration-200"
+                    >
+                      {demoLanguage}
+                    </button>
+                    <button
+                      onClick={toggleDemoDarkMode}
+                      className={`p-2 rounded-lg transition-colors duration-200 group ${
+                        demoIsDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
+                      }`}
+                      title={demoIsDarkMode ? "Passa alla modalità chiara" : "Passa alla modalità scura"}
+                    >
+                      {demoIsDarkMode ? (
+                        <Sun className={`w-5 h-5 transition-colors duration-200 ${
+                          demoIsDarkMode ? 'text-gray-300 group-hover:text-primary' : 'text-gray-600 group-hover:text-primary'
+                        }`} />
+                      ) : (
+                        <Moon className={`w-5 h-5 transition-colors duration-200 ${
+                          demoIsDarkMode ? 'text-gray-300 group-hover:text-primary' : 'text-gray-600 group-hover:text-primary'
+                        }`} />
+                      )}
+                    </button>
+                    <button
+                      onClick={() => setDemoShowInfo(!demoShowInfo)}
+                      className={`p-2 rounded-lg transition ${
+                        demoIsDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
+                      }`}
+                    >
+                      <Info className={`w-5 h-5 transition-colors duration-300 ${
+                        demoIsDarkMode ? 'text-gray-300' : 'text-gray-600'
+                      }`} />
+                    </button>
+                    <button
+                      onClick={() => setIsDemoPopupOpen(false)}
+                      className={`p-2 rounded-lg transition ${
+                        demoIsDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
+                      }`}
+                    >
+                      <X className={`w-5 h-5 transition-colors duration-300 ${
+                        demoIsDarkMode ? 'text-gray-300' : 'text-gray-600'
+                      }`} />
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            {/* Input Area */}
-            <div className="p-3 border-t border-gray-200/50">
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault()
-                  handleDemoChat(demoInput)
-                }}
-                className="flex gap-3"
+            {/* Info Panel - FISSO */}
+            {demoShowInfo && (
+              <motion.div
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-blue-50 border-b border-blue-200 flex-shrink-0"
               >
-                <input
-                  type="text"
-                  value={demoInput}
-                  onChange={(e) => setDemoInput(e.target.value)}
-                  placeholder="Scrivi un messaggio..."
-                  className="flex-1 px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500"
-                  disabled={isDemoLoading}
-                />
-                <motion.button
-                  type="submit"
-                  disabled={!demoInput.trim() || isDemoLoading}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="px-6 py-3 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-2xl font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:from-orange-600 hover:to-amber-600 transition-all duration-200"
-                >
-                  <Send className="w-4 h-4" />
-                </motion.button>
-              </form>
+                <div className="max-w-4xl mx-auto px-4 py-4">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="text-sm text-blue-800 mb-2">
+                        <strong>{currentDemoTexts.howCanIHelp}</strong>
+                      </p>
+                      <ul className="text-sm text-blue-700 space-y-1">
+                        {currentDemoTexts.helpItems.map((item, index) => (
+                          <li key={index}>• {item}</li>
+                        ))}
+                      </ul>
+                    </div>
+                    <button
+                      onClick={() => setDemoShowInfo(false)}
+                      className="text-blue-600 hover:text-blue-800"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {/* Main Chat Area - FISSA */}
+            <div className="flex-1 flex flex-col max-w-4xl mx-auto w-full px-4 py-4 md:py-6 overflow-hidden">
+              <div className={`${demoIsDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl shadow-xl overflow-hidden flex flex-col h-full transition-colors duration-300`}>
+                {/* Welcome Screen */}
+                {demoShowWelcome && demoMessages.length <= 1 && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="p-8 text-center flex-1 flex flex-col justify-center"
+                  >
+                    <div className="w-20 h-20 bg-rose-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                      <MessageSquare className="w-10 h-10 text-rose-500" />
+                    </div>
+                    <h2 className={`text-2xl font-bold mb-2 ${demoIsDarkMode ? 'text-white' : 'text-gray-900'} transition-colors duration-300`}>{currentDemoTexts.welcome}</h2>
+                    <p className={`mb-6 max-w-md mx-auto transition-colors duration-300 ${demoIsDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                      {currentDemoTexts.welcomeSubtitle}
+                    </p>
+                    <div className="mb-6">
+                      <input
+                        type="text"
+                        value={demoGuestName}
+                        onChange={(e) => setDemoGuestName(e.target.value)}
+                        placeholder={currentDemoTexts.namePlaceholder}
+                        className={`max-w-xs mx-auto px-4 py-3 rounded-lg border transition-all duration-200 ${
+                          demoIsDarkMode 
+                            ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-primary focus:ring-2 focus:ring-primary/20' 
+                            : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-primary focus:ring-2 focus:ring-primary/20'
+                        } outline-none`}
+                      />
+                    </div>
+                    <button
+                      onClick={handleDemoStartChat}
+                      className="px-6 py-3 bg-gradient-to-r from-primary to-secondary text-white rounded-2xl font-semibold hover:from-secondary hover:to-accent transition-all duration-200"
+                    >
+                      {currentDemoTexts.startChat}
+                    </button>
+                  </motion.div>
+                )}
+
+                {/* Messages Area - FISSA */}
+                {(!demoShowWelcome || demoMessages.length > 1) && (
+                  <>
+                    <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4">
+                      {demoMessages.map((message, index) => (
+                        <motion.div
+                          key={index}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: index * 0.1 }}
+                          className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                        >
+                          <div className={`flex items-start max-w-[85%] md:max-w-[70%] ${
+                            message.role === 'user' ? 'flex-row-reverse' : ''
+                          }`}>
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                              message.role === 'user' 
+                                ? 'bg-gradient-to-r from-rose-500 to-pink-600 text-white ml-3' 
+                                : 'bg-gray-200 text-gray-600 mr-3'
+                            }`}>
+                              {message.role === 'user' ? (
+                                <User className="w-4 h-4" />
+                              ) : (
+                                <Bot className="w-4 h-4" />
+                              )}
+                            </div>
+                            <div className={`rounded-2xl px-4 py-3 ${
+                              message.role === 'user'
+                                ? 'bg-gradient-to-r from-rose-500 to-pink-600 text-white rounded-br-sm'
+                                : 'bg-gray-100 text-gray-900 rounded-bl-sm'
+                            }`}>
+                              <p className="whitespace-pre-wrap">{message.content}</p>
+                              <p className={`text-xs mt-1 ${
+                                message.role === 'user' ? 'text-white/70' : 'text-gray-400'
+                              }`}>
+                                {message.timestamp.toLocaleTimeString('it-IT', {
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                })}
+                              </p>
+                            </div>
+                          </div>
+                        </motion.div>
+                      ))}
+                      
+                      {isDemoLoading && (
+                        <motion.div
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          className="flex justify-start"
+                        >
+                          <div className="flex items-center bg-gray-100 rounded-2xl rounded-bl-sm px-4 py-3">
+                            <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                            <span className="text-gray-600">{currentDemoTexts.writing}</span>
+                          </div>
+                        </motion.div>
+                      )}
+                      
+                      <div ref={demoMessagesEndRef} />
+                    </div>
+
+                    {/* Messaggi Suggeriti - SU UNA RIGA SOLA */}
+                    <div className={`border-t p-2 transition-colors duration-300 ${
+                      demoIsDarkMode ? 'border-gray-700' : 'border-gray-100'
+                    }`}>
+                      <div className="flex justify-center gap-2 md:gap-3 overflow-x-auto">
+                        {currentDemoTexts.suggestedMessages.map((message: string, index: number) => (
+                          <motion.button
+                            key={index}
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ delay: index * 0.1 }}
+                            onClick={() => handleDemoSuggestedMessage(message)}
+                            className="px-3 py-2 md:px-4 md:py-2 bg-gradient-to-r from-primary/10 to-accent/10 text-primary border border-primary/20 rounded-full text-xs md:text-sm font-medium hover:from-primary/20 hover:to-accent/20 hover:border-primary/40 transition-all duration-200 hover:scale-105 active:scale-95 whitespace-nowrap flex-shrink-0"
+                          >
+                            {message}
+                          </motion.button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Input Area - FISSA */}
+                    <div className={`border-t p-3 md:p-4 pb-2 safe-bottom flex-shrink-0 transition-colors duration-300 ${
+                      demoIsDarkMode ? 'border-gray-700' : 'border-gray-200'
+                    }`}>
+                      <form onSubmit={handleDemoSendMessage} className="flex items-center gap-2 md:gap-3">
+                        <input
+                          ref={demoInputRef}
+                          type="text"
+                          value={demoInput}
+                          onChange={(e) => setDemoInput(e.target.value)}
+                          placeholder={currentDemoTexts.placeholder}
+                          disabled={isDemoLoading}
+                          className={`flex-1 px-4 py-2.5 rounded-full border outline-none transition ${
+                            demoIsDarkMode 
+                              ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-primary focus:ring-2 focus:ring-primary/20' 
+                              : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-primary focus:ring-2 focus:ring-primary/20'
+                          }`}
+                        />
+                        <button
+                          type="submit"
+                          disabled={isDemoLoading || !demoInput.trim()}
+                          className="w-10 h-10 md:w-11 md:h-11 bg-gradient-to-r from-primary to-secondary text-white rounded-full flex items-center justify-center hover:from-secondary hover:to-accent transition disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <Send className="w-4 h-4 md:w-5 md:h-5" />
+                        </button>
+                      </form>
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* Footer - FISSO */}
+              <div className="text-center mt-2 flex-shrink-0">
+                <p className={`text-xs transition-colors duration-300 ${demoIsDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                  Powered by{' '}
+                  <a
+                    href="https://hostgpt.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-rose-500 hover:text-rose-600"
+                  >
+                    HostGPT
+                  </a>
+                </p>
+              </div>
             </div>
           </motion.div>
         </motion.div>

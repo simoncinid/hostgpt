@@ -14,7 +14,8 @@ import {
   X,
   RefreshCw,
   Moon,
-  Sun
+  Sun,
+  Clock
 } from 'lucide-react'
 import { chat } from '@/lib/api'
 import toast from 'react-hot-toast'
@@ -45,6 +46,8 @@ export default function ChatWidgetPage() {
   const [showWelcome, setShowWelcome] = useState(true)
   const [showInfo, setShowInfo] = useState(false)
   const [subscriptionCancelled, setSubscriptionCancelled] = useState(false)
+  const [freeTrialLimitReached, setFreeTrialLimitReached] = useState(false)
+  const [freeTrialExpired, setFreeTrialExpired] = useState(false)
   const [language, setLanguage] = useState<'IT' | 'ENG'>('IT')
   const [isDarkMode, setIsDarkMode] = useState(false)
   
@@ -79,7 +82,11 @@ export default function ChatWidgetPage() {
         "Consigli su ristoranti e attrazioni",
         "Informazioni sui trasporti",
         "Contatti di emergenza"
-      ]
+      ],
+      freeTrialLimitReached: "Limite messaggi free trial raggiunto",
+      freeTrialLimitReachedDesc: "L'host ha raggiunto il limite di messaggi del periodo di prova gratuito. Il servizio sarà ripristinato con l'abbonamento completo.",
+      freeTrialExpired: "Periodo di prova scaduto",
+      freeTrialExpiredDesc: "Il periodo di prova gratuito dell'host è scaduto. Il servizio sarà ripristinato con l'abbonamento completo."
     },
     ENG: {
       assistant: 'Virtual Assistant',
@@ -107,7 +114,11 @@ export default function ChatWidgetPage() {
         "Restaurant and attraction recommendations", 
         "Transportation information",
         "Emergency contacts"
-      ]
+      ],
+      freeTrialLimitReached: "Free trial message limit reached",
+      freeTrialLimitReachedDesc: "The host has reached the free trial message limit. Service will be restored with a complete subscription.",
+      freeTrialExpired: "Free trial expired",
+      freeTrialExpiredDesc: "The host's free trial period has expired. Service will be restored with a complete subscription."
     }
   }
 
@@ -162,7 +173,23 @@ export default function ChatWidgetPage() {
       setMessages(prev => [...prev, assistantMessage])
     } catch (error: any) {
       if (error.response?.status === 403) {
-        setSubscriptionCancelled(true)
+        const errorDetail = error.response?.data?.detail || ''
+        if (errorDetail.includes('free trial') || errorDetail.includes('periodo di prova')) {
+          if (errorDetail.includes('scaduto') || errorDetail.includes('expired')) {
+            setFreeTrialExpired(true)
+          } else {
+            setFreeTrialLimitReached(true)
+          }
+        } else {
+          setSubscriptionCancelled(true)
+        }
+      } else if (error.response?.status === 429) {
+        const errorDetail = error.response?.data?.detail || ''
+        if (errorDetail.includes('free trial') || errorDetail.includes('periodo di prova')) {
+          setFreeTrialLimitReached(true)
+        } else {
+          toast.error(currentTexts.error)
+        }
       } else {
         toast.error(currentTexts.error)
       }
@@ -323,14 +350,14 @@ export default function ChatWidgetPage() {
     }`}>
       {/* Header - FISSO */}
       <div className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'} shadow-sm flex-shrink-0 border-b transition-colors duration-300`}>
-        <div className="max-w-4xl mx-auto px-4 py-4">
+        <div className="max-w-4xl mx-auto px-2 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
               <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center mr-3">
                 <Home className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h1 className="font-semibold text-lg">{chatInfo?.name}</h1>
+                <h1 className={`font-semibold text-lg transition-colors duration-300 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{chatInfo?.name}</h1>
                 <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-500'} transition-colors duration-300`}>{currentTexts.assistant}</p>
               </div>
             </div>
@@ -417,8 +444,66 @@ export default function ChatWidgetPage() {
       {/* Main Chat Area - FISSA */}
       <div className="flex-1 flex flex-col max-w-4xl mx-auto w-full px-4 py-4 md:py-6 overflow-hidden">
         <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl shadow-xl overflow-hidden flex flex-col h-full transition-colors duration-300`}>
+          {/* Error States */}
+          {subscriptionCancelled && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="p-8 text-center flex-1 flex flex-col justify-center"
+            >
+              <div className="w-20 h-20 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                <X className="w-10 h-10 text-red-500" />
+              </div>
+              <h2 className={`text-2xl font-bold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'} transition-colors duration-300`}>
+                {currentTexts.serviceUnavailable}
+              </h2>
+              <p className={`mb-6 max-w-md mx-auto transition-colors duration-300 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                {currentTexts.serviceUnavailableDesc}
+              </p>
+              <p className={`text-sm transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                {currentTexts.contactHost}
+              </p>
+            </motion.div>
+          )}
+
+          {freeTrialLimitReached && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="p-8 text-center flex-1 flex flex-col justify-center"
+            >
+              <div className="w-20 h-20 bg-orange-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                <MessageSquare className="w-10 h-10 text-orange-500" />
+              </div>
+              <h2 className={`text-2xl font-bold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'} transition-colors duration-300`}>
+                {currentTexts.freeTrialLimitReached}
+              </h2>
+              <p className={`mb-6 max-w-md mx-auto transition-colors duration-300 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                {currentTexts.freeTrialLimitReachedDesc}
+              </p>
+            </motion.div>
+          )}
+
+          {freeTrialExpired && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="p-8 text-center flex-1 flex flex-col justify-center"
+            >
+              <div className="w-20 h-20 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                <Clock className="w-10 h-10 text-red-500" />
+              </div>
+              <h2 className={`text-2xl font-bold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'} transition-colors duration-300`}>
+                {currentTexts.freeTrialExpired}
+              </h2>
+              <p className={`mb-6 max-w-md mx-auto transition-colors duration-300 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                {currentTexts.freeTrialExpiredDesc}
+              </p>
+            </motion.div>
+          )}
+
           {/* Welcome Screen */}
-          {showWelcome && messages.length <= 1 && (
+          {showWelcome && messages.length <= 1 && !subscriptionCancelled && !freeTrialLimitReached && !freeTrialExpired && (
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -454,7 +539,7 @@ export default function ChatWidgetPage() {
           )}
 
           {/* Messages Area - FISSA */}
-          {(!showWelcome || messages.length > 1) && (
+          {(!showWelcome || messages.length > 1) && !subscriptionCancelled && !freeTrialLimitReached && !freeTrialExpired && (
             <>
               <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4">
                 {messages.map((message, index) => (
@@ -515,7 +600,7 @@ export default function ChatWidgetPage() {
               </div>
 
               {/* Messaggi Suggeriti - SU UNA RIGA SOLA */}
-              <div className={`border-t p-3 md:p-4 transition-colors duration-300 ${
+              <div className={`border-t p-2 transition-colors duration-300 ${
                 isDarkMode ? 'border-gray-700' : 'border-gray-100'
               }`}>
                 <div className="flex justify-center gap-2 md:gap-3 overflow-x-auto">
@@ -535,7 +620,7 @@ export default function ChatWidgetPage() {
               </div>
 
               {/* Input Area - FISSA */}
-              <div className={`border-t p-3 md:p-4 pb-6 md:pb-4 safe-bottom flex-shrink-0 transition-colors duration-300 ${
+              <div className={`border-t p-3 md:p-4 pb-2 safe-bottom flex-shrink-0 transition-colors duration-300 ${
                 isDarkMode ? 'border-gray-700' : 'border-gray-200'
               }`}>
                 <form onSubmit={handleSendMessage} className="flex items-center gap-2 md:gap-3">
@@ -546,7 +631,7 @@ export default function ChatWidgetPage() {
                     onChange={(e) => setInputMessage(e.target.value)}
                     placeholder={currentTexts.placeholder}
                     disabled={isLoading}
-                    className={`flex-1 px-4 py-3 rounded-full border outline-none transition ${
+                    className={`flex-1 px-4 py-2.5 rounded-full border outline-none transition ${
                       isDarkMode 
                         ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-primary focus:ring-2 focus:ring-primary/20' 
                         : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-primary focus:ring-2 focus:ring-primary/20'
@@ -555,9 +640,9 @@ export default function ChatWidgetPage() {
                   <button
                     type="submit"
                     disabled={isLoading || !inputMessage.trim()}
-                    className="w-11 h-11 md:w-12 md:h-12 bg-gradient-to-r from-primary to-secondary text-white rounded-full flex items-center justify-center hover:from-secondary hover:to-accent transition disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-10 h-10 md:w-11 md:h-11 bg-gradient-to-r from-primary to-secondary text-white rounded-full flex items-center justify-center hover:from-secondary hover:to-accent transition disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <Send className="w-5 h-5" />
+                    <Send className="w-4 h-4 md:w-5 md:h-5" />
                   </button>
                 </form>
               </div>
@@ -566,8 +651,8 @@ export default function ChatWidgetPage() {
         </div>
 
         {/* Footer - FISSO */}
-        <div className="text-center mt-6 flex-shrink-0">
-          <p className={`text-sm transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+        <div className="text-center mt-2 flex-shrink-0">
+          <p className={`text-xs transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
             Powered by{' '}
             <a
               href="https://hostgpt.com"

@@ -8,6 +8,17 @@ interface User {
   subscription_end_date: string | null
   guardian_subscription_status: string
   guardian_subscription_end_date: string | null
+  // Free trial fields
+  wants_free_trial: boolean
+  messages_limit: number
+  messages_used: number
+  messages_remaining: number
+  free_trial_start_date: string | null
+  free_trial_end_date: string | null
+  free_trial_messages_limit: number
+  free_trial_messages_used: number
+  free_trial_converted: boolean
+  is_free_trial_active: boolean
 }
 
 interface AuthState {

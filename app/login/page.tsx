@@ -27,24 +27,44 @@ function LoginContent() {
   useEffect(() => {
     const registered = searchParams.get('registered')
     const subscriptionSuccess = searchParams.get('subscription') === 'success'
+    const freeTrialStarted = searchParams.get('free_trial_started') === 'true'
+    const tokenFromUrl = searchParams.get('token')
+    
     if (registered) {
-      toast.success('Controlla la tua email e clicca il link di verifica per procedere al pagamento')
+      toast.success('Controlla la tua email e clicca il link di verifica per continuare')
     }
     if (subscriptionSuccess) {
       // Messaggio informativo; la conferma avverrà dopo il login con token
       toast.success('Pagamento effettuato! Ora puoi accedere')
     }
-  }, [searchParams])
+    if (freeTrialStarted) {
+      toast.success('🎉 Periodo di prova gratuito avviato! Ora puoi accedere alla dashboard')
+    }
+    if (tokenFromUrl) {
+      // Se c'è un token dalla verifica email, autentica automaticamente
+      localStorage.setItem('token', tokenFromUrl)
+      setAuth(tokenFromUrl)
+    }
+  }, [searchParams, setAuth])
 
   const onSubmit = async (data: LoginForm) => {
     setIsLoading(true)
     try {
-      const response = await api.post('/auth/login', data)
-      const { access_token } = response.data
+      // Controlla se c'è un token dalla verifica email
+      const tokenFromUrl = searchParams.get('token')
       
-      // Salva token e user info
-      localStorage.setItem('token', access_token)
-      setAuth(access_token)
+      if (tokenFromUrl) {
+        // Se c'è un token dalla verifica email, è già stato gestito nell'useEffect
+        // Non fare nulla qui
+      } else {
+        // Altrimenti fai il login normale
+        const response = await api.post('/auth/login', data)
+        const { access_token } = response.data
+        
+        // Salva token e user info
+        localStorage.setItem('token', access_token)
+        setAuth(access_token)
+      }
       
       // Se ritorno da Stripe con successo, prova a confermare la sottoscrizione ora che siamo autenticati
       const subscriptionSuccess = searchParams.get('subscription') === 'success'
@@ -60,13 +80,23 @@ function LoginContent() {
         const me = await api.get('/auth/me')
         const subscriptionStatus = me.data?.subscription_status
         const isVerified = me.data?.is_verified
+        const wantsFreeTrial = me.data?.wants_free_trial
+        
         if (!isVerified) {
           toast.error('Devi verificare la tua email. Controlla la posta e clicca il link di verifica.')
           return
         }
-        if (!['active', 'cancelling'].includes(subscriptionStatus)) {
-          toast('Completa il pagamento per continuare', { icon: '💳' })
-          router.push('/checkout')
+        
+        if (!['active', 'cancelling', 'free_trial'].includes(subscriptionStatus)) {
+          // Se l'utente non ha scelto il free trial, va al checkout
+          if (!wantsFreeTrial) {
+            toast('Completa il pagamento per continuare', { icon: '💳' })
+            router.push('/checkout')
+          } else {
+            // Se ha scelto il free trial ma non è attivo, c'è un problema
+            toast.error('Errore nell\'avvio del periodo di prova. Contatta il supporto.')
+            return
+          }
         } else {
           toast.success('Accesso effettuato con successo!')
           router.push('/dashboard')
