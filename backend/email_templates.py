@@ -686,3 +686,59 @@ def create_free_trial_expired_email(user_name: str, messages_used: int, total_me
     """
     
     return get_base_email_template(content)
+
+def create_subscription_confirmation_email(user_name: str) -> str:
+    """Template email per confermare l'attivazione dell'abbonamento"""
+    
+    content = f"""
+        <div class="greeting">🎉 Abbonamento attivato con successo!</div>
+        
+        <div class="message">
+            Ciao <strong>{user_name}</strong>, il tuo abbonamento HostGPT è stato attivato con successo! 
+            Ora hai accesso completo a tutte le funzionalità della piattaforma.
+        </div>
+        
+        <div class="highlight-box" style="border-left-color: {HOSTGPT_COLORS['success']};">
+            <h3 style="color: {HOSTGPT_COLORS['success']}; margin-bottom: 15px;">✅ Il tuo abbonamento include:</h3>
+            <ul class="feature-list">
+                <li><strong>1000 messaggi mensili</strong> per i tuoi chatbot</li>
+                <li><strong>Chatbot illimitati</strong> per tutte le tue proprietà</li>
+                <li><strong>Risposte istantanee</strong> 24/7 ai tuoi ospiti</li>
+                <li><strong>Statistiche avanzate</strong> e analisi dettagliate</li>
+                <li><strong>Supporto prioritario</strong> per qualsiasi domanda</li>
+                <li><strong>29€/mese</strong> - fatturazione automatica</li>
+            </ul>
+        </div>
+        
+        <div style="text-align: center;">
+            <a href="https://hostgpt.com/dashboard" class="cta-button">
+                🚀 Vai alla Dashboard
+            </a>
+        </div>
+        
+        <div class="message">
+            <strong>Prossimi passi:</strong>
+        </div>
+        
+        <div style="background: {HOSTGPT_COLORS['light']}; padding: 15px; border-radius: 8px; margin: 15px 0;">
+            <h3 style="color: {HOSTGPT_COLORS['primary']}; margin-bottom: 10px;">💡 Cosa puoi fare ora:</h3>
+            <ul class="feature-list">
+                <li>Configura il tuo primo chatbot per la tua proprietà</li>
+                <li>Personalizza le risposte in base alle tue esigenze</li>
+                <li>Monitora le conversazioni e le statistiche</li>
+                <li>Migliora l'esperienza dei tuoi ospiti</li>
+                <li>Aumenta le recensioni positive</li>
+            </ul>
+        </div>
+        
+        <div class="message">
+            <strong>Fatturazione:</strong> Il tuo abbonamento si rinnoverà automaticamente ogni mese. 
+            Puoi gestire le impostazioni di fatturazione dalla tua dashboard in qualsiasi momento.
+        </div>
+        
+        <div class="message">
+            Grazie per aver scelto HostGPT! Siamo qui per aiutarti a creare un'esperienza straordinaria per i tuoi ospiti. 🏠✨
+        </div>
+    """
+    
+    return get_base_email_template(content)

@@ -8,13 +8,13 @@ import {
   CreditCard, 
   Shield, 
   CheckCircle, 
-  ArrowLeft, 
   Loader2,
   Home,
   MessageSquare,
   Users,
   Zap,
-  Star
+  Star,
+  ArrowLeft
 } from 'lucide-react'
 import { subscription } from '@/lib/api'
 import { useAuthStore } from '@/lib/store'
@@ -99,13 +99,13 @@ function CheckoutForm({ clientSecret, onSuccess }: { clientSecret: string, onSuc
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-4">
         <div className="border border-gray-200 rounded-lg p-4 bg-white">
-          <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center justify-between mb-3">
             <span className="text-sm font-medium text-gray-700">Dati carta</span>
             <div className="flex space-x-1">
-              <div className="w-8 h-5 bg-gray-300 rounded"></div>
-              <div className="w-8 h-5 bg-gray-300 rounded"></div>
-              <div className="w-8 h-5 bg-gray-300 rounded"></div>
-              <div className="w-8 h-5 bg-gray-300 rounded"></div>
+              <div className="w-6 h-4 bg-gray-300 rounded"></div>
+              <div className="w-6 h-4 bg-gray-300 rounded"></div>
+              <div className="w-6 h-4 bg-gray-300 rounded"></div>
+              <div className="w-6 h-4 bg-gray-300 rounded"></div>
             </div>
           </div>
           <CardElement options={cardElementOptions} />
@@ -217,9 +217,10 @@ function CheckoutContent() {
       setStatus('success')
       setErrorMessage('Pagamento completato con successo! Il tuo abbonamento è ora attivo. Reindirizzamento alla dashboard...')
       
+      // Reindirizza immediatamente alla dashboard
       setTimeout(() => {
         window.location.href = '/dashboard'
-      }, 3000)
+      }, 2000)
     } catch (error: any) {
       console.error('Errore nella conferma del pagamento:', error)
       toast.error('Errore nella conferma del pagamento. Contatta il supporto.')
@@ -227,42 +228,42 @@ function CheckoutContent() {
   }
 
   const features = [
-    { icon: <MessageSquare className="w-5 h-5" />, text: "1000 messaggi mensili" },
-    { icon: <Users className="w-5 h-5" />, text: "Chatbot illimitati" },
-    { icon: <Zap className="w-5 h-5" />, text: "Risposte istantanee" },
-    { icon: <Star className="w-5 h-5" />, text: "Supporto prioritario" }
+    { icon: <MessageSquare className="w-4 h-4" />, text: "1000 messaggi mensili" },
+    { icon: <Users className="w-4 h-4" />, text: "Chatbot illimitati" },
+    { icon: <Zap className="w-4 h-4" />, text: "Risposte istantanee" },
+    { icon: <Star className="w-4 h-4" />, text: "Supporto prioritario" }
   ]
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
-      {/* Header */}
+      {/* Header semplificato */}
       <div className="bg-white shadow-sm border-b">
-        <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
+        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
           <Link href="/" className="flex items-center space-x-2">
-            <Home className="w-7 h-7 text-primary" />
-            <span className="text-xl font-bold text-dark">HostGPT</span>
+            <Home className="w-6 h-6 text-primary" />
+            <span className="text-lg font-bold text-dark">HostGPT</span>
           </Link>
-          <div className="flex items-center space-x-2 text-sm text-gray-600">
-            <Shield className="w-4 h-4" />
-            <span>Pagamento sicuro con Stripe</span>
+          <div className="flex items-center space-x-2 text-xs text-gray-600">
+            <Shield className="w-3 h-3" />
+            <span className="hidden sm:inline">Pagamento sicuro</span>
           </div>
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        <div className="grid lg:grid-cols-2 gap-8">
+      <div className="max-w-4xl mx-auto px-4 py-6">
+        <div className="grid lg:grid-cols-2 gap-6">
           {/* Colonna sinistra - Form di pagamento */}
-          <div className="space-y-6">
+          <div className="space-y-4">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
             >
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-2">
                 Completa il tuo abbonamento
               </h1>
-              <p className="text-gray-600 mb-6">
-                Inizia subito a creare chatbot intelligenti per la tua proprietà
+              <p className="text-gray-600 text-sm lg:text-base">
+                Inizia subito a creare chatbot intelligenti
               </p>
             </motion.div>
 
@@ -271,13 +272,13 @@ function CheckoutContent() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.2 }}
-                className="bg-white rounded-xl shadow-lg p-6 border"
+                className="bg-white rounded-xl shadow-lg p-4 lg:p-6 border"
               >
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-xl font-semibold text-gray-900">Informazioni di pagamento</h2>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg lg:text-xl font-semibold text-gray-900">Pagamento</h2>
                   <div className="flex items-center space-x-2">
-                    <CreditCard className="w-5 h-5 text-gray-400" />
-                    <span className="text-sm text-gray-500">Carta di credito</span>
+                    <CreditCard className="w-4 h-4 text-gray-400" />
+                    <span className="text-xs text-gray-500">Carta di credito</span>
                   </div>
                 </div>
 
@@ -288,12 +289,12 @@ function CheckoutContent() {
                   />
                 </Elements>
 
-                <div className="mt-4 text-center">
+                <div className="mt-3 text-center">
                   <p className="text-xs text-gray-500">
                     Cliccando su "Paga" accetti i nostri{' '}
-                    <Link href="/terms" className="text-primary hover:underline">Termini di servizio</Link>
+                    <Link href="/terms" className="text-primary hover:underline">Termini</Link>
                     {' '}e la{' '}
-                    <Link href="/privacy" className="text-primary hover:underline">Privacy Policy</Link>
+                    <Link href="/privacy" className="text-primary hover:underline">Privacy</Link>
                   </p>
                 </div>
               </motion.div>
@@ -303,11 +304,11 @@ function CheckoutContent() {
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-white rounded-xl shadow-lg p-8 text-center"
+                className="bg-white rounded-xl shadow-lg p-6 lg:p-8 text-center"
               >
-                <Loader2 className="w-12 h-12 text-primary animate-spin mx-auto mb-4" />
-                <h2 className="text-xl font-semibold mb-2">Preparazione pagamento…</h2>
-                <p className="text-gray-600">Attendi qualche secondo mentre prepariamo la sessione di checkout.</p>
+                <Loader2 className="w-10 h-10 lg:w-12 lg:h-12 text-primary animate-spin mx-auto mb-4" />
+                <h2 className="text-lg lg:text-xl font-semibold mb-2">Preparazione pagamento…</h2>
+                <p className="text-gray-600 text-sm lg:text-base">Attendi qualche secondo.</p>
               </motion.div>
             )}
 
@@ -315,14 +316,14 @@ function CheckoutContent() {
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-white rounded-xl shadow-lg p-8 text-center"
+                className="bg-white rounded-xl shadow-lg p-6 lg:p-8 text-center"
               >
-                <h2 className="text-xl font-semibold mb-2">Pagamento annullato</h2>
-                <p className="text-gray-600 mb-6">Puoi riprovare quando vuoi.</p>
-                <div className="flex gap-3 justify-center">
-                  <Link href="/dashboard" className="btn-secondary">Torna alla dashboard</Link>
+                <h2 className="text-lg lg:text-xl font-semibold mb-2">Pagamento annullato</h2>
+                <p className="text-gray-600 mb-6 text-sm lg:text-base">Puoi riprovare quando vuoi.</p>
+                <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                  <Link href="/dashboard" className="btn-secondary text-sm">Torna alla dashboard</Link>
                   <button
-                    className="btn-primary"
+                    className="btn-primary text-sm"
                     onClick={() => router.replace('/checkout')}
                   >
                     Riprova pagamento
@@ -335,13 +336,13 @@ function CheckoutContent() {
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-white rounded-xl shadow-lg p-8 text-center"
+                className="bg-white rounded-xl shadow-lg p-6 lg:p-8 text-center"
               >
-                <h2 className="text-xl font-semibold mb-2">Si è verificato un problema</h2>
-                <p className="text-gray-600 mb-6">{errorMessage}</p>
-                <div className="flex gap-3 justify-center">
-                  <Link href="/login" className="btn-secondary">Accedi</Link>
-                  <button className="btn-primary" onClick={() => router.refresh()}>Riprova</button>
+                <h2 className="text-lg lg:text-xl font-semibold mb-2">Si è verificato un problema</h2>
+                <p className="text-gray-600 mb-6 text-sm lg:text-base">{errorMessage}</p>
+                <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                  <Link href="/login" className="btn-secondary text-sm">Accedi</Link>
+                  <button className="btn-primary text-sm" onClick={() => router.refresh()}>Riprova</button>
                 </div>
               </motion.div>
             )}
@@ -350,78 +351,74 @@ function CheckoutContent() {
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-white rounded-xl shadow-lg p-8 text-center"
+                className="bg-white rounded-xl shadow-lg p-6 lg:p-8 text-center"
               >
-                <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-                <h2 className="text-xl font-semibold mb-2 text-green-600">Pagamento completato!</h2>
-                <p className="text-gray-600 mb-6">{errorMessage}</p>
-                <div className="flex gap-3 justify-center">
-                  <Link href="/dashboard" className="btn-primary">Vai alla dashboard</Link>
+                <CheckCircle className="w-12 h-12 lg:w-16 lg:h-16 text-green-500 mx-auto mb-4" />
+                <h2 className="text-lg lg:text-xl font-semibold mb-2 text-green-600">Pagamento completato!</h2>
+                <p className="text-gray-600 mb-6 text-sm lg:text-base">{errorMessage}</p>
+                <div className="flex justify-center">
+                  <Link href="/dashboard" className="btn-primary text-sm">Vai alla dashboard</Link>
                 </div>
               </motion.div>
             )}
           </div>
 
-          {/* Colonna destra - Riepilogo */}
+          {/* Colonna destra - Riepilogo semplificato */}
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5, delay: 0.3 }}
-            className="space-y-6"
+            className="space-y-4 lg:space-y-6"
           >
-            <div className="bg-white rounded-xl shadow-lg p-6 border">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Riepilogo abbonamento</h3>
+            <div className="bg-white rounded-xl shadow-lg p-4 lg:p-6 border">
+              <h3 className="text-base lg:text-lg font-semibold text-gray-900 mb-3 lg:mb-4">Riepilogo</h3>
               
-              <div className="space-y-3">
+              <div className="space-y-2 lg:space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-gray-600">HostGPT Pro</span>
-                  <span className="font-semibold">29€/mese</span>
+                  <span className="text-gray-600 text-sm lg:text-base">HostGPT Pro</span>
+                  <span className="font-semibold text-sm lg:text-base">29€/mese</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-gray-600">Fatturazione</span>
-                  <span className="text-sm text-gray-500">Mensile</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-600">Prossimo addebito</span>
-                  <span className="text-sm text-gray-500">Tra 30 giorni</span>
+                  <span className="text-gray-600 text-sm lg:text-base">Fatturazione</span>
+                  <span className="text-xs lg:text-sm text-gray-500">Mensile</span>
                 </div>
               </div>
 
-              <div className="border-t pt-4 mt-4">
-                <div className="flex items-center justify-between text-lg font-semibold">
+              <div className="border-t pt-3 lg:pt-4 mt-3 lg:mt-4">
+                <div className="flex items-center justify-between text-base lg:text-lg font-semibold">
                   <span>Totale</span>
                   <span>29€/mese</span>
                 </div>
               </div>
             </div>
 
-            <div className="bg-gradient-to-r from-primary/10 to-purple-600/10 rounded-xl p-6 border border-primary/20">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Cosa include il tuo abbonamento</h3>
-              <div className="space-y-3">
+            <div className="bg-gradient-to-r from-primary/10 to-purple-600/10 rounded-xl p-4 lg:p-6 border border-primary/20">
+              <h3 className="text-base lg:text-lg font-semibold text-gray-900 mb-3 lg:mb-4">Cosa include</h3>
+              <div className="space-y-2 lg:space-y-3">
                 {features.map((feature, index) => (
                   <motion.div
                     key={index}
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.3, delay: 0.4 + index * 0.1 }}
-                    className="flex items-center space-x-3"
+                    className="flex items-center space-x-2 lg:space-x-3"
                   >
-                    <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center text-primary">
+                    <div className="w-6 h-6 lg:w-8 lg:h-8 bg-primary/10 rounded-lg flex items-center justify-center text-primary">
                       {feature.icon}
                     </div>
-                    <span className="text-gray-700">{feature.text}</span>
+                    <span className="text-gray-700 text-sm lg:text-base">{feature.text}</span>
                   </motion.div>
                 ))}
               </div>
             </div>
 
-            <div className="bg-blue-50 rounded-xl p-6 border border-blue-200">
-              <div className="flex items-start space-x-3">
-                <Shield className="w-6 h-6 text-blue-600 mt-1 flex-shrink-0" />
+            <div className="bg-blue-50 rounded-xl p-4 lg:p-6 border border-blue-200">
+              <div className="flex items-start space-x-2 lg:space-x-3">
+                <Shield className="w-4 h-4 lg:w-6 lg:h-6 text-blue-600 mt-1 flex-shrink-0" />
                 <div>
-                  <h4 className="font-semibold text-blue-900 mb-2">Pagamento sicuro</h4>
-                  <p className="text-sm text-blue-700">
-                    I tuoi dati di pagamento sono protetti con crittografia SSL e gestiti in modo sicuro da Stripe.
+                  <h4 className="font-semibold text-blue-900 mb-1 lg:mb-2 text-sm lg:text-base">Pagamento sicuro</h4>
+                  <p className="text-xs lg:text-sm text-blue-700">
+                    I tuoi dati sono protetti con crittografia SSL e gestiti da Stripe.
                   </p>
                 </div>
               </div>

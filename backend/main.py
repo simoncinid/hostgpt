@@ -1131,6 +1131,21 @@ async def confirm_payment(
         
         logger.info(f"Subscription created successfully for user {current_user.id}: {subscription.id}")
         
+        # Invia email di conferma abbonamento
+        try:
+            from email_templates import create_subscription_confirmation_email
+            email_body = create_subscription_confirmation_email(current_user.full_name or current_user.email)
+            background_tasks = BackgroundTasks()
+            background_tasks.add_task(
+                send_email, 
+                current_user.email, 
+                "🎉 Abbonamento HostGPT attivato con successo!", 
+                email_body
+            )
+            logger.info(f"Subscription confirmation email sent to {current_user.email}")
+        except Exception as e:
+            logger.error(f"Failed to send subscription confirmation email: {e}")
+        
         return {
             "status": "success",
             "subscription_id": subscription.id,
