@@ -172,9 +172,6 @@ export default function LandingPage() {
 
   // Stati per il popup demo chat
   const [isDemoPopupOpen, setIsDemoPopupOpen] = useState(false)
-  const [demoMessages, setDemoMessages] = useState<Array<{role: 'user' | 'assistant', text: string}>>([])
-  const [demoInput, setDemoInput] = useState('')
-  const [isDemoLoading, setIsDemoLoading] = useState(false)
 
   // Gestione flip della card pricing - una sola volta
   const handlePricingFlip = () => {
@@ -196,9 +193,6 @@ export default function LandingPage() {
       }, 5600) // 600ms flip + 5000ms animazione
     }
   }
-
-  // Stati per il thread della demo
-  const [demoThreadId, setDemoThreadId] = useState<string | null>(null)
 
   // Demo Chat State
   const [demoMessages, setDemoMessages] = useState<Array<{role: 'user' | 'assistant', content: string, timestamp: Date}>>([])
