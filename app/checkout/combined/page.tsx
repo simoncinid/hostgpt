@@ -10,12 +10,14 @@ import {
   CheckCircle, 
   Loader2,
   Home,
-  AlertTriangle,
-  Eye,
+  MessageSquare,
+  Users,
   Zap,
-  Star
+  Star,
+  AlertTriangle,
+  Eye
 } from 'lucide-react'
-import { guardian } from '@/lib/api'
+import { subscription } from '@/lib/api'
 import { useAuthStore } from '@/lib/store'
 import toast from 'react-hot-toast'
 import { loadStripe } from '@stripe/stripe-js'
@@ -108,7 +110,7 @@ function CheckoutForm({ clientSecret, onSuccess }: { clientSecret: string, onSuc
       <button
         type="submit"
         disabled={!stripe || isProcessing}
-        className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-4 px-6 rounded-lg font-semibold hover:from-purple-600/90 hover:to-indigo-600/90 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+        className="w-full bg-gradient-to-r from-primary via-purple-600 to-indigo-600 text-white py-4 px-6 rounded-lg font-semibold hover:from-primary/90 hover:via-purple-600/90 hover:to-indigo-600/90 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
       >
         {isProcessing ? (
           <>
@@ -118,7 +120,7 @@ function CheckoutForm({ clientSecret, onSuccess }: { clientSecret: string, onSuc
         ) : (
           <>
             <Shield className="w-5 h-5" />
-            <span>Attiva Guardian - 9€/mese</span>
+            <span>Attiva Pacchetto Completo - 38€/mese</span>
           </>
         )}
       </button>
@@ -162,14 +164,14 @@ function CheckoutContent() {
           return
         }
 
-        const resp = await guardian.createCheckout()
+        const resp = await subscription.createCheckout()
         
         // Controlla se l'abbonamento è stato riattivato
         if (resp.data.status === 'reactivated') {
           setStatus('success')
-          setErrorMessage('Guardian riattivato con successo!')
+          setErrorMessage('Abbonamento riattivato con successo!')
           setTimeout(() => {
-            window.location.href = '/dashboard/guardian'
+            router.push('/dashboard?refresh=true&subscription=success')
           }, 2000)
           return
         }
@@ -198,20 +200,20 @@ function CheckoutContent() {
 
   const handlePaymentSuccess = async () => {
     try {
-      // Conferma il pagamento con il backend
-      await guardian.confirmPayment(paymentIntentId)
+      // Conferma il pagamento combinato con il backend
+      await subscription.confirmCombinedPayment(paymentIntentId)
       
-      // Aggiorna lo stato utente per mostrare Guardian attivo
+      // Aggiorna lo stato utente per mostrare abbonamento attivo
       const auth = (await import('@/lib/api')).auth
       const me = await auth.me()
       setUser(me.data)
       
       setStatus('success')
-      setErrorMessage('Guardian attivato! Reindirizzamento alla dashboard...')
+      setErrorMessage('Pacchetto completo attivato! Reindirizzamento alla dashboard...')
       
-      // Reindirizza immediatamente alla dashboard Guardian con parametro di refresh
+      // Reindirizza immediatamente alla dashboard con parametro di refresh
       setTimeout(() => {
-        router.push('/dashboard/guardian?refresh=true&subscription=success')
+        router.push('/dashboard?refresh=true&subscription=success')
       }, 1500)
     } catch (error: any) {
       console.error('Errore nella conferma del pagamento:', error)
@@ -220,13 +222,13 @@ function CheckoutContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-indigo-50 flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-indigo-50 flex flex-col">
       {/* Header migliorato */}
       <div className="bg-white shadow-sm border-b px-6 py-4">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <Link href="/" className="flex items-center space-x-3">
-            <Home className="w-8 h-8 text-purple-600" />
-            <span className="text-xl font-bold text-dark">HostGPT Guardian</span>
+            <Home className="w-8 h-8 text-primary" />
+            <span className="text-xl font-bold text-dark">HostGPT Pro + Guardian</span>
           </Link>
           <div className="flex items-center space-x-3 text-sm text-gray-600">
             <Shield className="w-4 h-4" />
@@ -248,10 +250,10 @@ function CheckoutContent() {
                 className="mb-6"
               >
                 <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-2">
-                  Attiva Guardian
+                  Pacchetto Completo
                 </h1>
                 <p className="text-gray-600 text-sm lg:text-base">
-                  Proteggi la soddisfazione dei tuoi ospiti
+                  HostGPT Pro + Guardian per la massima efficienza
                 </p>
               </motion.div>
 
@@ -276,10 +278,10 @@ function CheckoutContent() {
 
                   <div className="mt-3 text-center">
                     <p className="text-xs text-gray-500">
-                      Cliccando su "Attiva Guardian" accetti i nostri{' '}
-                      <Link href="/terms" className="text-purple-600 hover:underline">Termini</Link>
+                      Cliccando su "Attiva Pacchetto Completo" accetti i nostri{' '}
+                      <Link href="/terms" className="text-primary hover:underline">Termini</Link>
                       {' '}e la{' '}
-                      <Link href="/privacy" className="text-purple-600 hover:underline">Privacy</Link>
+                      <Link href="/privacy" className="text-primary hover:underline">Privacy</Link>
                     </p>
                   </div>
                 </motion.div>
@@ -291,7 +293,7 @@ function CheckoutContent() {
                   animate={{ opacity: 1, y: 0 }}
                   className="bg-white rounded-xl shadow-lg p-8 text-center"
                 >
-                  <Loader2 className="w-12 h-12 text-purple-600 animate-spin mx-auto mb-4" />
+                  <Loader2 className="w-12 h-12 text-primary animate-spin mx-auto mb-4" />
                   <h2 className="text-xl font-semibold mb-2">Preparazione...</h2>
                   <p className="text-gray-600">Attendi qualche secondo.</p>
                 </motion.div>
@@ -306,10 +308,10 @@ function CheckoutContent() {
                   <h2 className="text-xl font-semibold mb-2">Pagamento annullato</h2>
                   <p className="text-gray-600 mb-6">Puoi riprovare quando vuoi.</p>
                   <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                    <Link href="/dashboard/guardian" className="btn-secondary">Dashboard</Link>
+                    <Link href="/dashboard" className="btn-secondary">Dashboard</Link>
                     <button
                       className="btn-primary"
-                      onClick={() => router.replace('/checkout/guardian')}
+                      onClick={() => router.replace('/checkout/combined')}
                     >
                       Riprova
                     </button>
@@ -341,7 +343,7 @@ function CheckoutContent() {
                   <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
                   <h2 className="text-xl font-semibold mb-2 text-green-600">Completato!</h2>
                   <p className="text-gray-600 mb-6">{errorMessage}</p>
-                  <Link href="/dashboard/guardian" className="btn-primary">Vai alla Dashboard Guardian</Link>
+                  <Link href="/dashboard" className="btn-primary">Vai alla Dashboard</Link>
                 </motion.div>
               )}
             </div>
@@ -358,7 +360,11 @@ function CheckoutContent() {
                 
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-600">HostGPT Guardian</span>
+                    <span className="text-gray-600">HostGPT Pro</span>
+                    <span className="font-semibold">29€/mese</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-600">Guardian</span>
                     <span className="font-semibold">9€/mese</span>
                   </div>
                   <div className="flex items-center justify-between">
@@ -370,14 +376,22 @@ function CheckoutContent() {
                 <div className="border-t pt-4 mt-4">
                   <div className="flex items-center justify-between text-lg font-semibold">
                     <span>Totale</span>
-                    <span>9€/mese</span>
+                    <span>38€/mese</span>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-gradient-to-r from-purple-600/10 to-indigo-600/10 rounded-xl p-6 border border-purple-600/20">
+              <div className="bg-gradient-to-r from-primary/10 to-purple-600/10 rounded-xl p-6 border border-primary/20">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Include</h3>
                 <div className="space-y-3">
+                  <div className="flex items-center space-x-3">
+                    <MessageSquare className="w-5 h-5 text-primary" />
+                    <span className="text-gray-700">1000 messaggi/mese</span>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <Users className="w-5 h-5 text-primary" />
+                    <span className="text-gray-700">Chatbot illimitati</span>
+                  </div>
                   <div className="flex items-center space-x-3">
                     <Eye className="w-5 h-5 text-purple-600" />
                     <span className="text-gray-700">Monitoraggio automatico</span>
@@ -385,14 +399,6 @@ function CheckoutContent() {
                   <div className="flex items-center space-x-3">
                     <AlertTriangle className="w-5 h-5 text-purple-600" />
                     <span className="text-gray-700">Alert ospiti insoddisfatti</span>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <Zap className="w-5 h-5 text-purple-600" />
-                    <span className="text-gray-700">Rilevamento in tempo reale</span>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <Star className="w-5 h-5 text-purple-600" />
-                    <span className="text-gray-700">Suggerimenti di azione</span>
                   </div>
                 </div>
               </div>
@@ -409,16 +415,16 @@ function CheckoutFallback() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
       <div className="w-full max-w-md bg-white rounded-lg shadow p-6 text-center">
-        <Loader2 className="w-8 h-8 text-purple-600 animate-spin mx-auto mb-4" />
+        <Loader2 className="w-8 h-8 text-primary animate-spin mx-auto mb-4" />
         <h1 className="text-2xl font-semibold mb-2">Caricamento…</h1>
-        <p className="text-gray-600">Preparazione della pagina di checkout Guardian.</p>
+        <p className="text-gray-600">Preparazione della pagina di checkout combinato.</p>
       </div>
     </div>
   )
 }
 
 // Componente principale avvolto in Suspense
-export default function GuardianCheckoutPage() {
+export default function CombinedCheckoutPage() {
   return (
     <Suspense fallback={<CheckoutFallback />}>
       <CheckoutContent />

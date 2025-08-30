@@ -162,9 +162,11 @@ function GuardianContent() {
         return
       }
       
-      // Se è un checkout combinato, mostra messaggio informativo
+      // Se è un checkout combinato, reindirizza al checkout combinato personalizzato
       if (response.data.is_combined) {
         toast.success('Reindirizzamento al checkout per HostGPT + Guardian...')
+        router.push('/checkout/combined')
+        return
       }
       
       // Se abbiamo un client_secret, reindirizza al checkout Guardian personalizzato

@@ -1223,6 +1223,91 @@ async def confirm_guardian_payment(
         logger.error(f"Error confirming Guardian payment: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.post("/api/subscription/confirm-combined-payment")
+async def confirm_combined_payment(
+    request: ConfirmPaymentRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    payment_intent_id = request.payment_intent_id
+    """Conferma il pagamento combinato e crea entrambe le sottoscrizioni"""
+    try:
+        logger.info(f"Confirming combined payment for user {current_user.id}, payment_intent_id: {payment_intent_id}")
+        
+        # Recupera il Payment Intent
+        payment_intent = stripe.PaymentIntent.retrieve(payment_intent_id)
+        
+        if payment_intent.status != 'succeeded':
+            raise HTTPException(status_code=400, detail="Il pagamento non è stato completato con successo")
+        
+        # Verifica che il Payment Intent appartenga all'utente
+        if payment_intent.customer != current_user.stripe_customer_id:
+            raise HTTPException(status_code=400, detail="Payment Intent non valido")
+        
+        # Crea entrambe le sottoscrizioni
+        hostgpt_price_id = payment_intent.metadata.get('hostgpt_price_id')
+        guardian_price_id = payment_intent.metadata.get('guardian_price_id')
+        
+        if not hostgpt_price_id or not guardian_price_id:
+            raise HTTPException(status_code=400, detail="Price IDs non trovati nel Payment Intent")
+        
+        # Crea sottoscrizione HostGPT
+        hostgpt_subscription = stripe.Subscription.create(
+            customer=current_user.stripe_customer_id,
+            items=[{'price': hostgpt_price_id}],
+            payment_behavior='default_incomplete',
+            payment_settings={'save_default_payment_method': 'on_subscription'},
+            expand=['latest_invoice.payment_intent'],
+        )
+        
+        # Crea sottoscrizione Guardian
+        guardian_subscription = stripe.Subscription.create(
+            customer=current_user.stripe_customer_id,
+            items=[{'price': guardian_price_id}],
+            payment_behavior='default_incomplete',
+            payment_settings={'save_default_payment_method': 'on_subscription'},
+            expand=['latest_invoice.payment_intent'],
+        )
+        
+        # Aggiorna il database
+        current_user.stripe_subscription_id = hostgpt_subscription.id
+        current_user.subscription_status = 'active'
+        current_user.subscription_end_date = datetime.utcfromtimestamp(hostgpt_subscription.current_period_end)
+        
+        current_user.guardian_stripe_subscription_id = guardian_subscription.id
+        current_user.guardian_subscription_status = 'active'
+        current_user.guardian_subscription_end_date = datetime.utcfromtimestamp(guardian_subscription.current_period_end)
+        
+        db.commit()
+        
+        logger.info(f"Combined subscriptions created successfully for user {current_user.id}")
+        
+        # Invia email di conferma per il pacchetto completo
+        try:
+            from email_templates import create_combined_subscription_confirmation_email
+            email_body = create_combined_subscription_confirmation_email(current_user.full_name or current_user.email)
+            background_tasks = BackgroundTasks()
+            background_tasks.add_task(
+                send_email, 
+                current_user.email, 
+                "🎉 Pacchetto Completo attivato con successo!", 
+                email_body
+            )
+            logger.info(f"Combined subscription confirmation email sent to {current_user.email}")
+        except Exception as e:
+            logger.error(f"Failed to send combined subscription confirmation email: {e}")
+        
+        return {
+            "status": "success",
+            "hostgpt_subscription_id": hostgpt_subscription.id,
+            "guardian_subscription_id": guardian_subscription.id,
+            "message": "Pacchetto completo attivato con successo"
+        }
+        
+    except Exception as e:
+        logger.error(f"Error confirming combined payment: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.post("/api/subscription/webhook")
 async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
     """Webhook per eventi Stripe"""
@@ -2520,7 +2605,29 @@ async def create_combined_checkout_session(current_user: User, db: Session):
         )
         
         logger.info(f"Combined checkout session created successfully: {checkout_session.id}")
-        return {"checkout_url": checkout_session.url, "is_combined": True}
+        # Per il checkout combinato, creiamo un Payment Intent personalizzato
+        payment_intent = stripe.PaymentIntent.create(
+            amount=3800,  # 38€ in centesimi
+            currency='eur',
+            customer=current_user.stripe_customer_id,
+            metadata={
+                'user_id': str(current_user.id),
+                'subscription_type': 'combined',
+                'free_trial_conversion': 'true',
+                'hostgpt_price_id': settings.STRIPE_PRICE_ID,
+                'guardian_price_id': guardian_price_id
+            },
+            automatic_payment_methods={
+                'enabled': True,
+            },
+        )
+        
+        logger.info(f"Combined payment intent created successfully: {payment_intent.id}")
+        return {
+            "client_secret": payment_intent.client_secret,
+            "payment_intent_id": payment_intent.id,
+            "is_combined": True
+        }
         
     except Exception as e:
         logger.error(f"Combined checkout error: {e}")

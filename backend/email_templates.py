@@ -743,6 +743,62 @@ def create_subscription_confirmation_email(user_name: str) -> str:
     
     return get_base_email_template(content)
 
+def create_combined_subscription_confirmation_email(user_name: str) -> str:
+    """Template email per confermare l'attivazione del pacchetto completo HostGPT + Guardian"""
+    content = f"""
+    <div style="text-align: center; padding: 40px 20px;">
+        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 15px; margin-bottom: 30px;">
+            <h1 style="color: white; margin: 0; font-size: 28px; font-weight: bold;">🎉 Pacchetto Completo Attivato!</h1>
+            <p style="color: white; margin: 10px 0 0 0; font-size: 16px;">Ciao {user_name},</p>
+        </div>
+        
+        <div style="background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); margin-bottom: 20px;">
+            <h2 style="color: #333; margin-bottom: 20px;">Il tuo pacchetto HostGPT Pro + Guardian è ora attivo!</h2>
+            
+            <div style="display: flex; justify-content: space-around; margin: 30px 0; flex-wrap: wrap;">
+                <div style="text-align: center; margin: 10px; flex: 1; min-width: 200px;">
+                    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px;">
+                        <span style="color: white; font-size: 24px;">🤖</span>
+                    </div>
+                    <h3 style="color: #333; margin: 10px 0;">HostGPT Pro</h3>
+                    <p style="color: #666; margin: 5px 0;">• 1000 messaggi/mese</p>
+                    <p style="color: #666; margin: 5px 0;">• Chatbot illimitati</p>
+                    <p style="color: #666; margin: 5px 0;">• Risposte istantanee</p>
+                </div>
+                
+                <div style="text-align: center; margin: 10px; flex: 1; min-width: 200px;">
+                    <div style="background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%); width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px;">
+                        <span style="color: white; font-size: 24px;">🛡️</span>
+                    </div>
+                    <h3 style="color: #333; margin: 10px 0;">Guardian</h3>
+                    <p style="color: #666; margin: 5px 0;">• Monitoraggio automatico</p>
+                    <p style="color: #666; margin: 5px 0;">• Alert ospiti insoddisfatti</p>
+                    <p style="color: #666; margin: 5px 0;">• Rilevamento in tempo reale</p>
+                </div>
+            </div>
+            
+            <p style="color: #666; line-height: 1.6; margin: 20px 0;">
+                Ora hai accesso completo a tutte le funzionalità di HostGPT Pro e Guardian. 
+                Inizia subito a creare chatbot intelligenti e monitora la soddisfazione dei tuoi ospiti!
+            </p>
+        </div>
+        
+        <div style="text-align: center; margin-top: 30px;">
+            <a href="{os.getenv('FRONTEND_URL', 'http://localhost:3000')}/dashboard" 
+               style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 25px; font-weight: bold; display: inline-block; margin: 10px;">
+                🚀 Vai alla Dashboard
+            </a>
+        </div>
+        
+        <div style="margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 10px;">
+            <p style="color: #666; margin: 0; font-size: 14px;">
+                Hai domande? Contattaci su <a href="mailto:support@hostgpt.com" style="color: #667eea;">support@hostgpt.com</a>
+            </p>
+        </div>
+    </div>
+    """
+    return get_base_email_template(content)
+
 def create_guardian_subscription_confirmation_email(user_name: str) -> str:
     """Template email per confermare l'attivazione dell'abbonamento Guardian"""
     

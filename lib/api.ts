@@ -61,6 +61,8 @@ export const subscription = {
     api.post('/subscription/confirm', { session_id }),
   confirmPayment: (payment_intent_id: string) =>
     api.post('/subscription/confirm-payment', { payment_intent_id }),
+  confirmCombinedPayment: (payment_intent_id: string) =>
+    api.post('/subscription/confirm-combined-payment', { payment_intent_id }),
   cancel: () =>
     api.post('/subscription/cancel'),
 }
