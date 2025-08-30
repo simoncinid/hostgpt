@@ -891,90 +891,72 @@ export default function LandingPage() {
                 </Link>
               </motion.div>
 
-              {/* Desktop Menu premium */}
-              <div className="hidden md:flex items-center space-x-3 relative z-10">
+              {/* Desktop Menu premium - Ripensato per essere più pulito e organizzato */}
+              <div className="hidden md:flex items-center space-x-2 relative z-10">
                 {[
                   { href: "#features", label: "Funzionalità" },
                   { href: "#demo", label: "Demo" },
                   { href: "#how-it-works", label: "Come Funziona" },
                   { href: "#pricing", label: "Prezzi" },
-                  { href: "#feedback", label: "Feedback" },
-                  { href: "/login", label: "Accedi" }
+                  { href: "#feedback", label: "Feedback" }
                 ].map((item, index) => (
                   <motion.div
                     key={item.href}
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.4, delay: index * 0.1 }}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
                   >
                     <Link 
                       href={item.href} 
-                      className="relative px-4 py-2 text-gray-700 font-semibold hover:text-gray-900 transition-all duration-300 rounded-xl hover:bg-white/30 group"
+                      className="relative px-3 py-2 text-gray-700 font-medium hover:text-gray-900 transition-all duration-300 rounded-lg hover:bg-white/40 group text-sm"
                     >
                       <span className="relative z-10">{item.label}</span>
                       <motion.div
-                        className="absolute inset-0 bg-gradient-to-r from-rose-100/50 to-pink-100/50 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                        className="absolute inset-0 bg-gradient-to-r from-rose-100/50 to-pink-100/50 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"
                         layoutId="navbar-hover"
                       />
                     </Link>
                   </motion.div>
                 ))}
                 
-                {/* Bottone Free Trial verde */}
+                {/* Separatore */}
+                <div className="w-px h-6 bg-gray-300 mx-2"></div>
+                
+                {/* Bottone Login */}
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.5, delay: 0.6 }}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <Link
+                    href="/login"
+                    className="px-4 py-2 text-gray-700 font-medium hover:text-gray-900 transition-all duration-300 rounded-lg hover:bg-white/40 text-sm"
+                  >
+                    Accedi
+                  </Link>
+                </motion.div>
+
+                {/* Bottone CTA principale */}
                 <motion.div
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ duration: 0.5, delay: 0.7 }}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="ml-4"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="ml-2"
                 >
                   <div className="relative group">
                     <motion.div
-                      className="absolute -inset-1 bg-gradient-to-r from-green-400 to-emerald-500 rounded-2xl blur opacity-0 group-hover:opacity-40 transition-opacity duration-300"
-                      whileHover={{ scale: 1.1 }}
-                    />
-                    <Link
-                      href="/register?free_trial=true"
-                      className="relative inline-flex items-center gap-2 px-6 py-3 text-white font-bold bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl shadow-lg transition-all duration-300 group-hover:shadow-xl overflow-hidden"
-                    >
-                      {/* Effetto shimmer verde */}
-                      <motion.div
-                        className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12"
-                        animate={{
-                          x: ['-100%', '100%'],
-                        }}
-                        transition={{
-                          duration: 2,
-                          repeat: Infinity,
-                          repeatDelay: 3,
-                          ease: "easeInOut",
-                        }}
-                      />
-                      <span className="relative z-10">🎉 Prova Gratis</span>
-                    </Link>
-                  </div>
-                </motion.div>
-
-                {/* Bottone CTA premium */}
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.5, delay: 0.8 }}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="ml-4"
-                >
-                  <div className="relative group">
-                    <motion.div
-                      className="absolute -inset-1 bg-gradient-to-r from-rose-400 to-pink-500 rounded-2xl blur opacity-0 group-hover:opacity-40 transition-opacity duration-300"
+                      className="absolute -inset-1 bg-gradient-to-r from-rose-400 to-pink-500 rounded-xl blur opacity-0 group-hover:opacity-40 transition-opacity duration-300"
                       whileHover={{ scale: 1.1 }}
                     />
                     <Link
                       href="/register?free_trial=false"
-                      className="relative inline-flex items-center gap-2 px-6 py-3 text-white font-bold bg-gradient-to-r from-rose-500 to-pink-600 rounded-2xl shadow-lg transition-all duration-300 group-hover:shadow-xl overflow-hidden"
+                      className="relative inline-flex items-center gap-2 px-4 py-2 text-white font-semibold bg-gradient-to-r from-rose-500 to-pink-600 rounded-xl shadow-lg transition-all duration-300 group-hover:shadow-xl overflow-hidden text-sm"
                     >
                       {/* Effetto shimmer */}
                       <motion.div
@@ -1000,7 +982,7 @@ export default function LandingPage() {
                         }}
                         className="relative z-10"
                       >
-                        <Sparkles className="w-4 h-4" />
+                        <Sparkles className="w-3 h-3" />
                       </motion.div>
                     </Link>
                   </div>
@@ -1050,14 +1032,13 @@ export default function LandingPage() {
                   <div className="absolute bottom-0 left-0 w-16 h-16 bg-gradient-to-tr from-pink-100/40 to-transparent rounded-full blur-lg"></div>
                 </div>
 
-                <div className="space-y-3 relative z-10">
+                <div className="space-y-2 relative z-10">
                   {[
                     { href: "#features", label: "Funzionalità" },
                     { href: "#demo", label: "Demo" },
                     { href: "#how-it-works", label: "Come Funziona" },
                     { href: "#pricing", label: "Prezzi" },
-                    { href: "#feedback", label: "Feedback" },
-                    { href: "/login", label: "Accedi" }
+                    { href: "#feedback", label: "Feedback" }
                   ].map((item, index) => (
                     <motion.div
                       key={item.href}
@@ -1068,26 +1049,28 @@ export default function LandingPage() {
                       <Link 
                         href={item.href} 
                         onClick={() => setIsMenuOpen(false)} 
-                        className="block px-4 py-3 text-gray-700 font-semibold hover:text-gray-900 hover:bg-white/30 rounded-xl transition-all duration-300"
+                        className="block px-4 py-2.5 text-gray-700 font-medium hover:text-gray-900 hover:bg-white/30 rounded-lg transition-all duration-300 text-sm"
                       >
                         {item.label}
                       </Link>
                     </motion.div>
                   ))}
                   
-                  {/* Bottone mobile Free Trial */}
+                  {/* Separatore mobile */}
+                  <div className="border-t border-white/20 my-2"></div>
+                  
+                  {/* Bottone mobile Login */}
                   <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.4, delay: 0.3 }}
-                    className="pt-3 border-t border-white/20"
                   >
                     <Link 
-                      href="/register?free_trial=true" 
+                      href="/login" 
                       onClick={() => setIsMenuOpen(false)} 
-                      className="block w-full text-center px-6 py-4 text-white font-bold bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 mb-3"
+                      className="block w-full text-center px-4 py-2.5 text-gray-700 font-medium hover:text-gray-900 hover:bg-white/30 rounded-lg transition-all duration-300 text-sm"
                     >
-                      🎉 Prova Gratis
+                      Accedi
                     </Link>
                   </motion.div>
 
@@ -1096,11 +1079,12 @@ export default function LandingPage() {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.4, delay: 0.4 }}
+                    className="pt-2"
                   >
                     <Link 
                       href="/register?free_trial=false" 
                       onClick={() => setIsMenuOpen(false)} 
-                      className="block w-full text-center px-6 py-4 text-white font-bold bg-gradient-to-r from-rose-500 to-pink-600 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300"
+                      className="block w-full text-center px-4 py-3 text-white font-semibold bg-gradient-to-r from-rose-500 to-pink-600 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 text-sm"
                     >
                       Registrati
                     </Link>
@@ -3568,29 +3552,29 @@ export default function LandingPage() {
       {/* Cookie Banner */}
       <CookieBanner />
 
-      {/* Demo Chat Popup Modal - Replica esatta della pagina chat */}
+      {/* Demo Chat Popup Modal - Ripensato con margini, angoli arrotondati e altezza fissa */}
       {isDemoPopupOpen && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
         >
-          {/* Backdrop */}
+          {/* Backdrop con supporto dark mode */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 bg-black/20 backdrop-blur-sm"
+            className={`absolute inset-0 ${demoIsDarkMode ? 'bg-black/60' : 'bg-black/20'} backdrop-blur-sm`}
             onClick={() => setIsDemoPopupOpen(false)}
           />
           
-          {/* Modal Content - Replica esatta della pagina chat */}
+          {/* Modal Content - Con margini, angoli arrotondati e altezza fissa */}
           <motion.div
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.95, opacity: 0 }}
-            className="relative w-full h-full max-w-4xl mx-auto bg-white shadow-2xl overflow-hidden"
+            className={`relative w-full max-w-4xl mx-auto ${demoIsDarkMode ? 'bg-gray-900' : 'bg-white'} shadow-2xl overflow-hidden rounded-3xl h-[90vh] max-h-[800px]`}
           >
             {/* Header - FISSO */}
             <div className={`${demoIsDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'} shadow-sm flex-shrink-0 border-b transition-colors duration-300`}>
@@ -3695,7 +3679,7 @@ export default function LandingPage() {
               </motion.div>
             )}
 
-            {/* Main Chat Area - FISSA */}
+            {/* Main Chat Area - FISSA con altezza controllata */}
             <div className="flex-1 flex flex-col max-w-4xl mx-auto w-full px-4 py-4 md:py-6 overflow-hidden">
               <div className={`${demoIsDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl shadow-xl overflow-hidden flex flex-col h-full transition-colors duration-300`}>
                 {/* Welcome Screen */}
@@ -3704,6 +3688,7 @@ export default function LandingPage() {
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     className="p-8 text-center flex-1 flex flex-col justify-center"
+                    style={{ minHeight: '400px' }}
                   >
                     <div className="w-20 h-20 bg-rose-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
                       <MessageSquare className="w-10 h-10 text-rose-500" />
@@ -3737,7 +3722,7 @@ export default function LandingPage() {
                 {/* Messages Area - FISSA */}
                 {(!demoShowWelcome || demoMessages.length > 1) && (
                   <>
-                    <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4">
+                    <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4" style={{ maxHeight: 'calc(100vh - 400px)', minHeight: '300px' }}>
                       {demoMessages.map((message, index) => (
                         <motion.div
                           key={index}
