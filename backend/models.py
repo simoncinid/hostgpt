@@ -36,6 +36,10 @@ class User(Base):
     guardian_subscription_end_date = Column(DateTime)
     guardian_stripe_subscription_id = Column(String(255))
     
+    # Referral code fields
+    referral_code_id = Column(Integer, ForeignKey("referral_codes.id"))
+    referral_code_used_at = Column(DateTime)  # Quando è stato utilizzato il referral code
+    
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, onupdate=func.now())
     
@@ -43,7 +47,8 @@ class User(Base):
     chatbots = relationship("Chatbot", back_populates="owner", cascade="all, delete-orphan")
     guest_satisfaction = relationship("GuestSatisfaction", back_populates="user", cascade="all, delete-orphan")
     guardian_alerts = relationship("GuardianAlert", back_populates="user", cascade="all, delete-orphan")
-    
+    referral_code = relationship("ReferralCode", back_populates="users")
+
 class Chatbot(Base):
     __tablename__ = "chatbots"
     
@@ -254,3 +259,19 @@ class GuardianAnalysis(Base):
     
     # Relationships
     conversation = relationship("Conversation")
+
+class ReferralCode(Base):
+    __tablename__ = "referral_codes"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    code = Column(String(50), unique=True, nullable=False, index=True)
+    description = Column(String(255))
+    bonus_messages = Column(Integer, default=100)  # Messaggi bonus da aggiungere al limite
+    is_active = Column(Boolean, default=True)
+    max_uses = Column(Integer)  # Numero massimo di utilizzi (None = illimitato)
+    current_uses = Column(Integer, default=0)  # Numero di utilizzi attuali
+    created_at = Column(DateTime, server_default=func.now())
+    expires_at = Column(DateTime)  # Data di scadenza (None = mai)
+    
+    # Relationships
+    users = relationship("User", back_populates="referral_code")

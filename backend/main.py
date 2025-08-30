@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import func
-from typing import List, Optional
+from typing import List, Optional, Tuple
 from datetime import datetime, timedelta
 import stripe
 import openai
@@ -23,7 +23,7 @@ import secrets
 import logging
 
 from database import get_db, engine
-from models import Base, User, Chatbot, Conversation, Message, KnowledgeBase, Analytics, GuardianAlert, GuardianAnalysis
+from models import Base, User, Chatbot, Conversation, Message, KnowledgeBase, Analytics, GuardianAlert, GuardianAnalysis, ReferralCode
 from config import settings
 from email_templates import (
     create_welcome_email,
@@ -167,6 +167,15 @@ class SubscriptionConfirm(BaseModel):
 
 class ConfirmPaymentRequest(BaseModel):
     payment_intent_id: str
+    referral_code: Optional[str] = None
+
+class ReferralCodeRequest(BaseModel):
+    code: str
+
+class ReferralCodeResponse(BaseModel):
+    valid: bool
+    bonus_messages: int
+    message: str
 
 # ============= Utility Functions =============
 
@@ -914,8 +923,109 @@ async def get_me(current_user: User = Depends(get_current_user)):
         "free_trial_messages_limit": current_user.free_trial_messages_limit,
         "free_trial_messages_used": current_user.free_trial_messages_used,
         "free_trial_converted": current_user.free_trial_converted,
-        "is_free_trial_active": is_free_trial_active(current_user)
+        "is_free_trial_active": is_free_trial_active(current_user),
+        # Referral code info
+        "referral_code_used": current_user.referral_code.code if current_user.referral_code else None,
+        "referral_code_used_at": current_user.referral_code_used_at.isoformat() if current_user.referral_code_used_at else None
     }
+
+# ============= Referral Code Management =============
+
+def validate_referral_code(code: str, db: Session) -> Tuple[bool, Optional[ReferralCode], str]:
+    """
+    Valida un referral code e restituisce (is_valid, referral_code_object, message)
+    """
+    try:
+        # Cerca il referral code nel database
+        referral_code = db.query(ReferralCode).filter(
+            ReferralCode.code == code.upper(),
+            ReferralCode.is_active == True
+        ).first()
+        
+        if not referral_code:
+            return False, None, "Codice referral non valido o non attivo"
+        
+        # Verifica se il codice è scaduto
+        if referral_code.expires_at and referral_code.expires_at < datetime.utcnow():
+            return False, None, "Codice referral scaduto"
+        
+        # Verifica se il codice ha raggiunto il limite massimo di utilizzi
+        if referral_code.max_uses and referral_code.current_uses >= referral_code.max_uses:
+            return False, None, "Codice referral esaurito"
+        
+        return True, referral_code, "Codice referral valido"
+        
+    except Exception as e:
+        logger.error(f"Errore nella validazione del referral code: {e}")
+        return False, None, "Errore nella validazione del codice"
+
+@app.post("/api/referral/validate", response_model=ReferralCodeResponse)
+async def validate_referral_code_endpoint(
+    request: ReferralCodeRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Valida un referral code e restituisce i dettagli"""
+    try:
+        is_valid, referral_code, message = validate_referral_code(request.code, db)
+        
+        if is_valid:
+            return ReferralCodeResponse(
+                valid=True,
+                bonus_messages=referral_code.bonus_messages,
+                message=f"Codice valido! Riceverai {referral_code.bonus_messages} messaggi bonus al mese"
+            )
+        else:
+            return ReferralCodeResponse(
+                valid=False,
+                bonus_messages=0,
+                message=message
+            )
+            
+    except Exception as e:
+        logger.error(f"Errore nella validazione del referral code: {e}")
+        raise HTTPException(status_code=500, detail="Errore interno del server")
+
+@app.get("/api/referral/stats")
+async def get_referral_stats(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Ottieni statistiche sui referral codes (solo per admin)"""
+    try:
+        # Per ora, permettiamo a tutti gli utenti di vedere le statistiche
+        # In futuro potresti aggiungere un campo is_admin al modello User
+        
+        # Conta tutti i referral codes
+        total_codes = db.query(ReferralCode).count()
+        active_codes = db.query(ReferralCode).filter(ReferralCode.is_active == True).count()
+        
+        # Conta utenti che hanno usato referral codes
+        users_with_referral = db.query(User).filter(User.referral_code_id.isnot(None)).count()
+        
+        # Top referral codes per utilizzo
+        top_codes = db.query(ReferralCode).order_by(ReferralCode.current_uses.desc()).limit(5).all()
+        
+        return {
+            "total_codes": total_codes,
+            "active_codes": active_codes,
+            "users_with_referral": users_with_referral,
+            "top_codes": [
+                {
+                    "code": code.code,
+                    "description": code.description,
+                    "bonus_messages": code.bonus_messages,
+                    "current_uses": code.current_uses,
+                    "max_uses": code.max_uses,
+                    "is_active": code.is_active
+                }
+                for code in top_codes
+            ]
+        }
+        
+    except Exception as e:
+        logger.error(f"Errore nel recupero delle statistiche referral: {e}")
+        raise HTTPException(status_code=500, detail="Errore interno del server")
 
 # --- Subscription/Payment ---
 
@@ -1121,12 +1231,35 @@ async def confirm_payment(
             expand=['latest_invoice.payment_intent'],
         )
         
+        # Gestione referral code
+        bonus_messages = 0
+        if request.referral_code:
+            is_valid, referral_code_obj, message = validate_referral_code(request.referral_code, db)
+            if is_valid and not current_user.referral_code_id:  # Solo se non ha già usato un referral code
+                # Applica il bonus
+                bonus_messages = referral_code_obj.bonus_messages
+                current_user.referral_code_id = referral_code_obj.id
+                current_user.referral_code_used_at = datetime.utcnow()
+                
+                # Incrementa il contatore di utilizzi del referral code
+                referral_code_obj.current_uses += 1
+                
+                logger.info(f"Referral code {request.referral_code} applied to user {current_user.id}, bonus: {bonus_messages} messages")
+            else:
+                logger.warning(f"Invalid referral code {request.referral_code} for user {current_user.id}: {message}")
+        
         # Aggiorna il database
         current_user.stripe_subscription_id = subscription.id
         current_user.subscription_status = 'active'
         current_user.subscription_end_date = datetime.utcfromtimestamp(subscription.current_period_end)
         current_user.messages_used = 0
         current_user.messages_reset_date = datetime.utcnow()
+        
+        # Applica il bonus dei messaggi se presente
+        if bonus_messages > 0:
+            current_user.messages_limit += bonus_messages
+            logger.info(f"Applied {bonus_messages} bonus messages to user {current_user.id}. New limit: {current_user.messages_limit}")
+        
         db.commit()
         
         logger.info(f"Subscription created successfully for user {current_user.id}: {subscription.id}")
@@ -1146,10 +1279,15 @@ async def confirm_payment(
         except Exception as e:
             logger.error(f"Failed to send subscription confirmation email: {e}")
         
+        response_message = "Abbonamento attivato con successo"
+        if bonus_messages > 0:
+            response_message += f" + {bonus_messages} messaggi bonus!"
+        
         return {
             "status": "success",
             "subscription_id": subscription.id,
-            "message": "Abbonamento attivato con successo"
+            "message": response_message,
+            "bonus_messages": bonus_messages
         }
         
     except Exception as e:
@@ -1279,6 +1417,23 @@ async def confirm_combined_payment(
         )
         logger.info(f"Guardian subscription created: {guardian_subscription.id}")
         
+        # Gestione referral code
+        bonus_messages = 0
+        if request.referral_code:
+            is_valid, referral_code_obj, message = validate_referral_code(request.referral_code, db)
+            if is_valid and not current_user.referral_code_id:  # Solo se non ha già usato un referral code
+                # Applica il bonus
+                bonus_messages = referral_code_obj.bonus_messages
+                current_user.referral_code_id = referral_code_obj.id
+                current_user.referral_code_used_at = datetime.utcnow()
+                
+                # Incrementa il contatore di utilizzi del referral code
+                referral_code_obj.current_uses += 1
+                
+                logger.info(f"Referral code {request.referral_code} applied to user {current_user.id}, bonus: {bonus_messages} messages")
+            else:
+                logger.warning(f"Invalid referral code {request.referral_code} for user {current_user.id}: {message}")
+        
         # Aggiorna il database
         logger.info("Updating database...")
         current_user.stripe_subscription_id = hostgpt_subscription.id
@@ -1288,6 +1443,11 @@ async def confirm_combined_payment(
         current_user.guardian_stripe_subscription_id = guardian_subscription.id
         current_user.guardian_subscription_status = 'active'
         current_user.guardian_subscription_end_date = datetime.utcfromtimestamp(guardian_subscription.current_period_end)
+        
+        # Applica il bonus dei messaggi se presente
+        if bonus_messages > 0:
+            current_user.messages_limit += bonus_messages
+            logger.info(f"Applied {bonus_messages} bonus messages to user {current_user.id}. New limit: {current_user.messages_limit}")
         
         logger.info("Committing to database...")
         db.commit()
@@ -1309,11 +1469,16 @@ async def confirm_combined_payment(
         except Exception as e:
             logger.error(f"Failed to send combined subscription confirmation email: {e}")
         
+        response_message = "Pacchetto completo attivato con successo"
+        if bonus_messages > 0:
+            response_message += f" + {bonus_messages} messaggi bonus!"
+        
         return {
             "status": "success",
             "hostgpt_subscription_id": hostgpt_subscription.id,
             "guardian_subscription_id": guardian_subscription.id,
-            "message": "Pacchetto completo attivato con successo"
+            "message": response_message,
+            "bonus_messages": bonus_messages
         }
         
     except Exception as e:
