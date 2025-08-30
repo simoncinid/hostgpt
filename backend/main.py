@@ -1226,6 +1226,7 @@ async def confirm_guardian_payment(
 @app.post("/api/subscription/confirm-combined-payment")
 async def confirm_combined_payment(
     request: ConfirmPaymentRequest,
+    background_tasks: BackgroundTasks,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -1255,7 +1256,6 @@ async def confirm_combined_payment(
         hostgpt_subscription = stripe.Subscription.create(
             customer=current_user.stripe_customer_id,
             items=[{'price': hostgpt_price_id}],
-            payment_behavior='default_incomplete',
             payment_settings={'save_default_payment_method': 'on_subscription'},
             expand=['latest_invoice.payment_intent'],
         )
@@ -1264,7 +1264,6 @@ async def confirm_combined_payment(
         guardian_subscription = stripe.Subscription.create(
             customer=current_user.stripe_customer_id,
             items=[{'price': guardian_price_id}],
-            payment_behavior='default_incomplete',
             payment_settings={'save_default_payment_method': 'on_subscription'},
             expand=['latest_invoice.payment_intent'],
         )
@@ -1286,7 +1285,6 @@ async def confirm_combined_payment(
         try:
             from email_templates import create_combined_subscription_confirmation_email
             email_body = create_combined_subscription_confirmation_email(current_user.full_name or current_user.email)
-            background_tasks = BackgroundTasks()
             background_tasks.add_task(
                 send_email, 
                 current_user.email, 
