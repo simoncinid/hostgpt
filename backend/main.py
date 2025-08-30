@@ -1055,31 +1055,87 @@ async def create_checkout_session(current_user: User = Depends(get_current_user)
             else:
                 logger.info(f"No subscriptions found for customer {current_user.stripe_customer_id}")
         
-        # Crea sessione checkout per abbonamento mensile a 29€
-        logger.info(f"Creating checkout session for user {current_user.id}")
-        checkout_session = stripe.checkout.Session.create(
+        # Crea Payment Intent per checkout personalizzato
+        logger.info(f"Creating payment intent for user {current_user.id}")
+        
+        payment_intent = stripe.PaymentIntent.create(
+            amount=2900,  # 29€ in centesimi
+            currency='eur',
             customer=current_user.stripe_customer_id,
-            payment_method_types=['card'],
-            line_items=[{
-                'price': settings.STRIPE_PRICE_ID,  # Questo dovrà essere configurato per 29€/mese
-                'quantity': 1,
-            }],
-            mode='subscription',
-            success_url=f"{settings.FRONTEND_URL}/login?subscription=success&session_id={{CHECKOUT_SESSION_ID}}",
-            cancel_url=f"{settings.FRONTEND_URL}/dashboard?subscription=cancelled",
             metadata={
-                'user_id': str(current_user.id)
-            }
+                'user_id': str(current_user.id),
+                'subscription_type': 'hostgpt',
+                'price_id': settings.STRIPE_PRICE_ID
+            },
+            automatic_payment_methods={
+                'enabled': True,
+            },
         )
         
-        logger.info(f"Checkout session created successfully: {checkout_session.id}")
-        return {"checkout_url": checkout_session.url}
+        logger.info(f"Payment intent created successfully: {payment_intent.id}")
+        return {
+            "client_secret": payment_intent.client_secret,
+            "payment_intent_id": payment_intent.id
+        }
         
     except Exception as e:
         logger.error(f"Stripe checkout error: {e}")
         logger.error(f"Error type: {type(e)}")
         logger.error(f"Error details: {str(e)}")
         raise HTTPException(status_code=400, detail=str(e))
+
+@app.post("/api/subscription/confirm-payment")
+async def confirm_payment(
+    payment_intent_id: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Conferma il pagamento e crea la sottoscrizione"""
+    try:
+        logger.info(f"Confirming payment for user {current_user.id}, payment_intent_id: {payment_intent_id}")
+        
+        # Recupera il Payment Intent
+        payment_intent = stripe.PaymentIntent.retrieve(payment_intent_id)
+        
+        if payment_intent.status != 'succeeded':
+            raise HTTPException(status_code=400, detail="Il pagamento non è stato completato con successo")
+        
+        # Verifica che il Payment Intent appartenga all'utente
+        if payment_intent.customer != current_user.stripe_customer_id:
+            raise HTTPException(status_code=400, detail="Payment Intent non valido")
+        
+        # Crea la sottoscrizione usando il price_id dal metadata
+        price_id = payment_intent.metadata.get('price_id')
+        if not price_id:
+            raise HTTPException(status_code=400, detail="Price ID non trovato nel Payment Intent")
+        
+        subscription = stripe.Subscription.create(
+            customer=current_user.stripe_customer_id,
+            items=[{'price': price_id}],
+            payment_behavior='default_incomplete',
+            payment_settings={'save_default_payment_method': 'on_subscription'},
+            expand=['latest_invoice.payment_intent'],
+        )
+        
+        # Aggiorna il database
+        current_user.stripe_subscription_id = subscription.id
+        current_user.subscription_status = 'active'
+        current_user.subscription_end_date = datetime.utcfromtimestamp(subscription.current_period_end)
+        current_user.messages_used = 0
+        current_user.messages_reset_date = datetime.utcnow()
+        db.commit()
+        
+        logger.info(f"Subscription created successfully for user {current_user.id}: {subscription.id}")
+        
+        return {
+            "status": "success",
+            "subscription_id": subscription.id,
+            "message": "Abbonamento attivato con successo"
+        }
+        
+    except Exception as e:
+        logger.error(f"Error confirming payment: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/subscription/webhook")
 async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
