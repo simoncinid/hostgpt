@@ -1324,6 +1324,25 @@ async def confirm_combined_payment(
         logger.error(f"Traceback: {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.post("/api/subscription/create-combined-checkout")
+async def create_combined_checkout_endpoint(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Crea checkout per il pacchetto combinato HostGPT + Guardian"""
+    try:
+        logger.info(f"Creating combined checkout for user {current_user.id}")
+        
+        # Verifica se l'utente è in free trial
+        if current_user.subscription_status == 'free_trial':
+            return await create_combined_checkout_session(current_user, db)
+        else:
+            raise HTTPException(status_code=400, detail="Checkout combinato disponibile solo per utenti in free trial")
+            
+    except Exception as e:
+        logger.error(f"Error creating combined checkout: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.post("/api/subscription/webhook")
 async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
     """Webhook per eventi Stripe"""

@@ -164,7 +164,7 @@ function CheckoutContent() {
           return
         }
 
-        const resp = await subscription.createCheckout()
+        const resp = await subscription.createCombinedCheckout()
         
         // Controlla se l'abbonamento è stato riattivato
         if (resp.data.status === 'reactivated') {
