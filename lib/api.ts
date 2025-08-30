@@ -12,9 +12,11 @@ const api = axios.create({
 // Request interceptor per aggiungere token
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token')
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('token')
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`
+      }
     }
     return config
   },
@@ -29,8 +31,10 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       // Token scaduto o non valido
-      localStorage.removeItem('token')
-      window.location.href = '/login'
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('token')
+        window.location.href = '/login'
+      }
     }
     return Promise.reject(error)
   }

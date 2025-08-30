@@ -441,7 +441,7 @@ export default function LandingPage() {
         const nextStep = (prev + 1) % 3
         
         // Scroll to the next card on mobile
-        if (window.innerWidth < 768) {
+        if (typeof window !== 'undefined' && window.innerWidth < 768) {
           const container = document.querySelector('.snap-x') as HTMLElement;
           if (container) {
             container.scrollTo({
@@ -461,7 +461,7 @@ export default function LandingPage() {
   // Sync activeStep with scroll position on mobile
   useEffect(() => {
     const handleScroll = () => {
-      if (window.innerWidth < 768) {
+      if (typeof window !== 'undefined' && window.innerWidth < 768) {
         const container = document.querySelector('.snap-x') as HTMLElement;
         if (container) {
           const scrollLeft = container.scrollLeft;
@@ -473,7 +473,7 @@ export default function LandingPage() {
     };
 
     const container = document.querySelector('.snap-x') as HTMLElement;
-    if (container && window.innerWidth < 768) {
+    if (container && typeof window !== 'undefined' && window.innerWidth < 768) {
       container.addEventListener('scroll', handleScroll);
       return () => container.removeEventListener('scroll', handleScroll);
     }

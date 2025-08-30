@@ -1,6 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+
+// Disable static generation for this page
+export const dynamic = 'force-dynamic'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
@@ -9,6 +12,7 @@ import { useForm } from 'react-hook-form'
 import toast from 'react-hot-toast'
 import { useAuthStore } from '@/lib/store'
 import api from '@/lib/api'
+import ClientOnly from '@/components/ClientOnly'
 
 interface RegisterForm {
   email: string
@@ -65,19 +69,20 @@ export default function RegisterPage() {
   ]
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
-      {/* Logo - nascosto su mobile */}
-      <Link href="/" className="absolute top-8 left-8 hidden md:flex items-center space-x-2">
-        <Home className="w-8 h-8 text-primary" />
-        <span className="text-2xl font-bold text-dark">HostGPT</span>
-      </Link>
+    <ClientOnly>
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
+        {/* Logo - nascosto su mobile */}
+        <Link href="/" className="absolute top-8 left-8 hidden md:flex items-center space-x-2">
+          <Home className="w-8 h-8 text-primary" />
+          <span className="text-2xl font-bold text-dark">HostGPT</span>
+        </Link>
 
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="w-full max-w-md md:max-w-md"
-      >
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="w-full max-w-md md:max-w-md"
+        >
         <div className="bg-white rounded-2xl shadow-xl p-6 md:p-8 md:min-h-fit min-h-[calc(100vh-2rem)] flex flex-col justify-center">
                      <div className="text-center mb-6 md:mb-8">
              <h1 className="text-2xl md:text-3xl font-bold text-dark mb-2">Crea il tuo Account</h1>
@@ -297,5 +302,6 @@ export default function RegisterPage() {
         </div>
       </motion.div>
     </div>
+    </ClientOnly>
   )
 }

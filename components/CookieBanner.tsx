@@ -17,13 +17,15 @@ export default function CookieBanner() {
 
   useEffect(() => {
     // Controlla se l'utente ha già dato il consenso
-    const cookieConsent = localStorage.getItem('hostgpt-cookie-consent')
-    if (!cookieConsent) {
-      // Mostra il banner dopo un piccolo delay per non essere invasivo
-      const timer = setTimeout(() => {
-        setShowBanner(true)
-      }, 2000)
-      return () => clearTimeout(timer)
+    if (typeof window !== 'undefined') {
+      const cookieConsent = localStorage.getItem('hostgpt-cookie-consent')
+      if (!cookieConsent) {
+        // Mostra il banner dopo un piccolo delay per non essere invasivo
+        const timer = setTimeout(() => {
+          setShowBanner(true)
+        }, 2000)
+        return () => clearTimeout(timer)
+      }
     }
   }, [])
 
@@ -35,7 +37,9 @@ export default function CookieBanner() {
       functional: true,
       timestamp: new Date().toISOString()
     }
-    localStorage.setItem('hostgpt-cookie-consent', JSON.stringify(consent))
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('hostgpt-cookie-consent', JSON.stringify(consent))
+    }
     setShowBanner(false)
     setShowSettings(false)
     
@@ -51,7 +55,9 @@ export default function CookieBanner() {
       ...preferences,
       timestamp: new Date().toISOString()
     }
-    localStorage.setItem('hostgpt-cookie-consent', JSON.stringify(consent))
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('hostgpt-cookie-consent', JSON.stringify(consent))
+    }
     setShowBanner(false)
     setShowSettings(false)
     
@@ -69,7 +75,9 @@ export default function CookieBanner() {
       functional: false,
       timestamp: new Date().toISOString()
     }
-    localStorage.setItem('hostgpt-cookie-consent', JSON.stringify(consent))
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('hostgpt-cookie-consent', JSON.stringify(consent))
+    }
     setShowBanner(false)
     setShowSettings(false)
   }

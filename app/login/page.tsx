@@ -42,7 +42,9 @@ function LoginContent() {
     }
     if (tokenFromUrl) {
       // Se c'è un token dalla verifica email, autentica automaticamente
-      localStorage.setItem('token', tokenFromUrl)
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('token', tokenFromUrl)
+      }
       setAuth(tokenFromUrl)
     }
   }, [searchParams, setAuth])
@@ -62,7 +64,9 @@ function LoginContent() {
         const { access_token } = response.data
         
         // Salva token e user info
-        localStorage.setItem('token', access_token)
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('token', access_token)
+        }
         setAuth(access_token)
       }
       
