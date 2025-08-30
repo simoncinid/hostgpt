@@ -65,6 +65,8 @@ export const subscription = {
     api.post('/subscription/cancel'),
 }
 
+
+
 export const freeTrial = {
   start: () =>
     api.post('/free-trial/start'),
@@ -120,6 +122,9 @@ export const guardian = {
   
   createCheckout: () =>
     api.post('/guardian/create-checkout'),
+  
+  confirmPayment: (payment_intent_id: string) =>
+    api.post('/guardian/confirm-payment', { payment_intent_id }),
   
   cancel: () =>
     api.post('/guardian/cancel'),

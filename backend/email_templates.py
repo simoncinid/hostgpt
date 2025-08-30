@@ -742,3 +742,60 @@ def create_subscription_confirmation_email(user_name: str) -> str:
     """
     
     return get_base_email_template(content)
+
+def create_guardian_subscription_confirmation_email(user_name: str) -> str:
+    """Template email per confermare l'attivazione dell'abbonamento Guardian"""
+    
+    content = f"""
+        <div class="greeting">🛡️ Guardian attivato con successo!</div>
+        
+        <div class="message">
+            Ciao <strong>{user_name}</strong>, il tuo abbonamento HostGPT Guardian è stato attivato con successo! 
+            Ora hai accesso al sistema di protezione avanzato per monitorare la soddisfazione dei tuoi ospiti.
+        </div>
+        
+        <div class="highlight-box" style="border-left-color: {HOSTGPT_COLORS['success']};">
+            <h3 style="color: {HOSTGPT_COLORS['success']}; margin-bottom: 15px;">✅ Il tuo Guardian include:</h3>
+            <ul class="feature-list">
+                <li><strong>Monitoraggio automatico</strong> di tutte le conversazioni</li>
+                <li><strong>Rilevamento ospiti insoddisfatti</strong> in tempo reale</li>
+                <li><strong>Alert immediati</strong> per recensioni negative</li>
+                <li><strong>Suggerimenti di azione</strong> personalizzati</li>
+                <li><strong>Dashboard Guardian</strong> dedicata</li>
+                <li><strong>9€/mese</strong> - fatturazione automatica</li>
+            </ul>
+        </div>
+        
+        <div style="text-align: center;">
+            <a href="https://hostgpt.com/dashboard/guardian" class="cta-button">
+                🛡️ Vai alla Dashboard Guardian
+            </a>
+        </div>
+        
+        <div class="message">
+            <strong>Come funziona Guardian:</strong>
+        </div>
+        
+        <div style="background: {HOSTGPT_COLORS['light']}; padding: 15px; border-radius: 8px; margin: 15px 0;">
+            <h3 style="color: {HOSTGPT_COLORS['primary']}; margin-bottom: 10px;">💡 Cosa fa Guardian per te:</h3>
+            <ul class="feature-list">
+                <li>Analizza automaticamente ogni conversazione con i tuoi ospiti</li>
+                <li>Rileva segnali di insoddisfazione prima che diventino recensioni negative</li>
+                <li>Ti invia alert immediati quando un ospite potrebbe essere insoddisfatto</li>
+                <li>Ti suggerisce azioni specifiche per risolvere i problemi</li>
+                <li>Ti aiuta a mantenere recensioni positive e soddisfazione alta</li>
+            </ul>
+        </div>
+        
+        <div class="message">
+            <strong>Fatturazione:</strong> Il tuo abbonamento Guardian si rinnoverà automaticamente ogni mese. 
+            Puoi gestire le impostazioni di fatturazione dalla tua dashboard in qualsiasi momento.
+        </div>
+        
+        <div class="message">
+            Grazie per aver scelto HostGPT Guardian! Ora sei protetto e puoi concentrarti su ciò che conta davvero: 
+            offrire un'esperienza straordinaria ai tuoi ospiti. 🛡️✨
+        </div>
+    """
+    
+    return get_base_email_template(content)

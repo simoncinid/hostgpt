@@ -1156,6 +1156,73 @@ async def confirm_payment(
         logger.error(f"Error confirming payment: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.post("/api/guardian/confirm-payment")
+async def confirm_guardian_payment(
+    request: ConfirmPaymentRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    payment_intent_id = request.payment_intent_id
+    """Conferma il pagamento Guardian e crea la sottoscrizione"""
+    try:
+        logger.info(f"Confirming Guardian payment for user {current_user.id}, payment_intent_id: {payment_intent_id}")
+        
+        # Recupera il Payment Intent
+        payment_intent = stripe.PaymentIntent.retrieve(payment_intent_id)
+        
+        if payment_intent.status != 'succeeded':
+            raise HTTPException(status_code=400, detail="Il pagamento non è stato completato con successo")
+        
+        # Verifica che il Payment Intent appartenga all'utente
+        if payment_intent.customer != current_user.stripe_customer_id:
+            raise HTTPException(status_code=400, detail="Payment Intent non valido")
+        
+        # Crea la sottoscrizione usando il price_id dal metadata
+        price_id = payment_intent.metadata.get('price_id')
+        if not price_id:
+            raise HTTPException(status_code=400, detail="Price ID non trovato nel Payment Intent")
+        
+        subscription = stripe.Subscription.create(
+            customer=current_user.stripe_customer_id,
+            items=[{'price': price_id}],
+            payment_behavior='default_incomplete',
+            payment_settings={'save_default_payment_method': 'on_subscription'},
+            expand=['latest_invoice.payment_intent'],
+        )
+        
+        # Aggiorna il database
+        current_user.guardian_stripe_subscription_id = subscription.id
+        current_user.guardian_subscription_status = 'active'
+        current_user.guardian_subscription_end_date = datetime.utcfromtimestamp(subscription.current_period_end)
+        db.commit()
+        
+        logger.info(f"Guardian subscription created successfully for user {current_user.id}: {subscription.id}")
+        
+        # Invia email di conferma abbonamento Guardian
+        try:
+            from email_templates import create_guardian_subscription_confirmation_email
+            email_body = create_guardian_subscription_confirmation_email(current_user.full_name or current_user.email)
+            background_tasks = BackgroundTasks()
+            background_tasks.add_task(
+                send_email, 
+                current_user.email, 
+                "🛡️ Abbonamento Guardian attivato con successo!", 
+                email_body
+            )
+            logger.info(f"Guardian subscription confirmation email sent to {current_user.email}")
+        except Exception as e:
+            logger.error(f"Failed to send Guardian subscription confirmation email: {e}")
+        
+        return {
+            "status": "success",
+            "subscription_id": subscription.id,
+            "message": "Abbonamento Guardian attivato con successo"
+        }
+        
+    except Exception as e:
+        logger.error(f"Error confirming Guardian payment: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.post("/api/subscription/webhook")
 async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
     """Webhook per eventi Stripe"""
@@ -2380,30 +2447,31 @@ async def create_guardian_checkout_session(current_user: User = Depends(get_curr
             current_user.stripe_customer_id = customer.id
             db.commit()
         
-        # Crea sessione checkout per abbonamento Guardian mensile a 9€
-        logger.info(f"Creating Guardian checkout session for user {current_user.id}")
+        # Crea Payment Intent per checkout personalizzato Guardian
+        logger.info(f"Creating Guardian payment intent for user {current_user.id}")
         
         # Price ID per Guardian - 9€/mese
         guardian_price_id = "price_1RzYheClR9LCJ8qE7OMhCmlH"
         
-        checkout_session = stripe.checkout.Session.create(
+        payment_intent = stripe.PaymentIntent.create(
+            amount=900,  # 9€ in centesimi
+            currency='eur',
             customer=current_user.stripe_customer_id,
-            payment_method_types=['card'],
-            line_items=[{
-                'price': guardian_price_id,  # Questo dovrà essere configurato per 9€/mese
-                'quantity': 1,
-            }],
-            mode='subscription',
-            success_url=f"{settings.FRONTEND_URL}/dashboard/guardian?subscription=success&session_id={{CHECKOUT_SESSION_ID}}",
-            cancel_url=f"{settings.FRONTEND_URL}/dashboard/guardian?subscription=cancelled",
             metadata={
                 'user_id': str(current_user.id),
-                'subscription_type': 'guardian'
-            }
+                'subscription_type': 'guardian',
+                'price_id': guardian_price_id
+            },
+            automatic_payment_methods={
+                'enabled': True,
+            },
         )
         
-        logger.info(f"Guardian checkout session created successfully: {checkout_session.id}")
-        return {"checkout_url": checkout_session.url}
+        logger.info(f"Guardian payment intent created successfully: {payment_intent.id}")
+        return {
+            "client_secret": payment_intent.client_secret,
+            "payment_intent_id": payment_intent.id
+        }
         
     except Exception as e:
         logger.error(f"Guardian Stripe checkout error: {e}")

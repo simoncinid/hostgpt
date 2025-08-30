@@ -92,14 +92,11 @@ function GuardianContent() {
       const status = response.data
       setGuardianStatus(status)
       
-      // Aggiorna lo store dell'utente con i dati Guardian
+      // Aggiorna completamente lo stato utente dal server
       if (user) {
-        const updatedUser = {
-          ...user,
-          guardian_subscription_status: status.guardian_subscription_status,
-          guardian_subscription_end_date: status.guardian_subscription_end_date
-        }
-        setUser(updatedUser)
+        const auth = (await import('@/lib/api')).auth
+        const me = await auth.me()
+        setUser(me.data)
       }
       
       if (status.is_active) {
@@ -162,9 +159,9 @@ function GuardianContent() {
         toast.success('Reindirizzamento al checkout per HostGPT + Guardian...')
       }
       
-      // Se abbiamo un client_secret, reindirizza al checkout personalizzato
+      // Se abbiamo un client_secret, reindirizza al checkout Guardian personalizzato
       if (response.data.client_secret) {
-        router.push('/checkout')
+        router.push('/checkout/guardian')
       } else if (response.data.checkout_url) {
         // Fallback per checkout Stripe tradizionale
         window.location.href = response.data.checkout_url
