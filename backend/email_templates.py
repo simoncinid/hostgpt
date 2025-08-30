@@ -712,7 +712,7 @@ def create_subscription_confirmation_email(user_name: str) -> str:
         
         <div style="text-align: center;">
             <a href="https://hostgpt.com/dashboard" class="cta-button">
-                🚀 Vai alla Dashboard
+                🚀 Crea il tuo Chatbot
             </a>
         </div>
         
