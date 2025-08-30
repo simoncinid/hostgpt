@@ -468,3 +468,221 @@ def create_guardian_alert_email(user_name: str, alert, conversation_summary: str
     """
     
     return get_base_email_template(content)
+
+def create_free_trial_welcome_email(user_name: str) -> str:
+    """Template email di benvenuto per il free trial"""
+    
+    content = f"""
+        <div class="greeting">🎉 Benvenuto nel tuo periodo di prova gratuito!</div>
+        
+        <div class="message">
+            Ciao <strong>{user_name}</strong>, benvenuto in HostGPT! Hai appena iniziato il tuo periodo di prova gratuito di <strong>14 giorni</strong>.
+        </div>
+        
+        <div class="highlight-box" style="border-left-color: {HOSTGPT_COLORS['success']};">
+            <h3 style="color: {HOSTGPT_COLORS['success']}; margin-bottom: 15px;">🎁 Cosa include il tuo periodo di prova:</h3>
+            <ul class="feature-list">
+                <li><strong>14 giorni di accesso completo</strong> a tutte le funzionalità</li>
+                <li><strong>20 messaggi gratuiti</strong> per testare il tuo chatbot</li>
+                <li><strong>1 chatbot personalizzato</strong> con il tuo brand</li>
+                <li><strong>Dashboard completa</strong> per monitorare le conversazioni</li>
+                <li><strong>QR code e link</strong> da condividere con i tuoi ospiti</li>
+                <li><strong>Assistenza tecnica</strong> durante tutto il periodo di prova</li>
+            </ul>
+        </div>
+        
+        <div class="highlight-box" style="border-left-color: {HOSTGPT_COLORS['primary']};">
+            <h3 style="color: {HOSTGPT_COLORS['primary']}; margin-bottom: 15px;">🚀 Inizia subito:</h3>
+            <ol class="feature-list">
+                <li>Accedi alla <strong>dashboard</strong> e crea il tuo primo chatbot</li>
+                <li>Personalizza il <strong>messaggio di benvenuto</strong> e le risposte</li>
+                <li>Scarica il <strong>QR code</strong> e condividi il link</li>
+                <li>Monitora le <strong>conversazioni</strong> in tempo reale</li>
+            </ol>
+        </div>
+        
+        <div style="text-align: center;">
+            <a href="https://hostgpt.com/dashboard" class="cta-button">
+                🎯 Inizia a Creare il tuo Chatbot
+            </a>
+        </div>
+        
+        <div class="message">
+            <strong>Importante:</strong> Il tuo periodo di prova scadrà automaticamente tra 14 giorni. 
+            Se decidi di continuare, potrai sottoscrivere l'abbonamento completo a soli <strong>29€/mese</strong> 
+            con 1000 messaggi mensili e tutte le funzionalità avanzate.
+        </div>
+        
+        <div style="background: {HOSTGPT_COLORS['light']}; padding: 15px; border-radius: 8px; margin: 15px 0;">
+            <h3 style="color: {HOSTGPT_COLORS['primary']}; margin-bottom: 10px;">💡 Suggerimenti per massimizzare la tua prova:</h3>
+            <ul class="feature-list">
+                <li>Testa il chatbot con amici e familiari</li>
+                <li>Personalizza le risposte in base alle domande più frequenti</li>
+                <li>Monitora le statistiche per vedere l'engagement</li>
+                <li>Preparati a scalare con l'abbonamento completo</li>
+            </ul>
+        </div>
+        
+        <div class="message">
+            Se hai domande durante il periodo di prova, non esitare a contattarci. 
+            Siamo qui per aiutarti a creare la migliore esperienza per i tuoi ospiti! 🏠✨
+        </div>
+    """
+    
+    return get_base_email_template(content)
+
+def create_free_trial_ending_email(user_name: str, days_remaining: int, messages_used: int, total_messages: int) -> str:
+    """Template email per notificare la fine del free trial"""
+    
+    # Calcola le statistiche
+    usage_percentage = (messages_used / total_messages) * 100 if total_messages > 0 else 0
+    
+    # Personalizza il messaggio in base all'utilizzo
+    if messages_used == 0:
+        engagement_message = """
+            <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; border-radius: 8px; margin: 15px 0;">
+                <h3 style="color: #856404; margin-bottom: 10px;">💡 Non hai ancora utilizzato il tuo chatbot?</h3>
+                <p style="margin: 0; color: #856404;">Non è troppo tardi! Crea il tuo chatbot ora e inizia a migliorare l'esperienza dei tuoi ospiti. Molti host hanno visto un aumento significativo della soddisfazione degli ospiti già dal primo giorno.</p>
+            </div>
+        """
+    elif usage_percentage < 30:
+        engagement_message = """
+            <div style="background: #d1ecf1; border-left: 4px solid #17a2b8; padding: 15px; border-radius: 8px; margin: 15px 0;">
+                <h3 style="color: #0c5460; margin-bottom: 10px;">🚀 Hai appena iniziato a scoprire il potenziale!</h3>
+                <p style="margin: 0; color: #0c5460;">Con l'abbonamento completo avrai 1000 messaggi mensili per sfruttare al massimo il tuo chatbot e migliorare l'esperienza di tutti i tuoi ospiti.</p>
+            </div>
+        """
+    elif usage_percentage < 70:
+        engagement_message = """
+            <div style="background: #d4edda; border-left: 4px solid #28a745; padding: 15px; border-radius: 8px; margin: 15px 0;">
+                <h3 style="color: #155724; margin-bottom: 10px;">🎯 Ottimo utilizzo del tuo chatbot!</h3>
+                <p style="margin: 0; color: #155724;">Stai già vedendo i benefici. Con l'abbonamento completo potrai continuare a migliorare l'esperienza dei tuoi ospiti senza limiti.</p>
+            </div>
+        """
+    else:
+        engagement_message = """
+            <div style="background: #d1ecf1; border-left: 4px solid #17a2b8; padding: 15px; border-radius: 8px; margin: 15px 0;">
+                <h3 style="color: #0c5460; margin-bottom: 10px;">🔥 Utilizzo eccellente!</h3>
+                <p style="margin: 0; color: #0c5460;">Hai sfruttato al massimo il periodo di prova. È chiaro che HostGPT sta già migliorando l'esperienza dei tuoi ospiti. Continua con l'abbonamento completo!</p>
+            </div>
+        """
+    
+    content = f"""
+        <div class="greeting">⏰ Il tuo periodo di prova sta per scadere</div>
+        
+        <div class="message">
+            Ciao <strong>{user_name}</strong>, il tuo periodo di prova gratuito scadrà tra <strong>{days_remaining} giorni</strong>.
+        </div>
+        
+        <div class="highlight-box" style="border-left-color: {HOSTGPT_COLORS['warning']};">
+            <h3 style="color: {HOSTGPT_COLORS['warning']}; margin-bottom: 15px;">📊 Le tue statistiche del periodo di prova:</h3>
+            <ul class="feature-list">
+                <li><strong>Messaggi utilizzati:</strong> {messages_used}/{total_messages} ({usage_percentage:.0f}%)</li>
+                <li><strong>Giorni rimanenti:</strong> {days_remaining} giorni</li>
+                <li><strong>Chatbot creati:</strong> 1 chatbot personalizzato</li>
+            </ul>
+        </div>
+        
+        {engagement_message}
+        
+        <div class="highlight-box" style="border-left-color: {HOSTGPT_COLORS['success']};">
+            <h3 style="color: {HOSTGPT_COLORS['success']}; margin-bottom: 15px;">🎁 Cosa succede con l'abbonamento completo:</h3>
+            <ul class="feature-list">
+                <li><strong>1000 messaggi mensili</strong> invece di 20</li>
+                <li><strong>Accesso illimitato</strong> a tutte le funzionalità</li>
+                <li><strong>Statistiche avanzate</strong> e analisi dettagliate</li>
+                <li><strong>Supporto prioritario</strong> per qualsiasi domanda</li>
+                <li><strong>Solo 29€/mese</strong> - meno di 1€ al giorno</li>
+            </ul>
+        </div>
+        
+        <div style="text-align: center;">
+            <a href="https://hostgpt.com/checkout" class="cta-button">
+                💳 Attiva l'Abbonamento Completo - 29€/mese
+            </a>
+        </div>
+        
+        <div class="message">
+            <strong>Non perdere i benefici!</strong> Dopo la scadenza del periodo di prova, il tuo chatbot non sarà più accessibile 
+            e perderai tutte le conversazioni e le statistiche raccolte. Attiva l'abbonamento ora per continuare 
+            a migliorare l'esperienza dei tuoi ospiti senza interruzioni.
+        </div>
+        
+        <div style="background: {HOSTGPT_COLORS['light']}; padding: 15px; border-radius: 8px; margin: 15px 0;">
+            <h3 style="color: {HOSTGPT_COLORS['primary']}; margin-bottom: 10px;">💡 Perché continuare con HostGPT:</h3>
+            <ul class="feature-list">
+                <li>Migliora la soddisfazione degli ospiti del 40% in media</li>
+                <li>Riduce il carico di lavoro per le domande ricorrenti</li>
+                <li>Aumenta le recensioni positive</li>
+                <li>Offre assistenza 24/7 ai tuoi ospiti</li>
+                <li>Ti permette di concentrarti su ciò che conta davvero</li>
+            </ul>
+        </div>
+        
+        <div class="message">
+            Grazie per aver provato HostGPT! Speriamo di continuare a supportarti nel migliorare l'esperienza dei tuoi ospiti. 🏠✨
+        </div>
+    """
+    
+    return get_base_email_template(content)
+
+def create_free_trial_expired_email(user_name: str, messages_used: int, total_messages: int) -> str:
+    """Template email per notificare la scadenza del free trial"""
+    
+    usage_percentage = (messages_used / total_messages) * 100 if total_messages > 0 else 0
+    
+    content = f"""
+        <div class="greeting">⏰ Il tuo periodo di prova è scaduto</div>
+        
+        <div class="message">
+            Ciao <strong>{user_name}</strong>, il tuo periodo di prova gratuito di HostGPT è scaduto. 
+            Il tuo chatbot è temporaneamente non disponibile.
+        </div>
+        
+        <div class="highlight-box" style="border-left-color: {HOSTGPT_COLORS['error']};">
+            <h3 style="color: {HOSTGPT_COLORS['error']}; margin-bottom: 15px;">📊 Il tuo utilizzo durante la prova:</h3>
+            <ul class="feature-list">
+                <li><strong>Messaggi utilizzati:</strong> {messages_used}/{total_messages} ({usage_percentage:.0f}%)</li>
+                <li><strong>Chatbot creati:</strong> 1 chatbot personalizzato</li>
+                <li><strong>Periodo di prova:</strong> 14 giorni completati</li>
+            </ul>
+        </div>
+        
+        <div class="highlight-box" style="border-left-color: {HOSTGPT_COLORS['success']};">
+            <h3 style="color: {HOSTGPT_COLORS['success']}; margin-bottom: 15px;">🎁 Attiva l'abbonamento completo per continuare:</h3>
+            <ul class="feature-list">
+                <li><strong>Ripristina immediatamente</strong> l'accesso al tuo chatbot</li>
+                <li><strong>1000 messaggi mensili</strong> invece di 20</li>
+                <li><strong>Accesso illimitato</strong> a tutte le funzionalità</li>
+                <li><strong>Statistiche avanzate</strong> e analisi dettagliate</li>
+                <li><strong>Solo 29€/mese</strong> - meno di 1€ al giorno</li>
+            </ul>
+        </div>
+        
+        <div style="text-align: center;">
+            <a href="https://hostgpt.com/checkout" class="cta-button">
+                🔓 Riattiva il tuo Chatbot - 29€/mese
+            </a>
+        </div>
+        
+        <div class="message">
+            <strong>Non perdere i tuoi dati!</strong> Tutte le tue configurazioni e statistiche sono ancora disponibili 
+            e verranno ripristinate immediatamente dopo l'attivazione dell'abbonamento.
+        </div>
+        
+        <div style="background: {HOSTGPT_COLORS['light']}; padding: 15px; border-radius: 8px; margin: 15px 0;">
+            <h3 style="color: {HOSTGPT_COLORS['primary']}; margin-bottom: 10px;">💡 Cosa succede ora:</h3>
+            <ul class="feature-list">
+                <li>Il tuo chatbot non è più accessibile agli ospiti</li>
+                <li>Non puoi più creare nuovi messaggi</li>
+                <li>Le tue configurazioni sono salvate e sicure</li>
+                <li>Attivando l'abbonamento, tutto tornerà attivo immediatamente</li>
+            </ul>
+        </div>
+        
+        <div class="message">
+            Grazie per aver provato HostGPT! Speriamo di rivederti presto per continuare a migliorare l'esperienza dei tuoi ospiti. 🏠✨
+        </div>
+    """
+    
+    return get_base_email_template(content)

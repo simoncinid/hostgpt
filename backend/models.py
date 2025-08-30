@@ -17,11 +17,19 @@ class User(Base):
     verification_token = Column(String(255), unique=True)
     stripe_customer_id = Column(String(255))
     stripe_subscription_id = Column(String(255))
-    subscription_status = Column(String(50), default="inactive")  # inactive, active, cancelled, past_due
+    subscription_status = Column(String(50), default="inactive")  # inactive, active, cancelled, past_due, free_trial
     subscription_end_date = Column(DateTime)
     messages_limit = Column(Integer, default=1000)  # Limite mensile di messaggi
     messages_used = Column(Integer, default=0)  # Messaggi utilizzati nel mese corrente
     messages_reset_date = Column(DateTime)  # Data ultimo reset dei messaggi
+    
+    # Free trial fields
+    wants_free_trial = Column(Boolean, default=False)  # Se l'utente ha scelto il free trial
+    free_trial_start_date = Column(DateTime)  # Data inizio free trial
+    free_trial_end_date = Column(DateTime)  # Data fine free trial (14 giorni dopo)
+    free_trial_messages_limit = Column(Integer, default=20)  # Limite messaggi free trial
+    free_trial_messages_used = Column(Integer, default=0)  # Messaggi usati durante free trial
+    free_trial_converted = Column(Boolean, default=False)  # Se è stato convertito ad abbonamento
     
     # Nuovo servizio Guardian
     guardian_subscription_status = Column(String(50), default="inactive")  # inactive, active, cancelled

@@ -30,7 +30,10 @@ from email_templates import (
     create_subscription_activation_email,
     create_subscription_cancellation_email,
     create_chatbot_ready_email,
-    create_guardian_alert_email
+    create_guardian_alert_email,
+    create_free_trial_welcome_email,
+    create_free_trial_ending_email,
+    create_free_trial_expired_email
 )
 
 # Configurazione logging
@@ -58,8 +61,25 @@ stripe.api_key = settings.STRIPE_SECRET_KEY
 openai.api_key = settings.OPENAI_API_KEY
 
 def is_subscription_active(subscription_status: str) -> bool:
-    """Verifica se l'abbonamento è attivo (considerando anche 'cancelling')"""
-    return subscription_status in ['active', 'cancelling']
+    """Verifica se l'abbonamento è attivo (considerando anche 'cancelling' e 'free_trial')"""
+    return subscription_status in ['active', 'cancelling', 'free_trial']
+
+def is_free_trial_active(user: User) -> bool:
+    """Verifica se il free trial è attivo e non scaduto"""
+    if user.subscription_status != 'free_trial':
+        return False
+    
+    if not user.free_trial_end_date:
+        return False
+    
+    return datetime.utcnow() < user.free_trial_end_date
+
+def get_free_trial_messages_remaining(user: User) -> int:
+    """Calcola i messaggi rimanenti nel free trial"""
+    if not is_free_trial_active(user):
+        return 0
+    
+    return max(0, user.free_trial_messages_limit - user.free_trial_messages_used)
 
 def get_openai_client():
     """Restituisce un client OpenAI configurato per Assistants v2."""
@@ -78,6 +98,7 @@ class UserRegister(BaseModel):
     password: str
     full_name: str
     phone: Optional[str] = None
+    wants_free_trial: Optional[bool] = False
 
 class UserLogin(BaseModel):
     email: EmailStr
@@ -754,7 +775,8 @@ async def register(user: UserRegister, background_tasks: BackgroundTasks, db: Se
         full_name=user.full_name,
         phone=user.phone,
         is_verified=False,
-        verification_token=verification_token  # Aggiungeremo questo campo al modello
+        verification_token=verification_token,  # Aggiungeremo questo campo al modello
+        wants_free_trial=user.wants_free_trial  # Traccia se vuole il free trial
     )
     db.add(db_user)
     db.commit()
@@ -770,7 +792,7 @@ async def register(user: UserRegister, background_tasks: BackgroundTasks, db: Se
 
 @app.get("/api/auth/verify-email")
 async def verify_email(token: str, db: Session = Depends(get_db)):
-    """Verifica email e reindirizza al pagamento"""
+    """Verifica email e gestisce free trial o checkout in base alla scelta dell'utente"""
     from fastapi.responses import RedirectResponse
     
     # Normalizza il token (rimuove spazi accidentali da email client)
@@ -785,14 +807,47 @@ async def verify_email(token: str, db: Session = Depends(get_db)):
     # Verifica l'email
     user.is_verified = True
     user.verification_token = None
-    db.commit()
     
     # Crea token di accesso per l'utente
     access_token = create_access_token(data={"sub": user.email})
     
-    # Reindirizza alla pagina di checkout con token
-    checkout_url = f"{settings.FRONTEND_URL}/checkout?token={access_token}"
-    return RedirectResponse(url=checkout_url)
+    if user.wants_free_trial:
+        # Avvia automaticamente il free trial
+        now = datetime.utcnow()
+        free_trial_end = now + timedelta(days=14)
+        
+        user.subscription_status = 'free_trial'
+        user.free_trial_start_date = now
+        user.free_trial_end_date = free_trial_end
+        user.free_trial_messages_used = 0
+        user.free_trial_converted = False
+        user.messages_used = 0
+        user.messages_reset_date = now
+        
+        db.commit()
+        
+        # Invia email di benvenuto free trial
+        email_body = create_free_trial_welcome_email(user.full_name or user.email)
+        background_tasks = BackgroundTasks()
+        background_tasks.add_task(
+            send_email, 
+            user.email, 
+            "🎉 Benvenuto nel tuo periodo di prova gratuito HostGPT!", 
+            email_body
+        )
+        
+        # Reindirizza alla dashboard
+        dashboard_url = f"{settings.FRONTEND_URL}/login?token={access_token}&free_trial_started=true"
+        return RedirectResponse(url=dashboard_url)
+    else:
+        # Marca come se il free trial fosse finito (utente vuole pagare subito)
+        user.subscription_status = 'inactive'
+        user.free_trial_converted = False  # Non ha mai fatto free trial
+        db.commit()
+        
+        # Reindirizza al checkout
+        checkout_url = f"{settings.FRONTEND_URL}/checkout?token={access_token}"
+        return RedirectResponse(url=checkout_url)
 
 @app.post("/api/auth/login", response_model=Token)
 async def login(user: UserLogin, db: Session = Depends(get_db)):
@@ -827,18 +882,36 @@ async def get_me(current_user: User = Depends(get_current_user)):
             db = next(get_db())
             db.commit()
     
+    # Calcola messaggi rimanenti in base al tipo di abbonamento
+    if current_user.subscription_status == 'free_trial':
+        messages_remaining = get_free_trial_messages_remaining(current_user)
+        messages_limit = current_user.free_trial_messages_limit
+        messages_used = current_user.free_trial_messages_used
+    else:
+        messages_remaining = current_user.messages_limit - current_user.messages_used
+        messages_limit = current_user.messages_limit
+        messages_used = current_user.messages_used
+    
     return {
         "id": current_user.id,
         "email": current_user.email,
         "full_name": current_user.full_name,
         "subscription_status": current_user.subscription_status,
         "subscription_end_date": current_user.subscription_end_date,
-        "messages_limit": current_user.messages_limit,
-        "messages_used": current_user.messages_used,
-        "messages_remaining": current_user.messages_limit - current_user.messages_used,
+        "wants_free_trial": current_user.wants_free_trial,
+        "messages_limit": messages_limit,
+        "messages_used": messages_used,
+        "messages_remaining": messages_remaining,
         "is_verified": current_user.is_verified,
         "guardian_subscription_status": current_user.guardian_subscription_status,
-        "guardian_subscription_end_date": current_user.guardian_subscription_end_date
+        "guardian_subscription_end_date": current_user.guardian_subscription_end_date,
+        # Free trial info
+        "free_trial_start_date": current_user.free_trial_start_date.isoformat() if current_user.free_trial_start_date else None,
+        "free_trial_end_date": current_user.free_trial_end_date.isoformat() if current_user.free_trial_end_date else None,
+        "free_trial_messages_limit": current_user.free_trial_messages_limit,
+        "free_trial_messages_used": current_user.free_trial_messages_used,
+        "free_trial_converted": current_user.free_trial_converted,
+        "is_free_trial_active": is_free_trial_active(current_user)
     }
 
 # --- Subscription/Payment ---
@@ -871,6 +944,12 @@ async def create_checkout_session(current_user: User = Depends(get_current_user)
         if current_user.subscription_status == 'active':
             logger.error(f"User {current_user.id} already has active subscription")
             raise HTTPException(status_code=400, detail="Hai già un abbonamento attivo")
+        
+        # Se è in free trial, marca come convertito
+        if current_user.subscription_status == 'free_trial':
+            current_user.free_trial_converted = True
+            db.commit()
+            logger.info(f"User {current_user.id} converting from free trial to paid subscription")
         
         # Se l'abbonamento è completamente cancellato, assicurati che tutti i campi dell'abbonamento siano resettati
         if current_user.subscription_status == 'cancelled' and current_user.stripe_subscription_id:
@@ -1815,19 +1894,36 @@ async def send_message(
             detail="Il proprietario di questo chatbot non ha un abbonamento attivo. Il servizio è temporaneamente non disponibile."
         )
     
-    # Controlla se deve essere resettato il conteggio mensile
-    if owner.messages_reset_date:
-        if datetime.utcnow() > owner.messages_reset_date + timedelta(days=30):
-            owner.messages_used = 0
-            owner.messages_reset_date = datetime.utcnow()
-            db.commit()
-    
-    # Verifica limite messaggi
-    if owner.messages_used >= owner.messages_limit:
-        raise HTTPException(
-            status_code=429, 
-            detail=f"Limite mensile di {owner.messages_limit} messaggi raggiunto. Il limite si resetta il {(owner.messages_reset_date + timedelta(days=30)).strftime('%d/%m/%Y')} se la data è definita."
-        )
+    # Gestione free trial
+    if owner.subscription_status == 'free_trial':
+        # Verifica se il free trial è ancora attivo
+        if not is_free_trial_active(owner):
+            raise HTTPException(
+                status_code=403,
+                detail="Il periodo di prova gratuito è scaduto. Sottoscrivi un abbonamento per continuare a utilizzare il servizio."
+            )
+        
+        # Verifica limite messaggi free trial
+        if owner.free_trial_messages_used >= owner.free_trial_messages_limit:
+            raise HTTPException(
+                status_code=429,
+                detail="Hai raggiunto il limite di 20 messaggi del periodo di prova gratuito. Sottoscrivi un abbonamento per continuare."
+            )
+    else:
+        # Gestione abbonamento normale
+        # Controlla se deve essere resettato il conteggio mensile
+        if owner.messages_reset_date:
+            if datetime.utcnow() > owner.messages_reset_date + timedelta(days=30):
+                owner.messages_used = 0
+                owner.messages_reset_date = datetime.utcnow()
+                db.commit()
+        
+        # Verifica limite messaggi
+        if owner.messages_used >= owner.messages_limit:
+            raise HTTPException(
+                status_code=429, 
+                detail=f"Limite mensile di {owner.messages_limit} messaggi raggiunto. Il limite si resetta il {(owner.messages_reset_date + timedelta(days=30)).strftime('%d/%m/%Y')} se la data è definita."
+            )
     
     try:
         client = get_openai_client()
@@ -1908,7 +2004,10 @@ async def send_message(
             chatbot.total_conversations += 1
         
         # Incrementa il contatore messaggi dell'utente
-        owner.messages_used += 1  # Contiamo solo i messaggi inviati dagli ospiti
+        if owner.subscription_status == 'free_trial':
+            owner.free_trial_messages_used += 1
+        else:
+            owner.messages_used += 1  # Contiamo solo i messaggi inviati dagli ospiti
         
         db.commit()
         
@@ -1916,10 +2015,16 @@ async def send_message(
         import asyncio
         asyncio.create_task(analyze_conversation_with_guardian(conversation.id, db))
         
+        # Calcola messaggi rimanenti
+        if owner.subscription_status == 'free_trial':
+            messages_remaining = owner.free_trial_messages_limit - owner.free_trial_messages_used
+        else:
+            messages_remaining = owner.messages_limit - owner.messages_used
+        
         return {
             "thread_id": thread_id,
             "message": assistant_message,
-            "messages_remaining": owner.messages_limit - owner.messages_used
+            "messages_remaining": messages_remaining
         }
         
     except Exception as e:
@@ -2096,7 +2201,13 @@ async def create_guardian_checkout_session(current_user: User = Depends(get_curr
         logger.info(f"Starting Guardian checkout process for user {current_user.id} (email: {current_user.email})")
         logger.info(f"User Guardian subscription status: {current_user.guardian_subscription_status}")
         
-        # Verifica che l'utente abbia un abbonamento HostGPT attivo
+        # Verifica che l'utente abbia un abbonamento HostGPT attivo (non free trial)
+        if current_user.subscription_status == 'free_trial':
+            raise HTTPException(
+                status_code=400,
+                detail="Non puoi attivare Guardian durante il periodo di prova gratuito. Completa il periodo di prova e sottoscrivi l'abbonamento completo per accedere a Guardian."
+            )
+        
         if not is_subscription_active(current_user.subscription_status):
             raise HTTPException(
                 status_code=400,
@@ -2848,6 +2959,222 @@ async def analyze_conversation_with_guardian(conversation_id: int, db: Session):
         
     except Exception as e:
         logger.error(f"Errore nell'analisi Guardian della conversazione {conversation_id}: {e}")
+
+# --- Free Trial Management ---
+
+@app.post("/api/free-trial/start")
+async def start_free_trial(
+    background_tasks: BackgroundTasks,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Avvia il periodo di prova gratuito di 14 giorni"""
+    try:
+        logger.info(f"Starting free trial for user {current_user.id} (email: {current_user.email})")
+        
+        # Verifica che l'utente abbia verificato l'email
+        if not current_user.is_verified:
+            raise HTTPException(status_code=400, detail="Devi verificare la tua email prima di iniziare il periodo di prova")
+        
+        # Verifica che non abbia già un abbonamento attivo o un free trial
+        if current_user.subscription_status in ['active', 'cancelling', 'free_trial']:
+            if current_user.subscription_status == 'free_trial' and is_free_trial_active(current_user):
+                raise HTTPException(status_code=400, detail="Hai già un periodo di prova attivo")
+            elif current_user.subscription_status in ['active', 'cancelling']:
+                raise HTTPException(status_code=400, detail="Hai già un abbonamento attivo")
+        
+        # Calcola le date del free trial
+        now = datetime.utcnow()
+        free_trial_end = now + timedelta(days=14)
+        
+        # Aggiorna l'utente per il free trial
+        current_user.subscription_status = 'free_trial'
+        current_user.free_trial_start_date = now
+        current_user.free_trial_end_date = free_trial_end
+        current_user.free_trial_messages_used = 0
+        current_user.free_trial_converted = False
+        current_user.messages_used = 0
+        current_user.messages_reset_date = now
+        
+        db.commit()
+        
+        # Invia email di benvenuto free trial
+        email_body = create_free_trial_welcome_email(current_user.full_name or current_user.email)
+        background_tasks.add_task(
+            send_email, 
+            current_user.email, 
+            "🎉 Benvenuto nel tuo periodo di prova gratuito HostGPT!", 
+            email_body
+        )
+        
+        logger.info(f"Free trial started successfully for user {current_user.id}")
+        return {
+            "status": "success",
+            "message": "Periodo di prova gratuito avviato con successo!",
+            "free_trial_end_date": free_trial_end.isoformat(),
+            "messages_remaining": 20
+        }
+        
+    except Exception as e:
+        logger.error(f"Error starting free trial: {e}")
+        raise HTTPException(status_code=500, detail="Errore nell'avvio del periodo di prova")
+
+@app.get("/api/free-trial/status")
+async def get_free_trial_status(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Ottieni lo stato del free trial dell'utente"""
+    try:
+        is_active = is_free_trial_active(current_user)
+        messages_remaining = get_free_trial_messages_remaining(current_user)
+        
+        return {
+            "is_active": is_active,
+            "subscription_status": current_user.subscription_status,
+            "free_trial_start_date": current_user.free_trial_start_date.isoformat() if current_user.free_trial_start_date else None,
+            "free_trial_end_date": current_user.free_trial_end_date.isoformat() if current_user.free_trial_end_date else None,
+            "messages_limit": current_user.free_trial_messages_limit,
+            "messages_used": current_user.free_trial_messages_used,
+            "messages_remaining": messages_remaining,
+            "days_remaining": (current_user.free_trial_end_date - datetime.utcnow()).days if is_active else 0,
+            "converted": current_user.free_trial_converted
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting free trial status: {e}")
+        raise HTTPException(status_code=500, detail="Errore nel recupero dello stato del free trial")
+
+@app.post("/api/free-trial/send-notifications")
+async def send_free_trial_notifications(
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db)
+):
+    """Invia notifiche email per i free trial in scadenza (da chiamare via cron job)"""
+    try:
+        now = datetime.utcnow()
+        
+        # Trova utenti in free trial
+        free_trial_users = db.query(User).filter(
+            User.subscription_status == 'free_trial',
+            User.free_trial_end_date.isnot(None)
+        ).all()
+        
+        notifications_sent = 0
+        
+        for user in free_trial_users:
+            if not user.free_trial_end_date:
+                continue
+                
+            days_remaining = (user.free_trial_end_date - now).days
+            
+            # Invia notifica 3 giorni prima della scadenza
+            if days_remaining == 3:
+                email_body = create_free_trial_ending_email(
+                    user.full_name or user.email,
+                    days_remaining,
+                    user.free_trial_messages_used,
+                    user.free_trial_messages_limit
+                )
+                background_tasks.add_task(
+                    send_email,
+                    user.email,
+                    "⏰ Il tuo periodo di prova HostGPT scade tra 3 giorni",
+                    email_body
+                )
+                notifications_sent += 1
+                logger.info(f"Sent 3-day warning email to user {user.id}")
+            
+            # Invia notifica 1 giorno prima della scadenza
+            elif days_remaining == 1:
+                email_body = create_free_trial_ending_email(
+                    user.full_name or user.email,
+                    days_remaining,
+                    user.free_trial_messages_used,
+                    user.free_trial_messages_limit
+                )
+                background_tasks.add_task(
+                    send_email,
+                    user.email,
+                    "🚨 Il tuo periodo di prova HostGPT scade domani!",
+                    email_body
+                )
+                notifications_sent += 1
+                logger.info(f"Sent 1-day warning email to user {user.id}")
+            
+            # Invia notifica il giorno della scadenza
+            elif days_remaining == 0:
+                email_body = create_free_trial_expired_email(
+                    user.full_name or user.email,
+                    user.free_trial_messages_used,
+                    user.free_trial_messages_limit
+                )
+                background_tasks.add_task(
+                    send_email,
+                    user.email,
+                    "⏰ Il tuo periodo di prova HostGPT è scaduto",
+                    email_body
+                )
+                notifications_sent += 1
+                logger.info(f"Sent expiration email to user {user.id}")
+        
+        return {
+            "status": "success",
+            "notifications_sent": notifications_sent,
+            "message": f"Inviate {notifications_sent} notifiche email per free trial"
+        }
+        
+    except Exception as e:
+        logger.error(f"Error sending free trial notifications: {e}")
+        raise HTTPException(status_code=500, detail="Errore nell'invio delle notifiche free trial")
+
+@app.post("/api/free-trial/expire-trials")
+async def expire_free_trials(
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db)
+):
+    """Scade i free trial scaduti (da chiamare via cron job)"""
+    try:
+        now = datetime.utcnow()
+        
+        # Trova utenti con free trial scaduto
+        expired_users = db.query(User).filter(
+            User.subscription_status == 'free_trial',
+            User.free_trial_end_date < now
+        ).all()
+        
+        expired_count = 0
+        
+        for user in expired_users:
+            # Cambia status a inactive
+            user.subscription_status = 'inactive'
+            db.commit()
+            
+            # Invia email di scadenza se non già inviata
+            email_body = create_free_trial_expired_email(
+                user.full_name or user.email,
+                user.free_trial_messages_used,
+                user.free_trial_messages_limit
+            )
+            background_tasks.add_task(
+                send_email,
+                user.email,
+                "⏰ Il tuo periodo di prova HostGPT è scaduto",
+                email_body
+            )
+            
+            expired_count += 1
+            logger.info(f"Expired free trial for user {user.id}")
+        
+        return {
+            "status": "success",
+            "expired_count": expired_count,
+            "message": f"Scaduti {expired_count} free trial"
+        }
+        
+    except Exception as e:
+        logger.error(f"Error expiring free trials: {e}")
+        raise HTTPException(status_code=500, detail="Errore nella gestione delle scadenze free trial")
 
 if __name__ == "__main__":
     import uvicorn
