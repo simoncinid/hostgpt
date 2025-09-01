@@ -5,6 +5,8 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { motion } from 'framer-motion'
 import CookieBanner from '../components/CookieBanner'
+import LanguageSelector from '../components/LanguageSelector'
+import { useLanguage } from '../lib/languageContext'
 import api from '../lib/api'
 import { 
   MessageSquare, 
@@ -49,22 +51,14 @@ import {
 } from 'lucide-react'
 
 export default function LandingPage() {
+  const { t, language } = useLanguage()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [currentTestimonial, setCurrentTestimonial] = useState(0)
   const [touchStart, setTouchStart] = useState<number | null>(null)
   const [touchEnd, setTouchEnd] = useState<number | null>(null)
 
   // Messaggi demo dinamici
-  const demoChatMessages: { role: 'user' | 'assistant'; text: string }[] = [
-    { role: 'user', text: 'Ciao! A che ora è il check-in?' },
-    { role: 'assistant', text: 'Ciao! Il check-in è dalle 15:00 alle 20:00. Ti invieremo il codice della cassetta di sicurezza il giorno dell\'arrivo.' },
-    { role: 'user', text: 'Posso fare check-in dopo le 22?' },
-    { role: 'assistant', text: 'Certo! È previsto un self check-in 24/7. Facci sapere l\'orario stimato e ti assistiamo noi.' },
-    { role: 'user', text: 'Com\'è il parcheggio in zona?' },
-    { role: 'assistant', text: 'C\'è parcheggio gratuito in strada nei dintorni. In alternativa, a 300m trovi il Garage Verdi a 15€/giorno.' },
-    { role: 'user', text: 'Wifi e ristoranti consigliati?' },
-    { role: 'assistant', text: 'Wifi fibra 200Mbps, password: CASA2024. Per cenare ti consiglio Trattoria Roma (5 min a piedi) e Osteria Bella Vista.' }
-  ]
+  const demoChatMessages: { role: 'user' | 'assistant'; text: string }[] = t.demoMessages
   const [demoVisible, setDemoVisible] = useState<typeof demoChatMessages>([])
   const [demoRunId, setDemoRunId] = useState(0)
   const demoScrollRef = useRef<HTMLDivElement | null>(null)
@@ -89,74 +83,29 @@ export default function LandingPage() {
     }
   }, [demoVisible])
 
-  const features = [
-    {
-      icon: <MessageSquare className="w-6 h-6 md:w-10 md:h-10 text-white" />,
-      bgGradient: "from-blue-500 to-blue-600",
-      title: "Chatbot Personalizzato",
-      description: "Crea un assistente virtuale su misura per la tua proprietà con pochi click",
-      features: ["Risposte personalizzate", "Lingua italiana", "Conoscenza locale"]
-    },
-    {
-      icon: <Globe className="w-6 h-6 md:w-10 md:h-10 text-white" />,
-      bgGradient: "from-purple-500 to-purple-600",
-      title: "Informazioni Locali",
-      description: "Fornisci consigli su ristoranti, attrazioni e servizi della zona",
-      features: ["Ristoranti consigliati", "Attrazioni turistiche", "Trasporti locali"]
-    },
-    {
-      icon: <BarChart3 className="w-6 h-6 md:w-10 md:h-10 text-white" />,
-      bgGradient: "from-orange-500 to-orange-600",
-      title: "Statistiche Dettagliate",
-      description: "Monitora le conversazioni e ottieni insights sui bisogni dei tuoi ospiti",
-      features: ["Analisi conversazioni", "Metriche performance", "Report dettagliati"]
-    },
-    {
-      icon: <Zap className="w-6 h-6 md:w-10 md:h-10 text-white" />,
-      bgGradient: "from-yellow-500 to-yellow-600",
-      title: "Setup Veloce",
-      description: "Attiva il tuo chatbot in meno di 10 minuti con la nostra procedura guidata",
-      features: ["Configurazione rapida", "Setup guidato", "Pronto in 10 minuti"]
-    },
-    {
-      icon: <Headphones className="w-6 h-6 md:w-10 md:h-10 text-white" />,
-      bgGradient: "from-green-500 to-green-600",
-      title: "Assistenza 24/7",
-      description: "Supporto tecnico sempre disponibile per aiutarti a ottenere il massimo",
-      features: ["Supporto dedicato", "Risposte rapide", "Assistenza continua"]
-    },
-    {
-      icon: <Shield className="w-6 h-6 md:w-10 md:h-10 text-white" />,
-      bgGradient: "from-red-500 to-red-600",
-      title: "Sicuro e Affidabile",
-      description: "I tuoi dati sono protetti con i più alti standard di sicurezza",
-      features: ["Crittografia avanzata", "Backup automatici", "Conformità GDPR"]
-    }
-  ]
+  const features = t.features.items.map((feature: any, index: number) => ({
+    icon: [
+      <MessageSquare className="w-6 h-6 md:w-10 md:h-10 text-white" />,
+      <Globe className="w-6 h-6 md:w-10 md:h-10 text-white" />,
+      <BarChart3 className="w-6 h-6 md:w-10 md:h-10 text-white" />,
+      <Zap className="w-6 h-6 md:w-10 md:h-10 text-white" />,
+      <Headphones className="w-6 h-6 md:w-10 md:h-10 text-white" />,
+      <Shield className="w-6 h-6 md:w-10 md:h-10 text-white" />
+    ][index],
+    bgGradient: [
+      "from-blue-500 to-blue-600",
+      "from-purple-500 to-purple-600",
+      "from-orange-500 to-orange-600",
+      "from-yellow-500 to-yellow-600",
+      "from-green-500 to-green-600",
+      "from-red-500 to-red-600"
+    ][index],
+    title: feature.title,
+    description: feature.description,
+    features: feature.features
+  }))
 
-  const testimonials = [
-    {
-      name: "Marco Rossi",
-      role: "Host a Roma",
-      content: "HostGPT ha rivoluzionato il modo in cui gestisco gli ospiti. Risparmio ore ogni settimana!",
-      rating: 5,
-      avatar: "MR"
-    },
-    {
-      name: "Laura Bianchi",
-      role: "Host a Firenze",
-      content: "I miei ospiti adorano avere risposte immediate. Le recensioni sono migliorate notevolmente.",
-      rating: 5,
-      avatar: "LB"
-    },
-    {
-      name: "Giuseppe Verdi",
-      role: "Host a Milano",
-      content: "Facile da configurare e utilissimo. Non posso più farne a meno!",
-      rating: 5,
-      avatar: "GV"
-    }
-  ]
+  const testimonials = t.testimonials
 
   // Stati per l'animazione flip della card pricing
   const [pricingFlipped, setPricingFlipped] = useState(false)
@@ -166,6 +115,7 @@ export default function LandingPage() {
 
   // Stati per le animazioni "Come funziona"
   const [howItWorksInView, setHowItWorksInView] = useState([false, false, false])
+  const [howItWorksCompleted, setHowItWorksCompleted] = useState([false, false, false])
   const [activeStep, setActiveStep] = useState(0)
   const howItWorksRefs = [useRef<HTMLDivElement>(null), useRef<HTMLDivElement>(null), useRef<HTMLDivElement>(null)]
 
@@ -216,71 +166,13 @@ export default function LandingPage() {
   const demoInputRef = useRef<HTMLInputElement>(null)
 
   // Testi multilingua per demo
-  const demoTexts = {
-    IT: {
-      assistant: 'Assistente Virtuale',
-      suggestedMessages: [
-        "Contatta Host",
-        "Attrazioni", 
-        "Check-in/Check-out"
-      ],
-      placeholder: "Scrivi un messaggio...",
-      welcome: "Benvenuto!",
-      welcomeSubtitle: "Sono qui per aiutarti con qualsiasi domanda sulla casa e sulla zona. Come posso esserti utile?",
-      startChat: "Inizia la Chat",
-      namePlaceholder: "Il tuo nome (opzionale)",
-      writing: "Sto scrivendo...",
-      howCanIHelp: "Come posso aiutarti:",
-      helpItems: [
-        "Informazioni sulla casa e i servizi",
-        "Orari di check-in e check-out", 
-        "Consigli su ristoranti e attrazioni",
-        "Informazioni sui trasporti",
-        "Contatti di emergenza"
-      ]
-    },
-    ENG: {
-      assistant: 'Virtual Assistant',
-      suggestedMessages: [
-        "Contact Host",
-        "Attractions",
-        "Check-in/Check-out"
-      ],
-      placeholder: "Write a message...",
-      welcome: "Welcome!",
-      welcomeSubtitle: "I'm here to help you with any questions about the house and the area. How can I be useful?",
-      startChat: "Start Chat",
-      namePlaceholder: "Your name (optional)",
-      writing: "I'm writing...",
-      howCanIHelp: "How can I help you:",
-      helpItems: [
-        "Information about the house and services",
-        "Check-in and check-out times",
-        "Restaurant and attraction recommendations", 
-        "Transportation information",
-        "Emergency contacts"
-      ]
-    }
-  }
-
-  const currentDemoTexts = demoTexts[demoLanguage]
+  const currentDemoTexts = t.demo
 
   // Messaggi completi per i suggerimenti demo
-  const fullDemoMessages = {
-    IT: {
-      "Contatta Host": "Voglio contattare l'host. Come faccio?",
-      "Attrazioni": "Vorrei visitare la zona, che attrazioni ci sono e come posso raggiungerle?",
-      "Check-in/Check-out": "Quali sono gli orari di check-in e check-out?"
-    },
-    ENG: {
-      "Contact Host": "I want to contact the host. How can I do it?",
-      "Attractions": "I'd like to visit the area, what attractions are there and how can I reach them?",
-      "Check-in/Check-out": "What are the check-in and check-out times?"
-    }
-  }
+  const currentFullDemoMessages = t.demo.fullMessages
 
   const handleDemoSuggestedMessage = async (suggestionKey: string) => {
-    const fullMessage = fullDemoMessages[demoLanguage][suggestionKey as keyof typeof fullDemoMessages[typeof demoLanguage]]
+    const fullMessage = currentFullDemoMessages[suggestionKey as keyof typeof currentFullDemoMessages] as string
     
     const userMessage = {
       role: 'user' as const,
@@ -312,7 +204,7 @@ export default function LandingPage() {
       console.error('Errore nella chat demo:', error)
       setDemoMessages(prev => [...prev, { 
         role: 'assistant', 
-        content: 'Mi dispiace, si è verificato un errore. Riprova più tardi.',
+        content: t.common.error,
         timestamp: new Date()
       }])
     } finally {
@@ -356,7 +248,7 @@ export default function LandingPage() {
       console.error('Errore nella chat demo:', error)
       setDemoMessages(prev => [...prev, { 
         role: 'assistant', 
-        content: 'Mi dispiace, si è verificato un errore. Riprova più tardi.',
+        content: t.common.error,
         timestamp: new Date()
       }])
     } finally {
@@ -407,12 +299,27 @@ export default function LandingPage() {
     const observers = howItWorksRefs.map((ref, index) => {
       const observer = new IntersectionObserver(
         ([entry]) => {
-          if (entry.isIntersecting) {
+          if (entry.isIntersecting && !howItWorksCompleted[index]) {
             setHowItWorksInView(prev => {
               const newState = [...prev]
               newState[index] = true
               return newState
             })
+            
+            // Mark animation as completed immediately to prevent looping
+            setTimeout(() => {
+              setHowItWorksCompleted(prev => {
+                const newState = [...prev]
+                newState[index] = true
+                return newState
+              })
+              // Also set inView to false to stop the animation
+              setHowItWorksInView(prev => {
+                const newState = [...prev]
+                newState[index] = false
+                return newState
+              })
+            }, 3000) // 3 seconds for the animation to complete
           }
         },
         { threshold: 0.3 }
@@ -432,7 +339,7 @@ export default function LandingPage() {
         }
       })
     }
-  }, [])
+  }, [howItWorksCompleted])
 
   // Auto-switch per i passi in mobile - Gallery style
   useEffect(() => {
@@ -481,41 +388,22 @@ export default function LandingPage() {
 
 
 
-  const howItWorksSteps = [
-    {
-      step: 1,
-      title: "Registrati",
-      description: "Crea il tuo account e scegli il piano più adatto alle tue esigenze"
-    },
-    {
-      step: 2,
-      title: "Personalizza",
-      description: "Rispondi alle domande guidate per creare la knowledge base del tuo chatbot"
-    },
-    {
-      step: 3,
-      title: "Condividi",
-      description: "Ricevi il QR code e il link da condividere con i tuoi ospiti"
-    }
-  ]
+  const howItWorksSteps = t.howItWorks.steps.map((step: any, index: number) => ({
+    step: index + 1,
+    title: step.title,
+    description: step.description
+  }))
 
-  const pricingPlans = [
-    {
-      name: "Abbonamento",
-      price: "€29",
-      period: "/mese",
-      features: [
-        "1 Chatbot personalizzato",
-        "1000 messaggi/mese",
-        "Assistenza 24/7",
-        "Statistiche avanzate",
-        "QR Code e link di condivisione",
-        "Accesso a Guardian (9€/mese)"
-      ],
-      highlighted: true,
-      hasFreeTrial: true
-    }
-  ]
+  const pricingPlans = t.pricing.plans.map((plan: any, index: number) => ({
+    name: plan.name,
+    price: plan.price,
+    period: plan.period,
+    features: plan.features,
+    highlighted: true,
+    hasFreeTrial: true,
+    freeTrialButton: plan.freeTrialButton,
+    ctaButton: plan.ctaButton
+  }))
 
   const nextTestimonial = () => {
     setCurrentTestimonial((prev) => (prev + 1) % testimonials.length)
@@ -581,7 +469,7 @@ export default function LandingPage() {
   // Componenti per le animazioni "Come funziona"
   const RegistrationAnimation = ({ isActive }: { isActive: boolean }) => {
     return (
-      <div className="w-full max-w-sm bg-gradient-to-br from-blue-50 to-indigo-100 rounded-xl p-4 relative" style={{height: '24rem'}}>
+      <div className="w-full max-w-sm bg-gradient-to-br from-blue-50 to-indigo-100 rounded-xl p-4 relative" style={{height: '18rem'}}>
         <div className="bg-white rounded-lg shadow-lg p-3 h-full flex flex-col overflow-hidden">
           <div className="flex items-center justify-between px-2 py-1 bg-gray-100 rounded-t-lg border-b">
             <div className="flex space-x-1">
@@ -596,46 +484,46 @@ export default function LandingPage() {
               <motion.div
                 initial={{ scale: 0 }}
                 animate={isActive ? { scale: 1 } : { scale: 0 }}
-                transition={{ delay: 0.5, type: "spring", repeat: Infinity, repeatDelay: 8 }}
+                transition={{ delay: 0.5, type: "spring" }}
                 className="w-6 h-6 bg-primary rounded mx-auto mb-2 flex items-center justify-center"
               >
                 <Home className="w-3 h-3 text-white" />
               </motion.div>
-              <h3 className="text-xs font-bold">Registrati</h3>
+              <h3 className="text-xs font-bold">{t.howItWorks.animations.register.title}</h3>
             </div>
             <div className="space-y-2">
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={isActive ? { opacity: 1, x: 0 } : { opacity: 0, x: -20 }}
-                transition={{ delay: 1, duration: 1, repeat: Infinity, repeatDelay: 8 }}
+                transition={{ delay: 1, duration: 1 }}
                 className="h-6 bg-blue-50 rounded border flex items-center px-2"
               >
-                <div className="text-xs text-gray-700">mario.rossi@email.com</div>
+                <div className="text-xs text-gray-700">{t.howItWorks.animations.register.email}</div>
               </motion.div>
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={isActive ? { opacity: 1, x: 0 } : { opacity: 0, x: -20 }}
-                transition={{ delay: 2, duration: 1, repeat: Infinity, repeatDelay: 8 }}
+                transition={{ delay: 2, duration: 1 }}
                 className="h-6 bg-blue-50 rounded border flex items-center px-2"
               >
-                <div className="text-xs text-gray-700">••••••••</div>
+                <div className="text-xs text-gray-700">{t.howItWorks.animations.register.password}</div>
               </motion.div>
               <motion.button
                 initial={{ scale: 0.8, opacity: 0 }}
                 animate={isActive ? { scale: 1, opacity: 1 } : { scale: 0.8, opacity: 0 }}
-                transition={{ delay: 3, duration: 0.5, repeat: Infinity, repeatDelay: 8 }}
+                transition={{ delay: 3, duration: 0.5 }}
                 className="w-full h-8 rounded text-xs font-semibold text-white bg-primary hover:bg-primary/90 transition"
               >
-                Registrati
+                {t.howItWorks.animations.register.button}
               </motion.button>
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={isActive ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-                transition={{ delay: 4, duration: 1, repeat: Infinity, repeatDelay: 8 }}
+                transition={{ delay: 4, duration: 1 }}
                 className="text-center mt-1"
               >
                 <div className="w-3 h-3 bg-green-500 rounded-full mx-auto mb-1"></div>
-                <p className="text-xs text-green-600 font-medium">Account creato!</p>
+                <p className="text-xs text-green-600 font-medium">{t.howItWorks.animations.register.success}</p>
               </motion.div>
             </div>
           </div>
@@ -646,7 +534,7 @@ export default function LandingPage() {
 
   const CustomizationAnimation = ({ isActive }: { isActive: boolean }) => {
     return (
-      <div className="w-full max-w-sm bg-gradient-to-br from-green-50 to-emerald-100 rounded-xl p-4 relative" style={{height: '24rem'}}>
+      <div className="w-full max-w-sm bg-gradient-to-br from-green-50 to-emerald-100 rounded-xl p-4 relative" style={{height: '18rem'}}>
         <div className="bg-white rounded-lg shadow-lg p-3 h-full flex flex-col overflow-hidden">
           <div className="flex items-center justify-between px-2 py-1 bg-gray-900 rounded-t-lg text-white">
             <div className="flex items-center space-x-1">
@@ -656,43 +544,43 @@ export default function LandingPage() {
           </div>
           <div className="flex-1 flex flex-col justify-start p-2 min-h-0">
             <div className="text-center mb-4">
-              <h3 className="text-xs font-bold">Crea Chatbot</h3>
+              <h3 className="text-xs font-bold">{t.howItWorks.animations.customize.title}</h3>
             </div>
             <div className="space-y-2">
               <motion.div
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={isActive ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.8 }}
-                transition={{ delay: 0.5, duration: 1, repeat: Infinity, repeatDelay: 8 }}
+                transition={{ delay: 0.5, duration: 1 }}
                 className="p-2 rounded border-2 border-green-400 bg-green-50"
               >
-                <div className="text-xs text-gray-600">Nome proprietà</div>
-                <div className="text-xs font-medium">Casa Bella Vista</div>
+                <div className="text-xs text-gray-600">{t.howItWorks.animations.customize.propertyName}</div>
+                <div className="text-xs font-medium">{t.howItWorks.animations.customize.propertyValue}</div>
               </motion.div>
               <motion.div
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={isActive ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.8 }}
-                transition={{ delay: 1.5, duration: 1, repeat: Infinity, repeatDelay: 8 }}
+                transition={{ delay: 1.5, duration: 1 }}
                 className="p-2 rounded border-2 border-green-400 bg-green-50"
               >
-                <div className="text-xs text-gray-600">Check-in</div>
-                <div className="text-xs font-medium">15:00-20:00</div>
+                <div className="text-xs text-gray-600">{t.howItWorks.animations.customize.checkIn}</div>
+                <div className="text-xs font-medium">{t.howItWorks.animations.customize.checkInValue}</div>
               </motion.div>
               <motion.div
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={isActive ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.8 }}
-                transition={{ delay: 2.5, duration: 1, repeat: Infinity, repeatDelay: 8 }}
+                transition={{ delay: 2.5, duration: 1 }}
                 className="p-2 rounded border-2 border-green-400 bg-green-50"
               >
-                <div className="text-xs text-gray-600">Consigli</div>
-                <div className="text-xs font-medium">Ristorante Roma...</div>
+                <div className="text-xs text-gray-600">{t.howItWorks.animations.customize.tips}</div>
+                <div className="text-xs font-medium">{t.howItWorks.animations.customize.tipsValue}</div>
               </motion.div>
               <motion.button
                 initial={{ opacity: 0, y: 20 }}
                 animate={isActive ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-                transition={{ delay: 3.5, duration: 1, repeat: Infinity, repeatDelay: 8 }}
+                transition={{ delay: 3.5, duration: 1 }}
                 className="w-full h-8 rounded text-xs font-semibold text-white bg-green-500 hover:bg-green-600 transition mt-2"
               >
-                Chatbot Creato!
+                {t.howItWorks.animations.customize.button}
               </motion.button>
             </div>
           </div>
@@ -703,16 +591,16 @@ export default function LandingPage() {
 
   const SharingAnimation = ({ isActive }: { isActive: boolean }) => {
     return (
-      <div className="w-full max-w-sm bg-gradient-to-br from-purple-50 to-violet-100 rounded-xl p-4 relative" style={{height: '24rem'}}>
+      <div className="w-full max-w-sm bg-gradient-to-br from-purple-50 to-violet-100 rounded-xl p-4 relative" style={{height: '18rem'}}>
         <div className="bg-white rounded-lg shadow-lg p-3 h-full flex flex-col overflow-hidden">
           <div className="flex items-center justify-center px-2 py-1 bg-gradient-to-r from-primary to-accent rounded-t-lg text-white">
-            <span className="text-xs font-bold">Chatbot Pronto!</span>
+            <span className="text-xs font-bold">{t.howItWorks.animations.share.title}</span>
           </div>
           <div className="flex-1 flex flex-col justify-start items-center text-center p-2 min-h-0" style={{marginTop: '1rem'}}>
             <motion.div
               initial={{ scale: 0, rotate: 0 }}
               animate={isActive ? { scale: 1, rotate: 360 } : { scale: 0, rotate: 0 }}
-              transition={{ delay: 0.5, duration: 1.2, repeat: Infinity, repeatDelay: 8 }}
+              transition={{ delay: 0.5, duration: 1.2 }}
               className="flex justify-center mb-3"
             >
               <div className="w-12 h-12 bg-white border-2 border-gray-300 rounded relative shadow-sm">
@@ -732,23 +620,23 @@ export default function LandingPage() {
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={isActive ? { opacity: 1 } : { opacity: 0 }}
-                transition={{ delay: 1.5, duration: 1, repeat: Infinity, repeatDelay: 8 }}
+                transition={{ delay: 1.5, duration: 1 }}
                 className="text-xs text-gray-600"
               >
-                Link del chatbot:
+                {t.howItWorks.animations.share.link}
               </motion.div>
               <motion.div
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={isActive ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.8 }}
-                transition={{ delay: 2.5, duration: 1, repeat: Infinity, repeatDelay: 8 }}
+                transition={{ delay: 2.5, duration: 1 }}
                 className="bg-gray-100 rounded px-2 py-1 text-xs text-primary font-mono"
               >
-                hostgpt.it/chat/abc123
+                hostgpt.it/register
               </motion.div>
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={isActive ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-                transition={{ delay: 3.5, duration: 1, repeat: Infinity, repeatDelay: 8 }}
+                transition={{ delay: 3.5, duration: 1 }}
                 className="flex justify-center space-x-2 mt-2"
               >
                 <div className="w-6 h-6 bg-blue-500 rounded-lg flex items-center justify-center shadow-sm">
@@ -764,10 +652,10 @@ export default function LandingPage() {
               <motion.div
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={isActive ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.8 }}
-                transition={{ delay: 4.5, duration: 1, repeat: Infinity, repeatDelay: 8 }}
+                transition={{ delay: 4.5, duration: 1 }}
                 className="text-xs text-green-600 font-medium mt-2"
               >
-                ✅ Condividi con gli ospiti!
+                ✅ {t.howItWorks.animations.share.success}
               </motion.div>
             </div>
           </div>
@@ -776,73 +664,35 @@ export default function LandingPage() {
     )
   }
 
-  // Componente per l'animazione della chat nella sezione pricing
-  const PricingChatAnimation = ({ isActive }: { isActive: boolean }) => {
+  // Componente per la chat nella sezione pricing (senza animazioni)
+  const PricingChatStatic = () => {
     return (
       <div className="h-full flex flex-col relative">
         <div className="text-center mb-4">
-          <h3 className="text-xl font-bold text-primary mb-2">Demo Chat Live</h3>
-          <p className="text-sm text-gray-600">Vedi HostGPT in azione!</p>
+          <h3 className="text-xl font-bold text-primary mb-2">{t.demoChatStatic.title}</h3>
+          <p className="text-sm text-gray-600">{t.demoChatStatic.subtitle}</p>
         </div>
         
         <div className="flex-1 bg-gray-50 rounded-xl p-4 relative">
           <div className="space-y-3">
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={isActive ? { opacity: 1, x: 0 } : { opacity: 0, x: -20 }}
-              transition={{ delay: isActive ? 0.2 : 0, duration: 0.5 }}
-              className="flex justify-start"
-            >
+            <div className="flex justify-start">
               <div className="bg-white p-2 rounded-lg shadow-sm max-w-xs">
-                <p className="text-sm">Ciao! A che ora è il check-in?</p>
+                <p className="text-sm">{t.demoChatStatic.messages.user1}</p>
               </div>
-            </motion.div>
+            </div>
             
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={isActive ? { opacity: 1, x: 0 } : { opacity: 0, x: 20 }}
-              transition={{ delay: isActive ? 1 : 0, duration: 0.5 }}
-              className="flex justify-end"
-            >
+            <div className="flex justify-end">
               <div className="bg-primary text-white p-2 rounded-lg shadow-sm max-w-xs">
-                <p className="text-sm">Il check-in è dalle 15:00 alle 20:00. Ti invio il codice!</p>
+                <p className="text-sm">{t.demoChatStatic.messages.assistant1}</p>
               </div>
-            </motion.div>
+            </div>
             
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={isActive ? { opacity: 1, x: 0 } : { opacity: 0, x: -20 }}
-              transition={{ delay: isActive ? 1.8 : 0, duration: 0.5 }}
-              className="flex justify-start"
-            >
+            <div className="flex justify-start">
               <div className="bg-white p-2 rounded-lg shadow-sm max-w-xs">
-                <p className="text-sm">Perfetto! Grazie mille! 🙏</p>
+                <p className="text-sm">{t.demoChatStatic.messages.user2}</p>
               </div>
-            </motion.div>
+            </div>
           </div>
-          
-          {/* Effetto blur che appare alla fine - dura 3 secondi */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={isActive ? { opacity: 1 } : { opacity: 0 }}
-            transition={{ delay: isActive ? 2 : 0, duration: 0.8 }}
-            className="absolute inset-x-0 bottom-0 top-0 bg-white/80 backdrop-blur-sm rounded-xl flex items-center justify-center"
-          >
-            <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={isActive ? { scale: 1, opacity: 1 } : { scale: 0.8, opacity: 0 }}
-              transition={{ delay: isActive ? 2.2 : 0, duration: 0.6 }}
-              className="text-center"
-            >
-              <div className="text-2xl mb-2">🎯</div>
-              <div className="text-lg font-bold text-green-600 mb-1">
-                Più bella di così!
-              </div>
-              <p className="text-sm text-gray-600">
-                Host rilassato, ospite felice
-              </p>
-            </motion.div>
-          </motion.div>
         </div>
       </div>
     )
@@ -894,11 +744,11 @@ export default function LandingPage() {
               {/* Desktop Menu premium - Ripensato per essere più pulito e organizzato */}
               <div className="hidden md:flex items-center space-x-2 relative z-10">
                 {[
-                  { href: "#features", label: "Funzionalità" },
-                  { href: "#demo", label: "Demo" },
-                  { href: "#how-it-works", label: "Come Funziona" },
-                  { href: "#pricing", label: "Prezzi" },
-                  { href: "#feedback", label: "Feedback" }
+                  { href: "#features", label: t.navbar.features },
+                  { href: "#demo", label: t.navbar.demo },
+                  { href: "#how-it-works", label: t.navbar.howItWorks },
+                  { href: "#pricing", label: t.navbar.pricing },
+                  { href: "#feedback", label: t.navbar.feedback }
                 ].map((item, index) => (
                   <motion.div
                     key={item.href}
@@ -924,6 +774,12 @@ export default function LandingPage() {
                 {/* Separatore */}
                 <div className="w-px h-6 bg-gray-300 mx-2"></div>
                 
+                {/* Language Selector */}
+                <LanguageSelector />
+                
+                {/* Separatore */}
+                <div className="w-px h-6 bg-gray-300 mx-2"></div>
+                
                 {/* Bottone Login */}
                 <motion.div
                   initial={{ opacity: 0, scale: 0.8 }}
@@ -936,7 +792,7 @@ export default function LandingPage() {
                     href="/login"
                     className="px-4 py-2 text-gray-700 font-medium hover:text-gray-900 transition-all duration-300 rounded-lg hover:bg-white/40 text-sm"
                   >
-                    Accedi
+                    {t.navbar.login}
                   </Link>
                 </motion.div>
 
@@ -971,7 +827,7 @@ export default function LandingPage() {
                           ease: "easeInOut",
                         }}
                       />
-                      <span className="relative z-10">Registrati</span>
+                      <span className="relative z-10">{t.navbar.register}</span>
                       <motion.div
                         animate={{ rotate: [0, 5, 0] }}
                         transition={{
@@ -1034,11 +890,11 @@ export default function LandingPage() {
 
                 <div className="space-y-2 relative z-10">
                   {[
-                    { href: "#features", label: "Funzionalità" },
-                    { href: "#demo", label: "Demo" },
-                    { href: "#how-it-works", label: "Come Funziona" },
-                    { href: "#pricing", label: "Prezzi" },
-                    { href: "#feedback", label: "Feedback" }
+                    { href: "#features", label: t.navbar.features },
+                    { href: "#demo", label: t.navbar.demo },
+                    { href: "#how-it-works", label: t.navbar.howItWorks },
+                    { href: "#pricing", label: t.navbar.pricing },
+                    { href: "#feedback", label: t.navbar.feedback }
                   ].map((item, index) => (
                     <motion.div
                       key={item.href}
@@ -1059,6 +915,14 @@ export default function LandingPage() {
                   {/* Separatore mobile */}
                   <div className="border-t border-white/20 my-2"></div>
                   
+                  {/* Language Selector Mobile */}
+                  <div className="px-4 py-2">
+                    <LanguageSelector />
+                  </div>
+                  
+                  {/* Separatore mobile */}
+                  <div className="border-t border-white/20 my-2"></div>
+                  
                   {/* Bottone mobile Login */}
                   <motion.div
                     initial={{ opacity: 0, y: 10 }}
@@ -1070,7 +934,7 @@ export default function LandingPage() {
                       onClick={() => setIsMenuOpen(false)} 
                       className="block w-full text-center px-4 py-2.5 text-gray-700 font-medium hover:text-gray-900 hover:bg-white/30 rounded-lg transition-all duration-300 text-sm"
                     >
-                      Accedi
+                      {t.navbar.login}
                     </Link>
                   </motion.div>
 
@@ -1086,7 +950,7 @@ export default function LandingPage() {
                       onClick={() => setIsMenuOpen(false)} 
                       className="block w-full text-center px-4 py-3 text-white font-semibold bg-gradient-to-r from-rose-500 to-pink-600 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 text-sm"
                     >
-                      Registrati
+                      {t.navbar.register}
                     </Link>
                   </motion.div>
                 </div>
@@ -1187,30 +1051,7 @@ export default function LandingPage() {
             transition={{ duration: 1, ease: [0.23, 1, 0.320, 1] }}
             className="text-center mb-20"
           >
-            {/* Badge premium */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.8, delay: 0.2, type: "spring", stiffness: 100 }}
-              className="inline-flex items-center gap-2 px-6 py-3 bg-white/40 backdrop-blur-xl border border-white/20 rounded-full shadow-lg mb-8"
-            >
-              <motion.div
-                className="w-2 h-2 bg-gradient-to-r from-rose-500 to-pink-600 rounded-full"
-                animate={{
-                  scale: [1, 1.2, 1],
-                  opacity: [0.7, 1, 0.7],
-                }}
-                transition={{
-                  duration: 2,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                }}
-              />
-              <span className="text-sm font-semibold text-gray-700">
-                Assistente AI #1 per Host Airbnb
-              </span>
-              <Sparkles className="w-4 h-4 text-rose-500" />
-            </motion.div>
+
 
             {/* Titolo principale spettacolare */}
             <motion.h1
@@ -1219,7 +1060,7 @@ export default function LandingPage() {
               transition={{ duration: 0.9, delay: 0.4, ease: "easeOut" }}
               className="text-4xl sm:text-6xl md:text-8xl font-black mb-8 leading-tight tracking-tight"
             >
-              <span className="text-gray-900 block text-4xl sm:text-6xl md:text-8xl">Risparmia Tempo con</span>
+              <span className="text-gray-900 block text-4xl sm:text-6xl md:text-6xl">{t.hero.title}</span>
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-600 via-pink-600 to-rose-700 block relative text-5xl sm:text-7xl md:text-8xl">
                 HostGPT
                 {/* Effetto shimmer */}
@@ -1248,11 +1089,7 @@ export default function LandingPage() {
               transition={{ duration: 0.8, delay: 0.6 }}
               className="text-lg sm:text-2xl text-gray-700 mb-12 max-w-4xl mx-auto leading-relaxed font-light"
             >
-              Rispondi automaticamente, in modo completo e immediato, alle richieste dei guest 24/7. 
-              <br />
-              <span className="font-semibold text-transparent bg-clip-text bg-gradient-to-r from-rose-600 to-pink-600">
-              Meno messaggi per te, più soddisfazione per loro.
-              </span>
+              {t.hero.subtitle} <span className="font-semibold text-transparent bg-clip-text bg-gradient-to-r from-rose-600 to-pink-600">{t.hero.subtitleHighlight}</span>
             </motion.p>
 
             {/* Bottoni CTA spettacolari */}
@@ -1289,7 +1126,7 @@ export default function LandingPage() {
                       ease: "easeInOut",
                     }}
                   />
-                  <span className="relative z-10">🎉 Prova Gratis 14 giorni</span>
+                  <span className="relative z-10">{t.hero.freeTrialButton}</span>
                   <motion.div
                     whileHover={{ x: 5 }}
                     transition={{ type: "spring", stiffness: 400 }}
@@ -1327,7 +1164,7 @@ export default function LandingPage() {
                       ease: "easeInOut",
                     }}
                   />
-                  <span className="relative z-10">Registrati per iniziare</span>
+                  <span className="relative z-10">{t.hero.registerButton}</span>
                   <motion.div
                     whileHover={{ x: 5 }}
                     transition={{ type: "spring", stiffness: 400 }}
@@ -1363,7 +1200,7 @@ export default function LandingPage() {
                       ease: "easeInOut"
                     }}
                   />
-                  <span className="relative z-10">PROVA DEMO</span>
+                  <span className="relative z-10">{t.hero.demoButton}</span>
                   <motion.div
                     animate={{ 
                       scale: [1, 1.2, 1],
@@ -1422,7 +1259,7 @@ export default function LandingPage() {
                 </div>
                   </motion.div>
                   <div className="ml-3 md:ml-6 flex-1 min-w-0">
-                    <h3 className="text-lg md:text-2xl font-bold text-gray-900 truncate">Casa Bella Vista Bot</h3>
+                    <h3 className="text-lg md:text-2xl font-bold text-gray-900 truncate">{t.demo.title}</h3>
                   </div>
                 </motion.div>
 
@@ -1520,7 +1357,7 @@ export default function LandingPage() {
                 </div>
                   </motion.div>
                   <div className="ml-3 md:ml-6 flex-1 min-w-0">
-                    <h3 className="text-lg md:text-2xl font-bold text-gray-900 truncate">Casa Bella Vista Bot</h3>
+                    <h3 className="text-lg md:text-2xl font-bold text-gray-900 truncate">{t.demo.title}</h3>
                   </div>
                 </motion.div>
 
@@ -1661,13 +1498,13 @@ export default function LandingPage() {
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
-            className="text-center mb-8 md:mb-16"
+            className="text-center mb-8 md:mb-12"
           >
             <h2 className="text-5xl md:text-6xl font-black text-dark mb-6 leading-tight">
-              Come Funziona
+              {t.howItWorks.title}
             </h2>
             <p className="text-xl md:text-2xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-              Tre semplici passi per attivare il tuo assistente virtuale
+              {t.howItWorks.subtitle}
             </p>
           </motion.div>
 
@@ -1697,7 +1534,7 @@ export default function LandingPage() {
                    </div>
                    
                                 {/* Card con animazione statica - DESKTOP VERSIONE ORIGINALE */}
-                <div className="bg-gradient-to-br from-rose-50/80 via-pink-50/60 to-rose-50/80 rounded-2xl p-6 shadow-xl border border-rose-100/50 h-[36rem] relative overflow-hidden flex flex-col">
+                <div className="bg-white rounded-2xl p-6 shadow-xl border border-gray-100 h-[29rem] relative overflow-hidden flex flex-col">
                   
                   {/* Titolo e descrizione */}
                   <div className="text-center mb-6">
@@ -1767,9 +1604,9 @@ export default function LandingPage() {
                      
                      {/* Animazioni dinamiche - posizionamento ottimizzato */}
                      <div className="flex-1 flex items-center justify-center">
-                       {index === 0 && <RegistrationAnimation isActive={howItWorksInView[0]} />}
-                       {index === 1 && <CustomizationAnimation isActive={howItWorksInView[1]} />}
-                       {index === 2 && <SharingAnimation isActive={howItWorksInView[2]} />}
+                       {index === 0 && <RegistrationAnimation isActive={howItWorksCompleted[0]} />}
+                       {index === 1 && <CustomizationAnimation isActive={howItWorksCompleted[1]} />}
+                       {index === 2 && <SharingAnimation isActive={howItWorksCompleted[2]} />}
                      </div>
                      
                      {/* Gradiente decorativo */}
@@ -1880,10 +1717,7 @@ export default function LandingPage() {
               className="inline-block"
             >
               <h2 className="text-5xl md:text-6xl font-black mb-6 leading-tight">
-                <span className="text-white block mb-2">Tutto Quello</span>
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-indigo-400 to-purple-500 block">
-                  che Ti Serve
-                </span>
+                <span className="text-white block mb-2">{t.features.title}</span>
             </h2>
           </motion.div>
 
@@ -1894,16 +1728,16 @@ export default function LandingPage() {
               viewport={{ once: true }}
               className="text-xl md:text-2xl text-gray-300 max-w-4xl mx-auto"
             >
-              Funzionalità potenti e raffinate per trasformare completamente
+              {t.features.subtitle}
               <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-indigo-400 font-semibold">
-                l'esperienza dei tuoi ospiti
+                {t.features.subtitleHighlight}
               </span>
             </motion.p>
           </motion.div>
 
           {/* Grid delle features ultra-lussuose */}
-          <div className="grid grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+          <div className="grid grid-cols-2 lg:grid-cols-6 gap-6 lg:gap-4">
              {features.map((feature, index) => (
                // Mostra solo le prime 4 features su mobile, tutte su desktop
                <div key={index} className={`${index >= 4 ? 'hidden lg:block' : ''}`}>
@@ -1941,7 +1775,7 @@ export default function LandingPage() {
                 />
 
                 {/* Card principale */}
-                <div className="relative bg-white rounded-3xl p-4 md:p-6 lg:p-8 shadow-lg border border-rose-100/40 overflow-hidden text-center group-hover:shadow-2xl transition-all duration-500 h-32 md:h-auto flex flex-col justify-center md:block"
+                <div className="relative bg-white rounded-3xl p-2 md:p-3 lg:p-4 shadow-lg border border-rose-100/40 overflow-hidden text-center group-hover:shadow-2xl transition-all duration-500 h-48 md:h-72 lg:h-80 flex flex-col"
                      style={{ 
                        boxShadow: "0 10px 25px rgba(244, 63, 94, 0.04), 0 0 0 1px rgba(251, 207, 232, 0.08)"
                      }}>
@@ -1951,98 +1785,73 @@ export default function LandingPage() {
                   <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-rose-100/25 to-transparent rounded-full blur-2xl"></div>
                   <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-pink-100/20 to-transparent rounded-full blur-xl"></div>
 
-                  {/* Icona ultra-stilizzata */}
-                  <motion.div
-                    initial={{ scale: 0, rotate: -180 }}
-                    whileInView={{ scale: 1, rotate: 0 }}
-                    transition={{ 
-                      duration: 0.8, 
-                      delay: 0.3 + (index * 0.1),
-                      type: "spring",
-                      stiffness: 200
-                    }}
-                    viewport={{ once: true }}
-                    whileHover={{ 
-                      scale: 1.1, 
-                      rotate: 5,
-                      boxShadow: "0 15px 30px rgba(244, 63, 94, 0.2)"
-                    }}
-                    className="relative w-8 h-8 md:w-16 md:h-16 lg:w-20 lg:h-20 rounded-xl md:rounded-2xl bg-gradient-to-r from-purple-500 to-indigo-600 flex items-center justify-center mb-2 md:mb-6 mx-auto shadow-lg overflow-hidden"
-                  >
-                    {/* Shimmer effect sull'icona */}
-                    <motion.div
-                      className="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent -skew-x-12"
-                      animate={{
-                        x: ["-100%", "200%"]
-                      }}
-                      transition={{
-                        duration: 2.5,
-                        repeat: Infinity,
-                        repeatDelay: 4,
-                        ease: "easeInOut"
-                      }}
-                    />
-                    <div className="relative text-white text-xs md:text-base">
-                   {feature.icon}
-                 </div>
-                  </motion.div>
-
-                  {/* Titolo con animazione */}
-                  <motion.h3 
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.5 + (index * 0.1), duration: 0.6 }}
-                    viewport={{ once: true }}
-                    className="text-xs md:text-xl lg:text-2xl font-bold mb-1 md:mb-4 text-gray-900 group-hover:text-gray-800 transition-colors duration-300 leading-tight"
-                  >
-                    {feature.title}
-                  </motion.h3>
-
-                  {/* Descrizione (solo desktop) */}
-                  <motion.p 
-                    initial={{ opacity: 0 }}
-                    whileInView={{ opacity: 1 }}
-                    transition={{ delay: 0.7 + (index * 0.1), duration: 0.6 }}
-                    viewport={{ once: true }}
-                    className="hidden lg:block text-gray-600 mb-6 leading-relaxed group-hover:text-gray-700 transition-colors duration-300"
-                  >
-                    {feature.description}
-                  </motion.p>
-
-                  {/* Lista features ultra-stilizzata - nascosta su mobile */}
-                  <motion.ul 
-                    initial={{ opacity: 0 }}
-                    whileInView={{ opacity: 1 }}
-                    transition={{ delay: 0.8 + (index * 0.1), duration: 0.7 }}
-                    viewport={{ once: true }}
-                    className="hidden md:block space-y-3"
-                  >
-                   {feature.features.map((item, i) => (
-                      <motion.li 
-                        key={i}
-                        initial={{ opacity: 0, x: -15 }}
-                        whileInView={{ opacity: 1, x: 0 }}
+                  {/* Contenuto della card con spaziatura uniforme */}
+                  <div className="flex flex-col h-full justify-between py-2 md:py-4">
+                    {/* Sezione superiore: Icona */}
+                    <div className="flex-shrink-0">
+                      <motion.div
+                        initial={{ scale: 0, rotate: -180 }}
+                        whileInView={{ scale: 1, rotate: 0 }}
                         transition={{ 
-                          delay: 1 + (index * 0.1) + (i * 0.1), 
-                          duration: 0.5 
+                          duration: 0.8, 
+                          delay: 0.3 + (index * 0.1),
+                          type: "spring",
+                          stiffness: 200
                         }}
                         viewport={{ once: true }}
-                        whileHover={{ x: 2 }}
-                        className="flex items-center justify-center lg:justify-start text-sm text-gray-600 group"
+                        whileHover={{ 
+                          scale: 1.1, 
+                          rotate: 5,
+                          boxShadow: "0 15px 30px rgba(244, 63, 94, 0.2)"
+                        }}
+                        className="relative w-10 h-10 md:w-14 md:h-14 lg:w-18 lg:h-18 rounded-xl md:rounded-2xl bg-gradient-to-r from-purple-500 to-indigo-600 flex items-center justify-center mx-auto shadow-lg overflow-hidden"
                       >
+                        {/* Shimmer effect sull'icona */}
                         <motion.div
-                          className="flex-shrink-0 w-5 h-5 bg-gradient-to-r from-purple-500 to-indigo-600 rounded-full flex items-center justify-center mr-3 shadow-sm"
-                          whileHover={{ scale: 1.1, rotate: 5 }}
-                          transition={{ type: "spring", stiffness: 400 }}
-                        >
-                          <Check className="w-2.5 h-2.5 text-white font-bold" strokeWidth={3} />
-                        </motion.div>
-                        <span className="text-center lg:text-left group-hover:text-gray-700 transition-colors duration-200 font-medium">
-                          {item}
-                        </span>
-                      </motion.li>
-                    ))}
-                  </motion.ul>
+                          className="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent -skew-x-12"
+                          animate={{
+                            x: ["-100%", "200%"]
+                          }}
+                          transition={{
+                            duration: 2.5,
+                            repeat: Infinity,
+                            repeatDelay: 4,
+                            ease: "easeInOut"
+                          }}
+                        />
+                        <div className="relative text-white text-sm md:text-lg lg:text-xl">
+                          {feature.icon}
+                        </div>
+                      </motion.div>
+                    </div>
+
+                    {/* Sezione centrale: Titolo e Descrizione */}
+                    <div className="flex-1 flex flex-col justify-center px-1">
+                      {/* Titolo con animazione */}
+                      <motion.h3 
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.5 + (index * 0.1), duration: 0.6 }}
+                        viewport={{ once: true }}
+                        className="text-sm md:text-lg lg:text-xl font-bold mb-2 md:mb-3 text-gray-900 group-hover:text-gray-800 transition-colors duration-300 leading-tight"
+                      >
+                        {feature.title}
+                      </motion.h3>
+
+                      {/* Descrizione (solo desktop) */}
+                      <motion.p 
+                        initial={{ opacity: 0 }}
+                        whileInView={{ opacity: 1 }}
+                        transition={{ delay: 0.7 + (index * 0.1), duration: 0.6 }}
+                        viewport={{ once: true }}
+                        className="hidden lg:block text-gray-600 leading-relaxed group-hover:text-gray-700 transition-colors duration-300 text-sm"
+                      >
+                        {feature.description}
+                      </motion.p>
+                    </div>
+                  </div>
+
+
 
                   {/* Decorazioni angolari sottili */}
                   <div className="absolute top-3 left-3 w-4 h-4 border-l border-t border-rose-200/50 rounded-tl-lg"></div>
@@ -2179,10 +1988,7 @@ export default function LandingPage() {
               className="inline-block"
             >
               <h2 className="text-5xl md:text-7xl font-black mb-6 leading-tight">
-                <span className="text-gray-900 block">Un Solo</span>
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-500 via-pink-500 to-rose-600 block">
-                  Abbonamento
-                </span>
+                <span className="text-gray-900 block">{t.pricing.title}</span>
               </h2>
           </motion.div>
 
@@ -2193,15 +1999,7 @@ export default function LandingPage() {
               viewport={{ once: true }}
               className="text-xl md:text-2xl text-gray-700 max-w-4xl mx-auto"
             >
-              Tutto ciò che ti serve per trasformare completamente
-              <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-indigo-400 font-semibold">
-                l'esperienza dei tuoi ospiti
-              </span>
-              <br />
-              <span className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-rose-600 to-pink-600">
-                €29/mese
-              </span>
+              {t.pricing.subtitle}
             </motion.p>
           </motion.div>
 
@@ -2209,76 +2007,11 @@ export default function LandingPage() {
             {pricingPlans.map((plan, index) => (
               plan.highlighted ? (
                 <div key={index} className="relative w-full h-auto" style={{ perspective: '1200px' }}>
-                  {/* Glow effect esterno ultra-elegante */}
-                  <motion.div
-                    className="absolute -inset-8 bg-gradient-to-r from-rose-200/30 via-pink-200/40 to-rose-300/30 rounded-[3rem] blur-2xl opacity-0"
-                    animate={{
-                      opacity: [0, 0.8, 0],
-                      scale: [0.8, 1.1, 0.8]
-                    }}
-                    transition={{
-                      duration: 4,
-                      repeat: Infinity,
-                      ease: "easeInOut"
-                    }}
-                  />
-                  
-                  {/* Anelli concentrici animati */}
-                  <motion.div
-                    className="absolute -inset-6 rounded-[2.5rem] border border-rose-200/40"
-                    animate={{
-                      scale: [1, 1.05, 1],
-                      opacity: [0.3, 0.6, 0.3]
-                    }}
-                    transition={{
-                      duration: 3,
-                      repeat: Infinity,
-                      ease: "easeInOut",
-                      delay: 0.5
-                    }}
-                  />
-                  <motion.div
-                    className="absolute -inset-4 rounded-[2rem] border border-pink-300/30"
-                    animate={{
-                      scale: [1, 1.03, 1],
-                      opacity: [0.4, 0.7, 0.4]
-                    }}
-                    transition={{
-                      duration: 2.5,
-                      repeat: Infinity,
-                      ease: "easeInOut",
-                      delay: 1
-                    }}
-                  />
 
-              <motion.div
-                    initial={false}
-                    animate={{ rotateY: pricingFlipped ? 180 : 0 }}
-                    transition={{ 
-                      duration: 0.8, 
-                      ease: [0.23, 1, 0.320, 1],
-                      type: "spring",
-                      stiffness: 100
-                    }}
-                    className="relative w-full"
-                    style={{ transformStyle: 'preserve-3d' }}
-                  >
+
+              <div className="relative w-full">
                     {/* Fronte della card - ULTRA LUXURIOUS */}
-                                        <motion.div 
-                      initial={{ opacity: 0, y: 40, scale: 0.9 }}
-                      whileInView={{ opacity: 1, y: 0, scale: 1 }}
-                      onViewportEnter={() => handlePricingFlip()}
-                      transition={{ 
-                        duration: 0.8, 
-                        delay: index * 0.2,
-                        type: "spring",
-                        stiffness: 80
-                      }}
-                      viewport={{ once: true }}
-                      whileHover={{ 
-                        y: -8,
-                        boxShadow: "0 40px 80px rgba(244, 63, 94, 0.15)"
-                      }}
+                                        <div 
                       className="relative bg-white rounded-[2rem] p-10 md:p-12 overflow-hidden shadow-2xl border border-rose-100/50"
                       style={{ 
                         backfaceVisibility: 'hidden',
@@ -2294,19 +2027,11 @@ export default function LandingPage() {
 
                       {/* Header del piano */}
                       <div className="relative text-center mb-8">
-                        <motion.h3 
-                          className="text-3xl md:text-4xl font-black text-gray-900 mb-4"
-                          initial={{ opacity: 0, y: 20 }}
-                          whileInView={{ opacity: 1, y: 0 }}
-                          transition={{ delay: 1, duration: 0.6 }}
-                          viewport={{ once: true }}
-                        >
+                        <h3 className="text-3xl md:text-4xl font-black text-gray-900 mb-4">
                           {plan.name}
-                        </motion.h3>
+                        </h3>
                         
-                        <motion.div 
-                          className="mb-8"
-                        >
+                        <div className="mb-8">
                           <div className="text-6xl md:text-7xl font-black mb-2">
                             <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-600 to-pink-600">
                               {plan.price}
@@ -2318,165 +2043,65 @@ export default function LandingPage() {
                           
                           {/* Free Trial Button */}
                           {plan.hasFreeTrial && (
-                            <motion.div
-                              initial={{ opacity: 0, y: 20 }}
-                              whileInView={{ opacity: 1, y: 0 }}
-                              transition={{ delay: 1.5, duration: 0.6 }}
-                              viewport={{ once: true }}
-                              className="mt-4"
-                            >
+                            <div className="mt-4">
                               <Link
                                 href="/register?free_trial=true"
                                 className="inline-block group"
                               >
-                                <motion.div
-                                  whileHover={{ 
-                                    scale: 1.05,
-                                    boxShadow: "0 15px 30px rgba(34, 197, 94, 0.3)"
-                                  }}
-                                  whileTap={{ scale: 0.95 }}
-                                  className="bg-gradient-to-r from-green-500 to-emerald-600 text-white py-3 px-6 rounded-xl font-bold text-base shadow-lg overflow-hidden relative"
-                                >
-                                  {/* Shimmer effect verde */}
-                                  <motion.div
-                                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12"
-                                    animate={{
-                                      x: ["-100%", "200%"]
-                                    }}
-                                    transition={{
-                                      duration: 2,
-                                      repeat: Infinity,
-                                      repeatDelay: 4,
-                                      ease: "easeInOut"
-                                    }}
-                                  />
+                                <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white py-3 px-6 rounded-xl font-bold text-base shadow-lg overflow-hidden relative">
                                   <span className="relative flex items-center justify-center">
-                                    🎉 Prova gratis per 14 giorni
+                                    {plan.freeTrialButton}
                                   </span>
-                                </motion.div>
+                                </div>
                               </Link>
-                            </motion.div>
+                            </div>
                           )}
-                        </motion.div>
+                        </div>
 
                       {/* Lista features ultra-stilizzata */}
-                      <motion.ul 
-                        className="space-y-4 mb-10"
-                        initial={{ opacity: 0 }}
-                        whileInView={{ opacity: 1 }}
-                        transition={{ delay: 1.4, duration: 0.8 }}
-                        viewport={{ once: true }}
-                      >
-                        {plan.features.map((feature, i) => (
-                          <motion.li 
+                      <div className="grid grid-cols-2 gap-4 mb-10">
+                        {plan.features.map((feature: string, i: number) => (
+                          <div 
                             key={i} 
                             className="flex items-start group"
-                            initial={{ opacity: 0, x: -20 }}
-                            whileInView={{ opacity: 1, x: 0 }}
-                            transition={{ delay: 1.6 + (i * 0.1), duration: 0.5 }}
-                            viewport={{ once: true }}
-                            whileHover={{ x: 4 }}
                           >
-                            <motion.div
-                              className="flex-shrink-0 w-6 h-6 bg-gradient-to-r from-rose-500 to-pink-600 rounded-full flex items-center justify-center mr-4 mt-0.5 shadow-lg"
-                              whileHover={{ scale: 1.1, rotate: 5 }}
-                              transition={{ type: "spring", stiffness: 400 }}
-                            >
-                              <Check className="w-3.5 h-3.5 text-white font-bold" strokeWidth={3} />
-                            </motion.div>
-                            <span className="text-gray-700 text-lg font-medium group-hover:text-gray-900 transition-colors duration-200">
+                            <div className="flex-shrink-0 w-5 h-5 bg-gradient-to-r from-rose-500 to-pink-600 rounded-full flex items-center justify-center mr-3 mt-0.5 shadow-lg">
+                              <Check className="w-3 h-3 text-white font-bold" strokeWidth={3} />
+                            </div>
+                            <span className="text-gray-700 text-sm font-medium group-hover:text-gray-900 transition-colors duration-200">
                               {feature}
                             </span>
-                          </motion.li>
+                          </div>
                         ))}
-                      </motion.ul>
+                      </div>
                     </div>
 
                       {/* Bottone CTA spettacolare */}
-                      <motion.div
-                        initial={{ opacity: 0, y: 30 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 2, duration: 0.6 }}
-                        viewport={{ once: true }}
-                        className="relative"
-                      >
-                        <motion.div
-                          className="absolute inset-0 bg-gradient-to-r from-rose-400 to-pink-500 rounded-2xl blur-lg opacity-0 group-hover:opacity-30 transition-opacity duration-300"
-                          whileHover={{ scale: 1.05 }}
-                        />
+                      <div className="relative">
                 <Link
                   href="/register?free_trial=false"
                           className="relative block group"
                         >
-                          <motion.div
-                            whileHover={{ 
-                              scale: 1.02,
-                              boxShadow: "0 20px 40px rgba(244, 63, 94, 0.2)"
-                            }}
-                            whileTap={{ scale: 0.98 }}
-                            className="bg-gradient-to-r from-rose-500 via-pink-500 to-rose-600 text-white py-4 px-8 rounded-2xl font-bold text-lg text-center shadow-lg overflow-hidden relative"
-                          >
-                            {/* Shimmer effect */}
-                            <motion.div
-                              className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12"
-                              animate={{
-                                x: ["-100%", "200%"]
-                              }}
-                              transition={{
-                                duration: 2,
-                                repeat: Infinity,
-                                repeatDelay: 3,
-                                ease: "easeInOut"
-                              }}
-                            />
+                          <div className="bg-gradient-to-r from-rose-500 via-pink-500 to-rose-600 text-white py-4 px-8 rounded-2xl font-bold text-lg text-center shadow-lg overflow-hidden relative">
                             <span className="relative flex items-center justify-center">
-                              Inizia Subito
-                              <motion.div
-                                className="ml-2"
-                                animate={{ x: [0, 4, 0] }}
-                                transition={{ duration: 1.5, repeat: Infinity }}
-                              >
+                              {plan.ctaButton}
+                              <div className="ml-2">
                                 <ArrowRight className="w-5 h-5" />
-                              </motion.div>
+                              </div>
                             </span>
-                          </motion.div>
+                          </div>
                 </Link>
-              </motion.div>
+              </div>
 
                       {/* Decorazioni angolari */}
                       <div className="absolute top-4 left-4 w-6 h-6 border-l-2 border-t-2 border-rose-200 rounded-tl-lg"></div>
                       <div className="absolute top-4 right-4 w-6 h-6 border-r-2 border-t-2 border-rose-200 rounded-tr-lg"></div>
                       <div className="absolute bottom-4 left-4 w-6 h-6 border-l-2 border-b-2 border-rose-200 rounded-bl-lg"></div>
                       <div className="absolute bottom-4 right-4 w-6 h-6 border-r-2 border-b-2 border-rose-200 rounded-br-lg"></div>
-                    </motion.div>
-
-                    {/* Retro della card - DEMO CHAT MIGLIORATA */}
-                    <motion.div 
-                      className="absolute inset-0 bg-white rounded-[2rem] shadow-2xl border border-rose-100/50 p-10 md:p-12 overflow-hidden"
-                      style={{ 
-                        backfaceVisibility: 'hidden', 
-                        transform: 'rotateY(180deg)',
-                        boxShadow: "0 25px 50px rgba(244, 63, 94, 0.08), 0 0 0 1px rgba(251, 207, 232, 0.1)"
-                      }}
-                    >
-                      {/* Background pattern interno retro */}
-                      <div className="absolute inset-0 bg-gradient-to-bl from-rose-50/30 via-transparent to-pink-50/20"></div>
-                      <div className="absolute top-0 left-0 w-40 h-40 bg-gradient-to-br from-rose-100/40 to-transparent rounded-full blur-3xl"></div>
-
-
-
-                      {/* Demo chat potenziata */}
-                      <div className="relative h-full">
-                      <PricingChatAnimation isActive={pricingAnimationStarted} />
-                        
-                        {/* Decorazioni angolari retro */}
-                        <div className="absolute top-4 left-4 w-6 h-6 border-l-2 border-t-2 border-pink-200 rounded-tl-lg"></div>
-                        <div className="absolute top-4 right-4 w-6 h-6 border-r-2 border-t-2 border-pink-200 rounded-tr-lg"></div>
-                        <div className="absolute bottom-4 left-4 w-6 h-6 border-l-2 border-b-2 border-pink-200 rounded-bl-lg"></div>
-                        <div className="absolute bottom-4 right-4 w-6 h-6 border-r-2 border-b-2 border-pink-200 rounded-br-lg"></div>
                     </div>
-                    </motion.div>
-                  </motion.div>
+
+
+                  </div>
                 </div>
               ) : null
             ))}
@@ -2489,8 +2114,8 @@ export default function LandingPage() {
 
 
 
-      {/* FEEDBACK SECTION - Mobile: semplice, Desktop: completa come prima */}
-      <section id="feedback" className="relative overflow-hidden">
+      {/* FEEDBACK SECTION - Nascosta */}
+      <section id="feedback" className="relative overflow-hidden hidden">
         {/* Background con gradiente dinamico e pattern */}
         <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900"></div>
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(120,119,198,0.3),transparent_50%)] opacity-40"></div>
@@ -2559,11 +2184,7 @@ export default function LandingPage() {
                 className="inline-block"
               >
                 <h2 className="text-5xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-purple-200 to-blue-200 mb-4 md:mb-6 leading-tight">
-                  Il Tuo Feedback
-                  <br />
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-pink-300 to-purple-300">
-                    È Prezioso
-                  </span>
+                  Il Tuo Feedback È Prezioso
                 </h2>
               </motion.div>
 
@@ -2970,41 +2591,7 @@ export default function LandingPage() {
                         <div className="text-gray-300 text-sm">Rating Medio</div>
                       </motion.div>
 
-                      <motion.div
-                        initial={{ opacity: 0, scale: 0.8 }}
-                        whileInView={{ opacity: 1, scale: 1 }}
-                        transition={{ duration: 0.6, delay: 0.8 }}
-                        viewport={{ once: true }}
-                        className="text-center p-4 bg-white/5 rounded-2xl border border-white/10"
-                      >
-                        <motion.div
-                          initial={{ opacity: 0 }}
-                          whileInView={{ opacity: 1 }}
-                          transition={{ duration: 1, delay: 1 }}
-                          viewport={{ once: true }}
-                          className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400 mb-2"
-                        >
-                          98%
-                        </motion.div>
-                        <div className="text-gray-300 text-sm">Soddisfazione</div>
-                      </motion.div>
 
-                      <motion.div
-                        initial={{ opacity: 0, scale: 0.8 }}
-                        whileInView={{ opacity: 1, scale: 1 }}
-                        transition={{ duration: 0.6, delay: 0.9 }}
-                        className="text-center p-4 bg-white/5 rounded-2xl border border-white/10"
-                      >
-                        <motion.div
-                          initial={{ opacity: 0 }}
-                          whileInView={{ opacity: 1 }}
-                          transition={{ duration: 1, delay: 1.1 }}
-                          className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400 mb-2"
-                        >
-                          156
-                        </motion.div>
-                        <div className="text-gray-300 text-sm">Nuove Feature</div>
-                      </motion.div>
                     </div>
                   </div>
                 </div>
@@ -3084,11 +2671,7 @@ export default function LandingPage() {
               className="inline-block"
             >
               <h2 className="text-4xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-blue-200 to-purple-200 mb-4 leading-tight">
-                Numeri che
-                <br />
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-pink-300 to-yellow-300">
-                  Parlano Chiaro
-                </span>
+                {t.statistics.title}
               </h2>
             </motion.div>
             
@@ -3098,7 +2681,7 @@ export default function LandingPage() {
               transition={{ duration: 0.6, delay: 0.4 }}
               className="text-xl text-gray-300 max-w-3xl mx-auto"
             >
-              I risultati straordinari che stiamo costruendo insieme alla nostra community
+              {t.statistics.subtitle}
             </motion.p>
             </motion.div>
 
@@ -3136,21 +2719,21 @@ export default function LandingPage() {
                   transition={{ duration: 0.8, delay: 0.4 }}
                   className="text-3xl md:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400 mb-2"
                 >
-                  500+
+                  {t.statistics.stats[0].number}
                 </motion.div>
 
                 {/* Label */}
-                <div className="text-gray-300 text-sm md:text-base font-semibold">Host Attivi</div>
+                <div className="text-gray-300 text-sm md:text-base font-semibold">{t.statistics.stats[0].label}</div>
                 
                 {/* Indicatore di crescita */}
                 <motion.div
                   initial={{ opacity: 0, x: -10 }}
                   whileInView={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.5, delay: 0.6 }}
-                  className="flex items-center mt-2 text-green-400 text-xs"
+                  className="flex items-center justify-center mt-2 text-green-400 text-xs"
                 >
                   <TrendingUp className="w-3 h-3 mr-1" />
-                  <span>+23% questo mese</span>
+                  <span>{t.statistics.stats[0].growth}</span>
                 </motion.div>
               </div>
             </motion.div>
@@ -3183,19 +2766,19 @@ export default function LandingPage() {
                   transition={{ duration: 0.8, delay: 0.5 }}
                   className="text-3xl md:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400 mb-2"
                 >
-                  50K+
+                  {t.statistics.stats[1].number}
                 </motion.div>
 
-                <div className="text-gray-300 text-sm md:text-base font-semibold">Conversazioni</div>
+                <div className="text-gray-300 text-sm md:text-base font-semibold">{t.statistics.stats[1].label}</div>
                 
                 <motion.div
                   initial={{ opacity: 0, x: -10 }}
                   whileInView={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.5, delay: 0.7 }}
-                  className="flex items-center mt-2 text-green-400 text-xs"
+                  className="flex items-center justify-center mt-2 text-green-400 text-xs"
                 >
                   <TrendingUp className="w-3 h-3 mr-1" />
-                  <span>+156% questo anno</span>
+                  <span>{t.statistics.stats[1].growth}</span>
                 </motion.div>
               </div>
             </motion.div>
@@ -3228,19 +2811,19 @@ export default function LandingPage() {
                   transition={{ duration: 0.8, delay: 0.6 }}
                   className="text-3xl md:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-emerald-400 mb-2"
                 >
-                  99.9%
+                  {t.statistics.stats[2].number}
                 </motion.div>
 
-                <div className="text-gray-300 text-sm md:text-base font-semibold">Uptime</div>
+                <div className="text-gray-300 text-sm md:text-base font-semibold">{t.statistics.stats[2].label}</div>
                 
                 <motion.div
                   initial={{ opacity: 0, x: -10 }}
                   whileInView={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.5, delay: 0.8 }}
-                  className="flex items-center mt-2 text-green-400 text-xs"
+                  className="flex items-center justify-center mt-2 text-green-400 text-xs"
                 >
                   <Check className="w-3 h-3 mr-1" />
-                  <span>Sempre disponibile</span>
+                  <span>{t.statistics.stats[2].growth}</span>
                 </motion.div>
               </div>
             </motion.div>
@@ -3273,23 +2856,23 @@ export default function LandingPage() {
                   transition={{ duration: 0.8, delay: 0.7 }}
                   className="text-3xl md:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-400 mb-2"
                 >
-                  4.9
+                  {t.statistics.stats[3].number}
                 </motion.div>
 
-                <div className="text-gray-300 text-sm md:text-base font-semibold">Valutazione</div>
+                <div className="text-gray-300 text-sm md:text-base font-semibold">{t.statistics.stats[3].label}</div>
                 
                 <motion.div
                   initial={{ opacity: 0, x: -10 }}
                   whileInView={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.5, delay: 0.9 }}
-                  className="flex items-center mt-2 text-yellow-400 text-xs"
+                  className="flex items-center justify-center mt-2 text-yellow-400 text-xs"
                 >
                   <div className="flex mr-1">
                     {[...Array(5)].map((_, i) => (
                       <Star key={i} className="w-2.5 h-2.5 fill-current" />
                     ))}
                   </div>
-                  <span>da 2,847 recensioni</span>
+                  <span>{t.statistics.stats[3].growth}</span>
                 </motion.div>
               </div>
             </motion.div>
@@ -3390,9 +2973,9 @@ export default function LandingPage() {
                 viewport={{ once: true }}
                 className="text-2xl md:text-5xl lg:text-6xl font-black mb-6 md:mb-8 leading-tight"
               >
-                <span className="text-gray-900 block mb-1 md:mb-2">Pronto a Rivoluzionare</span>
+                <span className="text-gray-900 block mb-1 md:mb-2">{t.cta.title}</span>
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-600 via-pink-600 to-rose-700 block relative">
-                  l'Esperienza dei Tuoi Ospiti?
+                  {t.cta.titleHighlight}
                   {/* Effetto shimmer */}
                   <motion.div
                     className="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent -skew-x-12"
@@ -3417,7 +3000,7 @@ export default function LandingPage() {
                 viewport={{ once: true }}
                 className="text-base md:text-2xl text-gray-700 mb-8 md:mb-12 max-w-3xl mx-auto leading-relaxed font-light"
               >
-                Unisciti a <span className="font-bold text-transparent bg-clip-text bg-gradient-to-r from-rose-600 to-pink-600">centinaia di host</span> che hanno già migliorato il loro servizio con HostGPT
+                {t.cta.subtitle} <span className="font-bold text-transparent bg-clip-text bg-gradient-to-r from-rose-600 to-pink-600">{t.cta.subtitleHighlight}</span> che hanno già migliorato il loro servizio con HostGPT
               </motion.p>
 
               {/* Bottone CTA finale spettacolare */}
@@ -3457,7 +3040,7 @@ export default function LandingPage() {
                       }}
                     />
                     
-                    <span className="relative z-10">Registrati per iniziare</span>
+                    <span className="relative z-10">{t.cta.button}</span>
                     <motion.div
                       whileHover={{ x: 8 }}
                       transition={{ type: "spring", stiffness: 400 }}
@@ -3495,7 +3078,7 @@ export default function LandingPage() {
                 <span className="text-xl font-bold">HostGPT</span>
               </div>
               <p className="text-gray-400 text-sm">
-                Il tuo assistente virtuale per affitti vacanza
+                {t.footer.description}
               </p>
             </div>
             
@@ -3506,7 +3089,7 @@ export default function LandingPage() {
                   <span className="text-lg font-bold">HostGPT</span>
                 </div>
                 <p className="text-gray-400 text-xs">
-                  Il tuo assistente virtuale per affitti vacanza
+                  {t.footer.description}
                 </p>
               </div>
             </div>
@@ -3514,29 +3097,29 @@ export default function LandingPage() {
             {/* Sezioni - Layout diverso per mobile/desktop */}
             <div className="grid grid-cols-3 gap-4 md:col-span-3 md:grid-cols-3 md:gap-8">
               <div className="text-center md:text-left">
-                <h4 className="font-semibold mb-3 text-sm md:text-base">Prodotto</h4>
+                <h4 className="font-semibold mb-3 text-sm md:text-base">{t.footer.sections.product.title}</h4>
                 <ul className="space-y-1 md:space-y-2 text-gray-400 text-xs md:text-sm">
-                <li><Link href="#features" className="hover:text-white transition">Funzionalità</Link></li>
-                <li><Link href="#pricing" className="hover:text-white transition">Prezzi</Link></li>
-                <li><Link href="#" className="hover:text-white transition">API</Link></li>
+                <li><Link href="#features" className="hover:text-white transition">{t.footer.sections.product.features}</Link></li>
+                <li><Link href="#pricing" className="hover:text-white transition">{t.footer.sections.product.pricing}</Link></li>
+                <li><Link href="#" className="hover:text-white transition">{t.footer.sections.product.api}</Link></li>
               </ul>
             </div>
             
               <div className="text-center md:text-left">
-                <h4 className="font-semibold mb-3 text-sm md:text-base">Azienda</h4>
+                <h4 className="font-semibold mb-3 text-sm md:text-base">{t.footer.sections.company.title}</h4>
                 <ul className="space-y-1 md:space-y-2 text-gray-400 text-xs md:text-sm">
-                <li><Link href="#" className="hover:text-white transition">Chi Siamo</Link></li>
-                <li><Link href="#" className="hover:text-white transition">Blog</Link></li>
-                <li><Link href="#" className="hover:text-white transition">Contatti</Link></li>
+                <li><Link href="#" className="hover:text-white transition">{t.footer.sections.company.about}</Link></li>
+                <li><Link href="#" className="hover:text-white transition">{t.footer.sections.company.blog}</Link></li>
+                <li><Link href="#" className="hover:text-white transition">{t.footer.sections.company.contact}</Link></li>
               </ul>
             </div>
             
               <div className="text-center md:text-left">
-                <h4 className="font-semibold mb-3 text-sm md:text-base">Legale</h4>
+                <h4 className="font-semibold mb-3 text-sm md:text-base">{t.footer.sections.legal.title}</h4>
                 <ul className="space-y-1 md:space-y-2 text-gray-400 text-xs md:text-sm">
-                  <li><Link href="/privacy" className="hover:text-white transition">Privacy</Link></li>
-                  <li><Link href="/terms" className="hover:text-white transition">Termini</Link></li>
-                <li><Link href="#" className="hover:text-white transition">Cookie</Link></li>
+                  <li><Link href="/privacy" className="hover:text-white transition">{t.footer.sections.legal.privacy}</Link></li>
+                  <li><Link href="/terms" className="hover:text-white transition">{t.footer.sections.legal.terms}</Link></li>
+                <li><Link href="#" className="hover:text-white transition">{t.footer.sections.legal.cookies}</Link></li>
               </ul>
               </div>
             </div>
@@ -3544,7 +3127,7 @@ export default function LandingPage() {
           
           {/* Separatore */}
           <div className="border-t border-gray-800 pt-6 text-center">
-            <p className="text-gray-400 text-sm">&copy; 2024 HostGPT. Tutti i diritti riservati.</p>
+            <p className="text-gray-400 text-sm">{t.footer.copyright}</p>
           </div>
         </div>
       </footer>

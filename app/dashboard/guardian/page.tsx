@@ -25,6 +25,7 @@ import { useAuthStore } from '@/lib/store'
 import toast from 'react-hot-toast'
 import Sidebar from '@/app/components/Sidebar'
 import { guardian } from '@/lib/api'
+import { useLanguage } from '@/lib/languageContext'
 
 interface GuardianStatus {
   guardian_subscription_status: string
@@ -58,6 +59,7 @@ interface GuardianAlert {
 function GuardianContent() {
   const router = useRouter()
   const { user, logout, setUser } = useAuthStore()
+  const { t } = useLanguage()
   const [guardianStatus, setGuardianStatus] = useState<GuardianStatus | null>(null)
   const [guardianStats, setGuardianStats] = useState<GuardianStats | null>(null)
   const [alerts, setAlerts] = useState<GuardianAlert[]>([])
@@ -262,10 +264,10 @@ function GuardianContent() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="loading-spinner w-8 h-8 mx-auto mb-4"></div>
-          <p className="text-gray-600">Caricamento Guardian...</p>
-        </div>
+              <div className="text-center">
+        <div className="loading-spinner w-8 h-8 mx-auto mb-4"></div>
+        <p className="text-gray-600">{t.guardian.loading}</p>
+      </div>
       </div>
     )
   }
@@ -282,7 +284,7 @@ function GuardianContent() {
               <div className="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center">
                 <Shield className="w-5 h-5 text-white" />
               </div>
-              <h1 className="text-xl font-semibold">Guardian</h1>
+              <h1 className="text-xl font-semibold">{t.guardian.title}</h1>
             </div>
           </div>
         </div>
@@ -318,8 +320,8 @@ function GuardianContent() {
                               </svg>
                             </div>
                             <div className="rounded-2xl px-4 py-3 bg-gradient-to-r from-rose-500 to-pink-600 text-white rounded-br-sm">
-                              <p className="whitespace-pre-wrap">Ciao! Ho un problema con il WiFi, non riesco a connettermi</p>
-                              <p className="text-xs mt-1 text-white/70">14:32</p>
+                              <p className="whitespace-pre-wrap">{t.guardian.demo.messages.guest}</p>
+                              <p className="text-xs mt-1 text-white/70">{t.guardian.demo.messages.time}</p>
                             </div>
                           </div>
                         </motion.div>
@@ -338,7 +340,7 @@ function GuardianContent() {
                               </svg>
                             </div>
                             <div className="rounded-2xl px-4 py-3 bg-gray-100 text-gray-900 rounded-bl-sm">
-                              <p className="whitespace-pre-wrap">Ciao! Mi dispiace per il problema. Prova a riavviare il router</p>
+                              <p className="whitespace-pre-wrap">{t.guardian.demo.messages.assistant}</p>
                               <p className="text-xs mt-1 text-gray-400">14:33</p>
                             </div>
                           </div>
@@ -358,7 +360,7 @@ function GuardianContent() {
                               </svg>
                             </div>
                             <div className="rounded-2xl px-4 py-3 bg-gradient-to-r from-rose-500 to-pink-600 text-white rounded-br-sm">
-                              <p className="whitespace-pre-wrap">Ho già provato, ma non funziona. Sono molto frustrato!</p>
+                              <p className="whitespace-pre-wrap">{t.guardian.demo.messages.guestFrustrated}</p>
                               <p className="text-xs mt-1 text-white/70">14:34</p>
                             </div>
                           </div>
@@ -381,8 +383,8 @@ function GuardianContent() {
                             <AlertTriangle className="w-10 h-10 relative z-10" />
                           </div>
                           <div className="text-center">
-                            <p className="text-2xl font-black tracking-wider">🚨 ALERT CRITICO</p>
-                            <p className="text-lg font-semibold mt-1">Ospite insoddisfatto rilevato</p>
+                            <p className="text-2xl font-black tracking-wider">{t.guardian.demo.alert.title}</p>
+                            <p className="text-lg font-semibold mt-1">{t.guardian.demo.alert.subtitle}</p>
                             <div className="flex space-x-2 mt-3 justify-center">
                               <div className="w-2 h-2 bg-red-300 rounded-full animate-bounce"></div>
                               <div className="w-2 h-2 bg-red-300 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
@@ -774,10 +776,9 @@ function GuardianContent() {
             <div className="flex gap-3 justify-end">
               <button
                 onClick={() => setShowCancelModal(false)}
-                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-                disabled={isCancellingSubscription}
+                className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 text-sm"
               >
-                Annulla
+                {t.guardian.subscription.cancelModal.cancel}
               </button>
               <button
                 onClick={handleCancelGuardian}

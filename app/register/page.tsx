@@ -6,11 +6,13 @@ import { useState, useEffect, Suspense } from 'react'
 export const dynamic = 'force-dynamic'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { Home, Mail, Lock, User, Phone, ArrowRight, Eye, EyeOff, Check } from 'lucide-react'
+import { Home, Mail, Lock, User, Phone, ArrowRight, Eye, EyeOff, Check, ArrowLeft } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import toast from 'react-hot-toast'
 import { useAuthStore } from '@/lib/store'
 import api from '@/lib/api'
+import { useLanguage } from '@/lib/languageContext'
+import { translations } from '@/lib/translations'
 
 interface RegisterForm {
   email: string
@@ -25,6 +27,9 @@ interface RegisterForm {
 function RegisterForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { language } = useLanguage()
+  const t = translations[language].register
+  
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
@@ -52,12 +57,10 @@ function RegisterForm() {
         wants_free_trial: isFreeTrial
       })
       
-             // Dopo la registrazione, mandiamo l'utente alla pagina che spiega di verificare l'email
-       const message = isFreeTrial 
-         ? 'Registrazione completata! Controlla la tua email per il link di verifica e inizia la prova gratuita.'
-         : 'Registrazione completata! Controlla la tua email per il link di verifica e completa il pagamento.'
-       toast.success(message)
-       router.push('/login?registered=1')
+      // Dopo la registrazione, mandiamo l'utente alla pagina che spiega di verificare l'email
+      const message = isFreeTrial ? t.success.freeTrial : t.success.paid
+      toast.success(message)
+      router.push('/login?registered=1')
     } catch (error: any) {
       toast.error(error.response?.data?.detail || 'Errore durante la registrazione')
     } finally {
@@ -66,240 +69,470 @@ function RegisterForm() {
   }
 
   const passwordRequirements = [
-    { text: 'Almeno 8 caratteri', check: password?.length >= 8 },
-    { text: 'Una lettera maiuscola', check: /[A-Z]/.test(password || '') },
-    { text: 'Una lettera minuscola', check: /[a-z]/.test(password || '') },
-    { text: 'Un numero', check: /[0-9]/.test(password || '') },
+    { text: t.passwordMinLength, check: password?.length >= 8 },
+    { text: t.passwordUppercase, check: /[A-Z]/.test(password || '') },
+    { text: t.passwordLowercase, check: /[a-z]/.test(password || '') },
+    { text: t.passwordNumber, check: /[0-9]/.test(password || '') },
   ]
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
-      {/* Logo - nascosto su mobile */}
-      <Link href="/" className="absolute top-8 left-8 hidden md:flex items-center space-x-2">
-        <Home className="w-8 h-8 text-primary" />
-        <span className="text-2xl font-bold text-dark">HostGPT</span>
-      </Link>
-
-      <div className="w-full max-w-md md:max-w-md">
-        <div className="bg-white rounded-2xl shadow-xl p-6 md:p-8 md:min-h-fit min-h-[calc(100vh-2rem)] flex flex-col justify-center">
-                   <div className="text-center mb-6 md:mb-8">
-           <h1 className="text-2xl md:text-3xl font-bold text-dark mb-2">Crea il tuo Account</h1>
-           <p className="text-gray-600 text-sm md:text-base">
-             {isFreeTrial ? 'Inizia la prova gratuita di 14 giorni' : 'Inizia subito con HostGPT'}
-           </p>
-           {isFreeTrial && (
-             <div className="mt-2 p-3 bg-green-50 border border-green-200 rounded-lg">
-               <p className="text-green-700 text-sm font-medium">
-                 🎉 Hai selezionato la prova gratuita! Dopo la registrazione potrai iniziare subito a creare il tuo chatbot.
-               </p>
-             </div>
-           )}
-           {!isFreeTrial && (
-             <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-               <p className="text-blue-700 text-sm font-medium">
-                 💳 Dopo la registrazione completerai il pagamento per attivare il tuo abbonamento.
-               </p>
-             </div>
-           )}
-         </div>
-
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 md:space-y-5 flex-1 flex flex-col justify-center">
-          {/* Nome Completo */}
-          <div>
-            <label className="label">Nome Completo</label>
-            <div className="relative">
-              <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                type="text"
-                {...register('full_name', {
-                  required: 'Nome richiesto',
-                  minLength: {
-                    value: 2,
-                    message: 'Il nome deve essere almeno 2 caratteri'
-                  }
-                })}
-                className="input-field pl-10"
-                placeholder="Mario Rossi"
-              />
-            </div>
-            {errors.full_name && (
-              <p className="error-text">{errors.full_name.message}</p>
-            )}
-          </div>
-
-          {/* Email */}
-          <div>
-            <label className="label">Email</label>
-            <div className="relative">
-              <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                type="email"
-                {...register('email', {
-                  required: 'Email richiesta',
-                  pattern: {
-                    value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                    message: 'Email non valida'
-                  }
-                })}
-                className="input-field pl-10"
-                placeholder="nome@esempio.com"
-              />
-            </div>
-            {errors.email && (
-              <p className="error-text">{errors.email.message}</p>
-            )}
-          </div>
-
-          {/* Telefono (opzionale) */}
-          <div>
-            <label className="label">Telefono (opzionale)</label>
-            <div className="relative">
-              <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                type="tel"
-                {...register('phone')}
-                className="input-field pl-10"
-                placeholder="+39 123 456 7890"
-              />
-            </div>
-          </div>
-
-          {/* Password */}
-          <div>
-            <label className="label">Password</label>
-            <div className="relative">
-              <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                type={showPassword ? 'text' : 'password'}
-                {...register('password', {
-                  required: 'Password richiesta',
-                  minLength: {
-                    value: 8,
-                    message: 'La password deve essere almeno 8 caratteri'
-                  },
-                  pattern: {
-                    value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
-                    message: 'La password deve contenere maiuscole, minuscole e numeri'
-                  }
-                })}
-                className="input-field pl-10 pr-10"
-                placeholder="••••••••"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2"
+    <div className="h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
+      <div className="w-full max-w-5xl">
+        <div className="bg-white rounded-2xl shadow-xl p-6 md:p-8 h-[98vh] md:h-[90vh] flex flex-col">
+          {/* Header */}
+          <div className="text-center mb-4 flex-shrink-0">
+            <div className="flex justify-between items-start mb-4">
+              <div className="flex-1">
+                <h1 className="text-2xl md:text-3xl font-bold text-dark mb-2">{t.title}</h1>
+                <p className="text-gray-600 text-sm md:text-base mb-3">
+                  {isFreeTrial ? t.freeTrialSubtitle : t.paidSubtitle}
+                </p>
+              </div>
+              <Link 
+                href="/" 
+                className="flex items-center justify-center w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors duration-200 ml-4"
               >
-                {showPassword ? (
-                  <EyeOff className="w-5 h-5 text-gray-400" />
-                ) : (
-                  <Eye className="w-5 h-5 text-gray-400" />
-                )}
-              </button>
+                <ArrowLeft className="w-4 h-4 text-gray-600" />
+              </Link>
             </div>
-            {errors.password && (
-              <p className="error-text">{errors.password.message}</p>
+            {isFreeTrial && (
+              <div className="p-2 md:p-3 bg-green-50 border border-green-200 rounded-lg">
+                <p className="text-green-700 text-xs md:text-sm font-medium">
+                  {t.freeTrialBanner}
+                </p>
+              </div>
             )}
-            
-            {/* Password Requirements */}
-            {password && (
-              <div className="mt-2 space-y-1">
-                {passwordRequirements.map((req, index) => (
-                  <div key={index} className="flex items-center text-sm">
-                    <Check className={`w-4 h-4 mr-2 ${req.check ? 'text-green-500' : 'text-gray-300'}`} />
-                    <span className={req.check ? 'text-green-500' : 'text-gray-400'}>
-                      {req.text}
-                    </span>
-                  </div>
-                ))}
+            {!isFreeTrial && (
+              <div className="p-2 md:p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-blue-700 text-xs md:text-sm font-medium">
+                  {t.paidBanner}
+                </p>
               </div>
             )}
           </div>
 
-          {/* Conferma Password */}
-          <div>
-            <label className="label">Conferma Password</label>
-            <div className="relative">
-              <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                type={showConfirmPassword ? 'text' : 'password'}
-                {...register('confirmPassword', {
-                  required: 'Conferma la password',
-                  validate: value => value === password || 'Le password non corrispondono'
-                })}
-                className="input-field pl-10 pr-10"
-                placeholder="••••••••"
-              />
-              <button
-                type="button"
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2"
-              >
-                {showConfirmPassword ? (
-                  <EyeOff className="w-5 h-5 text-gray-400" />
-                ) : (
-                  <Eye className="w-5 h-5 text-gray-400" />
+          {/* Form Content */}
+          <div className="flex-1 flex flex-col">
+            <form onSubmit={handleSubmit(onSubmit)} className="flex-1 flex flex-col">
+              {/* Layout desktop con grid template per allineamento perfetto */}
+              <div className="hidden md:grid md:grid-cols-2 md:gap-6 flex-1" style={{gridTemplateRows: 'auto auto auto auto auto auto'}}>
+                {/* Colonna sinistra */}
+                <div className="space-y-3">
+                  {/* Nome Completo - ROW 1 */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{t.fullName}</label>
+                    <div className="relative">
+                      <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <input
+                        type="text"
+                        {...register('full_name', {
+                          required: t.errors.nameRequired,
+                          minLength: {
+                            value: 2,
+                            message: t.errors.nameMinLength
+                          }
+                        })}
+                        className="w-full px-4 py-2.5 pl-10 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary focus:ring-opacity-20 outline-none transition-all duration-200"
+                        placeholder="Mario Rossi"
+                      />
+                    </div>
+                    {errors.full_name && (
+                      <p className="text-red-500 text-xs mt-1">{errors.full_name.message}</p>
+                    )}
+                  </div>
+
+                  {/* Telefono - ROW 2 */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{t.phoneOptional}</label>
+                    <div className="relative">
+                      <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <input
+                        type="tel"
+                        {...register('phone')}
+                        className="w-full px-4 py-2.5 pl-10 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary focus:ring-opacity-20 outline-none transition-all duration-200"
+                        placeholder="+39 123 456 7890"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Password - ROW 3 */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{t.password}</label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        {...register('password', {
+                          required: t.errors.passwordRequired,
+                          minLength: {
+                            value: 8,
+                            message: t.errors.passwordMinLength
+                          },
+                          pattern: {
+                            value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
+                            message: t.errors.passwordPattern
+                          }
+                        })}
+                        className="w-full px-4 py-2.5 pl-10 pr-10 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary focus:ring-opacity-20 outline-none transition-all duration-200"
+                        placeholder="••••••••"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2"
+                      >
+                        {showPassword ? (
+                          <EyeOff className="w-4 h-4 text-gray-400" />
+                        ) : (
+                          <Eye className="w-4 h-4 text-gray-400" />
+                        )}
+                      </button>
+                    </div>
+                    {errors.password && (
+                      <p className="text-red-500 text-xs mt-1">{errors.password.message}</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Colonna destra */}
+                <div className="space-y-3">
+                  {/* Email - ROW 1 - allineato con Nome */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{t.email}</label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <input
+                        type="email"
+                        {...register('email', {
+                          required: t.errors.emailRequired,
+                          pattern: {
+                            value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                            message: t.errors.emailInvalid
+                          }
+                        })}
+                        className="w-full px-4 py-2.5 pl-10 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary focus:ring-opacity-20 outline-none transition-all duration-200"
+                        placeholder="nome@esempio.com"
+                      />
+                    </div>
+                    {errors.email && (
+                      <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>
+                    )}
+                  </div>
+
+                  {/* Conferma Password - ROW 2 - allineato con Telefono */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{t.confirmPassword}</label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <input
+                        type={showConfirmPassword ? 'text' : 'password'}
+                        {...register('confirmPassword', {
+                          required: t.errors.confirmPasswordRequired,
+                          validate: value => value === password || t.errors.passwordsNotMatch
+                        })}
+                        className="w-full px-4 py-2.5 pl-10 pr-10 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary focus:ring-opacity-20 outline-none transition-all duration-200"
+                        placeholder="••••••••"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2"
+                      >
+                        {showConfirmPassword ? (
+                          <EyeOff className="w-4 h-4 text-gray-400" />
+                        ) : (
+                          <Eye className="w-4 h-4 text-gray-400" />
+                        )}
+                      </button>
+                    </div>
+                    {errors.confirmPassword && (
+                      <p className="text-red-500 text-xs mt-1">{errors.confirmPassword.message}</p>
+                    )}
+                  </div>
+
+                  {/* BUTTON - ROW 3 - PERFETTAMENTE ALLINEATO CON PASSWORD! */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1 invisible">Pulsante</label>
+                    <button
+                      type="submit"
+                      disabled={isLoading}
+                      className="w-full bg-primary hover:bg-secondary text-white font-semibold py-2.5 px-6 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 flex items-center justify-center"
+                    >
+                      {isLoading ? (
+                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white" />
+                      ) : (
+                        <>
+                          {t.createAccount}
+                          <ArrowRight className="ml-2 w-4 h-4" />
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Terms - ROW 4 - sopra il link "Accedi ora" */}
+                <div className="col-span-2 mt-3 text-center">
+                  <label className="flex items-start justify-center">
+                    <input
+                      type="checkbox"
+                      {...register('terms', {
+                        required: t.errors.termsRequired
+                      })}
+                      className="mt-0.5 mr-2 flex-shrink-0"
+                    />
+                    <span className="text-xs text-gray-600">
+                      {t.termsAccept}{' '}
+                      <Link href="/terms" className="text-primary hover:text-secondary">
+                        {t.termsLink}
+                      </Link>
+                      {' '}e la{' '}
+                      <Link href="/privacy" className="text-primary hover:text-secondary">
+                        {t.privacyLink}
+                      </Link>
+                    </span>
+                  </label>
+                  {errors.terms && (
+                    <p className="text-red-500 text-xs mt-1">{errors.terms.message}</p>
+                  )}
+                </div>
+
+                {/* Sign In Link - ROW 5 - sotto i termini */}
+                <div className="col-span-2 text-center mb-3">
+                  <p className="text-gray-600 text-sm">
+                    {t.alreadyHaveAccount}{' '}
+                    <Link href="/login" className="text-primary hover:text-secondary font-semibold">
+                      {t.loginNow}
+                    </Link>
+                  </p>
+                </div>
+
+                {/* Password Requirements - ROW 6 - solo se c'è password */}
+                {password && (
+                  <div className="col-span-2 bg-gray-50 p-3 rounded-lg">
+                    <h4 className="text-xs font-medium text-gray-700 mb-2">{t.passwordRequirements}</h4>
+                    <div className="space-y-1">
+                      {passwordRequirements.map((req, index) => (
+                        <div key={index} className="flex items-center text-xs">
+                          <Check className={`w-3 h-3 mr-1 flex-shrink-0 ${req.check ? 'text-green-500' : 'text-gray-300'}`} />
+                          <span className={req.check ? 'text-green-600' : 'text-gray-400'}>
+                            {req.text}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 )}
-              </button>
-            </div>
-            {errors.confirmPassword && (
-              <p className="error-text">{errors.confirmPassword.message}</p>
-            )}
+              </div>
+
+              {/* Layout mobile COMPLETAMENTE RIFATTO DA ZERO */}
+              <div className="md:hidden flex-1 overflow-y-auto">
+                <div className="space-y-3">
+                  {/* Nome Completo */}
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-0.5">{t.fullName}</label>
+                    <div className="relative">
+                      <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-3 h-3 text-gray-400" />
+                      <input
+                        type="text"
+                        {...register('full_name', {
+                          required: t.errors.nameRequired,
+                          minLength: {
+                            value: 2,
+                            message: t.errors.nameMinLength
+                          }
+                        })}
+                        className="w-full px-3 py-2 pl-9 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary focus:ring-opacity-20 outline-none transition-all duration-200 text-sm"
+                        placeholder="Mario Rossi"
+                      />
+                    </div>
+                    {errors.full_name && (
+                      <p className="text-red-500 text-xs mt-0.5">{errors.full_name.message}</p>
+                    )}
+                  </div>
+
+                  {/* Email */}
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-0.5">{t.email}</label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-3 h-3 text-gray-400" />
+                      <input
+                        type="email"
+                        {...register('email', {
+                          required: t.errors.emailRequired,
+                          pattern: {
+                            value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                            message: t.errors.emailInvalid
+                          }
+                        })}
+                        className="w-full px-3 py-2 pl-9 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary focus:ring-opacity-20 outline-none transition-all duration-200 text-sm"
+                        placeholder="nome@esempio.com"
+                      />
+                    </div>
+                    {errors.email && (
+                      <p className="text-red-500 text-xs mt-0.5">{errors.email.message}</p>
+                    )}
+                  </div>
+
+                  {/* Telefono */}
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-0.5">{t.phoneOptional}</label>
+                    <div className="relative">
+                      <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-3 h-3 text-gray-400" />
+                      <input
+                        type="tel"
+                        {...register('phone')}
+                        className="w-full px-3 py-2 pl-9 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary focus:ring-opacity-20 outline-none transition-all duration-200 text-sm"
+                        placeholder="+39 123 456 7890"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Password */}
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-0.5">{t.password}</label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-3 h-3 text-gray-400" />
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        {...register('password', {
+                          required: t.errors.passwordRequired,
+                          minLength: {
+                            value: 8,
+                            message: t.errors.passwordMinLength
+                          },
+                          pattern: {
+                            value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
+                            message: t.errors.passwordPattern
+                          }
+                        })}
+                        className="w-full px-3 py-2 pl-9 pr-9 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary focus:ring-opacity-20 outline-none transition-all duration-200 text-sm"
+                        placeholder="••••••••"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2"
+                      >
+                        {showPassword ? (
+                          <EyeOff className="w-3 h-3 text-gray-400" />
+                        ) : (
+                          <Eye className="w-3 h-3 text-gray-400" />
+                        )}
+                      </button>
+                    </div>
+                    {errors.password && (
+                      <p className="text-red-500 text-xs mt-0.5">{errors.password.message}</p>
+                    )}
+                  </div>
+
+                  {/* Conferma Password */}
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-0.5">{t.confirmPassword}</label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-3 h-3 text-gray-400" />
+                      <input
+                        type={showConfirmPassword ? 'text' : 'password'}
+                        {...register('confirmPassword', {
+                          required: t.errors.confirmPasswordRequired,
+                          validate: value => value === password || t.errors.passwordsNotMatch
+                        })}
+                        className="w-full px-3 py-2 pl-9 pr-9 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary focus:ring-opacity-20 outline-none transition-all duration-200 text-sm"
+                        placeholder="••••••••"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2"
+                      >
+                        {showConfirmPassword ? (
+                          <EyeOff className="w-3 h-3 text-gray-400" />
+                        ) : (
+                          <Eye className="w-3 h-3 text-gray-400" />
+                        )}
+                      </button>
+                    </div>
+                    {errors.confirmPassword && (
+                      <p className="text-red-500 text-xs mt-0.5">{errors.confirmPassword.message}</p>
+                    )}
+                  </div>
+
+                  {/* Password Requirements */}
+                  {password && (
+                    <div className="bg-gray-50 p-3 rounded-lg">
+                      <h4 className="text-xs font-medium text-gray-700 mb-2">{t.passwordRequirements}</h4>
+                      <div className="space-y-1">
+                        {passwordRequirements.map((req, index) => (
+                          <div key={index} className="flex items-center text-xs">
+                            <Check className={`w-3 h-3 mr-1 flex-shrink-0 ${req.check ? 'text-green-500' : 'text-gray-300'}`} />
+                            <span className={req.check ? 'text-green-600' : 'text-gray-400'}>
+                              {req.text}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Submit Button */}
+                  <div className="pt-1">
+                    <button
+                      type="submit"
+                      disabled={isLoading}
+                      className="w-full bg-primary hover:bg-secondary text-white font-semibold py-2 px-6 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 flex items-center justify-center text-sm"
+                    >
+                      {isLoading ? (
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+                      ) : (
+                        <>
+                          {t.createAccount}
+                          <ArrowRight className="ml-2 w-3 h-3" />
+                        </>
+                      )}
+                    </button>
+                  </div>
+
+                  {/* Terms */}
+                  <div className="pt-1">
+                    <label className="flex items-start">
+                      <input
+                        type="checkbox"
+                        {...register('terms', {
+                          required: t.errors.termsRequired
+                        })}
+                        className="mt-0.5 mr-2 flex-shrink-0"
+                      />
+                      <span className="text-xs text-gray-600">
+                        {t.termsAccept}{' '}
+                        <Link href="/terms" className="text-primary hover:text-secondary">
+                          {t.termsLink}
+                        </Link>
+                        {' '}e la{' '}
+                        <Link href="/privacy" className="text-primary hover:text-secondary">
+                          {t.privacyLink}
+                        </Link>
+                      </span>
+                    </label>
+                    {errors.terms && (
+                      <p className="text-red-500 text-xs mt-0.5">{errors.terms.message}</p>
+                    )}
+                  </div>
+
+                  {/* Sign In Link */}
+                  <div className="text-center pt-2 border-t border-gray-100">
+                    <p className="text-gray-600 text-xs">
+                      {t.alreadyHaveAccount}{' '}
+                      <Link href="/login" className="text-primary hover:text-secondary font-semibold">
+                        {t.loginNow}
+                      </Link>
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </form>
           </div>
-
-          {/* Terms */}
-          <div>
-            <label className="flex items-start">
-              <input
-                type="checkbox"
-                {...register('terms', {
-                  required: 'Devi accettare i termini e condizioni'
-                })}
-                className="mt-1 mr-2"
-              />
-              <span className="text-sm text-gray-600">
-                Accetto i{' '}
-                <Link href="/terms" className="text-primary hover:text-secondary">
-                  Termini e Condizioni
-                </Link>
-                {' '}e la{' '}
-                <Link href="/privacy" className="text-primary hover:text-secondary">
-                  Privacy Policy
-                </Link>
-              </span>
-            </label>
-            {errors.terms && (
-              <p className="error-text">{errors.terms.message}</p>
-            )}
-          </div>
-
-          {/* Submit Button */}
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full btn-primary flex items-center justify-center"
-          >
-            {isLoading ? (
-              <div className="loading-spinner w-6 h-6" />
-            ) : (
-              <>
-                Crea Account
-                <ArrowRight className="ml-2 w-5 h-5" />
-              </>
-            )}
-          </button>
-        </form>
-
-        {/* Sign In Link */}
-        <p className="text-center mt-8 text-gray-600">
-          Hai già un account?{' '}
-          <Link href="/login" className="text-primary hover:text-secondary font-semibold">
-            Accedi ora
-          </Link>
-        </p>
+        </div>
       </div>
     </div>
-  </div>
   )
 }
 

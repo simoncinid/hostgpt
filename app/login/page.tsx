@@ -4,10 +4,11 @@ import { useEffect, useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { Home, Mail, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react'
+import { Mail, Lock, ArrowRight, Eye, EyeOff, ArrowLeft } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import toast from 'react-hot-toast'
 import { useAuthStore } from '@/lib/store'
+import { useLanguage } from '@/lib/languageContext'
 import api, { subscription } from '@/lib/api'
 
 interface LoginForm {
@@ -18,6 +19,7 @@ interface LoginForm {
 function LoginContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { t } = useLanguage()
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const { setAuth } = useAuthStore()
@@ -117,135 +119,231 @@ function LoginContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
-      {/* Logo - nascosto su mobile */}
-      <Link href="/" className="absolute top-8 left-8 hidden md:flex items-center space-x-2">
-        <Home className="w-8 h-8 text-primary" />
-        <span className="text-2xl font-bold text-dark">HostGPT</span>
-      </Link>
-
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="w-full max-w-md md:max-w-md"
-      >
-        <div className="bg-white rounded-2xl shadow-xl p-6 md:p-8 md:min-h-fit min-h-[calc(100vh-2rem)] flex flex-col justify-center">
-          <div className="text-center mb-6 md:mb-8">
-            <h1 className="text-2xl md:text-3xl font-bold text-dark mb-2">Bentornato!</h1>
-            <p className="text-gray-600 text-sm md:text-base">Accedi al tuo account HostGPT</p>
+    <div className="h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
+      <div className="w-full max-w-md">
+        <div className="bg-white rounded-2xl shadow-xl p-6 md:p-8 h-auto md:h-auto flex flex-col">
+          {/* Header con freccetta per tornare indietro */}
+          <div className="flex justify-between items-start mb-6 flex-shrink-0">
+            <div className="flex-1">
+              <h1 className="text-2xl md:text-3xl font-bold text-dark mb-2">{t.auth.login.title}</h1>
+              <p className="text-gray-600 text-sm md:text-base">{t.auth.login.subtitle}</p>
+            </div>
+            <Link 
+              href="/" 
+              className="flex items-center justify-center w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors duration-200 ml-4"
+            >
+              <ArrowLeft className="w-4 h-4 text-gray-600" />
+            </Link>
           </div>
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 md:space-y-6 flex-1 flex flex-col justify-center">
-            {/* Email */}
-            <div>
-              <label className="label">Email</label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  type="email"
-                  {...register('email', {
-                    required: 'Email richiesta',
-                    pattern: {
-                      value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                      message: 'Email non valida'
-                    }
-                  })}
-                  className="input-field pl-10"
-                  placeholder="nome@esempio.com"
-                />
-              </div>
-              {errors.email && (
-                <p className="error-text">{errors.email.message}</p>
-              )}
-            </div>
+          {/* Form Content */}
+          <div className="flex-1 flex flex-col">
+            <form onSubmit={handleSubmit(onSubmit)} className="flex-1 flex flex-col">
+              {/* Layout desktop */}
+              <div className="hidden md:block space-y-5">
+                {/* Email */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{t.auth.login.email}</label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <input
+                      type="email"
+                      {...register('email', {
+                        required: t.auth.login.email + ' richiesta',
+                        pattern: {
+                          value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                          message: 'Email non valida'
+                        }
+                      })}
+                      className="w-full px-4 py-2.5 pl-10 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary focus:ring-opacity-20 outline-none transition-all duration-200"
+                      placeholder="nome@esempio.com"
+                    />
+                  </div>
+                  {errors.email && (
+                    <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>
+                  )}
+                </div>
 
-            {/* Password */}
-            <div>
-              <label className="label">Password</label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  {...register('password', {
-                    required: 'Password richiesta',
-                    minLength: {
-                      value: 6,
-                      message: 'La password deve essere almeno 6 caratteri'
-                    }
-                  })}
-                  className="input-field pl-10 pr-10"
-                  placeholder="••••••••"
-                />
+                {/* Password */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{t.auth.login.password}</label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      {...register('password', {
+                        required: t.auth.login.password + ' richiesta',
+                        minLength: {
+                          value: 6,
+                          message: 'La password deve essere almeno 6 caratteri'
+                        }
+                      })}
+                      className="w-full px-4 py-2.5 pl-10 pr-10 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary focus:ring-opacity-20 outline-none transition-all duration-200"
+                      placeholder="••••••••"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2"
+                    >
+                      {showPassword ? (
+                        <EyeOff className="w-4 h-4 text-gray-400" />
+                      ) : (
+                        <Eye className="w-4 h-4 text-gray-400" />
+                      )}
+                    </button>
+                  </div>
+                  {errors.password && (
+                    <p className="text-red-500 text-xs mt-1">{errors.password.message}</p>
+                  )}
+                </div>
+
+                {/* Remember & Forgot */}
+                <div className="flex items-center justify-between">
+                  <label className="flex items-center">
+                    <input type="checkbox" className="mr-2" />
+                    <span className="text-sm text-gray-600">{t.auth.login.rememberMe}</span>
+                  </label>
+                  <Link href="/forgot-password" className="text-sm text-primary hover:text-secondary">
+                    {t.auth.login.forgotPassword}
+                  </Link>
+                </div>
+
+                {/* Submit Button */}
                 <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2"
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full bg-primary hover:bg-secondary text-white font-semibold py-2.5 px-6 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 flex items-center justify-center"
                 >
-                  {showPassword ? (
-                    <EyeOff className="w-5 h-5 text-gray-400" />
+                  {isLoading ? (
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white" />
                   ) : (
-                    <Eye className="w-5 h-5 text-gray-400" />
+                    <>
+                      {t.auth.login.loginButton}
+                      <ArrowRight className="ml-2 w-4 h-4" />
+                    </>
                   )}
                 </button>
               </div>
-              {errors.password && (
-                <p className="error-text">{errors.password.message}</p>
-              )}
+
+              {/* Layout mobile riorganizzato */}
+              <div className="md:hidden flex-1 overflow-y-auto">
+                <div className="space-y-3">
+                  {/* Email */}
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-0.5">{t.auth.login.email}</label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-3 h-3 text-gray-400" />
+                      <input
+                        type="email"
+                        {...register('email', {
+                          required: t.auth.login.email + ' richiesta',
+                          pattern: {
+                            value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                            message: 'Email non valida'
+                          }
+                        })}
+                        className="w-full px-3 py-2 pl-9 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary focus:ring-opacity-20 outline-none transition-all duration-200 text-sm"
+                        placeholder="nome@esempio.com"
+                      />
+                    </div>
+                    {errors.email && (
+                      <p className="text-red-500 text-xs mt-0.5">{errors.email.message}</p>
+                    )}
+                  </div>
+
+                  {/* Password */}
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-0.5">{t.auth.login.password}</label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-3 h-3 text-gray-400" />
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        {...register('password', {
+                          required: t.auth.login.password + ' richiesta',
+                          minLength: {
+                            value: 6,
+                            message: 'La password deve essere almeno 6 caratteri'
+                          }
+                        })}
+                        className="w-full px-3 py-2 pl-9 pr-9 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary focus:ring-opacity-20 outline-none transition-all duration-200 text-sm"
+                        placeholder="••••••••"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2"
+                      >
+                        {showPassword ? (
+                          <EyeOff className="w-3 h-3 text-gray-400" />
+                        ) : (
+                          <Eye className="w-3 h-3 text-gray-400" />
+                        )}
+                      </button>
+                    </div>
+                    {errors.password && (
+                      <p className="text-red-500 text-xs mt-0.5">{errors.password.message}</p>
+                    )}
+                  </div>
+
+                  {/* Remember & Forgot */}
+                  <div className="flex items-center justify-between">
+                    <label className="flex items-center">
+                      <input type="checkbox" className="mr-2" />
+                      <span className="text-xs text-gray-600">{t.auth.login.rememberMe}</span>
+                    </label>
+                    <Link href="/forgot-password" className="text-xs text-primary hover:text-secondary">
+                      {t.auth.login.forgotPassword}
+                    </Link>
+                  </div>
+
+                  {/* Submit Button */}
+                  <div className="pt-1">
+                    <button
+                      type="submit"
+                      disabled={isLoading}
+                      className="w-full bg-primary hover:bg-secondary text-white font-semibold py-2 px-6 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 flex items-center justify-center text-sm"
+                    >
+                      {isLoading ? (
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+                      ) : (
+                        <>
+                          {t.auth.login.loginButton}
+                          <ArrowRight className="ml-2 w-3 h-3" />
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </form>
+
+            {/* Sign Up Link */}
+            <div className="text-center mt-4 pt-4 border-t border-gray-100 flex-shrink-0">
+              <p className="text-gray-600 text-xs md:text-sm">
+                {t.auth.login.noAccount}{' '}
+                <Link href="/register" className="text-primary hover:text-secondary font-semibold">
+                  {t.auth.login.registerLink}
+                </Link>
+              </p>
             </div>
-
-            {/* Remember & Forgot */}
-            <div className="flex items-center justify-between">
-              <label className="flex items-center">
-                <input type="checkbox" className="mr-2" />
-                <span className="text-sm text-gray-600">Ricordami</span>
-              </label>
-              <Link href="/forgot-password" className="text-sm text-primary hover:text-secondary">
-                Password dimenticata?
-              </Link>
-            </div>
-
-            {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full btn-primary flex items-center justify-center"
-            >
-              {isLoading ? (
-                <div className="loading-spinner w-6 h-6" />
-              ) : (
-                <>
-                  Accedi
-                  <ArrowRight className="ml-2 w-5 h-5" />
-                </>
-              )}
-            </button>
-          </form>
-
-
-
-          {/* Sign Up Link */}
-          <p className="text-center mt-8 text-gray-600">
-            Non hai un account?{' '}
-            <Link href="/register" className="text-primary hover:text-secondary font-semibold">
-              Registrati ora
-            </Link>
-          </p>
+          </div>
         </div>
-      </motion.div>
+      </div>
     </div>
   )
 }
 
 // Componente di fallback per il loading
 function LoginFallback() {
+  const { t } = useLanguage()
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
+    <div className="h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="bg-white rounded-2xl shadow-xl p-8">
           <div className="text-center">
-            <div className="loading-spinner w-8 h-8 mx-auto mb-4"></div>
-            <h1 className="text-2xl font-bold text-dark mb-2">Caricamento...</h1>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+            <h1 className="text-2xl font-bold text-dark mb-2">{t.common.loading}</h1>
             <p className="text-gray-600">Preparazione della pagina di accesso.</p>
           </div>
         </div>
