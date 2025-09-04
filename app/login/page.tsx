@@ -24,10 +24,11 @@ function LoginContent() {
   const [isLoading, setIsLoading] = useState(false)
   const { setAuth } = useAuthStore()
   
-  const { register, handleSubmit, formState: { errors } } = useForm<LoginForm>()
+  const { register, handleSubmit, formState: { errors }, watch } = useForm<LoginForm>()
   
-  // Debug: log errors
+  // Debug: log errors and form values
   console.log('Form errors:', errors)
+  console.log('Form values:', watch())
 
   useEffect(() => {
     const registered = searchParams.get('registered')
@@ -166,6 +167,7 @@ function LoginContent() {
                       })}
                       className="w-full px-4 py-2.5 pl-10 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary focus:ring-opacity-20 outline-none transition-all duration-200"
                       placeholder="nome@esempio.com"
+                      autoComplete="email"
                     />
                   </div>
                   {errors.email && (
@@ -189,6 +191,7 @@ function LoginContent() {
                       })}
                       className="w-full px-4 py-2.5 pl-10 pr-10 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary focus:ring-opacity-20 outline-none transition-all duration-200"
                       placeholder="••••••••"
+                      autoComplete="current-password"
                     />
                     <button
                       type="button"
@@ -255,6 +258,7 @@ function LoginContent() {
                         })}
                         className="w-full px-3 py-2 pl-9 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary focus:ring-opacity-20 outline-none transition-all duration-200 text-sm"
                         placeholder="nome@esempio.com"
+                        autoComplete="email"
                       />
                     </div>
                     {errors.email && (
@@ -278,6 +282,7 @@ function LoginContent() {
                         })}
                         className="w-full px-3 py-2 pl-9 pr-9 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary focus:ring-opacity-20 outline-none transition-all duration-200 text-sm"
                         placeholder="••••••••"
+                        autoComplete="current-password"
                       />
                       <button
                         type="button"
