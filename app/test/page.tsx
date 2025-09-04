@@ -1,7 +1,7 @@
 'use client'
 
-import { useLanguage } from '../lib/languageContext'
-import LanguageSelector from '../components/LanguageSelector'
+import { useLanguage } from '../../lib/languageContext'
+import LanguageSelector from '../../components/LanguageSelector'
 
 export default function TestPage() {
   const { t, language } = useLanguage()
