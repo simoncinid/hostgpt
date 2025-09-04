@@ -444,7 +444,8 @@ export default function LandingPage() {
     features: plan.features,
     hasFreeTrial: true,
     freeTrialButton: plan.freeTrialButton,
-    ctaButton: plan.ctaButton
+    ctaButton: plan.ctaButton,
+    priceId: plan.priceId
   }))
 
   const nextTestimonial = () => {

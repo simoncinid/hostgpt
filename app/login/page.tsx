@@ -25,6 +25,9 @@ function LoginContent() {
   const { setAuth } = useAuthStore()
   
   const { register, handleSubmit, formState: { errors } } = useForm<LoginForm>()
+  
+  // Debug: log errors
+  console.log('Form errors:', errors)
 
   useEffect(() => {
     const registered = searchParams.get('registered')
@@ -52,6 +55,7 @@ function LoginContent() {
   }, [searchParams, setAuth])
 
   const onSubmit = async (data: LoginForm) => {
+    console.log('Form submitted with data:', data)
     setIsLoading(true)
     try {
       // Controlla se c'è un token dalla verifica email
@@ -60,8 +64,10 @@ function LoginContent() {
       if (tokenFromUrl) {
         // Se c'è un token dalla verifica email, è già stato gestito nell'useEffect
         // Non fare nulla qui
+        console.log('Token from URL found, skipping login')
       } else {
         // Altrimenti fai il login normale
+        console.log('Attempting login with:', { email: data.email, password: data.password ? '***' : 'empty' })
         const response = await api.post('/auth/login', data)
         const { access_token } = response.data
         
@@ -70,6 +76,7 @@ function LoginContent() {
           localStorage.setItem('token', access_token)
         }
         setAuth(access_token)
+        console.log('Login successful')
       }
       
       // Se ritorno da Stripe con successo, prova a confermare la sottoscrizione ora che siamo autenticati
@@ -138,7 +145,9 @@ function LoginContent() {
 
           {/* Form Content */}
           <div className="flex-1 flex flex-col">
-            <form onSubmit={handleSubmit(onSubmit)} className="flex-1 flex flex-col">
+            <form onSubmit={handleSubmit(onSubmit, (errors) => {
+              console.log('Form validation failed:', errors)
+            })} className="flex-1 flex flex-col">
               {/* Layout desktop */}
               <div className="hidden md:block space-y-5">
                 {/* Email */}
@@ -213,6 +222,7 @@ function LoginContent() {
                 <button
                   type="submit"
                   disabled={isLoading}
+                  onClick={() => console.log('Desktop button clicked')}
                   className="w-full bg-primary hover:bg-secondary text-white font-semibold py-2.5 px-6 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 flex items-center justify-center"
                 >
                   {isLoading ? (
@@ -302,6 +312,7 @@ function LoginContent() {
                     <button
                       type="submit"
                       disabled={isLoading}
+                      onClick={() => console.log('Mobile button clicked')}
                       className="w-full bg-primary hover:bg-secondary text-white font-semibold py-2 px-6 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 flex items-center justify-center text-sm"
                     >
                       {isLoading ? (

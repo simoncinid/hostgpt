@@ -7,12 +7,14 @@ import { motion } from 'framer-motion'
 import { ArrowLeft, CreditCard, Mail, User, Loader2, LogOut, AlertTriangle } from 'lucide-react'
 import { auth, subscription } from '@/lib/api'
 import { useAuthStore } from '@/lib/store'
+import { useLanguage } from '@/lib/languageContext'
 import toast from 'react-hot-toast'
 import Sidebar from '@/app/components/Sidebar'
 
 export default function SettingsPage() {
   const router = useRouter()
   const { user, setUser, logout } = useAuthStore()
+  const { t } = useLanguage()
   const [isLoading, setIsLoading] = useState(true)
   const [isCheckoutLoading, setIsCheckoutLoading] = useState(false)
   const [isCancellingSubscription, setIsCancellingSubscription] = useState(false)

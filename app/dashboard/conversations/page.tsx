@@ -7,6 +7,7 @@ import { motion } from 'framer-motion'
 import { ArrowLeft, Search, Loader2, MessageSquare, Users } from 'lucide-react'
 import { chatbots as chatbotsApi, conversations as convApi } from '@/lib/api'
 import { useChatbotStore, useAuthStore } from '@/lib/store'
+import { useLanguage } from '@/lib/languageContext'
 import toast from 'react-hot-toast'
 import Sidebar from '@/app/components/Sidebar'
 import ConversationItem from '@/app/components/ConversationItem'
@@ -26,6 +27,7 @@ function ConversationsContent() {
 
   const { chatbots, setChatbots } = useChatbotStore()
   const { logout } = useAuthStore()
+  const { t } = useLanguage()
   const [selectedBotId, setSelectedBotId] = useState<number | null>(preselectedId)
   const [items, setItems] = useState<ConversationItem[]>([])
   const [filter, setFilter] = useState('')
@@ -81,7 +83,7 @@ function ConversationsContent() {
       <div className={`transition-all duration-200 ${isSidebarCollapsed ? 'md:ml-16' : 'md:ml-64'}`}>
         <div className="bg-white shadow-sm">
           <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-            <h1 className="text-xl font-semibold">Conversazioni</h1>
+            <h1 className="text-xl font-semibold">{t.conversations.title}</h1>
           </div>
         </div>
 
@@ -90,7 +92,7 @@ function ConversationsContent() {
             <div className="bg-white rounded-2xl shadow p-6 mb-6">
               <div className="grid md:grid-cols-3 gap-4 items-end">
                 <div>
-                  <label className="label">Chatbot</label>
+                  <label className="label">{t.conversations.chatbot}</label>
                   <select
                     className="input-field"
                     value={selectedBotId ?? ''}
@@ -103,9 +105,9 @@ function ConversationsContent() {
                   </select>
                 </div>
                 <div className="md:col-span-2">
-                  <label className="label">Cerca per ospite</label>
+                  <label className="label">{t.conversations.searchGuest}</label>
                   <div className="relative">
-                    <input className="input-field pl-10" placeholder="Es. Marco" value={filter} onChange={(e) => setFilter(e.target.value)} />
+                    <input className="input-field pl-10" placeholder={t.conversations.searchPlaceholder} value={filter} onChange={(e) => setFilter(e.target.value)} />
                     <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
                   </div>
                 </div>
@@ -115,12 +117,12 @@ function ConversationsContent() {
             <div className="bg-white rounded-2xl shadow">
               {isLoading ? (
                 <div className="flex items-center justify-center py-16 text-gray-600">
-                  <Loader2 className="w-6 h-6 animate-spin mr-2" /> Caricamento...
+                  <Loader2 className="w-6 h-6 animate-spin mr-2" /> {t.conversations.loading}
                 </div>
               ) : !selectedBotId ? (
-                <div className="p-6 text-gray-500">Seleziona un chatbot per vedere le conversazioni</div>
+                <div className="p-6 text-gray-500">{t.conversations.selectChatbot}</div>
               ) : filtered.length === 0 ? (
-                <div className="p-6 text-gray-500">Nessuna conversazione trovata</div>
+                <div className="p-6 text-gray-500">{t.conversations.noConversations}</div>
               ) : (
                 <div className="divide-y">
                   {filtered.map((c) => (
@@ -138,18 +140,20 @@ function ConversationsContent() {
 
 // Componente di fallback per il loading
 function ConversationsFallback() {
+  const { t } = useLanguage()
+  
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="bg-white shadow-sm">
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-          <h1 className="text-xl font-semibold">Conversazioni</h1>
+          <h1 className="text-xl font-semibold">{t.conversations.title}</h1>
         </div>
       </div>
       <div className="max-w-6xl mx-auto px-4 py-8">
         <div className="bg-white rounded-2xl shadow p-6">
           <div className="text-center py-12">
             <div className="loading-spinner w-8 h-8 mx-auto mb-4"></div>
-            <p className="text-gray-600">Caricamento conversazioni...</p>
+            <p className="text-gray-600">{t.conversations.loadingConversations}</p>
           </div>
         </div>
       </div>

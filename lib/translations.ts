@@ -103,6 +103,7 @@ export interface Translations {
       features: string[]
       freeTrialButton: string
       ctaButton: string
+      priceId?: string
     }>
   }
   
@@ -169,6 +170,27 @@ export interface Translations {
     privacy: string
     terms: string
     contact: string
+  }
+  
+  // Conversations translations
+  conversations: {
+    title: string
+    chatbot: string
+    searchGuest: string
+    searchPlaceholder: string
+    loading: string
+    selectChatbot: string
+    noConversations: string
+    loadingConversations: string
+  }
+  
+  // Checkout translations
+  checkout: {
+    title: string
+    loading: string
+    processing: string
+    success: string
+    error: string
   }
   
   // Auth Pages
@@ -537,7 +559,8 @@ export const translations: Record<Language, Translations> = {
             "Supporto 24/7"
           ],
           freeTrialButton: "🎉 Prova 14 Giorni Gratis",
-          ctaButton: "Inizia Ora"
+          ctaButton: "Inizia Ora",
+          priceId: "price_1S3dNUClR9LCJ8qEX2DEK4SE"
         }
       ]
     },
@@ -620,6 +643,28 @@ export const translations: Record<Language, Translations> = {
       terms: "Termini",
       contact: "Contatti"
     },
+    
+    // Conversations translations
+    conversations: {
+      title: "Conversazioni",
+      chatbot: "Chatbot",
+      searchGuest: "Cerca per ospite",
+      searchPlaceholder: "Es. Marco",
+      loading: "Caricamento...",
+      selectChatbot: "Seleziona un chatbot per vedere le conversazioni",
+      noConversations: "Nessuna conversazione trovata",
+      loadingConversations: "Caricamento conversazioni..."
+    },
+    
+    // Checkout translations
+    checkout: {
+      title: "Checkout",
+      loading: "Caricamento...",
+      processing: "Elaborazione pagamento...",
+      success: "Pagamento completato con successo!",
+      error: "Errore durante il pagamento"
+    },
+    
     auth: {
       login: {
         title: "Accedi",
@@ -989,7 +1034,8 @@ export const translations: Record<Language, Translations> = {
             "24/7 Support"
           ],
           freeTrialButton: "🎉 14 Days Free",
-          ctaButton: "Start Now"
+          ctaButton: "Start Now",
+          priceId: "price_1S3dNUClR9LCJ8qEX2DEK4SE"
         }
       ]
     },
@@ -1072,6 +1118,28 @@ export const translations: Record<Language, Translations> = {
       terms: "Terms",
       contact: "Contact"
     },
+    
+    // Conversations translations
+    conversations: {
+      title: "Conversations",
+      chatbot: "Chatbot",
+      searchGuest: "Search by guest",
+      searchPlaceholder: "E.g. Marco",
+      loading: "Loading...",
+      selectChatbot: "Select a chatbot to view conversations",
+      noConversations: "No conversations found",
+      loadingConversations: "Loading conversations..."
+    },
+    
+    // Checkout translations
+    checkout: {
+      title: "Checkout",
+      loading: "Loading...",
+      processing: "Processing payment...",
+      success: "Payment completed successfully!",
+      error: "Error during payment"
+    },
+    
     auth: {
       login: {
         title: "Login",

@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { MessageSquare, Users, QrCode, ExternalLink, Edit, Trash2, Eye, ArrowLeft, Loader2 } from 'lucide-react'
 import { useAuthStore, useChatbotStore } from '@/lib/store'
+import { useLanguage } from '@/lib/languageContext'
 import { chatbots as chatbotsApi, auth } from '@/lib/api'
 import toast from 'react-hot-toast'
 import Sidebar from '@/app/components/Sidebar'
@@ -14,6 +15,7 @@ export default function ChatbotsListPage() {
   const router = useRouter()
   const { user, isAuthenticated } = useAuthStore()
   const { chatbots, setChatbots, deleteChatbot } = useChatbotStore()
+  const { t } = useLanguage()
   const [isLoading, setIsLoading] = useState(true)
   const [showQRModal, setShowQRModal] = useState(false)
   const [currentQR, setCurrentQR] = useState<{ url: string; qr: string } | null>(null)

@@ -14,6 +14,7 @@ import {
   Shield
 } from 'lucide-react'
 import { useAuthStore } from '@/lib/store'
+import LanguageSelector from '@/components/LanguageSelector'
 
 interface SidebarProps {
   currentPath: string
@@ -122,6 +123,11 @@ export default function Sidebar({ currentPath, onLogout, isSidebarCollapsed: ext
                 </Link>
               </>
             )}
+            
+            {/* Language Selector */}
+            <div className="mt-4">
+              <LanguageSelector />
+            </div>
           </div>
         </div>
       </div>
@@ -135,12 +141,15 @@ export default function Sidebar({ currentPath, onLogout, isSidebarCollapsed: ext
           <Home className="w-7 h-7 text-primary" />
           <span className="text-xl font-bold text-dark">HostGPT</span>
         </Link>
-        <button
-          onClick={onLogout}
-          className="p-2 text-gray-600 hover:text-red-600 transition"
-        >
-          <LogOut className="w-5 h-5" />
-        </button>
+        <div className="flex items-center space-x-2">
+          <LanguageSelector />
+          <button
+            onClick={onLogout}
+            className="p-2 text-gray-600 hover:text-red-600 transition"
+          >
+            <LogOut className="w-5 h-5" />
+          </button>
+        </div>
       </div>
 
       {/* Drawer overlay on mobile */}

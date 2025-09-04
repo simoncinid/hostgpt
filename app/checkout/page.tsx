@@ -18,6 +18,7 @@ import {
 } from 'lucide-react'
 import { subscription, referral } from '@/lib/api'
 import { useAuthStore } from '@/lib/store'
+import { useLanguage } from '@/lib/languageContext'
 import toast from 'react-hot-toast'
 import { loadStripe } from '@stripe/stripe-js'
 import {
@@ -236,6 +237,7 @@ function CheckoutContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { setAuth, user, setUser } = useAuthStore()
+  const { t } = useLanguage()
 
   const [status, setStatus] = useState<'idle' | 'processing' | 'error' | 'cancelled' | 'success' | 'checkout'>('idle')
   const [errorMessage, setErrorMessage] = useState<string>('')
@@ -518,11 +520,13 @@ function CheckoutContent() {
 
 // Componente di fallback per il loading
 function CheckoutFallback() {
+  const { t } = useLanguage()
+  
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
       <div className="w-full max-w-md bg-white rounded-lg shadow p-6 text-center">
         <Loader2 className="w-8 h-8 text-primary animate-spin mx-auto mb-4" />
-        <h1 className="text-2xl font-semibold mb-2">Caricamento…</h1>
+        <h1 className="text-2xl font-semibold mb-2">{t.checkout.loading}</h1>
         <p className="text-gray-600">Preparazione della pagina di checkout.</p>
       </div>
     </div>

@@ -19,6 +19,7 @@ import {
   Eye
 } from 'lucide-react'
 import { useAuthStore, useChatbotStore } from '@/lib/store'
+import { useLanguage } from '@/lib/languageContext'
 import { chatbots as chatbotsApi, subscription, auth } from '@/lib/api'
 import toast from 'react-hot-toast'
 import Sidebar from '@/app/components/Sidebar'
@@ -28,6 +29,7 @@ function DashboardContent() {
   const searchParams = useSearchParams()
   const { user, logout, setAuth, setUser, isAuthenticated } = useAuthStore()
   const { chatbots, setChatbots, deleteChatbot } = useChatbotStore()
+  const { t } = useLanguage()
   const [isLoading, setIsLoading] = useState(true)
   const [selectedBot, setSelectedBot] = useState<number | null>(null)
   const [showQRModal, setShowQRModal] = useState(false)
@@ -140,14 +142,14 @@ function DashboardContent() {
         {/* Header */}
         <div className="mb-8 flex justify-between items-center">
           <h1 className="text-3xl font-bold text-dark">
-            Dashboard
+            {t.dashboard.title}
           </h1>
           <button
             onClick={handleLogout}
             className="hidden md:flex items-center text-gray-600 hover:text-red-600 transition px-3 py-2 rounded-lg hover:bg-gray-100"
           >
             <LogOut className="w-5 h-5 mr-2" />
-            ESCI
+            {t.common.logout.toUpperCase()}
           </button>
         </div>
 
