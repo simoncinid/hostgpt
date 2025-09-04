@@ -447,40 +447,30 @@ export const translations: Record<Language, Translations> = {
       subtitleHighlight: "l'esperienza dei tuoi ospiti",
       items: [
         {
-          title: "Chatbot Personalizzato",
-          description: "Crea un assistente virtuale su misura per la tua proprietà con pochi clic",
-          features: ["Risposte personalizzate", "Lingua italiana", "Conoscenza locale"]
+          title: "Stop alle Domande Ripetitive",
+          description: "Non perdere più tempo a rispondere alle stesse domande sui check-in, WiFi e attrazioni locali",
+          features: ["Risposte automatiche 24/7", "Zero interruzioni", "Tempo recuperato"]
         },
         {
-          title: "Informazioni Locali",
-          description: "Fornisci raccomandazioni per ristoranti, attrazioni e servizi locali",
-          features: ["Ristoranti consigliati", "Attrazioni turistiche", "Trasporti locali"]
+          title: "Ospiti Più Soddisfatti",
+          description: "Risposte immediate e complete aumentano la soddisfazione e le recensioni positive",
+          features: ["Risposte istantanee", "Informazioni complete", "Recensioni migliori"]
         },
         {
-          title: "Statistiche Dettagliate",
-          description: "Monitora le conversazioni e ottieni insight sui bisogni dei tuoi ospiti",
-          features: ["Analisi conversazioni", "Metriche performance", "Report dettagliati"]
+          title: "Setup in 5 Minuti",
+          description: "Attiva il tuo assistente virtuale in pochi minuti, senza competenze tecniche",
+          features: ["Configurazione guidata", "Nessuna programmazione", "Pronto subito"]
         },
         {
-          title: "Setup Rapido",
-          description: "Attiva il tuo chatbot in meno di 10 minuti con la nostra procedura guidata",
-          features: ["Configurazione rapida", "Setup guidato", "Pronto in 10 minuti"]
-        },
-        {
-          title: "Supporto 24/7",
-          description: "Supporto tecnico sempre disponibile per aiutarti a sfruttarlo al massimo",
-          features: ["Supporto dedicato", "Risposte rapide", "Assistenza continua"]
-        },
-        {
-          title: "Sicuro e Affidabile",
-          description: "I tuoi dati sono protetti con i più alti standard di sicurezza",
-          features: ["Crittografia avanzata", "Backup automatici", "Conformità GDPR"]
+          title: "Costa Meno di un Caffè",
+          description: "Investi meno di quello che spendi per un caffè al giorno e risparmia ore di lavoro",
+          features: ["Prezzo accessibile", "ROI immediato", "Risparmio garantito"]
         }
       ]
     },
     howItWorks: {
       title: "Come Funziona",
-      subtitle: "Tre semplici passi per attivare il tuo assistente virtuale",
+      subtitle: "Ogni giorno perdi <span class='text-pink-600 font-bold'>ore preziose</span> a rispondere alle stesse domande dei tuoi ospiti.<br><br>Con <span class='text-pink-600 font-bold'>HostGPT</span> risparmi tutto quel tempo per <span class='text-pink-600 font-bold'>meno di un caffè al giorno</span>.<br><br>Il tuo assistente virtuale risponde <span class='text-pink-600 font-bold'>automaticamente 24/7</span>, mentre tu ti concentri su ciò che conta davvero.",
       steps: [
         {
           title: "Registrati",
@@ -526,18 +516,27 @@ export const translations: Record<Language, Translations> = {
       subtitle: "Tutto quello che ti serve per trasformare completamente l'esperienza dei tuoi ospiti",
       plans: [
         {
-          name: "Sottoscrizione",
+          name: "Mensile",
           price: "€29",
           period: "/mese",
           features: [
             "1 Chatbot personalizzato",
             "1000 messaggi/mese",
-            "Supporto 24/7",
-            "Statistiche avanzate",
-            "QR Code e link di condivisione",
-            "Accesso a Guardian (€9/mese)"
+            "Supporto 24/7"
           ],
-          freeTrialButton: "🎉 Prova gratis per 14 giorni",
+          freeTrialButton: "🎉 Prova 14 Giorni Gratis",
+          ctaButton: "Inizia Ora"
+        },
+        {
+          name: "Annuale",
+          price: "€299",
+          period: "/anno",
+          features: [
+            "1 Chatbot personalizzato",
+            "1000 messaggi/mese",
+            "Supporto 24/7"
+          ],
+          freeTrialButton: "🎉 Prova 14 Giorni Gratis",
           ctaButton: "Inizia Ora"
         }
       ]
@@ -900,40 +899,30 @@ export const translations: Record<Language, Translations> = {
       subtitleHighlight: "your guests' experience",
       items: [
         {
-          title: "Custom Chatbot",
-          description: "Create a virtual assistant tailored to your property with just a few clicks",
-          features: ["Personalized responses", "Italian language", "Local knowledge"]
+          title: "Stop Repetitive Questions",
+          description: "No more wasting time answering the same questions about check-in, WiFi and local attractions",
+          features: ["Automatic responses 24/7", "Zero interruptions", "Time recovered"]
         },
         {
-          title: "Local Information",
-          description: "Provide recommendations for restaurants, attractions and local services",
-          features: ["Recommended restaurants", "Tourist attractions", "Local transportation"]
+          title: "Happier Guests",
+          description: "Immediate and complete responses increase satisfaction and positive reviews",
+          features: ["Instant responses", "Complete information", "Better reviews"]
         },
         {
-          title: "Detailed Statistics",
-          description: "Monitor conversations and get insights into your guests' needs",
-          features: ["Conversation analysis", "Performance metrics", "Detailed reports"]
+          title: "Setup in 5 Minutes",
+          description: "Activate your virtual assistant in minutes, without technical skills",
+          features: ["Guided configuration", "No programming", "Ready immediately"]
         },
         {
-          title: "Quick Setup",
-          description: "Activate your chatbot in less than 10 minutes with our guided procedure",
-          features: ["Quick configuration", "Guided setup", "Ready in 10 minutes"]
-        },
-        {
-          title: "24/7 Support",
-          description: "Technical support always available to help you get the most out of it",
-          features: ["Dedicated support", "Quick responses", "Continuous assistance"]
-        },
-        {
-          title: "Secure & Reliable",
-          description: "Your data is protected with the highest security standards",
-          features: ["Advanced encryption", "Automatic backups", "GDPR compliance"]
+          title: "Costs Less than Coffee",
+          description: "Invest less than what you spend on coffee per day and save hours of work",
+          features: ["Affordable price", "Immediate ROI", "Guaranteed savings"]
         }
       ]
     },
     howItWorks: {
       title: "How It Works",
-      subtitle: "Three simple steps to activate your virtual assistant",
+      subtitle: "Every day you lose <span class='text-pink-600 font-bold'>precious hours</span> answering the same questions from your guests.<br><br>With <span class='text-pink-600 font-bold'>HostGPT</span> you save all that time for <span class='text-pink-600 font-bold'>less than a coffee a day</span>.<br><br>Your virtual assistant responds <span class='text-pink-600 font-bold'>automatically 24/7</span>, while you focus on what really matters.",
       steps: [
         {
           title: "Sign Up",
@@ -979,18 +968,27 @@ export const translations: Record<Language, Translations> = {
       subtitle: "Everything you need to completely transform your guests' experience",
       plans: [
         {
-          name: "Subscription",
+          name: "Monthly",
           price: "€29",
           period: "/month",
           features: [
             "1 Custom chatbot",
             "1000 messages/month",
-            "24/7 Support",
-            "Advanced statistics",
-            "QR Code and sharing link",
-            "Access to Guardian (€9/month)"
+            "24/7 Support"
           ],
-          freeTrialButton: "🎉 Free trial for 14 days",
+          freeTrialButton: "🎉 14 Days Free",
+          ctaButton: "Start Now"
+        },
+        {
+          name: "Annual",
+          price: "€299",
+          period: "/year",
+          features: [
+            "1 Custom chatbot",
+            "1000 messages/month",
+            "24/7 Support"
+          ],
+          freeTrialButton: "🎉 14 Days Free",
           ctaButton: "Start Now"
         }
       ]

@@ -8,6 +8,7 @@ import CookieBanner from '../components/CookieBanner'
 import LanguageSelector from '../components/LanguageSelector'
 import { useLanguage } from '../lib/languageContext'
 import api from '../lib/api'
+import { chat } from '../lib/api'
 import { 
   MessageSquare, 
   Home, 
@@ -127,8 +128,6 @@ export default function LandingPage() {
   const [feedbackMessage, setFeedbackMessage] = useState('')
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false)
 
-  // Stati per il popup demo chat
-  const [isDemoPopupOpen, setIsDemoPopupOpen] = useState(false)
 
   // Gestione flip della card pricing - una sola volta
   const handlePricingFlip = () => {
@@ -152,7 +151,7 @@ export default function LandingPage() {
   }
 
   // Demo Chat State
-  const [demoMessages, setDemoMessages] = useState<Array<{role: 'user' | 'assistant', content: string, timestamp: Date}>>([])
+  const [demoMessages, setDemoMessages] = useState<Array<{id?: string, role: 'user' | 'assistant', content: string, timestamp: Date}>>([])
   const [demoInput, setDemoInput] = useState('')
   const [isDemoLoading, setIsDemoLoading] = useState(false)
   const [demoThreadId, setDemoThreadId] = useState<string | null>(null)
@@ -162,19 +161,79 @@ export default function LandingPage() {
   const [demoLanguage, setDemoLanguage] = useState<'IT' | 'ENG'>('IT')
   const [demoIsDarkMode, setDemoIsDarkMode] = useState(false)
   
-  const demoMessagesEndRef = useRef<HTMLDivElement>(null)
   const demoInputRef = useRef<HTMLInputElement>(null)
 
-  // Testi multilingua per demo
-  const currentDemoTexts = t.demo
+  // Testi multilingua per demo - dinamici basati sulla lingua demo
+  const demoTexts = {
+    IT: {
+      assistant: 'Assistente Virtuale',
+      suggestedMessages: [
+        "Contatta Host",
+        "Attrazioni", 
+        "Check-in/Check-out"
+      ],
+      placeholder: "Scrivi un messaggio...",
+      welcome: "Benvenuto!",
+      welcomeSubtitle: "Sono qui per aiutarti con qualsiasi domanda sulla casa e sulla zona. Come posso esserti utile?",
+      startChat: "Inizia la Chat",
+      namePlaceholder: "Il tuo nome (opzionale)",
+      writing: "Sto scrivendo...",
+      howCanIHelp: "Come posso aiutarti:",
+      helpItems: [
+        "Informazioni sulla casa e i servizi",
+        "Orari di check-in e check-out", 
+        "Consigli su ristoranti e attrazioni",
+        "Informazioni sui trasporti",
+        "Contatti di emergenza"
+      ]
+    },
+    ENG: {
+      assistant: 'Virtual Assistant',
+      suggestedMessages: [
+        "Contact Host",
+        "Attractions",
+        "Check-in/Check-out"
+      ],
+      placeholder: "Write a message...",
+      welcome: "Welcome!",
+      welcomeSubtitle: "I'm here to help you with any questions about the house and the area. How can I be useful?",
+      startChat: "Start Chat",
+      namePlaceholder: "Your name (optional)",
+      writing: "I'm writing...",
+      howCanIHelp: "How can I help you:",
+      helpItems: [
+        "Information about the house and services",
+        "Check-in and check-out times",
+        "Restaurant and attraction recommendations", 
+        "Transportation information",
+        "Emergency contacts"
+      ]
+    }
+  }
+
+  const currentDemoTexts = demoTexts[demoLanguage]
 
   // Messaggi completi per i suggerimenti demo
-  const currentFullDemoMessages = t.demo.fullMessages
+  const demoFullMessages = {
+    IT: {
+      "Contatta Host": "Voglio contattare l'host. Come faccio?",
+      "Attrazioni": "Vorrei visitare la zona, che attrazioni ci sono e come posso raggiungerle?",
+      "Check-in/Check-out": "Quali sono gli orari di check-in e check-out?"
+    },
+    ENG: {
+      "Contact Host": "I want to contact the host. How can I do it?",
+      "Attractions": "I'd like to visit the area, what attractions are there and how can I reach them?",
+      "Check-in/Check-out": "What are the check-in and check-out times?"
+    }
+  }
+
+  const currentFullDemoMessages = demoFullMessages[demoLanguage]
 
   const handleDemoSuggestedMessage = async (suggestionKey: string) => {
     const fullMessage = currentFullDemoMessages[suggestionKey as keyof typeof currentFullDemoMessages] as string
     
     const userMessage = {
+      id: Date.now().toString(),
       role: 'user' as const,
       content: fullMessage,
       timestamp: new Date()
@@ -184,9 +243,10 @@ export default function LandingPage() {
     setIsDemoLoading(true)
 
     try {
-      const response = await api.post('/demochat', {
+      const response = await chat.sendMessage('5e2665c8-e243-4df3-a9fd-8e0d1e4fedcc', {
         content: fullMessage,
-        thread_id: demoThreadId
+        thread_id: demoThreadId,
+        guest_name: demoGuestName || undefined
       })
 
       if (!demoThreadId) {
@@ -194,6 +254,7 @@ export default function LandingPage() {
       }
 
       const assistantMessage = {
+        id: (Date.now() + 1).toString(),
         role: 'assistant' as const,
         content: response.data.message,
         timestamp: new Date()
@@ -203,8 +264,9 @@ export default function LandingPage() {
     } catch (error) {
       console.error('Errore nella chat demo:', error)
       setDemoMessages(prev => [...prev, { 
+        id: (Date.now() + 1).toString(),
         role: 'assistant', 
-        content: t.common.error,
+        content: 'Errore nell\'invio del messaggio',
         timestamp: new Date()
       }])
     } finally {
@@ -218,6 +280,7 @@ export default function LandingPage() {
     if (!demoInput.trim()) return
 
     const userMessage = {
+      id: Date.now().toString(),
       role: 'user' as const,
       content: demoInput,
       timestamp: new Date()
@@ -228,9 +291,10 @@ export default function LandingPage() {
     setIsDemoLoading(true)
 
     try {
-      const response = await api.post('/demochat', {
+      const response = await chat.sendMessage('5e2665c8-e243-4df3-a9fd-8e0d1e4fedcc', {
         content: demoInput,
-        thread_id: demoThreadId
+        thread_id: demoThreadId,
+        guest_name: demoGuestName || undefined
       })
 
       if (!demoThreadId) {
@@ -238,6 +302,7 @@ export default function LandingPage() {
       }
 
       const assistantMessage = {
+        id: (Date.now() + 1).toString(),
         role: 'assistant' as const,
         content: response.data.message,
         timestamp: new Date()
@@ -247,8 +312,9 @@ export default function LandingPage() {
     } catch (error) {
       console.error('Errore nella chat demo:', error)
       setDemoMessages(prev => [...prev, { 
+        id: (Date.now() + 1).toString(),
         role: 'assistant', 
-        content: t.common.error,
+        content: 'Errore nell\'invio del messaggio',
         timestamp: new Date()
       }])
     } finally {
@@ -258,7 +324,6 @@ export default function LandingPage() {
 
   const handleDemoStartChat = () => {
     setDemoShowWelcome(false)
-    setTimeout(() => demoInputRef.current?.focus(), 100)
   }
 
   const handleDemoNewConversation = () => {
@@ -268,31 +333,9 @@ export default function LandingPage() {
     setDemoShowWelcome(true)
   }
 
-  const toggleDemoLanguage = () => {
-    setDemoLanguage(demoLanguage === 'IT' ? 'ENG' : 'IT')
-  }
 
-  const toggleDemoDarkMode = () => {
-    setDemoIsDarkMode(!demoIsDarkMode)
-  }
+  // Scroll automatico rimosso per evitare salti alla sezione "Come Funziona"
 
-  const scrollDemoToBottom = () => {
-    demoMessagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }
-
-  useEffect(() => {
-    scrollDemoToBottom()
-  }, [demoMessages])
-
-  const openDemoPopup = () => {
-    setIsDemoPopupOpen(true)
-    setDemoMessages([{
-      role: 'assistant',
-      content: 'Ciao! Sono l\'assistente AI di Casa Bella Vista. Come posso aiutarti oggi?',
-      timestamp: new Date()
-    }])
-    setDemoShowWelcome(true)
-  }
 
   // Intersection Observer per le animazioni "Come funziona"
   useEffect(() => {
@@ -399,7 +442,6 @@ export default function LandingPage() {
     price: plan.price,
     period: plan.period,
     features: plan.features,
-    highlighted: true,
     hasFreeTrial: true,
     freeTrialButton: plan.freeTrialButton,
     ctaButton: plan.ctaButton
@@ -1177,268 +1219,270 @@ export default function LandingPage() {
 
 
 
-              {/* Bottone PROVA DEMO */}
-              <motion.div
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className="relative group w-full sm:w-auto"
-              >
-                <button
-                  onClick={openDemoPopup}
-                  className="flex items-center justify-center gap-3 px-8 py-4 text-base font-bold text-white bg-gradient-to-r from-orange-500 to-amber-500 rounded-2xl shadow-lg hover:from-orange-600 hover:to-amber-600 hover:shadow-xl transition-all duration-300 overflow-hidden w-[90%] mx-[5%] sm:w-96 sm:mx-0"
-                >
-                  {/* Effetto shimmer */}
-                  <motion.div
-                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12"
-                    animate={{
-                      x: ["-100%", "200%"]
-                    }}
-                    transition={{
-                      duration: 2,
-                      repeat: Infinity,
-                      repeatDelay: 3,
-                      ease: "easeInOut"
-                    }}
-                  />
-                  <span className="relative z-10">{t.hero.demoButton}</span>
-                  <motion.div
-                    animate={{ 
-                      scale: [1, 1.2, 1],
-                      rotate: [0, 360, 0]
-                    }}
-                    transition={{
-                      duration: 2,
-                      repeat: Infinity,
-                      repeatDelay: 1,
-                      ease: "easeInOut",
-                    }}
-                    className="relative z-10"
-                  >
-                    <MessageSquare className="w-4 h-4" />
-                  </motion.div>
-               </button>
-              </motion.div>
             </motion.div>
           </motion.div>
 
-          {/* Demo Section Ultra-Elegante */}
+          {/* Demo Chat - COPIA ESATTA di /chat */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95, y: 50 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             transition={{ duration: 1.2, delay: 1, ease: [0.23, 1, 0.320, 1] }}
-            className="relative"
+            className="relative max-w-4xl mx-auto"
           >
-            {/* Glow esterno spettacolare - solo desktop */}
-            <div className="hidden md:block absolute -inset-8 bg-gradient-to-r from-rose-400/20 via-pink-500/30 to-rose-600/20 rounded-[3rem] blur-3xl opacity-60"></div>
-            
-            {/* Container principale con glassmorphism - solo desktop */}
-            <div className="hidden md:block relative bg-white/30 backdrop-blur-2xl border-0 md:border md:border-white/40 rounded-[2rem] p-4 md:p-12 shadow-2xl">
-              {/* Pattern decorativo interno - solo desktop */}
-              <div className="absolute inset-0 rounded-[2rem] overflow-hidden pointer-events-none">
-                <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-rose-100/20 to-transparent rounded-full blur-3xl"></div>
-                <div className="absolute bottom-0 left-0 w-48 h-48 bg-gradient-to-tr from-pink-100/30 to-transparent rounded-full blur-2xl"></div>
+            <div className={`h-[90vh] flex flex-col overflow-hidden transition-colors duration-300 ${
+              demoIsDarkMode 
+                ? 'bg-gradient-to-br from-gray-900 to-gray-800' 
+                : 'bg-gradient-to-br from-primary/5 to-accent/5'
+            }`}>
+              {/* Header - FISSO */}
+              <div className={`${demoIsDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'} shadow-sm flex-shrink-0 border-b transition-colors duration-300`}>
+                <div className="max-w-4xl mx-auto px-2 py-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center mr-3">
+                        <Home className="w-5 h-5 text-white" />
               </div>
-
-              {/* Demo chat ultra-stilizzata - desktop */}
-              <div className="relative bg-white/70 backdrop-blur-xl border border-white/50 rounded-3xl p-4 md:p-8 shadow-xl w-[90%] mx-auto">
-              {/* Header della chat spettacolare */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 1.2 }}
-                className="flex items-center mb-4 md:mb-8 pb-3 md:pb-6 border-b border-gray-200/50"
-              >
-                <motion.div
-                  className="relative"
-                  whileHover={{ scale: 1.05 }}
-                  transition={{ type: "spring", stiffness: 400 }}
-                >
-                  <div className="absolute -inset-2 bg-gradient-to-r from-rose-400 to-pink-500 rounded-2xl blur-lg opacity-30"></div>
-                  <div className="relative w-12 h-12 md:w-16 md:h-16 bg-gradient-to-r from-rose-500 to-pink-600 rounded-2xl flex items-center justify-center shadow-lg">
-                    <MessageSquare className="w-6 h-6 md:w-8 md:h-8 text-white" />
+                      <div>
+                        <h1 className={`font-semibold text-lg transition-colors duration-300 ${demoIsDarkMode ? 'text-white' : 'text-gray-900'}`}>Demo Chat</h1>
+                        <p className={`text-sm ${demoIsDarkMode ? 'text-gray-300' : 'text-gray-500'} transition-colors duration-300`}>{currentDemoTexts.assistant}</p>
                 </div>
-                  </motion.div>
-                  <div className="ml-3 md:ml-6 flex-1 min-w-0">
-                    <h3 className="text-lg md:text-2xl font-bold text-gray-900 truncate">{t.demo.title}</h3>
                   </div>
-                </motion.div>
-
-                {/* Area messaggi con effetti premium */}
-                <motion.div
-                  ref={demoScrollRef}
-                  className="space-y-3 md:space-y-6 h-60 md:h-80 overflow-y-auto pr-2 md:pr-4 scrollbar-custom"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.8, delay: 1.4 }}
-                >
-                  {demoVisible.map((m, idx) => (
-                    <motion.div
-                      key={idx}
-                      initial={{ opacity: 0, y: 20, scale: 0.95 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      transition={{ duration: 0.5, type: "spring", stiffness: 200 }}
-                      className={`relative ${m.role === 'user' ? 'flex justify-end' : 'flex justify-start'}`}
-                    >
-                      <div
-                        className={`max-w-xs md:max-w-sm px-3 py-2 md:px-6 md:py-4 rounded-2xl shadow-lg ${
-                          m.role === 'user'
-                            ? 'bg-gradient-to-r from-rose-500 to-pink-600 text-white'
-                            : 'bg-white/80 backdrop-blur-xl border border-white/50 text-gray-800'
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={handleDemoNewConversation}
+                        className={`p-2 rounded-lg transition-colors duration-200 group ${
+                          demoIsDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
+                        }`}
+                        title="Nuova conversazione"
+                      >
+                        <RefreshCw className={`w-5 h-5 transition-colors duration-200 ${
+                          demoIsDarkMode ? 'text-gray-300 group-hover:text-primary' : 'text-gray-600 group-hover:text-primary'
+                        }`} />
+                      </button>
+                      <button
+                        onClick={() => setDemoLanguage(demoLanguage === 'IT' ? 'ENG' : 'IT')}
+                        className="px-3 py-1.5 bg-gradient-to-r from-primary/10 to-accent/10 text-primary border border-primary/20 rounded-lg text-sm font-medium hover:from-primary/20 hover:to-accent/20 hover:border-primary/40 transition-all duration-200"
+                      >
+                        {demoLanguage}
+                      </button>
+                      <button
+                        onClick={() => setDemoIsDarkMode(!demoIsDarkMode)}
+                        className={`p-2 rounded-lg transition-colors duration-200 group ${
+                          demoIsDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
+                        }`}
+                        title={demoIsDarkMode ? "Passa alla modalità chiara" : "Passa alla modalità scura"}
+                      >
+                        {demoIsDarkMode ? (
+                          <Sun className={`w-5 h-5 transition-colors duration-200 ${
+                            demoIsDarkMode ? 'text-gray-300 group-hover:text-primary' : 'text-gray-600 group-hover:text-primary'
+                          }`} />
+                        ) : (
+                          <Moon className={`w-5 h-5 transition-colors duration-200 ${
+                            demoIsDarkMode ? 'text-gray-300 group-hover:text-primary' : 'text-gray-600 group-hover:text-primary'
+                          }`} />
+                        )}
+                      </button>
+                      <button
+                        onClick={() => setDemoShowInfo(!demoShowInfo)}
+                        className={`p-2 rounded-lg transition ${
+                          demoIsDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
                         }`}
                       >
-                        <div className="relative font-medium leading-relaxed text-sm md:text-base">
-                      {m.text}
+                        <Info className={`w-5 h-5 transition-colors duration-300 ${
+                          demoIsDarkMode ? 'text-gray-300' : 'text-gray-600'
+                        }`} />
+                      </button>
                         </div>
                       </div>
-                    </motion.div>
-                  ))}
-                </motion.div>
-
-                {/* Bottone replica demo spettacolare */}
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.8, delay: 1.6 }}
-                  className="mt-4 md:mt-8 pt-3 md:pt-6 border-t border-gray-200/50 text-center"
-                >
-                  <motion.button
-                    onClick={() => setDemoRunId((v) => v + 1)}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    className="relative group inline-flex items-center gap-2 md:gap-3 px-4 py-2 md:px-8 md:py-4 bg-gradient-to-r from-rose-500 to-pink-600 text-white font-bold rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden text-sm md:text-base"
-                  >
-                    {/* Effetto shimmer */}
-                    <motion.div
-                      className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12"
-                      animate={{
-                        x: ['-100%', '100%'],
-                      }}
-                      transition={{
-                        duration: 2,
-                        repeat: Infinity,
-                        repeatDelay: 4,
-                        ease: "easeInOut",
-                      }}
-                    />
-                    <motion.div
-                      animate={{ rotate: [0, 360] }}
-                      transition={{
-                        duration: 2,
-                        repeat: Infinity,
-                        ease: "linear",
-                      }}
-                      className="relative z-10"
-                    >
-                      <ArrowRight className="w-5 h-5" />
-                    </motion.div>
-                    <span className="relative z-10">Replica Demo</span>
-                  </motion.button>
-                </motion.div>
                 </div>
               </div>
 
-            {/* Demo chat ultra-stilizzata - mobile */}
-            <div className="md:hidden relative bg-white/70 backdrop-blur-xl border border-white/50 rounded-3xl p-4 md:p-8 shadow-xl w-[90%] mx-auto">
-              {/* Header della chat spettacolare */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 1.2 }}
-                className="flex items-center mb-4 md:mb-8 pb-3 md:pb-6 border-b border-gray-200/50"
-              >
+              {/* Info Panel - FISSO */}
+              {demoShowInfo && (
                 <motion.div
-                  className="relative"
-                  whileHover={{ scale: 1.05 }}
-                  transition={{ type: "spring", stiffness: 400 }}
+                  initial={{ opacity: 0, y: -20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-blue-50 border-b border-blue-200 flex-shrink-0"
                 >
-                  <div className="absolute -inset-2 bg-gradient-to-r from-rose-400 to-pink-500 rounded-2xl blur-lg opacity-30"></div>
-                  <div className="relative w-12 h-12 md:w-16 md:h-16 bg-gradient-to-r from-rose-500 to-pink-600 rounded-2xl flex items-center justify-center shadow-lg">
-                    <MessageSquare className="w-6 h-6 md:w-8 md:h-8 text-white" />
-                </div>
-                  </motion.div>
-                  <div className="ml-3 md:ml-6 flex-1 min-w-0">
-                    <h3 className="text-lg md:text-2xl font-bold text-gray-900 truncate">{t.demo.title}</h3>
+                  <div className="max-w-4xl mx-auto px-4 py-4">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <p className="text-sm text-blue-800 mb-2">
+                          <strong>{currentDemoTexts.howCanIHelp}</strong>
+                        </p>
+                        <ul className="text-sm text-blue-700 space-y-1">
+                          {currentDemoTexts.helpItems.map((item: string, index: number) => (
+                            <li key={index}>• {item}</li>
+                          ))}
+                        </ul>
+                      </div>
+                      <button
+                        onClick={() => setDemoShowInfo(false)}
+                        className="text-blue-600 hover:text-blue-800"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
                 </motion.div>
+              )}
 
-                {/* Area messaggi con effetti premium */}
+              {/* Main Chat Area - FISSA */}
+              <div className="flex-1 flex flex-col max-w-4xl mx-auto w-full px-4 py-4 md:py-6 overflow-hidden">
+                <div className={`${demoIsDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl shadow-xl overflow-hidden flex flex-col h-full transition-colors duration-300`}>
+                  {/* Welcome Screen */}
+                  {demoShowWelcome && demoMessages.length <= 1 && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="p-8 text-center flex-1 flex flex-col justify-center"
+                    >
+                      <div className="w-20 h-20 bg-rose-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <MessageSquare className="w-10 h-10 text-rose-500" />
+                </div>
+                      <h2 className={`text-2xl font-bold mb-2 ${demoIsDarkMode ? 'text-white' : 'text-gray-900'} transition-colors duration-300`}>{currentDemoTexts.welcome}</h2>
+                      <p className={`mb-6 max-w-md mx-auto transition-colors duration-300 ${demoIsDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                        {currentDemoTexts.welcomeSubtitle}
+                      </p>
+                      <div className="mb-6">
+                        <input
+                          type="text"
+                          value={demoGuestName}
+                          onChange={(e) => setDemoGuestName(e.target.value)}
+                          placeholder={currentDemoTexts.namePlaceholder}
+                          className={`max-w-xs mx-auto px-4 py-3 rounded-lg border transition-all duration-200 ${
+                            demoIsDarkMode 
+                              ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-primary focus:ring-2 focus:ring-primary/20' 
+                              : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-primary focus:ring-2 focus:ring-primary/20'
+                          } outline-none`}
+                        />
+              </div>
+                      <button
+                        onClick={handleDemoStartChat}
+                        className="px-6 py-3 bg-gradient-to-r from-primary to-secondary text-white rounded-2xl font-semibold hover:from-secondary hover:to-accent transition-all duration-200"
+                      >
+                        {currentDemoTexts.startChat}
+                      </button>
+                    </motion.div>
+                  )}
+
+                  {/* Messages Area - FISSA */}
+                  {(!demoShowWelcome || demoMessages.length > 1) && (
+                    <>
+                      <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4">
+                        {demoMessages.map((message, index) => (
+              <motion.div
+                            key={message.id || index}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: index * 0.1 }}
+                            className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                          >
+                            <div className={`flex items-start max-w-[85%] md:max-w-[70%] ${
+                              message.role === 'user' ? 'flex-row-reverse' : ''
+                            }`}>
+                              <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                                message.role === 'user' 
+                                  ? 'bg-gradient-to-r from-rose-500 to-pink-600 text-white ml-3' 
+                                  : 'bg-gray-200 text-gray-600 mr-3'
+                              }`}>
+                                {message.role === 'user' ? (
+                                  <User className="w-4 h-4" />
+                                ) : (
+                                  <Bot className="w-4 h-4" />
+                                )}
+                </div>
+                              <div className={`rounded-2xl px-4 py-3 ${
+                                message.role === 'user'
+                                  ? 'bg-gradient-to-r from-rose-500 to-pink-600 text-white rounded-br-sm'
+                                  : 'bg-gray-100 text-gray-900 rounded-bl-sm'
+                              }`}>
+                                <p className="whitespace-pre-wrap">{message.content}</p>
+                                <p className={`text-xs mt-1 ${
+                                  message.role === 'user' ? 'text-white/70' : 'text-gray-400'
+                                }`}>
+                                  {message.timestamp.toLocaleTimeString('it-IT', {
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                  })}
+                                </p>
+                              </div>
+                  </div>
+                </motion.div>
+                        ))}
+
+                        {isDemoLoading && (
                 <motion.div
-                  ref={demoScrollRef}
-                  className="space-y-3 md:space-y-6 h-60 md:h-80 overflow-y-auto pr-2 md:pr-4 scrollbar-custom"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  transition={{ duration: 0.8, delay: 1.4 }}
-                >
-                  {demoVisible.map((m, idx) => (
-                    <motion.div
-                      key={idx}
-                      initial={{ opacity: 0, y: 20, scale: 0.95 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      transition={{ duration: 0.5, type: "spring", stiffness: 200 }}
-                      className={`relative ${m.role === 'user' ? 'flex justify-end' : 'flex justify-start'}`}
-                    >
-                      <div
-                        className={`max-w-xs md:max-w-sm px-3 py-2 md:px-6 md:py-4 rounded-2xl shadow-lg ${
-                          m.role === 'user'
-                            ? 'bg-gradient-to-r from-rose-500 to-pink-600 text-white'
-                            : 'bg-white/80 backdrop-blur-xl border border-white/50 text-gray-800'
-                        }`}
-                      >
-                        <div className="relative font-medium leading-relaxed text-sm md:text-base">
-                      {m.text}
-                        </div>
+                            className="flex justify-start"
+                          >
+                            <div className="flex items-center bg-gray-100 rounded-2xl rounded-bl-sm px-4 py-3">
+                              <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                              <span className="text-gray-600">{currentDemoTexts.writing}</span>
                       </div>
                     </motion.div>
-                  ))}
-                </motion.div>
+                        )}
+                        
+                      </div>
 
-                {/* Bottone replica demo spettacolare */}
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.8, delay: 1.6 }}
-                  className="mt-4 md:mt-8 pt-3 md:pt-6 border-t border-gray-200/50 text-center"
-                >
+                      {/* Messaggi Suggeriti - SU UNA RIGA SOLA - Disabilitati durante il caricamento */}
+                      <div className={`border-t p-2 transition-colors duration-300 ${
+                        demoIsDarkMode ? 'border-gray-700' : 'border-gray-100'
+                      }`}>
+                        <div className="flex justify-center gap-2 md:gap-3 overflow-x-auto">
+                          {currentDemoTexts.suggestedMessages.map((message: string, index: number) => (
                   <motion.button
-                    onClick={() => setDemoRunId((v) => v + 1)}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    className="relative group inline-flex items-center gap-2 md:gap-3 px-4 py-2 md:px-8 md:py-4 bg-gradient-to-r from-rose-500 to-pink-600 text-white font-bold rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden text-sm md:text-base"
-                  >
-                    {/* Effetto shimmer */}
-                    <motion.div
-                      className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12"
-                      animate={{
-                        x: ['-100%', '100%'],
-                      }}
-                      transition={{
-                        duration: 2,
-                        repeat: Infinity,
-                        repeatDelay: 4,
-                        ease: "easeInOut",
-                      }}
-                    />
-                    <motion.div
-                      animate={{ rotate: [0, 360] }}
-                      transition={{
-                        duration: 2,
-                        repeat: Infinity,
-                        ease: "linear",
-                      }}
-                      className="relative z-10"
-                    >
-                      <ArrowRight className="w-5 h-5" />
-                    </motion.div>
-                    <span className="relative z-10">Replica Demo</span>
+                              key={index}
+                              initial={{ opacity: 0, scale: 0.9 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              transition={{ delay: index * 0.1 }}
+                              onClick={() => !isDemoLoading && handleDemoSuggestedMessage(message)}
+                              disabled={isDemoLoading}
+                              className={`px-3 py-2 md:px-4 md:py-2 rounded-full text-xs md:text-sm font-medium transition-all duration-200 hover:scale-105 active:scale-95 whitespace-nowrap flex-shrink-0 ${
+                                isDemoLoading 
+                                  ? 'bg-gray-100 text-gray-400 border border-gray-200 cursor-not-allowed' 
+                                  : 'bg-gradient-to-r from-primary/10 to-accent/10 text-primary border border-primary/20 hover:from-primary/20 hover:to-accent/20 hover:border-primary/40'
+                              }`}
+                            >
+                              {message}
                   </motion.button>
-                </motion.div>
+                          ))}
+                        </div>
             </div>
 
-            {/* Decorazioni angolari eleganti - solo desktop */}
-            <div className="hidden md:block absolute top-4 left-4 w-8 h-8 border-l-2 border-t-2 border-rose-300/40 rounded-tl-lg"></div>
-            <div className="hidden md:block absolute top-4 right-4 w-8 h-8 border-r-2 border-t-2 border-pink-300/40 rounded-tr-lg"></div>
-            <div className="hidden md:block absolute bottom-4 left-4 w-8 h-8 border-l-2 border-b-2 border-rose-300/40 rounded-bl-lg"></div>
-            <div className="hidden md:block absolute bottom-4 right-4 w-8 h-8 border-r-2 border-b-2 border-pink-300/40 rounded-br-lg"></div>
+                      {/* Input Area - FISSA */}
+                      <div className={`border-t p-3 md:p-4 pb-6 md:pb-2 flex-shrink-0 transition-colors duration-300 ${
+                        demoIsDarkMode ? 'border-gray-700' : 'border-gray-200'
+                      }`}>
+                        <form onSubmit={handleDemoSendMessage} className="flex items-center gap-2 md:gap-3">
+                          <input
+                            ref={demoInputRef}
+                            type="text"
+                            value={demoInput}
+                            onChange={(e) => setDemoInput(e.target.value)}
+                            placeholder={currentDemoTexts.placeholder}
+                            disabled={isDemoLoading}
+                            className={`flex-1 px-4 py-2.5 rounded-full border outline-none transition ${
+                              demoIsDarkMode 
+                                ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-primary focus:ring-2 focus:ring-primary/20' 
+                                : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-primary focus:ring-2 focus:ring-primary/20'
+                            }`}
+                          />
+                          <button
+                            type="submit"
+                            disabled={isDemoLoading || !demoInput.trim()}
+                            className="w-10 h-10 md:w-11 md:h-11 bg-gradient-to-r from-primary to-secondary text-white rounded-full flex items-center justify-center hover:from-secondary hover:to-accent transition disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            <Send className="w-4 h-4 md:w-5 md:h-5" />
+                          </button>
+                        </form>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
           </motion.div>
         </div>
 
@@ -1503,9 +1547,10 @@ export default function LandingPage() {
             <h2 className="text-5xl md:text-6xl font-black text-dark mb-6 leading-tight">
               {t.howItWorks.title}
             </h2>
-            <p className="text-xl md:text-2xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-              {t.howItWorks.subtitle}
-            </p>
+            <div 
+              className="text-xl md:text-2xl text-gray-800 max-w-5xl mx-auto leading-relaxed"
+              dangerouslySetInnerHTML={{ __html: t.howItWorks.subtitle }}
+            />
           </motion.div>
 
           {/* Steps con animazioni - Gallery style su mobile */}
@@ -1737,10 +1782,9 @@ export default function LandingPage() {
           </motion.div>
 
           {/* Grid delle features ultra-lussuose */}
-          <div className="grid grid-cols-2 lg:grid-cols-6 gap-6 lg:gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-4">
              {features.map((feature, index) => (
-               // Mostra solo le prime 4 features su mobile, tutte su desktop
-               <div key={index} className={`${index >= 4 ? 'hidden lg:block' : ''}`}>
+               <div key={index}>
                <motion.div
                  key={index}
                 initial={{ opacity: 0, y: 40, scale: 0.95 }}
@@ -2003,69 +2047,88 @@ export default function LandingPage() {
             </motion.p>
           </motion.div>
 
-          <div className="grid md:grid-cols-1 gap-8 max-w-2xl mx-auto">
-            {pricingPlans.map((plan, index) => (
-              plan.highlighted ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+            {pricingPlans.map((plan, index) => {
+              const isAnnual = plan.name === "Annuale" || plan.name === "Annual"
+              return (
                 <div key={index} className="relative w-full h-auto" style={{ perspective: '1200px' }}>
-
-
-              <div className="relative w-full">
-                    {/* Fronte della card - ULTRA LUXURIOUS */}
-                                        <div 
-                      className="relative bg-white rounded-[2rem] p-10 md:p-12 overflow-hidden shadow-2xl border border-rose-100/50"
+                  <div className="relative w-full">
+                    {/* Card quasi quadrata - ULTRA LUXURIOUS */}
+                    <div 
+                      className={`relative rounded-[2rem] p-6 md:p-8 overflow-hidden shadow-2xl aspect-square flex flex-col ${
+                        isAnnual 
+                          ? 'bg-gradient-to-br from-amber-50 to-orange-50 border-2 border-amber-200/60' 
+                          : 'bg-white border border-rose-100/50'
+                      }`}
                       style={{ 
                         backfaceVisibility: 'hidden',
-                        boxShadow: "0 25px 50px rgba(244, 63, 94, 0.08), 0 0 0 1px rgba(251, 207, 232, 0.1)"
+                        boxShadow: isAnnual 
+                          ? "0 25px 50px rgba(245, 158, 11, 0.15), 0 0 0 1px rgba(251, 191, 36, 0.2)"
+                          : "0 25px 50px rgba(244, 63, 94, 0.08), 0 0 0 1px rgba(251, 207, 232, 0.1)"
                       }}
                     >
-                      {/* Background pattern interno */}
-                      <div className="absolute inset-0 bg-gradient-to-br from-rose-50/30 via-transparent to-pink-50/20"></div>
-                      <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-rose-100/40 to-transparent rounded-full blur-3xl"></div>
-                      <div className="absolute bottom-0 left-0 w-32 h-32 bg-gradient-to-tr from-pink-100/30 to-transparent rounded-full blur-2xl"></div>
-
-
-
-                      {/* Header del piano */}
-                      <div className="relative text-center mb-8">
-                        <h3 className="text-3xl md:text-4xl font-black text-gray-900 mb-4">
-                          {plan.name}
-                        </h3>
-                        
-                        <div className="mb-8">
-                          <div className="text-6xl md:text-7xl font-black mb-2">
-                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-600 to-pink-600">
-                              {plan.price}
-                            </span>
-                            <span className="text-2xl md:text-3xl font-medium text-gray-600">
-                              {plan.period}
-                            </span>
+                      {/* Badge di risparmio per piano annuale */}
+                      {isAnnual && (
+                        <div className="absolute top-4 right-4 z-20">
+                          <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-3 py-1.5 rounded-full shadow-lg">
+                            <span className="text-xs font-bold">Risparmia €49</span>
                           </div>
-                          
-                          {/* Free Trial Button */}
-                          {plan.hasFreeTrial && (
-                            <div className="mt-4">
-                              <Link
-                                href="/register?free_trial=true"
-                                className="inline-block group"
-                              >
-                                <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white py-3 px-6 rounded-xl font-bold text-base shadow-lg overflow-hidden relative">
-                                  <span className="relative flex items-center justify-center">
-                                    {plan.freeTrialButton}
-                                  </span>
-                                </div>
-                              </Link>
-                            </div>
-                          )}
                         </div>
+                      )}
 
-                      {/* Lista features ultra-stilizzata */}
-                      <div className="grid grid-cols-2 gap-4 mb-10">
+                      {/* Background pattern interno */}
+                      <div className={`absolute inset-0 ${
+                        isAnnual 
+                          ? 'bg-gradient-to-br from-amber-50/40 via-transparent to-orange-50/30' 
+                          : 'bg-gradient-to-br from-rose-50/30 via-transparent to-pink-50/20'
+                      }`}></div>
+                      <div className={`absolute top-0 right-0 w-32 h-32 rounded-full blur-3xl ${
+                        isAnnual 
+                          ? 'bg-gradient-to-br from-amber-100/50 to-transparent' 
+                          : 'bg-gradient-to-br from-rose-100/40 to-transparent'
+                      }`}></div>
+                      <div className={`absolute bottom-0 left-0 w-24 h-24 rounded-full blur-2xl ${
+                        isAnnual 
+                          ? 'bg-gradient-to-tr from-orange-100/40 to-transparent' 
+                          : 'bg-gradient-to-tr from-pink-100/30 to-transparent'
+                      }`}></div>
+
+                    {/* Header del piano */}
+                    <div className="relative text-center mb-6 flex-shrink-0">
+                      <h3 className="text-2xl md:text-3xl font-black text-gray-900 mb-3">
+                        {plan.name}
+                      </h3>
+                      
+                      <div className="mb-6">
+                        <div className="text-4xl md:text-5xl font-black mb-2">
+                          <span className={`text-transparent bg-clip-text ${
+                            isAnnual 
+                              ? 'bg-gradient-to-r from-amber-600 to-orange-600' 
+                              : 'bg-gradient-to-r from-rose-600 to-pink-600'
+                          }`}>
+                            {plan.price}
+                          </span>
+                          <span className="text-lg md:text-xl font-medium text-gray-600">
+                            {plan.period}
+                          </span>
+                        </div>
+                        
+                      </div>
+                    </div>
+
+                    {/* Lista features ultra-stilizzata */}
+                    <div className="flex-1 flex flex-col justify-center mb-6">
+                      <div className="space-y-3">
                         {plan.features.map((feature: string, i: number) => (
                           <div 
                             key={i} 
                             className="flex items-start group"
                           >
-                            <div className="flex-shrink-0 w-5 h-5 bg-gradient-to-r from-rose-500 to-pink-600 rounded-full flex items-center justify-center mr-3 mt-0.5 shadow-lg">
+                            <div className={`flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center mr-3 mt-0.5 shadow-lg ${
+                              isAnnual 
+                                ? 'bg-gradient-to-r from-amber-500 to-orange-600' 
+                                : 'bg-gradient-to-r from-rose-500 to-pink-600'
+                            }`}>
                               <Check className="w-3 h-3 text-white font-bold" strokeWidth={3} />
                             </div>
                             <span className="text-gray-700 text-sm font-medium group-hover:text-gray-900 transition-colors duration-200">
@@ -2076,35 +2139,62 @@ export default function LandingPage() {
                       </div>
                     </div>
 
-                      {/* Bottone CTA spettacolare */}
-                      <div className="relative">
-                <Link
-                  href="/register?free_trial=false"
-                          className="relative block group"
+                    {/* Bottoni affiancati */}
+                    <div className="relative flex-shrink-0">
+                      <div className="flex gap-3">
+                        {/* Free Trial Button */}
+                        {plan.hasFreeTrial && (
+                          <Link
+                            href="/register?free_trial=true"
+                            className="flex-1 group"
+                          >
+                            <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white py-3 px-3 rounded-xl font-bold text-xs shadow-lg overflow-hidden relative">
+                              <span className="relative flex items-center justify-center">
+                                {plan.freeTrialButton}
+                              </span>
+                            </div>
+                          </Link>
+                        )}
+                        
+                        {/* Bottone CTA principale */}
+                        <Link
+                          href="/register?free_trial=false"
+                          className="flex-1 group"
                         >
-                          <div className="bg-gradient-to-r from-rose-500 via-pink-500 to-rose-600 text-white py-4 px-8 rounded-2xl font-bold text-lg text-center shadow-lg overflow-hidden relative">
+                          <div className={`text-white py-3 px-3 rounded-xl font-bold text-xs text-center shadow-lg overflow-hidden relative ${
+                            isAnnual 
+                              ? 'bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600' 
+                              : 'bg-gradient-to-r from-rose-500 via-pink-500 to-rose-600'
+                          }`}>
                             <span className="relative flex items-center justify-center">
                               {plan.ctaButton}
-                              <div className="ml-2">
-                                <ArrowRight className="w-5 h-5" />
+                              <div className="ml-1">
+                                <ArrowRight className="w-3 h-3" />
                               </div>
                             </span>
                           </div>
-                </Link>
-              </div>
-
-                      {/* Decorazioni angolari */}
-                      <div className="absolute top-4 left-4 w-6 h-6 border-l-2 border-t-2 border-rose-200 rounded-tl-lg"></div>
-                      <div className="absolute top-4 right-4 w-6 h-6 border-r-2 border-t-2 border-rose-200 rounded-tr-lg"></div>
-                      <div className="absolute bottom-4 left-4 w-6 h-6 border-l-2 border-b-2 border-rose-200 rounded-bl-lg"></div>
-                      <div className="absolute bottom-4 right-4 w-6 h-6 border-r-2 border-b-2 border-rose-200 rounded-br-lg"></div>
+                        </Link>
+                      </div>
                     </div>
 
-
+                    {/* Decorazioni angolari */}
+                    <div className={`absolute top-3 left-3 w-4 h-4 border-l-2 border-t-2 rounded-tl-lg ${
+                      isAnnual ? 'border-amber-200' : 'border-rose-200'
+                    }`}></div>
+                    <div className={`absolute top-3 right-3 w-4 h-4 border-r-2 border-t-2 rounded-tr-lg ${
+                      isAnnual ? 'border-amber-200' : 'border-rose-200'
+                    }`}></div>
+                    <div className={`absolute bottom-3 left-3 w-4 h-4 border-l-2 border-b-2 rounded-bl-lg ${
+                      isAnnual ? 'border-amber-200' : 'border-rose-200'
+                    }`}></div>
+                    <div className={`absolute bottom-3 right-3 w-4 h-4 border-r-2 border-b-2 rounded-br-lg ${
+                      isAnnual ? 'border-amber-200' : 'border-rose-200'
+                    }`}></div>
                   </div>
                 </div>
-              ) : null
-            ))}
+              </div>
+              )
+            })}
           </div>
 
 
@@ -3135,295 +3225,6 @@ export default function LandingPage() {
       {/* Cookie Banner */}
       <CookieBanner />
 
-      {/* Demo Chat Popup Modal - Ripensato con margini, angoli arrotondati e altezza fissa */}
-      {isDemoPopupOpen && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
-        >
-          {/* Backdrop con supporto dark mode */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className={`absolute inset-0 ${demoIsDarkMode ? 'bg-black/60' : 'bg-black/20'} backdrop-blur-sm`}
-            onClick={() => setIsDemoPopupOpen(false)}
-          />
-          
-          {/* Modal Content - Con margini, angoli arrotondati e altezza fissa */}
-          <motion.div
-            initial={{ scale: 0.95, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.95, opacity: 0 }}
-            className={`relative w-full max-w-4xl mx-auto ${demoIsDarkMode ? 'bg-gray-900' : 'bg-white'} shadow-2xl overflow-hidden rounded-3xl h-[90vh] max-h-[800px]`}
-          >
-            {/* Header - FISSO - Non sparisce mai */}
-            <div className={`${demoIsDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'} shadow-sm flex-shrink-0 border-b transition-colors duration-300`}>
-              <div className="max-w-4xl mx-auto px-2 py-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center mr-3">
-                      <Home className="w-5 h-5 text-white" />
-                    </div>
-                    <div>
-                      <h1 className={`font-semibold text-lg transition-colors duration-300 ${demoIsDarkMode ? 'text-white' : 'text-gray-900'}`}>Casa Bella Vista</h1>
-                      <p className={`text-sm ${demoIsDarkMode ? 'text-gray-300' : 'text-gray-500'} transition-colors duration-300`}>{currentDemoTexts.assistant}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={handleDemoNewConversation}
-                      className={`p-2 rounded-lg transition-colors duration-200 group ${
-                        demoIsDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
-                      }`}
-                      title="Nuova conversazione"
-                    >
-                      <RefreshCw className={`w-5 h-5 transition-colors duration-200 ${
-                        demoIsDarkMode ? 'text-gray-300 group-hover:text-primary' : 'text-gray-600 group-hover:text-primary'
-                      }`} />
-                    </button>
-                    <button
-                      onClick={toggleDemoLanguage}
-                      className="px-3 py-1.5 bg-gradient-to-r from-primary/10 to-accent/10 text-primary border border-primary/20 rounded-lg text-sm font-medium hover:from-primary/20 hover:to-accent/20 hover:border-primary/40 transition-all duration-200"
-                    >
-                      {demoLanguage}
-                    </button>
-                    <button
-                      onClick={toggleDemoDarkMode}
-                      className={`p-2 rounded-lg transition-colors duration-200 group ${
-                        demoIsDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
-                      }`}
-                      title={demoIsDarkMode ? "Passa alla modalità chiara" : "Passa alla modalità scura"}
-                    >
-                      {demoIsDarkMode ? (
-                        <Sun className={`w-5 h-5 transition-colors duration-200 ${
-                          demoIsDarkMode ? 'text-gray-300 group-hover:text-primary' : 'text-gray-600 group-hover:text-primary'
-                        }`} />
-                      ) : (
-                        <Moon className={`w-5 h-5 transition-colors duration-200 ${
-                          demoIsDarkMode ? 'text-gray-300 group-hover:text-primary' : 'text-gray-600 group-hover:text-primary'
-                        }`} />
-                      )}
-                    </button>
-                    <button
-                      onClick={() => setDemoShowInfo(!demoShowInfo)}
-                      className={`p-2 rounded-lg transition ${
-                        demoIsDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
-                      }`}
-                    >
-                      <Info className={`w-5 h-5 transition-colors duration-300 ${
-                        demoIsDarkMode ? 'text-gray-300' : 'text-gray-600'
-                      }`} />
-                    </button>
-                    <button
-                      onClick={() => setIsDemoPopupOpen(false)}
-                      className={`p-2 rounded-lg transition ${
-                        demoIsDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
-                      }`}
-                    >
-                      <X className={`w-5 h-5 transition-colors duration-300 ${
-                        demoIsDarkMode ? 'text-gray-300' : 'text-gray-600'
-                      }`} />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Info Panel - FISSO */}
-            {demoShowInfo && (
-              <motion.div
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-blue-50 border-b border-blue-200 flex-shrink-0"
-              >
-                <div className="max-w-4xl mx-auto px-4 py-4">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <p className="text-sm text-blue-800 mb-2">
-                        <strong>{currentDemoTexts.howCanIHelp}</strong>
-                      </p>
-                      <ul className="text-sm text-blue-700 space-y-1">
-                        {currentDemoTexts.helpItems.map((item, index) => (
-                          <li key={index}>• {item}</li>
-                        ))}
-                      </ul>
-                    </div>
-                    <button
-                      onClick={() => setDemoShowInfo(false)}
-                      className="text-blue-600 hover:text-blue-800"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-
-            {/* Main Chat Area - FISSA con altezza controllata */}
-            <div className="flex-1 flex flex-col max-w-4xl mx-auto w-full px-4 py-4 md:py-6 overflow-hidden">
-              <div className={`${demoIsDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl shadow-xl overflow-hidden flex flex-col h-full transition-colors duration-300`}>
-                {/* Welcome Screen */}
-                {demoShowWelcome && demoMessages.length <= 1 && (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="p-8 text-center flex-1 flex flex-col justify-center"
-                    style={{ minHeight: '400px' }}
-                  >
-                    <div className="w-20 h-20 bg-rose-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
-                      <MessageSquare className="w-10 h-10 text-rose-500" />
-                    </div>
-                    <h2 className={`text-2xl font-bold mb-2 ${demoIsDarkMode ? 'text-white' : 'text-gray-900'} transition-colors duration-300`}>{currentDemoTexts.welcome}</h2>
-                    <p className={`mb-6 max-w-md mx-auto transition-colors duration-300 ${demoIsDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                      {currentDemoTexts.welcomeSubtitle}
-                    </p>
-                    <div className="mb-6">
-                      <input
-                        type="text"
-                        value={demoGuestName}
-                        onChange={(e) => setDemoGuestName(e.target.value)}
-                        placeholder={currentDemoTexts.namePlaceholder}
-                        className={`max-w-xs mx-auto px-4 py-3 rounded-lg border transition-all duration-200 ${
-                          demoIsDarkMode 
-                            ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-primary focus:ring-2 focus:ring-primary/20' 
-                            : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-primary focus:ring-2 focus:ring-primary/20'
-                        } outline-none`}
-                      />
-                    </div>
-                    <button
-                      onClick={handleDemoStartChat}
-                      className="px-6 py-3 bg-gradient-to-r from-primary to-secondary text-white rounded-2xl font-semibold hover:from-secondary hover:to-accent transition-all duration-200"
-                    >
-                      {currentDemoTexts.startChat}
-                    </button>
-                  </motion.div>
-                )}
-
-                {/* Messages Area - FISSA */}
-                {(!demoShowWelcome || demoMessages.length > 1) && (
-                  <>
-                    <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4" style={{ maxHeight: 'calc(100vh - 500px)', minHeight: '250px' }}>
-                      {demoMessages.map((message, index) => (
-                        <motion.div
-                          key={index}
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: index * 0.1 }}
-                          className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                        >
-                          <div className={`flex items-start max-w-[85%] md:max-w-[70%] ${
-                            message.role === 'user' ? 'flex-row-reverse' : ''
-                          }`}>
-                            <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                              message.role === 'user' 
-                                ? 'bg-gradient-to-r from-rose-500 to-pink-600 text-white ml-3' 
-                                : 'bg-gray-200 text-gray-600 mr-3'
-                            }`}>
-                              {message.role === 'user' ? (
-                                <User className="w-4 h-4" />
-                              ) : (
-                                <Bot className="w-4 h-4" />
-                              )}
-                            </div>
-                            <div className={`rounded-2xl px-4 py-3 ${
-                              message.role === 'user'
-                                ? 'bg-gradient-to-r from-rose-500 to-pink-600 text-white rounded-br-sm'
-                                : 'bg-gray-100 text-gray-900 rounded-bl-sm'
-                            }`}>
-                              <p className="whitespace-pre-wrap">{message.content}</p>
-                              <p className={`text-xs mt-1 ${
-                                message.role === 'user' ? 'text-white/70' : 'text-gray-400'
-                              }`}>
-                                {message.timestamp.toLocaleTimeString('it-IT', {
-                                  hour: '2-digit',
-                                  minute: '2-digit'
-                                })}
-                              </p>
-                            </div>
-                          </div>
-                        </motion.div>
-                      ))}
-                      
-                      {isDemoLoading && (
-                        <motion.div
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          className="flex justify-start"
-                        >
-                          <div className="flex items-center bg-gray-100 rounded-2xl rounded-bl-sm px-4 py-3">
-                            <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                            <span className="text-gray-600">{currentDemoTexts.writing}</span>
-                          </div>
-                        </motion.div>
-                      )}
-                      
-                      <div ref={demoMessagesEndRef} />
-                    </div>
-
-                    {/* Messaggi Suggeriti - SU UNA RIGA SOLA - Disabilitati durante il caricamento */}
-                    <div className={`border-t p-2 transition-colors duration-300 ${
-                      demoIsDarkMode ? 'border-gray-700' : 'border-gray-100'
-                    }`}>
-                      <div className="flex justify-center gap-2 md:gap-3 overflow-x-auto">
-                        {currentDemoTexts.suggestedMessages.map((message: string, index: number) => (
-                          <motion.button
-                            key={index}
-                            initial={{ opacity: 0, scale: 0.9 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            transition={{ delay: index * 0.1 }}
-                            onClick={() => !isDemoLoading && handleDemoSuggestedMessage(message)}
-                            disabled={isDemoLoading}
-                            className={`px-3 py-2 md:px-4 md:py-2 rounded-full text-xs md:text-sm font-medium transition-all duration-200 hover:scale-105 active:scale-95 whitespace-nowrap flex-shrink-0 ${
-                              isDemoLoading 
-                                ? 'bg-gray-100 text-gray-400 border border-gray-200 cursor-not-allowed' 
-                                : 'bg-gradient-to-r from-primary/10 to-accent/10 text-primary border border-primary/20 hover:from-primary/20 hover:to-accent/20 hover:border-primary/40'
-                            }`}
-                          >
-                            {message}
-                          </motion.button>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Input Area - FISSA */}
-                    <div className={`border-t p-3 md:p-4 pb-2 safe-bottom flex-shrink-0 transition-colors duration-300 ${
-                      demoIsDarkMode ? 'border-gray-700' : 'border-gray-200'
-                    }`}>
-                      <form onSubmit={handleDemoSendMessage} className="flex items-center gap-2 md:gap-3">
-                        <input
-                          ref={demoInputRef}
-                          type="text"
-                          value={demoInput}
-                          onChange={(e) => setDemoInput(e.target.value)}
-                          placeholder={currentDemoTexts.placeholder}
-                          disabled={isDemoLoading}
-                          className={`flex-1 px-4 py-2.5 rounded-full border outline-none transition ${
-                            demoIsDarkMode 
-                              ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-primary focus:ring-2 focus:ring-primary/20' 
-                              : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-primary focus:ring-2 focus:ring-primary/20'
-                          }`}
-                        />
-                        <button
-                          type="submit"
-                          disabled={isDemoLoading || !demoInput.trim()}
-                          className="w-10 h-10 md:w-11 md:h-11 bg-gradient-to-r from-primary to-secondary text-white rounded-full flex items-center justify-center hover:from-secondary hover:to-accent transition disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          <Send className="w-4 h-4 md:w-5 md:h-5" />
-                        </button>
-                      </form>
-                    </div>
-                  </>
-                )}
-              </div>
-
-
-            </div>
-          </motion.div>
-        </motion.div>
-      )}
     </div>
   )
 }
