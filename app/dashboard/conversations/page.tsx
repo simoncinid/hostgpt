@@ -98,7 +98,7 @@ function ConversationsContent() {
                     value={selectedBotId ?? ''}
                     onChange={(e) => setSelectedBotId(e.target.value ? Number(e.target.value) : null)}
                   >
-                    <option value="">Seleziona...</option>
+                    <option value="">{t.conversations.selectOption}</option>
                     {chatbots.map((b) => (
                       <option key={b.id} value={b.id}>{b.property_name}</option>
                     ))}
@@ -153,7 +153,7 @@ function ConversationsFallback() {
         <div className="bg-white rounded-2xl shadow p-6">
           <div className="text-center py-12">
             <div className="loading-spinner w-8 h-8 mx-auto mb-4"></div>
-            <p className="text-gray-600">{t.conversations.loadingConversations}</p>
+            <p className="text-gray-600">{t.conversations.loading}</p>
           </div>
         </div>
       </div>

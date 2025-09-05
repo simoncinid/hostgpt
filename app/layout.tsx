@@ -1,10 +1,7 @@
 import type { Metadata, Viewport } from 'next'
-import { Inter } from 'next/font/google'
 import '@/styles/globals.css'
 import { Toaster } from 'react-hot-toast'
 import { LanguageProvider } from '../lib/languageContext'
-
-const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: 'HostGPT - Chatbot Intelligenti per Host',
@@ -26,7 +23,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="it">
-      <body className={inter.className}>
+      <body className="font-sans">
         <LanguageProvider>
           {children}
         </LanguageProvider>

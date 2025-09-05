@@ -146,7 +146,7 @@ function GuardianContent() {
       await fetchGuardianStatus()
       
       // Mostra messaggio di successo
-      toast.success('🎉 Abbonamento Guardian attivato con successo!')
+      toast.success(t.guardian.success.subscriptionActivated)
     } catch (error) {
       console.error('Error confirming guardian subscription:', error)
     }
@@ -182,7 +182,7 @@ function GuardianContent() {
       }
     } catch (error: any) {
       console.error('Error subscribing to guardian:', error)
-      const errorMessage = error.response?.data?.detail || 'Errore durante la sottoscrizione'
+      const errorMessage = error.response?.data?.detail || t.guardian.errors.subscriptionError
       toast.error(errorMessage)
     } finally {
       setIsCheckoutLoading(false)
@@ -201,10 +201,10 @@ function GuardianContent() {
       console.log('Aggiornando dati dal server...')
       await fetchGuardianData()
       
-      toast.success('Alert risolto con successo!')
+      toast.success(t.guardian.success.alertResolved)
     } catch (error) {
       console.error('Error resolving alert:', error)
-      toast.error('Errore durante la risoluzione dell\'alert')
+      toast.error(t.guardian.errors.alertResolutionError)
     }
   }
 
@@ -218,7 +218,7 @@ function GuardianContent() {
       await fetchGuardianStatus()
     } catch (error: any) {
       console.error('Error cancelling guardian subscription:', error)
-      toast.error(error.response?.data?.detail || 'Errore durante la cancellazione')
+      toast.error(error.response?.data?.detail || t.guardian.errors.cancellationError)
     } finally {
       setIsCancellingSubscription(false)
     }
@@ -232,7 +232,7 @@ function GuardianContent() {
       await fetchGuardianStatus()
     } catch (error: any) {
       console.error('Error reactivating guardian subscription:', error)
-      toast.error(error.response?.data?.detail || 'Errore durante la riattivazione')
+      toast.error(error.response?.data?.detail || t.guardian.errors.reactivationError)
     }
   }
 
@@ -418,7 +418,7 @@ function GuardianContent() {
                             <div className="flex-1">
                               <div className="flex items-center space-x-2 mb-3">
                                 <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-                                <p className="text-xl font-black text-gray-800">📞 Host chiama l'ospite</p>
+                                <p className="text-xl font-black text-gray-800">{t.guardian.demo.phoneCall}</p>
                               </div>
                               <div className="bg-white rounded-2xl p-4 shadow-inner border-l-4 border-green-500">
                                 <p className="text-gray-700 italic">"Mi scusi per il problema! Le mando subito il tecnico e le offro uno sconto del 20% sul soggiorno"</p>
@@ -444,8 +444,8 @@ function GuardianContent() {
                             <CheckCircle className="w-12 h-12 relative z-10" />
                           </div>
                           <div className="text-center">
-                            <p className="text-3xl font-black tracking-wider">🎉 Problema risolto!</p>
-                            <p className="text-xl font-semibold mt-2">Recensione negativa evitata</p>
+                            <p className="text-3xl font-black tracking-wider">{t.guardian.demo.problemSolved}</p>
+                            <p className="text-xl font-semibold mt-2">{t.guardian.demo.negativeReviewAvoided}</p>
                             <div className="flex space-x-3 mt-4 justify-center">
                               <div className="w-3 h-3 bg-green-300 rounded-full animate-bounce"></div>
                               <div className="w-3 h-3 bg-green-300 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
@@ -469,15 +469,15 @@ function GuardianContent() {
                     {isCheckoutLoading ? (
                       <>
                         <Loader2 className="w-5 h-5 animate-spin" />
-                        <span>Reindirizzamento...</span>
+                        <span>{t.guardian.redirecting}</span>
                       </>
                     ) : (
                       <>
                         <Shield className="w-5 h-5" />
                         <span>
                           {guardianStatus?.guardian_subscription_status === 'cancelling' 
-                            ? 'Riattiva Guardian' 
-                            : 'Attiva Guardian - 9€/mese'
+                            ? t.guardian.reactivate 
+                            : t.guardian.activateWithPrice
                           }
                         </span>
                       </>
@@ -501,12 +501,12 @@ function GuardianContent() {
                         <span className="text-sm md:text-3xl font-bold">{guardianStats.total_guests}</span>
                       </div>
                       <p className="text-gray-600 text-xs md:text-base">
-                        <span className="md:hidden">Ospiti</span>
-                        <span className="hidden md:inline">Ospiti Totali</span>
+                        <span className="md:hidden">{t.guardian.stats.totalGuestsShort}</span>
+                        <span className="hidden md:inline">{t.guardian.stats.totalGuests}</span>
                       </p>
                       <p className="text-xs md:text-sm text-green-600 mt-1">
-                        <span className="md:hidden">Monitorati</span>
-                        <span className="hidden md:inline">Monitorati</span>
+                        <span className="md:hidden">{t.guardian.stats.monitored}</span>
+                        <span className="hidden md:inline">{t.guardian.stats.monitored}</span>
                       </p>
                     </motion.div>
                     
@@ -521,12 +521,12 @@ function GuardianContent() {
                         <span className="text-sm md:text-3xl font-bold text-red-600">{guardianStats.high_risk_guests}</span>
                       </div>
                       <p className="text-gray-600 text-xs md:text-base">
-                        <span className="md:hidden">A Rischio</span>
-                        <span className="hidden md:inline">Ospiti a Rischio</span>
+                        <span className="md:hidden">{t.guardian.stats.highRiskGuestsShort}</span>
+                        <span className="hidden md:inline">{t.guardian.stats.highRiskGuests}</span>
                       </p>
                       <p className="text-xs md:text-sm text-red-600 mt-1">
-                        <span className="md:hidden">Rilevati</span>
-                        <span className="hidden md:inline">Rilevati</span>
+                        <span className="md:hidden">{t.guardian.stats.detected}</span>
+                        <span className="hidden md:inline">{t.guardian.stats.detected}</span>
                       </p>
                     </motion.div>
                     
@@ -541,12 +541,12 @@ function GuardianContent() {
                         <span className="text-sm md:text-3xl font-bold text-green-600">{guardianStats.resolved_issues}</span>
                       </div>
                       <p className="text-gray-600 text-xs md:text-base">
-                        <span className="md:hidden">Risolti</span>
-                        <span className="hidden md:inline">Problemi Risolti</span>
+                        <span className="md:hidden">{t.guardian.stats.resolvedIssuesShort}</span>
+                        <span className="hidden md:inline">{t.guardian.stats.resolvedIssues}</span>
                       </p>
                       <p className="text-xs md:text-sm text-green-600 mt-1">
-                        <span className="md:hidden">Gestiti</span>
-                        <span className="hidden md:inline">Gestiti</span>
+                        <span className="md:hidden">{t.guardian.stats.managed}</span>
+                        <span className="hidden md:inline">{t.guardian.stats.managed}</span>
                       </p>
                     </motion.div>
                     
@@ -561,12 +561,12 @@ function GuardianContent() {
                         <span className="text-sm md:text-3xl font-bold text-yellow-600">{guardianStats.avg_satisfaction}</span>
                       </div>
                       <p className="text-gray-600 text-xs md:text-base">
-                        <span className="md:hidden">Soddisf.</span>
-                        <span className="hidden md:inline">Soddisfazione Media</span>
+                        <span className="md:hidden">{t.guardian.stats.avgSatisfactionShort}</span>
+                        <span className="hidden md:inline">{t.guardian.stats.avgSatisfaction}</span>
                       </p>
                       <p className="text-xs md:text-sm text-yellow-600 mt-1">
-                        <span className="md:hidden">Punteggio</span>
-                        <span className="hidden md:inline">Punteggio</span>
+                        <span className="md:hidden">{t.guardian.stats.score}</span>
+                        <span className="hidden md:inline">{t.guardian.stats.score}</span>
                       </p>
                     </motion.div>
                   </div>
@@ -577,7 +577,7 @@ function GuardianContent() {
                   <div className="p-6 border-b border-gray-200">
                     <h2 className="text-xl font-semibold text-dark flex items-center space-x-2">
                       <AlertTriangle className="w-5 h-5 text-red-500" />
-                      <span>Alert Attivi ({alerts.length})</span>
+                      <span>{t.guardian.alerts.activeAlerts} ({alerts.length})</span>
                     </h2>
                   </div>
                  
@@ -585,7 +585,7 @@ function GuardianContent() {
                     {alerts.length === 0 ? (
                       <div className="text-center py-8">
                         <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-4" />
-                        <p className="text-gray-600">Nessun alert attivo. Tutto sotto controllo! 🎉</p>
+                        <p className="text-gray-600">{t.guardian.alerts.allUnderControl}</p>
                       </div>
                     ) : (
                       <div className="space-y-4">
@@ -602,14 +602,14 @@ function GuardianContent() {
                                   </div>
                                   <div className="flex-1 min-w-0">
                                     <div className="flex items-center space-x-3 mb-2">
-                                      <h3 className="font-semibold text-gray-900">Ospite #{alert.guest_id}</h3>
+                                      <h3 className="font-semibold text-gray-900">{t.guardian.alerts.guest} #{alert.guest_id}</h3>
                                       <span className={`px-3 py-1 rounded-full text-xs font-medium ${getSeverityColor(alert.severity)}`}>
                                         {alert.severity.toUpperCase()}
                                       </span>
                                     </div>
                                     <p className="text-gray-700 leading-relaxed">{alert.message}</p>
                                     <div className="mt-2 flex items-center space-x-4 text-xs text-gray-500">
-                                      <span>Creato: {new Date(alert.created_at).toLocaleString('it-IT')}</span>
+                                      <span>{t.guardian.alerts.created}: {new Date(alert.created_at).toLocaleString('it-IT')}</span>
                                     </div>
                                   </div>
                                 </div>
@@ -621,7 +621,7 @@ function GuardianContent() {
                                     }}
                                     className="px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-full text-sm font-medium hover:from-green-600 hover:to-green-700 transition-all duration-200 shadow-sm hover:shadow-md transform hover:scale-105"
                                   >
-                                    Risolvi
+{t.guardian.alerts.resolve}
                                   </button>
                                 </div>
                               </div>
@@ -631,7 +631,7 @@ function GuardianContent() {
                               <div className="border-t bg-gradient-to-br from-gray-50 to-gray-100 p-6">
                                 <h4 className="font-semibold text-gray-800 mb-4 flex items-center">
                                   <MessageSquare className="w-4 h-4 mr-2" />
-                                  Conversazione Completa
+{t.guardian.alerts.fullConversation}
                                 </h4>
                                 <div className="space-y-4 max-h-80 overflow-y-auto bg-white rounded-lg p-4 border">
                                   {alert.conversation.map((msg, index) => (
@@ -655,7 +655,7 @@ function GuardianContent() {
                                   <div className="flex items-start space-x-3">
                                     <Lightbulb className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
                                     <div>
-                                      <p className="text-sm font-semibold text-blue-800 mb-1">Suggerimento per la Risoluzione:</p>
+                                      <p className="text-sm font-semibold text-blue-800 mb-1">{t.guardian.alerts.resolutionSuggestion}</p>
                                       <p className="text-sm text-blue-700 leading-relaxed">{alert.suggested_action}</p>
                                     </div>
                                   </div>
@@ -672,20 +672,20 @@ function GuardianContent() {
                 {/* Gestione Abbonamento - Stile come in settings */}
                 <div className="bg-white rounded-2xl shadow p-6">
                   <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-lg font-semibold">Abbonamento Guardian</h2>
+                    <h2 className="text-lg font-semibold">{t.guardian.subscription.title}</h2>
                     <CreditCard className="w-5 h-5 text-gray-600" />
                   </div>
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="font-medium">Stato: <span className={
+                        <p className="font-medium">{t.guardian.subscription.status}: <span className={
                           guardianStatus?.guardian_subscription_status === 'active' ? 'text-green-600' : 
                           guardianStatus?.guardian_subscription_status === 'cancelling' ? 'text-orange-600' : 
                           'text-red-600'
                         }>{guardianStatus?.guardian_subscription_status || 'inactive'}</span></p>
                         {guardianStatus?.guardian_subscription_end_date && (
                           <p className="text-sm text-gray-500">
-                            {guardianStatus?.guardian_subscription_status === 'cancelling' ? 'Fine abbonamento: ' : 'Prossimo rinnovo: '}
+                            {guardianStatus?.guardian_subscription_status === 'cancelling' ? t.guardian.subscription.endDate + ': ' : t.guardian.subscription.nextRenewal + ': '}
                             {new Date(guardianStatus.guardian_subscription_end_date).toLocaleDateString('it-IT')}
                           </p>
                         )}
@@ -698,9 +698,9 @@ function GuardianContent() {
                           <div className="flex items-start gap-3">
                             <AlertTriangle className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
                             <div className="flex-1">
-                              <h3 className="font-medium text-red-800 mb-1">Annulla Abbonamento Guardian</h3>
+                              <h3 className="font-medium text-red-800 mb-1">{t.guardian.subscription.cancelSection.title}</h3>
                               <p className="text-sm text-red-700 mb-3">
-                                Annullando l'abbonamento il servizio verrà disattivato, ma tutti i tuoi dati rimarranno nel database.
+                                {t.guardian.subscription.cancelSection.description}
                               </p>
                               <button 
                                 onClick={() => setShowCancelModal(true)} 
@@ -710,10 +710,10 @@ function GuardianContent() {
                                 {isCancellingSubscription ? (
                                   <>
                                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                    Annullamento...
+{t.guardian.subscription.cancelSection.cancelling}
                                   </>
                                 ) : (
-                                  'Annulla Abbonamento'
+                                  t.guardian.subscription.cancelSection.button
                                 )}
                               </button>
                             </div>
@@ -728,9 +728,9 @@ function GuardianContent() {
                           <div className="flex items-start gap-3">
                             <AlertTriangle className="w-5 h-5 text-orange-600 mt-0.5 flex-shrink-0" />
                             <div className="flex-1">
-                              <h3 className="font-medium text-orange-800 mb-1">Abbonamento Guardian in Fase di Annullamento</h3>
+                              <h3 className="font-medium text-orange-800 mb-1">{t.guardian.subscription.cancellingSection.title}</h3>
                               <p className="text-sm text-orange-700 mb-3">
-                                Il tuo abbonamento è in fase di annullamento e rimarrà attivo fino alla fine del periodo corrente. Puoi riattivarlo in qualsiasi momento.
+                                {t.guardian.subscription.cancellingSection.description}
                               </p>
                               <button 
                                 onClick={handleReactivateGuardian} 
@@ -740,10 +740,10 @@ function GuardianContent() {
                                 {isCheckoutLoading ? (
                                   <>
                                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                    Riattivazione...
+{t.guardian.subscription.cancellingSection.reactivating}
                                   </>
                                 ) : (
-                                  'Riattiva Abbonamento (Gratis)'
+                                  t.guardian.subscription.cancellingSection.button
                                 )}
                               </button>
                             </div>
@@ -766,9 +766,9 @@ function GuardianContent() {
             <div className="flex items-start gap-3 mb-4">
               <AlertTriangle className="w-6 h-6 text-red-600 mt-0.5 flex-shrink-0" />
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-1">Conferma Annullamento Guardian</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-1">{t.guardian.subscription.cancelModal.title}</h3>
                 <p className="text-sm text-gray-600">
-                  Sei sicuro di voler annullare l'abbonamento Guardian? Il servizio rimarrà attivo fino alla fine del periodo corrente, ma non riceverai più alert per le conversazioni problematiche.
+                  {t.guardian.subscription.cancelModal.message}
                 </p>
               </div>
             </div>
@@ -788,10 +788,10 @@ function GuardianContent() {
                 {isCancellingSubscription ? (
                   <>
                     <div className="loading-spinner w-4 h-4 mr-2"></div>
-                    Annullamento...
+                    {t.guardian.subscription.cancelModal.cancelling}
                   </>
                 ) : (
-                  'Conferma Annullamento'
+                  t.guardian.subscription.cancelModal.confirm
                 )}
               </button>
             </div>
@@ -804,11 +804,12 @@ function GuardianContent() {
 
 // Componente di fallback per il loading
 function GuardianFallback() {
+  const { t } = useLanguage()
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center">
       <div className="text-center">
         <div className="loading-spinner w-8 h-8 mx-auto mb-4"></div>
-        <p className="text-gray-600">Caricamento Guardian...</p>
+        <p className="text-gray-600">{t.guardian.loading}</p>
       </div>
     </div>
   )

@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { ChevronDown, ChevronUp, User, Bot } from 'lucide-react'
 import { conversations as convApi } from '@/lib/api'
 import toast from 'react-hot-toast'
+import { useLanguage } from '@/lib/languageContext'
 
 interface Message {
   id: number
@@ -25,6 +26,7 @@ interface ConversationItemProps {
 }
 
 export default function ConversationItem({ conversation }: ConversationItemProps) {
+  const { t } = useLanguage()
   const [isExpanded, setIsExpanded] = useState(false)
   const [messages, setMessages] = useState<Message[]>([])
   const [isLoadingMessages, setIsLoadingMessages] = useState(false)
@@ -37,7 +39,7 @@ export default function ConversationItem({ conversation }: ConversationItemProps
       const response = await convApi.getMessages(conversation.id)
       setMessages(response.data)
     } catch (error) {
-      toast.error('Errore nel caricamento dei messaggi')
+      toast.error(t.conversations.loading)
     } finally {
       setIsLoadingMessages(false)
     }
@@ -62,7 +64,7 @@ export default function ConversationItem({ conversation }: ConversationItemProps
             <div className="flex items-center gap-3">
               <p className="font-medium text-gray-900">{conversation.guest_name}</p>
               <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">
-                {conversation.message_count} messaggi
+{conversation.message_count} {t.conversations.messages}
               </span>
             </div>
             <p className="text-sm text-gray-500 mt-1 line-clamp-1">
@@ -88,11 +90,11 @@ export default function ConversationItem({ conversation }: ConversationItemProps
           <div className="max-h-96 overflow-y-auto">
             {isLoadingMessages ? (
               <div className="p-4 text-center text-gray-500">
-                Caricamento messaggi...
+{t.conversations.loading}
               </div>
             ) : messages.length === 0 ? (
               <div className="p-4 text-center text-gray-500">
-                Nessun messaggio disponibile
+{t.conversations.noMessages}
               </div>
             ) : (
               <div className="p-4 space-y-4">

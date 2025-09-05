@@ -1103,7 +1103,7 @@ export default function LandingPage() {
               transition={{ duration: 0.9, delay: 0.4, ease: "easeOut" }}
               className="text-4xl sm:text-6xl md:text-8xl font-black mb-8 leading-tight tracking-tight"
             >
-              <span className="text-gray-900 block text-4xl sm:text-6xl md:text-6xl">{t.hero.title}</span>
+              <span className="text-gray-900 block text-4xl sm:text-6xl md:text-6xl">{t.hero.titlePrefix}</span>
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-600 via-pink-600 to-rose-700 block relative text-5xl sm:text-7xl md:text-8xl">
                 HostGPT
                 {/* Effetto shimmer */}
@@ -1121,7 +1121,7 @@ export default function LandingPage() {
                 />
               </span>
               <span className="text-gray-900 block text-4xl sm:text-6xl md:text-6xl mt-4">
-              L'assistente H24 per i tuoi ospiti
+              {t.hero.title}
               </span>
             </motion.h1>
 
@@ -1130,9 +1130,9 @@ export default function LandingPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.6 }}
-              className="text-lg sm:text-2xl text-gray-700 mb-12 max-w-4xl mx-auto leading-relaxed font-light"
+              className="text-lg sm:text-2xl text-gray-700 mb-12 max-w-6xl mx-auto leading-relaxed font-light"
             >
-              {t.hero.subtitle} <span className="font-semibold text-transparent bg-clip-text bg-gradient-to-r from-rose-600 to-pink-600">{t.hero.subtitleHighlight}</span>
+              {t.hero.subtitle} <br /><span className="font-semibold text-transparent bg-clip-text bg-gradient-to-r from-rose-600 to-pink-600">{t.hero.subtitleHighlight}</span>
             </motion.p>
 
             {/* Bottoni CTA spettacolari */}

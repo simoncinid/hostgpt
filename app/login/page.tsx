@@ -24,11 +24,40 @@ function LoginContent() {
   const [isLoading, setIsLoading] = useState(false)
   const { setAuth } = useAuthStore()
   
-  const { register, handleSubmit, formState: { errors }, watch } = useForm<LoginForm>()
+  const { register, handleSubmit, formState: { errors }, watch, setValue, getValues } = useForm<LoginForm>({
+    mode: 'onChange',
+    defaultValues: {
+      email: '',
+      password: ''
+    }
+  })
   
   // Debug: log errors and form values
   console.log('Form errors:', errors)
   console.log('Form values:', watch())
+
+  // Gestione autocomplete del browser
+  const handleAutocomplete = (field: 'email' | 'password', value: string) => {
+    setValue(field, value)
+  }
+
+  // Gestione click sui suggerimenti
+  const handleInputClick = (e: React.MouseEvent<HTMLInputElement>) => {
+    e.stopPropagation()
+  }
+
+  // Gestione focus per prevenire perdita di focus
+  const handleInputFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+    e.target.select()
+  }
+
+  // Gestione blur per prevenire perdita di dati
+  const handleInputBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    const { name, value } = e.target
+    if (name && value) {
+      setValue(name as 'email' | 'password', value)
+    }
+  }
 
   useEffect(() => {
     const registered = searchParams.get('registered')
@@ -146,9 +175,14 @@ function LoginContent() {
 
           {/* Form Content */}
           <div className="flex-1 flex flex-col">
-            <form onSubmit={handleSubmit(onSubmit, (errors) => {
-              console.log('Form validation failed:', errors)
-            })} className="flex-1 flex flex-col">
+            <form 
+              onSubmit={handleSubmit(onSubmit, (errors) => {
+                console.log('Form validation failed:', errors)
+              })} 
+              className="flex-1 flex flex-col"
+              autoComplete="on"
+              noValidate
+            >
               {/* Layout desktop */}
               <div className="hidden md:block space-y-5">
                 {/* Email */}
@@ -158,6 +192,7 @@ function LoginContent() {
                     <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                     <input
                       type="email"
+                      name="email"
                       {...register('email', {
                         required: t.auth.login.email + ' richiesta',
                         pattern: {
@@ -168,6 +203,16 @@ function LoginContent() {
                       className="w-full px-4 py-2.5 pl-10 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary focus:ring-opacity-20 outline-none transition-all duration-200"
                       placeholder="nome@esempio.com"
                       autoComplete="email"
+                      onClick={handleInputClick}
+                      onFocus={handleInputFocus}
+                      onBlur={handleInputBlur}
+                      onChange={(e) => {
+                        setValue('email', e.target.value)
+                      }}
+                      onInput={(e) => {
+                        const target = e.target as HTMLInputElement
+                        handleAutocomplete('email', target.value)
+                      }}
                     />
                   </div>
                   {errors.email && (
@@ -182,6 +227,7 @@ function LoginContent() {
                     <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                     <input
                       type={showPassword ? 'text' : 'password'}
+                      name="password"
                       {...register('password', {
                         required: t.auth.login.password + ' richiesta',
                         minLength: {
@@ -192,6 +238,16 @@ function LoginContent() {
                       className="w-full px-4 py-2.5 pl-10 pr-10 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary focus:ring-opacity-20 outline-none transition-all duration-200"
                       placeholder="••••••••"
                       autoComplete="current-password"
+                      onClick={handleInputClick}
+                      onFocus={handleInputFocus}
+                      onBlur={handleInputBlur}
+                      onChange={(e) => {
+                        setValue('password', e.target.value)
+                      }}
+                      onInput={(e) => {
+                        const target = e.target as HTMLInputElement
+                        handleAutocomplete('password', target.value)
+                      }}
                     />
                     <button
                       type="button"
@@ -225,8 +281,14 @@ function LoginContent() {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  onClick={() => console.log('Desktop button clicked')}
-                  className="w-full bg-primary hover:bg-secondary text-white font-semibold py-2.5 px-6 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 flex items-center justify-center"
+                  onClick={(e) => {
+                    e.preventDefault()
+                    console.log('Desktop button clicked')
+                    const formData = getValues()
+                    console.log('Form data on submit:', formData)
+                    handleSubmit(onSubmit)()
+                  }}
+                  className="w-full bg-primary hover:bg-secondary text-white font-semibold py-2.5 px-6 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isLoading ? (
                     <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white" />

@@ -15,6 +15,7 @@ export interface Translations {
   // Hero Section
   hero: {
     title: string
+    titlePrefix: string
     subtitle: string
     subtitleHighlight: string
     freeTrialButton: string
@@ -182,6 +183,16 @@ export interface Translations {
     selectChatbot: string
     noConversations: string
     loadingConversations: string
+    selectOption: string
+    conversations: string
+    messages: string
+    guest: string
+    startedAt: string
+    messageCount: string
+    lastMessage: string
+    viewConversation: string
+    noMessages: string
+    emptyState: string
   }
   
   // Checkout translations
@@ -222,22 +233,57 @@ export interface Translations {
   }
   
   // Dashboard
-  dashboard: {
-    title: string
-    welcome: string
-    stats: {
-      totalChatbots: string
-      totalMessages: string
-      activeChatbots: string
-      totalGuests: string
+      dashboard: {
+      title: string
+      welcome: string
+      stats: {
+        totalChatbots: string
+        totalMessages: string
+        activeChatbots: string
+        totalGuests: string
+        totalHistorical: string
+        allChatbots: string
+        alwaysOnline: string
+      }
+      quickActions: {
+        createChatbot: string
+        viewAnalytics: string
+        manageSettings: string
+        getSupport: string
+      }
+      freeTrial: {
+        title: string
+        description: string
+        activateButton: string
+      }
+      chatbots: {
+        title: string
+        seeAll: string
+        noChatbots: string
+        createFirst: string
+      }
+      moreStructures: {
+        title: string
+        description: string
+        whatsappButton: string
+      }
+      qrModal: {
+        title: string
+        description: string
+        copyButton: string
+        downloadButton: string
+        closeButton: string
+      }
+      status: {
+        hostgptActive: string
+        hostgptCancelling: string
+        hostgptCancelled: string
+        hostgptFreeTrial: string
+        guardianActive: string
+        guardianCancelling: string
+        guardianInactive: string
+      }
     }
-    quickActions: {
-      createChatbot: string
-      viewAnalytics: string
-      manageSettings: string
-      getSupport: string
-    }
-  }
   
   // Chatbots
   chatbots: {
@@ -265,17 +311,34 @@ export interface Translations {
     activate: string
     deactivate: string
     loading: string
+    redirecting: string
+    reactivate: string
+    activateWithPrice: string
     stats: {
       totalGuests: string
+      totalGuestsShort: string
+      monitored: string
       highRiskGuests: string
+      highRiskGuestsShort: string
+      detected: string
       resolvedIssues: string
+      resolvedIssuesShort: string
+      managed: string
       avgSatisfaction: string
+      avgSatisfactionShort: string
+      score: string
       negativeReviewsPrevented: string
     }
     alerts: {
       title: string
+      activeAlerts: string
       noAlerts: string
+      allUnderControl: string
       resolve: string
+      guest: string
+      created: string
+      fullConversation: string
+      resolutionSuggestion: string
       severity: {
         critical: string
         high: string
@@ -284,15 +347,34 @@ export interface Translations {
       }
     }
     subscription: {
+      title: string
+      status: string
       active: string
       inactive: string
+      cancelling: string
       cancel: string
       reactivate: string
+      reactivateFree: string
+      endDate: string
+      nextRenewal: string
+      cancelSection: {
+        title: string
+        description: string
+        button: string
+        cancelling: string
+      }
+      cancellingSection: {
+        title: string
+        description: string
+        button: string
+        reactivating: string
+      }
       cancelModal: {
         title: string
         message: string
         confirm: string
         cancel: string
+        cancelling: string
       }
     }
     demo: {
@@ -308,6 +390,21 @@ export interface Translations {
         title: string
         subtitle: string
       }
+      phoneCall: string
+      problemSolved: string
+      negativeReviewAvoided: string
+    }
+    success: {
+      subscriptionActivated: string
+      alertResolved: string
+      subscriptionCancelled: string
+      subscriptionReactivated: string
+    }
+    errors: {
+      subscriptionError: string
+      alertResolutionError: string
+      cancellationError: string
+      reactivationError: string
     }
   }
   
@@ -425,8 +522,9 @@ export const translations: Record<Language, Translations> = {
       register: "Registrati"
     },
     hero: {
-      title: "Risparmia Tempo con",
-      subtitle: "Rispondi automaticamente, in modo completo e immediato, alle richieste dei guest 24/7.",
+      title: "L'assistente H24 per i tuoi ospiti",
+      titlePrefix: "Risparmia ore di tempo prezioso con",
+      subtitle: "Risponde automaticamente, in modo completo e immediato, alle richieste degli ospiti.",
       subtitleHighlight: "Meno messaggi per te, più soddisfazione per loro.",
       freeTrialButton: "🎉 Prova Gratis 14 giorni",
       registerButton: "Registrati per iniziare",
@@ -653,7 +751,17 @@ export const translations: Record<Language, Translations> = {
       loading: "Caricamento...",
       selectChatbot: "Seleziona un chatbot per vedere le conversazioni",
       noConversations: "Nessuna conversazione trovata",
-      loadingConversations: "Caricamento conversazioni..."
+      loadingConversations: "Caricamento conversazioni...",
+      selectOption: "Seleziona...",
+      conversations: "conversazioni",
+      messages: "messaggi",
+      guest: "Ospite",
+      startedAt: "Iniziata il",
+      messageCount: "Messaggi",
+      lastMessage: "Ultimo messaggio",
+      viewConversation: "Visualizza conversazione",
+      noMessages: "Nessun messaggio",
+      emptyState: "Nessuna conversazione disponibile"
     },
     
     // Checkout translations
@@ -697,14 +805,49 @@ export const translations: Record<Language, Translations> = {
       stats: {
         totalChatbots: "Chatbot Totali",
         totalMessages: "Messaggi Totali",
-        activeChatbots: "Chatbot Attivi",
-        totalGuests: "Ospiti Totali"
+        activeChatbots: "Attivi",
+        totalGuests: "Ospiti Totali",
+        totalHistorical: "Totale storico",
+        allChatbots: "Tutti i chatbot",
+        alwaysOnline: "Sempre online"
       },
       quickActions: {
         createChatbot: "Crea Chatbot",
         viewAnalytics: "Visualizza Analisi",
         manageSettings: "Gestisci Impostazioni",
         getSupport: "Ottieni Supporto"
+      },
+      freeTrial: {
+        title: "Periodo di prova gratuito attivo",
+        description: "Hai {messages} messaggi rimanenti su {limit} • Scade il {date}",
+        activateButton: "Attiva Abbonamento"
+      },
+      chatbots: {
+        title: "I Tuoi Chatbot",
+        seeAll: "Vedi tutti →",
+        noChatbots: "Non hai ancora creato nessun chatbot",
+        createFirst: "Crea il tuo primo chatbot"
+      },
+      moreStructures: {
+        title: "Hai più strutture?",
+        description: "Ogni account può avere un solo chatbot. Se ti servono più chatbot perché gestisci più strutture, contattami al 3391797616.",
+        whatsappButton: "Scrivimi su WhatsApp"
+      },
+      qrModal: {
+        title: "QR Code Chatbot",
+        description: "Scansiona questo QR code per accedere al chatbot",
+        copyButton: "Copia",
+        downloadButton: "Scarica QR",
+        closeButton: "Chiudi"
+      },
+      status: {
+        hostgptActive: "HostGPT Attivo",
+        hostgptCancelling: "HostGPT In Annullamento",
+        hostgptCancelled: "HostGPT Annullato",
+        hostgptFreeTrial: "HostGPT Prova Gratuita",
+        guardianActive: "Guardian Attivo",
+        guardianCancelling: "Guardian In Annullamento",
+        guardianInactive: "Guardian Inattivo"
       }
     },
     chatbots: {
@@ -735,17 +878,34 @@ export const translations: Record<Language, Translations> = {
       activate: "Attiva Guardian",
       deactivate: "Disattiva Guardian",
       loading: "Caricamento Guardian...",
+      redirecting: "Reindirizzamento...",
+      reactivate: "Riattiva Guardian",
+      activateWithPrice: "Attiva Guardian - 9€/mese",
       stats: {
         totalGuests: "Ospiti Totali",
-        highRiskGuests: "Ospiti ad Alto Rischio",
+        totalGuestsShort: "Ospiti",
+        monitored: "Monitorati",
+        highRiskGuests: "Ospiti a Rischio",
+        highRiskGuestsShort: "A Rischio",
+        detected: "Rilevati",
         resolvedIssues: "Problemi Risolti",
+        resolvedIssuesShort: "Risolti",
+        managed: "Gestiti",
         avgSatisfaction: "Soddisfazione Media",
+        avgSatisfactionShort: "Soddisf.",
+        score: "Punteggio",
         negativeReviewsPrevented: "Recensioni Negative Evitate"
       },
       alerts: {
         title: "Alert Attivi",
+        activeAlerts: "Alert Attivi",
         noAlerts: "Nessun alert attivo",
-        resolve: "Risolve",
+        allUnderControl: "Nessun alert attivo. Tutto sotto controllo! 🎉",
+        resolve: "Risolvi",
+        guest: "Ospite",
+        created: "Creato",
+        fullConversation: "Conversazione Completa",
+        resolutionSuggestion: "Suggerimento per la Risoluzione:",
         severity: {
           critical: "Critico",
           high: "Alto",
@@ -754,15 +914,34 @@ export const translations: Record<Language, Translations> = {
         }
       },
       subscription: {
+        title: "Abbonamento Guardian",
+        status: "Stato",
         active: "Attivo",
         inactive: "Inattivo",
+        cancelling: "In Annullamento",
         cancel: "Cancella Abbonamento",
         reactivate: "Riattiva Abbonamento",
+        reactivateFree: "Riattiva Abbonamento (Gratis)",
+        endDate: "Fine abbonamento",
+        nextRenewal: "Prossimo rinnovo",
+        cancelSection: {
+          title: "Annulla Abbonamento Guardian",
+          description: "Annullando l'abbonamento il servizio verrà disattivato, ma tutti i tuoi dati rimarranno nel database.",
+          button: "Annulla Abbonamento",
+          cancelling: "Annullamento..."
+        },
+        cancellingSection: {
+          title: "Abbonamento Guardian in Fase di Annullamento",
+          description: "Il tuo abbonamento è in fase di annullamento e rimarrà attivo fino alla fine del periodo corrente. Puoi riattivarlo in qualsiasi momento.",
+          button: "Riattiva Abbonamento (Gratis)",
+          reactivating: "Riattivazione..."
+        },
         cancelModal: {
-          title: "Cancella Abbonamento Guardian",
-          message: "Sei sicuro di voler cancellare il tuo abbonamento Guardian? Non riceverai più notifiche sugli ospiti problematici.",
-          confirm: "Sì, Cancella",
-          cancel: "Annulla"
+          title: "Conferma Annullamento Guardian",
+          message: "Sei sicuro di voler annullare l'abbonamento Guardian? Il servizio rimarrà attivo fino alla fine del periodo corrente, ma non riceverai più alert per le conversazioni problematiche.",
+          confirm: "Conferma Annullamento",
+          cancel: "Annulla",
+          cancelling: "Annullamento..."
         }
       },
       demo: {
@@ -777,7 +956,22 @@ export const translations: Record<Language, Translations> = {
         alert: {
           title: "🚨 ALERT CRITICO",
           subtitle: "Ospite insoddisfatto rilevato"
-        }
+        },
+        phoneCall: "📞 Host chiama l'ospite",
+        problemSolved: "🎉 Problema risolto!",
+        negativeReviewAvoided: "Recensione negativa evitata"
+      },
+      success: {
+        subscriptionActivated: "🎉 Abbonamento Guardian attivato con successo!",
+        alertResolved: "Alert risolto con successo!",
+        subscriptionCancelled: "Abbonamento Guardian cancellato con successo",
+        subscriptionReactivated: "Abbonamento Guardian riattivato con successo"
+      },
+      errors: {
+        subscriptionError: "Errore durante la sottoscrizione",
+        alertResolutionError: "Errore durante la risoluzione dell'alert",
+        cancellationError: "Errore durante la cancellazione",
+        reactivationError: "Errore durante la riattivazione"
       }
     },
     statistics: {
@@ -900,7 +1094,8 @@ export const translations: Record<Language, Translations> = {
       register: "Sign Up"
     },
     hero: {
-      title: "Save Time with",
+      title: "24/7 Assistant for Your Guests",
+      titlePrefix: "Save precious hours of time with",
       subtitle: "Automatically respond completely and immediately to guest requests 24/7.",
       subtitleHighlight: "Less messages for you, more satisfaction for them.",
       freeTrialButton: "🎉 Free Trial 14 Days",
@@ -1128,7 +1323,17 @@ export const translations: Record<Language, Translations> = {
       loading: "Loading...",
       selectChatbot: "Select a chatbot to view conversations",
       noConversations: "No conversations found",
-      loadingConversations: "Loading conversations..."
+      loadingConversations: "Loading conversations...",
+      selectOption: "Select...",
+      conversations: "conversations",
+      messages: "messages",
+      guest: "Guest",
+      startedAt: "Started on",
+      messageCount: "Messages",
+      lastMessage: "Last message",
+      viewConversation: "View conversation",
+      noMessages: "No messages",
+      emptyState: "No conversations available"
     },
     
     // Checkout translations
@@ -1172,14 +1377,49 @@ export const translations: Record<Language, Translations> = {
       stats: {
         totalChatbots: "Total Chatbots",
         totalMessages: "Total Messages",
-        activeChatbots: "Active Chatbots",
-        totalGuests: "Total Guests"
+        activeChatbots: "Active",
+        totalGuests: "Total Guests",
+        totalHistorical: "Total historical",
+        allChatbots: "All chatbots",
+        alwaysOnline: "Always online"
       },
       quickActions: {
         createChatbot: "Create Chatbot",
         viewAnalytics: "View Analytics",
         manageSettings: "Manage Settings",
         getSupport: "Get Support"
+      },
+      freeTrial: {
+        title: "Free trial period active",
+        description: "You have {messages} messages remaining out of {limit} • Expires on {date}",
+        activateButton: "Activate Subscription"
+      },
+      chatbots: {
+        title: "Your Chatbots",
+        seeAll: "See all →",
+        noChatbots: "You haven't created any chatbots yet",
+        createFirst: "Create your first chatbot"
+      },
+      moreStructures: {
+        title: "Have more properties?",
+        description: "Each account can have only one chatbot. If you need more chatbots because you manage multiple properties, contact me at 3391797616.",
+        whatsappButton: "Write me on WhatsApp"
+      },
+      qrModal: {
+        title: "Chatbot QR Code",
+        description: "Scan this QR code to access the chatbot",
+        copyButton: "Copy",
+        downloadButton: "Download QR",
+        closeButton: "Close"
+      },
+      status: {
+        hostgptActive: "HostGPT Active",
+        hostgptCancelling: "HostGPT Cancelling",
+        hostgptCancelled: "HostGPT Cancelled",
+        hostgptFreeTrial: "HostGPT Free Trial",
+        guardianActive: "Guardian Active",
+        guardianCancelling: "Guardian Cancelling",
+        guardianInactive: "Guardian Inactive"
       }
     },
     chatbots: {
@@ -1210,17 +1450,34 @@ export const translations: Record<Language, Translations> = {
       activate: "Activate Guardian",
       deactivate: "Deactivate Guardian",
       loading: "Loading Guardian...",
+      redirecting: "Redirecting...",
+      reactivate: "Reactivate Guardian",
+      activateWithPrice: "Activate Guardian - €9/month",
       stats: {
         totalGuests: "Total Guests",
+        totalGuestsShort: "Guests",
+        monitored: "Monitored",
         highRiskGuests: "High Risk Guests",
+        highRiskGuestsShort: "At Risk",
+        detected: "Detected",
         resolvedIssues: "Resolved Issues",
+        resolvedIssuesShort: "Resolved",
+        managed: "Managed",
         avgSatisfaction: "Average Satisfaction",
+        avgSatisfactionShort: "Satisf.",
+        score: "Score",
         negativeReviewsPrevented: "Negative Reviews Prevented"
       },
       alerts: {
         title: "Active Alerts",
+        activeAlerts: "Active Alerts",
         noAlerts: "No active alerts",
+        allUnderControl: "No active alerts. Everything under control! 🎉",
         resolve: "Resolve",
+        guest: "Guest",
+        created: "Created",
+        fullConversation: "Full Conversation",
+        resolutionSuggestion: "Resolution Suggestion:",
         severity: {
           critical: "Critical",
           high: "High",
@@ -1229,15 +1486,34 @@ export const translations: Record<Language, Translations> = {
         }
       },
       subscription: {
+        title: "Guardian Subscription",
+        status: "Status",
         active: "Active",
         inactive: "Inactive",
+        cancelling: "Cancelling",
         cancel: "Cancel Subscription",
         reactivate: "Reactivate Subscription",
-        cancelModal: {
+        reactivateFree: "Reactivate Subscription (Free)",
+        endDate: "End date",
+        nextRenewal: "Next renewal",
+        cancelSection: {
           title: "Cancel Guardian Subscription",
-          message: "Are you sure you want to cancel your Guardian subscription? You will no longer receive notifications about problematic guests.",
-          confirm: "Yes, Cancel",
-          cancel: "Cancel"
+          description: "By cancelling the subscription the service will be deactivated, but all your data will remain in the database.",
+          button: "Cancel Subscription",
+          cancelling: "Cancelling..."
+        },
+        cancellingSection: {
+          title: "Guardian Subscription Being Cancelled",
+          description: "Your subscription is being cancelled and will remain active until the end of the current period. You can reactivate it at any time.",
+          button: "Reactivate Subscription (Free)",
+          reactivating: "Reactivating..."
+        },
+        cancelModal: {
+          title: "Confirm Guardian Cancellation",
+          message: "Are you sure you want to cancel your Guardian subscription? The service will remain active until the end of the current period, but you will no longer receive alerts for problematic conversations.",
+          confirm: "Confirm Cancellation",
+          cancel: "Cancel",
+          cancelling: "Cancelling..."
         }
       },
       demo: {
@@ -1252,7 +1528,22 @@ export const translations: Record<Language, Translations> = {
         alert: {
           title: "🚨 CRITICAL ALERT",
           subtitle: "Dissatisfied guest detected"
-        }
+        },
+        phoneCall: "📞 Host calls guest",
+        problemSolved: "🎉 Problem solved!",
+        negativeReviewAvoided: "Negative review avoided"
+      },
+      success: {
+        subscriptionActivated: "🎉 Guardian subscription activated successfully!",
+        alertResolved: "Alert resolved successfully!",
+        subscriptionCancelled: "Guardian subscription cancelled successfully",
+        subscriptionReactivated: "Guardian subscription reactivated successfully"
+      },
+      errors: {
+        subscriptionError: "Error during subscription",
+        alertResolutionError: "Error during alert resolution",
+        cancellationError: "Error during cancellation",
+        reactivationError: "Error during reactivation"
       }
     },
     statistics: {

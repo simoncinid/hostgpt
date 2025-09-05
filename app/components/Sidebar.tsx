@@ -14,6 +14,7 @@ import {
   Shield
 } from 'lucide-react'
 import { useAuthStore } from '@/lib/store'
+import { useLanguage } from '@/lib/languageContext'
 import LanguageSelector from '@/components/LanguageSelector'
 
 interface SidebarProps {
@@ -25,6 +26,7 @@ interface SidebarProps {
 
 export default function Sidebar({ currentPath, onLogout, isSidebarCollapsed: externalIsCollapsed, setIsSidebarCollapsed: externalSetCollapsed }: SidebarProps) {
   const { user } = useAuthStore()
+  const { t } = useLanguage()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [internalIsCollapsed, setInternalIsCollapsed] = useState(false)
   
@@ -60,35 +62,35 @@ export default function Sidebar({ currentPath, onLogout, isSidebarCollapsed: ext
             className={`flex items-center ${isSidebarCollapsed ? 'justify-center px-2 py-3' : 'px-6 py-3'} ${currentPath === '/dashboard' ? 'bg-primary/10 text-primary border-r-3 border-primary' : 'text-gray-600 hover:bg-gray-50'}`}
           >
             <BarChart3 className={`${isSidebarCollapsed ? 'w-6 h-6' : 'w-5 h-5'} ${!isSidebarCollapsed ? 'mr-3' : ''}`} />
-            {!isSidebarCollapsed && "Dashboard"}
+            {!isSidebarCollapsed && t.common.dashboard}
           </Link>
           <Link 
             href="/dashboard/chatbots"
             className={`flex items-center ${isSidebarCollapsed ? 'justify-center px-2 py-3' : 'px-6 py-3'} ${currentPath.startsWith('/dashboard/chatbots') ? 'bg-primary/10 text-primary border-r-3 border-primary' : 'text-gray-600 hover:bg-gray-50'}`}
           >
             <MessageSquare className={`${isSidebarCollapsed ? 'w-6 h-6' : 'w-5 h-5'} ${!isSidebarCollapsed ? 'mr-3' : ''}`} />
-            {!isSidebarCollapsed && "I Miei Chatbot"}
+            {!isSidebarCollapsed && t.chatbots.title}
           </Link>
           <Link 
             href="/dashboard/conversations" 
             className={`flex items-center ${isSidebarCollapsed ? 'justify-center px-2 py-3' : 'px-6 py-3'} ${currentPath === '/dashboard/conversations' ? 'bg-primary/10 text-primary border-r-3 border-primary' : 'text-gray-600 hover:bg-gray-50'}`}
           >
             <Users className={`${isSidebarCollapsed ? 'w-6 h-6' : 'w-5 h-5'} ${!isSidebarCollapsed ? 'mr-3' : ''}`} />
-            {!isSidebarCollapsed && "Conversazioni"}
+            {!isSidebarCollapsed && t.conversations.title}
           </Link>
           <Link 
             href="/dashboard/guardian" 
             className={`flex items-center ${isSidebarCollapsed ? 'justify-center px-2 py-3' : 'px-6 py-3'} ${currentPath === '/dashboard/guardian' ? 'bg-green-100 text-green-600 border-r-3 border-green-500' : 'text-gray-600 hover:bg-gray-50'}`}
           >
             <Shield className={`${isSidebarCollapsed ? 'w-6 h-6' : 'w-5 h-5'} ${!isSidebarCollapsed ? 'mr-3' : ''}`} />
-            {!isSidebarCollapsed && "Guardian"}
+            {!isSidebarCollapsed && t.guardian.title}
           </Link>
           <Link 
             href="/dashboard/settings" 
             className={`flex items-center ${isSidebarCollapsed ? 'justify-center px-2 py-3' : 'px-6 py-3'} ${currentPath === '/dashboard/settings' ? 'bg-primary/10 text-primary border-r-3 border-primary' : 'text-gray-600 hover:bg-gray-50'}`}
           >
             <Settings className={`${isSidebarCollapsed ? 'w-6 h-6' : 'w-5 h-5'} ${!isSidebarCollapsed ? 'mr-3' : ''}`} />
-            {!isSidebarCollapsed && "Impostazioni"}
+            {!isSidebarCollapsed && t.common.settings}
           </Link>
         </nav>
 
@@ -104,10 +106,10 @@ export default function Sidebar({ currentPath, onLogout, isSidebarCollapsed: ext
                   user?.subscription_status === 'cancelling' ? 'text-orange-600' : 
                   'text-red-600'
                 }`}>
-                  {user?.is_free_trial_active ? 'HostGPT Prova Gratuita' : 
-                   user?.subscription_status === 'active' ? 'HostGPT Attivo' : 
-                   user?.subscription_status === 'cancelling' ? 'HostGPT In Annullamento' : 
-                   'HostGPT Annullato'}
+                  {user?.is_free_trial_active ? t.dashboard.status.hostgptFreeTrial : 
+                   user?.subscription_status === 'active' ? t.dashboard.status.hostgptActive : 
+                   user?.subscription_status === 'cancelling' ? t.dashboard.status.hostgptCancelling : 
+                   t.dashboard.status.hostgptCancelled}
                 </p>
                 <Link 
                   href="/dashboard/guardian"
@@ -117,9 +119,9 @@ export default function Sidebar({ currentPath, onLogout, isSidebarCollapsed: ext
                     'text-red-600'
                   }`}
                 >
-                  {user?.guardian_subscription_status === 'active' ? 'Guardian Attivo' : 
-                   user?.guardian_subscription_status === 'cancelling' ? 'Guardian In Annullamento' : 
-                   'Guardian Inattivo'}
+                  {user?.guardian_subscription_status === 'active' ? t.dashboard.status.guardianActive : 
+                   user?.guardian_subscription_status === 'cancelling' ? t.dashboard.status.guardianCancelling : 
+                   t.dashboard.status.guardianInactive}
                 </Link>
               </>
             )}

@@ -76,10 +76,10 @@ export default function ChatbotsListPage() {
       <div className={`transition-all duration-200 ${isSidebarCollapsed ? 'md:ml-16' : 'md:ml-64'}`}>
         <div className="bg-white shadow-sm">
           <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-            <h1 className="text-xl font-semibold">I Miei Chatbot</h1>
+            <h1 className="text-xl font-semibold">{t.chatbots.title}</h1>
             {/* Nasconde il pulsante Crea se esiste già un chatbot */}
             {chatbots.length === 0 ? (
-              <Link href="/dashboard/chatbots/create" className="btn-primary">Crea Nuovo</Link>
+              <Link href="/dashboard/chatbots/create" className="btn-primary">{t.chatbots.create}</Link>
             ) : null}
           </div>
         </div>
@@ -93,8 +93,8 @@ export default function ChatbotsListPage() {
           ) : chatbots.length === 0 ? (
             <div className="text-center bg-white rounded-2xl shadow p-12">
               <MessageSquare className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500 mb-4">Non hai ancora creato alcun chatbot</p>
-              <Link href="/dashboard/chatbots/create" className="btn-primary">Crea il tuo primo chatbot</Link>
+              <p className="text-gray-500 mb-4">{t.chatbots.noChatbots}</p>
+              <Link href="/dashboard/chatbots/create" className="btn-primary">{t.chatbots.createFirst}</Link>
             </div>
           ) : (
             <div className="bg-white rounded-2xl shadow">

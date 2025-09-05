@@ -165,12 +165,12 @@ function DashboardContent() {
               <span className="text-sm md:text-3xl font-bold">{totalStats.totalBots}</span>
             </div>
             <p className="text-gray-600 text-xs md:text-base">
-              <span className="md:hidden">Chatbot</span>
-              <span className="hidden md:inline">Chatbot Totali</span>
+              <span className="md:hidden">{t.dashboard.stats.totalChatbots}</span>
+              <span className="hidden md:inline">{t.dashboard.stats.totalChatbots}</span>
             </p>
             <p className="text-xs md:text-sm text-green-600 mt-1">
-              <span className="md:hidden">{totalStats.activeBots} attivi</span>
-              <span className="hidden md:inline">{totalStats.activeBots} attivi</span>
+              <span className="md:hidden">{totalStats.activeBots} {t.dashboard.stats.activeChatbots}</span>
+              <span className="hidden md:inline">{totalStats.activeBots} {t.dashboard.stats.activeChatbots}</span>
             </p>
           </motion.div>
 
@@ -185,11 +185,11 @@ function DashboardContent() {
               <span className="text-sm md:text-3xl font-bold">{totalStats.totalConversations}</span>
             </div>
             <p className="text-gray-600 text-xs md:text-base">
-              <span className="md:hidden">Conversaz.</span>
-              <span className="hidden md:inline">Conversazioni</span>
+              <span className="md:hidden">{t.dashboard.stats.totalMessages}</span>
+              <span className="hidden md:inline">{t.dashboard.stats.totalMessages}</span>
             </p>
             <p className="text-xs md:text-sm text-gray-500 mt-1">
-              <span className="hidden md:inline">Totale storico</span>
+              <span className="hidden md:inline">{t.dashboard.stats.totalHistorical}</span>
             </p>
           </motion.div>
 
@@ -204,11 +204,11 @@ function DashboardContent() {
               <span className="text-sm md:text-3xl font-bold">{totalStats.totalMessages}</span>
             </div>
             <p className="text-gray-600 text-xs md:text-base">
-              <span className="md:hidden">Messaggi</span>
-              <span className="hidden md:inline">Messaggi Totali</span>
+              <span className="md:hidden">{t.dashboard.stats.totalMessages}</span>
+              <span className="hidden md:inline">{t.dashboard.stats.totalMessages}</span>
             </p>
             <p className="text-xs md:text-sm text-gray-500 mt-1">
-              <span className="hidden md:inline">Tutti i chatbot</span>
+              <span className="hidden md:inline">{t.dashboard.stats.allChatbots}</span>
             </p>
           </motion.div>
 
@@ -226,10 +226,10 @@ function DashboardContent() {
               </span>
             </div>
             <p className="text-gray-600 text-xs md:text-base">
-              <span className="md:hidden">Online</span>
-              <span className="hidden md:inline">Disponibilità</span>
+              <span className="md:hidden">{t.common.support}</span>
+              <span className="hidden md:inline">{t.common.support}</span>
             </p>
-            <p className="text-xs md:text-sm text-green-600 mt-1">Sempre online</p>
+            <p className="text-xs md:text-sm text-green-600 mt-1">{t.dashboard.stats.alwaysOnline}</p>
           </motion.div>
         </div>
 
@@ -246,10 +246,13 @@ function DashboardContent() {
                   <span className="text-green-600 text-lg">🎉</span>
                 </div>
                 <div>
-                  <h3 className="font-semibold text-green-800">Periodo di prova gratuito attivo</h3>
+                  <h3 className="font-semibold text-green-800">{t.dashboard.freeTrial.title}</h3>
                   <p className="text-green-700 text-sm">
-                    Hai {user.messages_remaining} messaggi rimanenti su {user.messages_limit} • 
-                    Scade il {user.free_trial_end_date ? new Date(user.free_trial_end_date).toLocaleDateString('it-IT') : '14 giorni'}
+                    {t.dashboard.freeTrial.description
+                      .replace('{messages}', user.messages_remaining.toString())
+                      .replace('{limit}', user.messages_limit.toString())
+                      .replace('{date}', user.free_trial_end_date ? new Date(user.free_trial_end_date).toLocaleDateString('it-IT') : '14 giorni')
+                    }
                   </p>
                 </div>
               </div>
@@ -257,7 +260,7 @@ function DashboardContent() {
                 href="/checkout"
                 className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
               >
-                Attiva Abbonamento
+{t.dashboard.freeTrial.activateButton}
               </Link>
             </div>
           </motion.div>
@@ -266,12 +269,12 @@ function DashboardContent() {
         {/* Chatbots List */}
         <div className="bg-white rounded-2xl shadow-lg p-4 md:p-6 mb-8">
           <div className="flex items-center justify-between mb-4 md:mb-6">
-            <h2 className="text-xl font-bold text-dark">I Tuoi Chatbot</h2>
+            <h2 className="text-xl font-bold text-dark">{t.dashboard.chatbots.title}</h2>
             <Link 
               href="/dashboard/chatbots"
               className="text-primary hover:text-secondary"
             >
-              Vedi tutti →
+              {t.dashboard.chatbots.seeAll}
             </Link>
           </div>
 
@@ -282,9 +285,9 @@ function DashboardContent() {
           ) : chatbots.length === 0 ? (
             <div className="text-center py-12">
               <MessageSquare className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500 mb-4">Non hai ancora creato nessun chatbot</p>
+              <p className="text-gray-500 mb-4">{t.dashboard.chatbots.noChatbots}</p>
               <Link href="/dashboard/chatbots/create" className="btn-primary">
-                Crea il tuo primo chatbot
+                {t.dashboard.chatbots.createFirst}
               </Link>
             </div>
           ) : (
@@ -386,9 +389,9 @@ function DashboardContent() {
 
         {/* Box informativo: limite 1 chatbot + CTA WhatsApp */}
         <div className="bg-gradient-to-r from-primary to-accent rounded-2xl p-6 md:p-8 mb-8 text-white">
-          <h2 className="text-2xl font-bold mb-4">Hai più strutture?</h2>
+          <h2 className="text-2xl font-bold mb-4">{t.dashboard.moreStructures.title}</h2>
           <p className="mb-6 text-white/90">
-            Ogni account può avere un solo chatbot. Se ti servono più chatbot perché gestisci più strutture, contattami al <strong>3391797616</strong>.
+            {t.dashboard.moreStructures.description}
           </p>
           <a
             href="https://wa.me/393391797616"
@@ -397,7 +400,7 @@ function DashboardContent() {
             className="inline-flex items-center bg-white text-primary px-6 py-3 rounded-lg font-semibold hover:shadow-lg transition"
           >
             <Plus className="w-5 h-5 mr-2" />
-            Scrivimi su WhatsApp
+{t.dashboard.moreStructures.whatsappButton}
           </a>
         </div>
       </div>
@@ -410,7 +413,7 @@ function DashboardContent() {
             animate={{ opacity: 1, scale: 1 }}
             className="bg-white rounded-2xl p-6 md:p-8 max-w-md w-full"
           >
-            <h3 className="text-xl font-bold mb-4">QR Code Chatbot</h3>
+            <h3 className="text-xl font-bold mb-4">{t.dashboard.qrModal.title}</h3>
             <div className="bg-gray-100 p-4 rounded-lg mb-4">
               <img
                 src={`data:image/png;base64,${currentQR.qr}`}
@@ -420,7 +423,7 @@ function DashboardContent() {
               />
             </div>
             <p className="text-sm text-gray-600 mb-4">
-              Scansiona questo QR code per accedere al chatbot
+              {t.dashboard.qrModal.description}
             </p>
             <div className="flex items-center gap-2 p-2 bg-gray-100 rounded-lg mb-4">
               <input
@@ -436,7 +439,7 @@ function DashboardContent() {
                 }}
                 className="text-primary hover:text-secondary"
               >
-                Copia
+{t.dashboard.qrModal.copyButton}
               </button>
             </div>
             <div className="flex gap-2">
@@ -450,13 +453,13 @@ function DashboardContent() {
                 }}
                 className="flex-1 btn-secondary"
               >
-                Scarica QR
+{t.dashboard.qrModal.downloadButton}
               </button>
               <button
                 onClick={() => setShowQRModal(false)}
                 className="flex-1 btn-primary"
               >
-                Chiudi
+{t.dashboard.qrModal.closeButton}
               </button>
             </div>
           </motion.div>
