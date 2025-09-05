@@ -160,6 +160,7 @@ export interface Translations {
     download: string
     upload: string
     refresh: string
+    redirecting: string
     settings: string
     profile: string
     logout: string
@@ -233,24 +234,24 @@ export interface Translations {
   }
   
   // Dashboard
-      dashboard: {
-      title: string
-      welcome: string
-      stats: {
-        totalChatbots: string
-        totalMessages: string
-        activeChatbots: string
-        totalGuests: string
+  dashboard: {
+    title: string
+    welcome: string
+    stats: {
+      totalChatbots: string
+      totalMessages: string
+      activeChatbots: string
+      totalGuests: string
         totalHistorical: string
         allChatbots: string
         alwaysOnline: string
-      }
-      quickActions: {
-        createChatbot: string
-        viewAnalytics: string
-        manageSettings: string
-        getSupport: string
-      }
+    }
+    quickActions: {
+      createChatbot: string
+      viewAnalytics: string
+      manageSettings: string
+      getSupport: string
+    }
       freeTrial: {
         title: string
         description: string
@@ -283,13 +284,11 @@ export interface Translations {
         guardianCancelling: string
         guardianInactive: string
       }
-    }
+  }
   
   // Chatbots
   chatbots: {
     title: string
-    create: string
-    edit: string
     delete: string
     name: string
     description: string
@@ -300,6 +299,151 @@ export interface Translations {
     actions: string
     noChatbots: string
     createFirst: string
+    conversations: string
+    active: string
+    guest: string
+    performance: {
+      title: string
+      conversations: string
+      messages: string
+      dailyDetail: string
+    }
+    preview: {
+      title: string
+      chatUrl: string
+      messages: string
+      conversations: string
+      averagePerChat: string
+    }
+    alert: {
+      critical: string
+      dissatisfiedGuest: string
+      negativeReviewRisk: string
+      sentiment: string
+    }
+    create: {
+      title: string
+      subtitle: string
+      steps: {
+        basic: string
+        property: string
+        amenities: string
+        location: string
+        services: string
+        final: string
+      }
+      form: {
+        name: string
+        propertyName: string
+        propertyType: string
+        propertyAddress: string
+        propertyCity: string
+        propertyDescription: string
+        checkInTime: string
+        checkOutTime: string
+        houseRules: string
+        amenities: string
+        neighborhoodDescription: string
+        transportationInfo: string
+        shoppingInfo: string
+        parkingInfo: string
+        specialInstructions: string
+        welcomeMessage: string
+        nearbyAttractions: string
+        restaurantsBars: string
+        emergencyContacts: string
+        wifiInfo: string
+        faq: string
+        addAttraction: string
+        addRestaurant: string
+        addContact: string
+        addFaq: string
+        attractionName: string
+        attractionDistance: string
+        attractionDescription: string
+        restaurantName: string
+        restaurantType: string
+        restaurantDistance: string
+        contactName: string
+        contactNumber: string
+        contactType: string
+        wifiNetwork: string
+        wifiPassword: string
+        question: string
+        answer: string
+        remove: string
+      }
+      buttons: {
+        next: string
+        previous: string
+        create: string
+        save: string
+        cancel: string
+        add: string
+      }
+      messages: {
+        creating: string
+        created: string
+        error: string
+        saved: string
+        saving: string
+      }
+    }
+    edit: {
+      title: string
+      subtitle: string
+      form: {
+        name: string
+        propertyName: string
+        propertyType: string
+        propertyAddress: string
+        propertyCity: string
+        propertyDescription: string
+        checkInTime: string
+        checkOutTime: string
+        houseRules: string
+        amenities: string
+        neighborhoodDescription: string
+        transportationInfo: string
+        shoppingInfo: string
+        parkingInfo: string
+        specialInstructions: string
+        welcomeMessage: string
+        nearbyAttractions: string
+        restaurantsBars: string
+        emergencyContacts: string
+        wifiInfo: string
+        faq: string
+        addAttraction: string
+        addRestaurant: string
+        addContact: string
+        addFaq: string
+        attractionName: string
+        attractionDistance: string
+        attractionDescription: string
+        restaurantName: string
+        restaurantType: string
+        restaurantDistance: string
+        contactName: string
+        contactNumber: string
+        contactType: string
+        wifiNetwork: string
+        wifiPassword: string
+        question: string
+        answer: string
+        remove: string
+      }
+      buttons: {
+        save: string
+        cancel: string
+        add: string
+      }
+      messages: {
+        saving: string
+        saved: string
+        error: string
+      }
+    }
   }
   
   // Guardian
@@ -418,6 +562,33 @@ export interface Translations {
     billing: string
     language: string
     theme: string
+    personalInfo: string
+    fullName: string
+    email: string
+    phone: string
+    company: string
+    updateProfile: string
+    changePassword: string
+    currentPassword: string
+    newPassword: string
+    confirmPassword: string
+    updatePassword: string
+    subscriptionStatus: string
+    plan: string
+    nextBilling: string
+    cancelSubscription: string
+    reactivateSubscription: string
+    notificationSettings: string
+    emailNotifications: string
+    smsNotifications: string
+    pushNotifications: string
+    privacySettings: string
+    dataProcessing: string
+    marketingEmails: string
+    analytics: string
+    deleteAccount: string
+    deleteAccountWarning: string
+    deleteAccountConfirm: string
   }
   
   // Statistics Section
@@ -729,6 +900,7 @@ export const translations: Record<Language, Translations> = {
       download: "Scarica",
       upload: "Carica",
       refresh: "Aggiorna",
+      redirecting: "Reindirizzamento...",
       settings: "Impostazioni",
       profile: "Profilo",
       logout: "Esci",
@@ -852,8 +1024,6 @@ export const translations: Record<Language, Translations> = {
     },
     chatbots: {
       title: "I Miei Chatbot",
-      create: "Crea Chatbot",
-      edit: "Modifica",
       delete: "Elimina",
       name: "Nome",
       description: "Descrizione",
@@ -863,7 +1033,152 @@ export const translations: Record<Language, Translations> = {
       lastActivity: "Ultima Attività",
       actions: "Azioni",
       noChatbots: "Non hai ancora creato nessun chatbot",
-      createFirst: "Crea il tuo primo chatbot"
+      createFirst: "Crea il tuo primo chatbot",
+      conversations: "conversazioni",
+      active: "Attivo",
+      guest: "Ospite",
+      performance: {
+        title: "Andamento Ultimi 30gg",
+        conversations: "Conversazioni",
+        messages: "Messaggi",
+        dailyDetail: "Dettaglio giornaliero"
+      },
+      preview: {
+        title: "Anteprima & Azioni",
+        chatUrl: "URL chat",
+        messages: "Messaggi",
+        conversations: "Conversazioni",
+        averagePerChat: "Media per chat"
+      },
+      alert: {
+        critical: "🚨 ALERT CRITICO",
+        dissatisfiedGuest: "Ospite insoddisfatto rilevato nella conversazione",
+        negativeReviewRisk: "Rischio recensione negativa",
+        sentiment: "Sentiment"
+      },
+      create: {
+        title: "Crea Nuovo Chatbot",
+        subtitle: "Configura il tuo chatbot per la tua proprietà",
+        steps: {
+          basic: "Informazioni Base",
+          property: "Proprietà",
+          amenities: "Servizi",
+          location: "Posizione",
+          services: "Servizi Locali",
+          final: "Finalizzazione"
+        },
+        form: {
+          name: "Nome Chatbot",
+          propertyName: "Nome Proprietà",
+          propertyType: "Tipo di Proprietà",
+          propertyAddress: "Indirizzo",
+          propertyCity: "Città",
+          propertyDescription: "Descrizione Proprietà",
+          checkInTime: "Orario Check-in",
+          checkOutTime: "Orario Check-out",
+          houseRules: "Regole della Casa",
+          amenities: "Servizi Disponibili",
+          neighborhoodDescription: "Descrizione Quartiere",
+          transportationInfo: "Informazioni Trasporti",
+          shoppingInfo: "Informazioni Shopping",
+          parkingInfo: "Informazioni Parcheggio",
+          specialInstructions: "Istruzioni Speciali",
+          welcomeMessage: "Messaggio di Benvenuto",
+          nearbyAttractions: "Attrazioni Vicine",
+          restaurantsBars: "Ristoranti e Bar",
+          emergencyContacts: "Contatti di Emergenza",
+          wifiInfo: "Informazioni WiFi",
+          faq: "Domande Frequenti",
+          addAttraction: "Aggiungi Attrazione",
+          addRestaurant: "Aggiungi Ristorante",
+          addContact: "Aggiungi Contatto",
+          addFaq: "Aggiungi FAQ",
+          attractionName: "Nome Attrazione",
+          attractionDistance: "Distanza",
+          attractionDescription: "Descrizione",
+          restaurantName: "Nome Ristorante",
+          restaurantType: "Tipo",
+          restaurantDistance: "Distanza",
+          contactName: "Nome Contatto",
+          contactNumber: "Numero",
+          contactType: "Tipo",
+          wifiNetwork: "Nome Rete",
+          wifiPassword: "Password",
+          question: "Domanda",
+          answer: "Risposta",
+          remove: "Rimuovi"
+        },
+        buttons: {
+          next: "Avanti",
+          previous: "Indietro",
+          create: "Crea Chatbot",
+          save: "Salva",
+          cancel: "Annulla",
+          add: "Aggiungi"
+        },
+        messages: {
+          creating: "Creazione chatbot in corso...",
+          created: "Chatbot creato con successo!",
+          error: "Errore nella creazione del chatbot",
+          saved: "Chatbot salvato con successo!",
+          saving: "Salvataggio in corso..."
+        }
+      },
+      edit: {
+        title: "Modifica Chatbot",
+        subtitle: "Aggiorna le informazioni del tuo chatbot",
+        form: {
+          name: "Nome Chatbot",
+          propertyName: "Nome Proprietà",
+          propertyType: "Tipo di Proprietà",
+          propertyAddress: "Indirizzo",
+          propertyCity: "Città",
+          propertyDescription: "Descrizione Proprietà",
+          checkInTime: "Orario Check-in",
+          checkOutTime: "Orario Check-out",
+          houseRules: "Regole della Casa",
+          amenities: "Servizi Disponibili",
+          neighborhoodDescription: "Descrizione Quartiere",
+          transportationInfo: "Informazioni Trasporti",
+          shoppingInfo: "Informazioni Shopping",
+          parkingInfo: "Informazioni Parcheggio",
+          specialInstructions: "Istruzioni Speciali",
+          welcomeMessage: "Messaggio di Benvenuto",
+          nearbyAttractions: "Attrazioni Vicine",
+          restaurantsBars: "Ristoranti e Bar",
+          emergencyContacts: "Contatti di Emergenza",
+          wifiInfo: "Informazioni WiFi",
+          faq: "Domande Frequenti",
+          addAttraction: "Aggiungi Attrazione",
+          addRestaurant: "Aggiungi Ristorante",
+          addContact: "Aggiungi Contatto",
+          addFaq: "Aggiungi FAQ",
+          attractionName: "Nome Attrazione",
+          attractionDistance: "Distanza",
+          attractionDescription: "Descrizione",
+          restaurantName: "Nome Ristorante",
+          restaurantType: "Tipo",
+          restaurantDistance: "Distanza",
+          contactName: "Nome Contatto",
+          contactNumber: "Numero",
+          contactType: "Tipo",
+          wifiNetwork: "Nome Rete",
+          wifiPassword: "Password",
+          question: "Domanda",
+          answer: "Risposta",
+          remove: "Rimuovi"
+        },
+        buttons: {
+          save: "Salva Modifiche",
+          cancel: "Annulla",
+          add: "Aggiungi"
+        },
+        messages: {
+          saving: "Salvataggio modifiche...",
+          saved: "Modifiche salvate con successo!",
+          error: "Errore nel salvataggio delle modifiche"
+        }
+      }
     },
     guardian: {
       title: "Guardian",
@@ -1080,7 +1395,34 @@ export const translations: Record<Language, Translations> = {
       security: "Sicurezza",
       billing: "Fatturazione",
       language: "Lingua",
-      theme: "Tema"
+      theme: "Tema",
+      personalInfo: "Informazioni Personali",
+      fullName: "Nome Completo",
+      email: "Email",
+      phone: "Telefono",
+      company: "Azienda",
+      updateProfile: "Aggiorna Profilo",
+      changePassword: "Cambia Password",
+      currentPassword: "Password Attuale",
+      newPassword: "Nuova Password",
+      confirmPassword: "Conferma Password",
+      updatePassword: "Aggiorna Password",
+      subscriptionStatus: "Stato Abbonamento",
+      plan: "Piano",
+      nextBilling: "Prossimo Addebito",
+      cancelSubscription: "Cancella Abbonamento",
+      reactivateSubscription: "Riattiva Abbonamento",
+      notificationSettings: "Impostazioni Notifiche",
+      emailNotifications: "Notifiche Email",
+      smsNotifications: "Notifiche SMS",
+      pushNotifications: "Notifiche Push",
+      privacySettings: "Impostazioni Privacy",
+      dataProcessing: "Elaborazione Dati",
+      marketingEmails: "Email Marketing",
+      analytics: "Analytics",
+      deleteAccount: "Elimina Account",
+      deleteAccountWarning: "Questa azione non può essere annullata",
+      deleteAccountConfirm: "Conferma Eliminazione"
     }
   },
   ENG: {
@@ -1301,6 +1643,7 @@ export const translations: Record<Language, Translations> = {
       download: "Download",
       upload: "Upload",
       refresh: "Refresh",
+      redirecting: "Redirecting...",
       settings: "Settings",
       profile: "Profile",
       logout: "Logout",
@@ -1424,8 +1767,6 @@ export const translations: Record<Language, Translations> = {
     },
     chatbots: {
       title: "My Chatbots",
-      create: "Create Chatbot",
-      edit: "Edit",
       delete: "Delete",
       name: "Name",
       description: "Description",
@@ -1435,7 +1776,152 @@ export const translations: Record<Language, Translations> = {
       lastActivity: "Last Activity",
       actions: "Actions",
       noChatbots: "You haven't created any chatbots yet",
-      createFirst: "Create your first chatbot"
+      createFirst: "Create your first chatbot",
+      conversations: "conversations",
+      active: "Active",
+      guest: "Guest",
+      performance: {
+        title: "Performance Last 30 Days",
+        conversations: "Conversations",
+        messages: "Messages",
+        dailyDetail: "Daily detail"
+      },
+      preview: {
+        title: "Preview & Actions",
+        chatUrl: "Chat URL",
+        messages: "Messages",
+        conversations: "Conversations",
+        averagePerChat: "Average per chat"
+      },
+      alert: {
+        critical: "🚨 CRITICAL ALERT",
+        dissatisfiedGuest: "Dissatisfied guest detected in conversation",
+        negativeReviewRisk: "Negative review risk",
+        sentiment: "Sentiment"
+      },
+      create: {
+        title: "Create New Chatbot",
+        subtitle: "Configure your chatbot for your property",
+        steps: {
+          basic: "Basic Information",
+          property: "Property",
+          amenities: "Amenities",
+          location: "Location",
+          services: "Local Services",
+          final: "Finalization"
+        },
+        form: {
+          name: "Chatbot Name",
+          propertyName: "Property Name",
+          propertyType: "Property Type",
+          propertyAddress: "Address",
+          propertyCity: "City",
+          propertyDescription: "Property Description",
+          checkInTime: "Check-in Time",
+          checkOutTime: "Check-out Time",
+          houseRules: "House Rules",
+          amenities: "Available Amenities",
+          neighborhoodDescription: "Neighborhood Description",
+          transportationInfo: "Transportation Information",
+          shoppingInfo: "Shopping Information",
+          parkingInfo: "Parking Information",
+          specialInstructions: "Special Instructions",
+          welcomeMessage: "Welcome Message",
+          nearbyAttractions: "Nearby Attractions",
+          restaurantsBars: "Restaurants and Bars",
+          emergencyContacts: "Emergency Contacts",
+          wifiInfo: "WiFi Information",
+          faq: "Frequently Asked Questions",
+          addAttraction: "Add Attraction",
+          addRestaurant: "Add Restaurant",
+          addContact: "Add Contact",
+          addFaq: "Add FAQ",
+          attractionName: "Attraction Name",
+          attractionDistance: "Distance",
+          attractionDescription: "Description",
+          restaurantName: "Restaurant Name",
+          restaurantType: "Type",
+          restaurantDistance: "Distance",
+          contactName: "Contact Name",
+          contactNumber: "Number",
+          contactType: "Type",
+          wifiNetwork: "Network Name",
+          wifiPassword: "Password",
+          question: "Question",
+          answer: "Answer",
+          remove: "Remove"
+        },
+        buttons: {
+          next: "Next",
+          previous: "Previous",
+          create: "Create Chatbot",
+          save: "Save",
+          cancel: "Cancel",
+          add: "Add"
+        },
+        messages: {
+          creating: "Creating chatbot...",
+          created: "Chatbot created successfully!",
+          error: "Error creating chatbot",
+          saved: "Chatbot saved successfully!",
+          saving: "Saving..."
+        }
+      },
+      edit: {
+        title: "Edit Chatbot",
+        subtitle: "Update your chatbot information",
+        form: {
+          name: "Chatbot Name",
+          propertyName: "Property Name",
+          propertyType: "Property Type",
+          propertyAddress: "Address",
+          propertyCity: "City",
+          propertyDescription: "Property Description",
+          checkInTime: "Check-in Time",
+          checkOutTime: "Check-out Time",
+          houseRules: "House Rules",
+          amenities: "Available Amenities",
+          neighborhoodDescription: "Neighborhood Description",
+          transportationInfo: "Transportation Information",
+          shoppingInfo: "Shopping Information",
+          parkingInfo: "Parking Information",
+          specialInstructions: "Special Instructions",
+          welcomeMessage: "Welcome Message",
+          nearbyAttractions: "Nearby Attractions",
+          restaurantsBars: "Restaurants and Bars",
+          emergencyContacts: "Emergency Contacts",
+          wifiInfo: "WiFi Information",
+          faq: "Frequently Asked Questions",
+          addAttraction: "Add Attraction",
+          addRestaurant: "Add Restaurant",
+          addContact: "Add Contact",
+          addFaq: "Add FAQ",
+          attractionName: "Attraction Name",
+          attractionDistance: "Distance",
+          attractionDescription: "Description",
+          restaurantName: "Restaurant Name",
+          restaurantType: "Type",
+          restaurantDistance: "Distance",
+          contactName: "Contact Name",
+          contactNumber: "Number",
+          contactType: "Type",
+          wifiNetwork: "Network Name",
+          wifiPassword: "Password",
+          question: "Question",
+          answer: "Answer",
+          remove: "Remove"
+        },
+        buttons: {
+          save: "Save Changes",
+          cancel: "Cancel",
+          add: "Add"
+        },
+        messages: {
+          saving: "Saving changes...",
+          saved: "Changes saved successfully!",
+          error: "Error saving changes"
+        }
+      }
     },
     guardian: {
       title: "Guardian",
@@ -1652,7 +2138,34 @@ export const translations: Record<Language, Translations> = {
       security: "Security",
       billing: "Billing",
       language: "Language",
-      theme: "Theme"
+      theme: "Theme",
+      personalInfo: "Personal Information",
+      fullName: "Full Name",
+      email: "Email",
+      phone: "Phone",
+      company: "Company",
+      updateProfile: "Update Profile",
+      changePassword: "Change Password",
+      currentPassword: "Current Password",
+      newPassword: "New Password",
+      confirmPassword: "Confirm Password",
+      updatePassword: "Update Password",
+      subscriptionStatus: "Subscription Status",
+      plan: "Plan",
+      nextBilling: "Next Billing",
+      cancelSubscription: "Cancel Subscription",
+      reactivateSubscription: "Reactivate Subscription",
+      notificationSettings: "Notification Settings",
+      emailNotifications: "Email Notifications",
+      smsNotifications: "SMS Notifications",
+      pushNotifications: "Push Notifications",
+      privacySettings: "Privacy Settings",
+      dataProcessing: "Data Processing",
+      marketingEmails: "Marketing Emails",
+      analytics: "Analytics",
+      deleteAccount: "Delete Account",
+      deleteAccountWarning: "This action cannot be undone",
+      deleteAccountConfirm: "Confirm Deletion"
     }
   }
 }

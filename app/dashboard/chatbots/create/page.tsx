@@ -25,6 +25,7 @@ import { useForm, useFieldArray } from 'react-hook-form'
 import toast from 'react-hot-toast'
 import { chatbots } from '@/lib/api'
 import { useChatbotStore } from '@/lib/store'
+import { useLanguage } from '@/lib/languageContext'
 
 interface ChatbotFormData {
   name: string
@@ -69,6 +70,7 @@ const amenitiesList = [
 
 export default function CreateChatbotPage() {
   const router = useRouter()
+  const { t } = useLanguage()
   const [currentStep, setCurrentStep] = useState(1)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const { addChatbot } = useChatbotStore()
@@ -134,10 +136,10 @@ export default function CreateChatbotPage() {
     try {
       const response = await chatbots.create(data)
       addChatbot(response.data)
-      toast.success('Chatbot creato con successo!')
+      toast.success(t.chatbots.create.messages.created)
       router.push(`/dashboard/chatbots/${response.data.id}`)
     } catch (error: any) {
-      toast.error(error.response?.data?.detail || 'Errore nella creazione del chatbot')
+      toast.error(error.response?.data?.detail || t.chatbots.create.messages.error)
     } finally {
       setIsSubmitting(false)
     }
@@ -201,7 +203,7 @@ export default function CreateChatbotPage() {
             </div>
 
             <div>
-              <label className="label">Indirizzo</label>
+              <label className="label">{t.chatbots.create.form.propertyAddress}</label>
               <input
                 {...register('property_address', { required: 'Indirizzo richiesto' })}
                 className="input-field"
@@ -211,7 +213,7 @@ export default function CreateChatbotPage() {
             </div>
 
             <div>
-              <label className="label">Città</label>
+              <label className="label">{t.chatbots.create.form.propertyCity}</label>
               <input
                 {...register('property_city', { required: 'Città richiesta' })}
                 className="input-field"
@@ -225,10 +227,10 @@ export default function CreateChatbotPage() {
       case 2:
         return (
           <div className="space-y-6">
-            <h2 className="text-2xl font-bold mb-4">Dettagli Proprietà</h2>
+            <h2 className="text-2xl font-bold mb-4">{t.chatbots.create.steps.property}</h2>
             
             <div>
-              <label className="label">Descrizione della Proprietà</label>
+              <label className="label">{t.chatbots.create.form.propertyDescription}</label>
               <textarea
                 {...register('property_description', { required: 'Descrizione richiesta' })}
                 className="input-field min-h-32"
@@ -239,7 +241,7 @@ export default function CreateChatbotPage() {
 
             <div className="grid md:grid-cols-2 gap-4">
               <div>
-                <label className="label">Orario Check-in</label>
+                <label className="label">{t.chatbots.create.form.checkInTime}</label>
                 <input
                   {...register('check_in_time', { required: 'Orario check-in richiesto' })}
                   className="input-field"
@@ -249,7 +251,7 @@ export default function CreateChatbotPage() {
               </div>
 
               <div>
-                <label className="label">Orario Check-out</label>
+                <label className="label">{t.chatbots.create.form.checkOutTime}</label>
                 <input
                   {...register('check_out_time', { required: 'Orario check-out richiesto' })}
                   className="input-field"
@@ -260,7 +262,7 @@ export default function CreateChatbotPage() {
             </div>
 
             <div>
-              <label className="label">Regole della Casa</label>
+              <label className="label">{t.chatbots.create.form.houseRules}</label>
               <textarea
                 {...register('house_rules', { required: 'Regole richieste' })}
                 className="input-field min-h-24"
@@ -274,10 +276,10 @@ export default function CreateChatbotPage() {
       case 3:
         return (
           <div className="space-y-6">
-            <h2 className="text-2xl font-bold mb-4">Servizi e Dotazioni</h2>
+            <h2 className="text-2xl font-bold mb-4">{t.chatbots.create.steps.amenities}</h2>
             
             <div>
-              <label className="label">Servizi Disponibili</label>
+              <label className="label">{t.chatbots.create.form.amenities}</label>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                 {amenitiesList.map((amenity) => (
                   <button
@@ -301,7 +303,7 @@ export default function CreateChatbotPage() {
 
             <div className="grid md:grid-cols-2 gap-4">
               <div>
-                <label className="label">Nome Rete WiFi</label>
+                <label className="label">{t.chatbots.create.form.wifiNetwork}</label>
                 <input
                   {...register('wifi_info.network')}
                   className="input-field"
@@ -310,7 +312,7 @@ export default function CreateChatbotPage() {
               </div>
 
               <div>
-                <label className="label">Password WiFi</label>
+                <label className="label">{t.chatbots.create.form.wifiPassword}</label>
                 <input
                   {...register('wifi_info.password')}
                   className="input-field"
@@ -320,7 +322,7 @@ export default function CreateChatbotPage() {
             </div>
 
             <div>
-              <label className="label">Informazioni Parcheggio</label>
+              <label className="label">{t.chatbots.create.form.parkingInfo}</label>
               <textarea
                 {...register('parking_info')}
                 className="input-field"
@@ -329,7 +331,7 @@ export default function CreateChatbotPage() {
             </div>
 
             <div>
-              <label className="label">Istruzioni Speciali</label>
+              <label className="label">{t.chatbots.create.form.specialInstructions}</label>
               <textarea
                 {...register('special_instructions')}
                 className="input-field"
@@ -342,10 +344,10 @@ export default function CreateChatbotPage() {
       case 4:
         return (
           <div className="space-y-6">
-            <h2 className="text-2xl font-bold mb-4">Zona e Trasporti</h2>
+            <h2 className="text-2xl font-bold mb-4">{t.chatbots.create.steps.location}</h2>
             
             <div>
-              <label className="label">Descrizione del Quartiere</label>
+              <label className="label">{t.chatbots.create.form.neighborhoodDescription}</label>
               <textarea
                 {...register('neighborhood_description', { required: 'Descrizione quartiere richiesta' })}
                 className="input-field min-h-24"
@@ -355,7 +357,7 @@ export default function CreateChatbotPage() {
             </div>
 
             <div>
-              <label className="label">Informazioni sui Trasporti</label>
+              <label className="label">{t.chatbots.create.form.transportationInfo}</label>
               <textarea
                 {...register('transportation_info', { required: 'Info trasporti richieste' })}
                 className="input-field min-h-24"
@@ -365,7 +367,7 @@ export default function CreateChatbotPage() {
             </div>
 
             <div>
-              <label className="label">Negozi e Shopping</label>
+              <label className="label">{t.chatbots.create.form.shoppingInfo}</label>
               <textarea
                 {...register('shopping_info')}
                 className="input-field"
@@ -378,10 +380,10 @@ export default function CreateChatbotPage() {
       case 5:
         return (
           <div className="space-y-6">
-            <h2 className="text-2xl font-bold mb-4">Luoghi di Interesse</h2>
+            <h2 className="text-2xl font-bold mb-4">{t.chatbots.create.steps.services}</h2>
             
             <div>
-              <label className="label">Attrazioni Vicine</label>
+              <label className="label">{t.chatbots.create.form.nearbyAttractions}</label>
               {attractionFields.map((field, index) => (
                 <div key={field.id} className="bg-gray-50 p-4 rounded-lg mb-3">
                   <div className="grid md:grid-cols-3 gap-3">
@@ -419,12 +421,12 @@ export default function CreateChatbotPage() {
                 className="text-primary hover:text-secondary"
               >
                 <Plus className="w-4 h-4 inline mr-1" />
-                Aggiungi Attrazione
+                {t.chatbots.create.form.addAttraction}
               </button>
             </div>
 
             <div>
-              <label className="label">Ristoranti e Bar</label>
+              <label className="label">{t.chatbots.create.form.restaurantsBars}</label>
               {restaurantFields.map((field, index) => (
                 <div key={field.id} className="bg-gray-50 p-4 rounded-lg mb-3">
                   <div className="grid md:grid-cols-3 gap-3">
@@ -667,7 +669,7 @@ export default function CreateChatbotPage() {
                   className="btn-secondary flex items-center"
                 >
                   <ArrowLeft className="w-5 h-5 mr-2" />
-                  Indietro
+                  {t.chatbots.create.buttons.previous}
                 </button>
               )}
               
@@ -677,7 +679,7 @@ export default function CreateChatbotPage() {
                   onClick={nextStep}
                   className="btn-primary flex items-center sm:ml-auto"
                 >
-                  Avanti
+                  {t.chatbots.create.buttons.next}
                   <ArrowRight className="w-5 h-5 ml-2" />
                 </button>
               ) : (
@@ -689,11 +691,11 @@ export default function CreateChatbotPage() {
                   {isSubmitting ? (
                     <>
                       <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                      Creazione in corso...
+                      {t.chatbots.create.messages.creating}
                     </>
                   ) : (
                     <>
-                      Crea Chatbot
+                      {t.chatbots.create.buttons.create}
                       <Check className="w-5 h-5 ml-2" />
                     </>
                   )}

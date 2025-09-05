@@ -8,6 +8,7 @@ import { motion } from 'framer-motion'
 import { ArrowLeft, Loader2, Save, Plus, X, Check } from 'lucide-react'
 import { chatbots as chatbotsApi } from '@/lib/api'
 import { useChatbotStore } from '@/lib/store'
+import { useLanguage } from '@/lib/languageContext'
 import toast from 'react-hot-toast'
 
 const amenitiesList = [
@@ -44,6 +45,7 @@ interface FormValues {
 export default function EditChatbotPage() {
   const params = useParams()
   const router = useRouter()
+  const { t } = useLanguage()
   const id = Number(params.id)
   const { currentChatbot, setCurrentChatbot, updateChatbot } = useChatbotStore()
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -104,12 +106,12 @@ export default function EditChatbotPage() {
       console.log('Name:', data.name)
       await chatbotsApi.update(id, data)
       updateChatbot(id, data as any)
-      toast.success('Chatbot aggiornato e riallenato con successo')
+      toast.success(t.chatbots.edit.messages.saved)
       router.push(`/dashboard/chatbots/${id}`)
     } catch (e: any) {
       console.error('Errore aggiornamento:', e)
       console.error('Response data:', e.response?.data)
-      toast.error(e.response?.data?.detail || 'Errore nell\'aggiornamento')
+      toast.error(e.response?.data?.detail || t.chatbots.edit.messages.error)
     } finally {
       setIsSubmitting(false)
     }
@@ -204,7 +206,7 @@ export default function EditChatbotPage() {
   if (!currentChatbot) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center text-gray-600">
-        <Loader2 className="w-6 h-6 animate-spin mr-2" /> Caricamento...
+        <Loader2 className="w-6 h-6 animate-spin mr-2" /> {t.common.loading}
       </div>
     )
   }
@@ -215,15 +217,15 @@ export default function EditChatbotPage() {
         <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
           <Link href={`/dashboard/chatbots/${id}`} className="text-gray-600 hover:text-primary flex items-center">
             <ArrowLeft className="w-5 h-5 mr-2" />
-            Indietro
+            {t.common.back}
           </Link>
-          <h1 className="text-xl font-semibold hidden md:block">Modifica Chatbot</h1>
+          <h1 className="text-xl font-semibold hidden md:block">{t.chatbots.edit.title}</h1>
         </div>
       </div>
 
       <div className="bg-white shadow-sm md:hidden">
         <div className="px-4 py-4">
-          <h1 className="text-xl font-semibold">Modifica Chatbot</h1>
+          <h1 className="text-xl font-semibold">{t.chatbots.edit.title}</h1>
         </div>
       </div>
 
@@ -237,14 +239,14 @@ export default function EditChatbotPage() {
           >
             {/* Informazioni Base */}
             <div className="border-b pb-6">
-              <h2 className="text-lg font-semibold mb-4">Informazioni Base</h2>
+              <h2 className="text-lg font-semibold mb-4">{t.chatbots.create.steps.basic}</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="label">Nome Chatbot</label>
+                  <label className="label">{t.chatbots.edit.form.name}</label>
                   <input {...register('name')} className="input-field" />
                 </div>
                 <div>
-                  <label className="label">Nome Proprietà</label>
+                  <label className="label">{t.chatbots.edit.form.propertyName}</label>
                   <input {...register('property_name')} className="input-field" />
                 </div>
                 <div>

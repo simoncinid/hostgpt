@@ -103,7 +103,7 @@ export default function SettingsPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center text-gray-600">
-        <Loader2 className="w-6 h-6 animate-spin mr-2" /> Caricamento...
+        <Loader2 className="w-6 h-6 animate-spin mr-2" /> {t.common.loading}
       </div>
     )
   }
@@ -116,26 +116,26 @@ export default function SettingsPage() {
       <div className={`transition-all duration-200 ${isSidebarCollapsed ? 'md:ml-16' : 'md:ml-64'}`}>
         <div className="bg-white shadow-sm">
           <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
-            <h1 className="text-xl font-semibold">Impostazioni</h1>
+            <h1 className="text-xl font-semibold">{t.settings.title}</h1>
           </div>
         </div>
 
         <div className="p-4 md:p-8">
           <div className="max-w-4xl mx-auto space-y-6">
             <div className="bg-white rounded-2xl shadow p-6">
-              <h2 className="text-lg font-semibold mb-4">Profilo</h2>
+              <h2 className="text-lg font-semibold mb-4">{t.settings.profile}</h2>
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="flex items-center gap-3">
                   <User className="w-5 h-5 text-gray-600" />
                   <div>
-                    <p className="text-sm text-gray-500">Nome</p>
+                    <p className="text-sm text-gray-500">{t.settings.fullName}</p>
                     <p className="font-medium">{user?.full_name}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
                   <Mail className="w-5 h-5 text-gray-600" />
                   <div>
-                    <p className="text-sm text-gray-500">Email</p>
+                    <p className="text-sm text-gray-500">{t.settings.email}</p>
                     <p className="font-medium">{user?.email}</p>
                   </div>
                 </div>
@@ -144,20 +144,20 @@ export default function SettingsPage() {
 
             <div className="bg-white rounded-2xl shadow p-6">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold">Abbonamento</h2>
+                <h2 className="text-lg font-semibold">{t.settings.billing}</h2>
                 <CreditCard className="w-5 h-5 text-gray-600" />
               </div>
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-medium">Stato: <span className={
+                    <p className="font-medium">{t.settings.subscriptionStatus}: <span className={
                       user?.subscription_status === 'active' ? 'text-green-600' : 
                       user?.subscription_status === 'cancelling' ? 'text-orange-600' : 
                       'text-red-600'
                     }>{user?.subscription_status || 'inactive'}</span></p>
                     {user?.subscription_end_date && (
                       <p className="text-sm text-gray-500">
-                        {user?.subscription_status === 'cancelling' ? 'Fine abbonamento: ' : 'Prossimo rinnovo: '}
+                        {user?.subscription_status === 'cancelling' ? t.settings.nextBilling + ': ' : t.settings.nextBilling + ': '}
                         {new Date(user.subscription_end_date).toLocaleDateString('it-IT')}
                       </p>
                     )}
@@ -167,12 +167,12 @@ export default function SettingsPage() {
                       {isCheckoutLoading ? (
                         <>
                           <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                          Reindirizzamento...
+                          {t.guardian.redirecting}
                         </>
                       ) : (
                         <>
                           <CreditCard className="w-5 h-5 mr-2" />
-                          Attiva Abbonamento
+                          {t.settings.reactivateSubscription}
                         </>
                       )}
                     </button>
@@ -185,7 +185,7 @@ export default function SettingsPage() {
                       <div className="flex items-start gap-3">
                         <AlertTriangle className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
                         <div className="flex-1">
-                          <h3 className="font-medium text-red-800 mb-1">Annulla Abbonamento</h3>
+                          <h3 className="font-medium text-red-800 mb-1">{t.settings.cancelSubscription}</h3>
                           <p className="text-sm text-red-700 mb-3">
                             Annullando l'abbonamento il servizio verrà disattivato, ma tutti i tuoi dati (chatbot, conversazioni, messaggi) rimarranno nel database.
                           </p>

@@ -7,6 +7,7 @@ import { motion } from 'framer-motion'
 import { ArrowLeft, MessageSquare, Users, ExternalLink, Edit, BarChart3, Loader2 } from 'lucide-react'
 import { chatbots as chatbotsApi } from '@/lib/api'
 import { useChatbotStore, useAuthStore } from '@/lib/store'
+import { useLanguage } from '@/lib/languageContext'
 import toast from 'react-hot-toast'
 import Sidebar from '@/app/components/Sidebar'
 import ConversationItem from '@/app/components/ConversationItem'
@@ -25,6 +26,7 @@ export default function ChatbotDetailPage() {
   const id = Number(params.id)
   const { currentChatbot, setCurrentChatbot } = useChatbotStore()
   const { logout } = useAuthStore()
+  const { t } = useLanguage()
   const [isLoading, setIsLoading] = useState(true)
   const [conversations, setConversations] = useState<ConversationPreview[]>([])
   const [analytics, setAnalytics] = useState<any>(null)
@@ -103,28 +105,28 @@ export default function ChatbotDetailPage() {
                   <MessageSquare className="w-5 h-5 md:w-8 md:h-8 text-primary" />
                   <span className="text-lg md:text-3xl font-bold">{currentChatbot.total_messages}</span>
                 </div>
-                <p className="text-gray-600 text-xs md:text-base">Messaggi</p>
+                <p className="text-gray-600 text-xs md:text-base">{t.chatbots.messages}</p>
               </div>
               <div className="stats-card p-3 md:p-6">
                 <div className="flex items-center justify-between mb-1 md:mb-2">
                   <Users className="w-5 h-5 md:w-8 md:h-8 text-primary" />
                   <span className="text-lg md:text-3xl font-bold">{currentChatbot.total_conversations}</span>
                 </div>
-                <p className="text-gray-600 text-xs md:text-base">Conversazioni</p>
+                <p className="text-gray-600 text-xs md:text-base">{t.chatbots.conversations}</p>
               </div>
               <div className="stats-card p-3 md:p-6">
                 <div className="flex items-center justify-between mb-1 md:mb-2">
                   <BarChart3 className="w-5 h-5 md:w-8 md:h-8 text-primary" />
                   <span className="text-lg md:text-3xl font-bold">{Math.round((analytics?.avg_messages_per_conversation || 0) * 10) / 10}</span>
                 </div>
-                <p className="text-gray-600 text-xs md:text-base">Media per chat</p>
+                <p className="text-gray-600 text-xs md:text-base">{t.chatbots.preview.averagePerChat}</p>
               </div>
             </div>
 
             <div className="grid md:grid-cols-2 gap-6">
               <div className="bg-white rounded-2xl shadow p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-semibold">Anteprima & Azioni</h2>
+                  <h2 className="text-lg font-semibold">{t.chatbots.preview.title}</h2>
                   <button className="p-2 hover:bg-gray-100 rounded-lg" title="Scarica QR Code">
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -134,7 +136,7 @@ export default function ChatbotDetailPage() {
                 <div className="bg-gray-50 p-4 rounded-lg">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
-                      <span className={`px-2 py-1 rounded-full text-xs ${currentChatbot.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>{currentChatbot.is_active ? 'Attivo' : 'Inattivo'}</span>
+                      <span className={`px-2 py-1 rounded-full text-xs ${currentChatbot.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>{currentChatbot.is_active ? t.chatbots.active : 'Inattivo'}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <button className="p-2 hover:bg-gray-100 rounded-lg" onClick={() => window.open(chatUrl, '_blank')} title="Apri Chat">
@@ -146,7 +148,7 @@ export default function ChatbotDetailPage() {
                     </div>
                   </div>
                   <div className="text-sm">
-                    <p className="text-gray-600 mb-1">URL Chat</p>
+                    <p className="text-gray-600 mb-1">{t.chatbots.preview.chatUrl}</p>
                     <div className="flex items-center gap-2 bg-white border rounded-lg p-2">
                       <input readOnly value={chatUrl} className="flex-1 bg-transparent text-sm"/>
                       <button onClick={() => { if (chatUrl) { navigator.clipboard.writeText(chatUrl); toast.success('Copiato!') } }} className="text-primary hover:text-secondary">Copia</button>
@@ -157,22 +159,22 @@ export default function ChatbotDetailPage() {
 
               <div className="bg-white rounded-2xl shadow p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-semibold">Andamento Ultimi 30gg</h2>
+                  <h2 className="text-lg font-semibold">{t.chatbots.performance.title}</h2>
                 </div>
                 {!analytics ? (
                   <p className="text-gray-500">Nessun dato disponibile</p>
                 ) : (
                   <div className="space-y-2">
                     <div className="flex items-center justify-between text-sm">
-                      <span>Conversazioni</span>
+                      <span>{t.chatbots.performance.conversations}</span>
                       <span className="font-semibold">{analytics.conversations_30d}</span>
                     </div>
                     <div className="flex items-center justify-between text-sm">
-                      <span>Messaggi</span>
+                      <span>{t.chatbots.performance.messages}</span>
                       <span className="font-semibold">{analytics.messages_30d}</span>
                     </div>
                     <div className="border-t pt-3">
-                      <p className="text-xs text-gray-500">Dettaglio giornaliero</p>
+                      <p className="text-xs text-gray-500">{t.chatbots.performance.dailyDetail}</p>
                       <div className="max-h-56 overflow-y-auto mt-2 divide-y text-sm">
                         {analytics.daily_stats.map((d: any) => (
                           <div key={d.date} className="py-2 flex items-center justify-between">
@@ -189,7 +191,7 @@ export default function ChatbotDetailPage() {
 
             <div className="bg-white rounded-2xl shadow p-6">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold">Conversazioni</h2>
+                <h2 className="text-lg font-semibold">{t.chatbots.conversations}</h2>
                 <Link href={`/dashboard/conversations?chatbot=${currentChatbot.id}`} className="text-primary hover:text-secondary">Vedi tutte →</Link>
               </div>
               {conversations.length === 0 ? (

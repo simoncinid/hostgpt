@@ -305,7 +305,7 @@ function DashboardContent() {
                      <h3 className="font-semibold text-base md:text-lg">{bot.property_name}</h3>
                      {bot.is_active ? (
                        <span className="px-2 py-1 bg-green-100 text-green-600 text-xs rounded-full">
-                         Attivo
+                         {t.chatbots.active}
                        </span>
                      ) : (
                        <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
@@ -324,11 +324,11 @@ function DashboardContent() {
                    <div className="flex items-center justify-between mb-3">
                      <span className="flex items-center text-xs md:text-sm text-gray-600">
                        <Users className="w-3 h-3 md:w-4 md:h-4 mr-1" />
-                       {bot.total_conversations} conversazioni
+                       {bot.total_conversations} {t.chatbots.conversations}
                      </span>
                      <span className="flex items-center text-xs md:text-sm text-gray-600">
                        <MessageSquare className="w-3 h-3 md:w-4 md:h-4 mr-1" />
-                       {bot.total_messages} messaggi
+                       {bot.total_messages} {t.chatbots.messages}
                      </span>
                    </div>
                    
