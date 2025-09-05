@@ -175,7 +175,7 @@ export default function CreateChatbotPage() {
             </div>
 
             <div>
-              <label className="label">Nome della Proprietà</label>
+              <label className="label">{t.chatbots.create.form.propertyName}</label>
               <input
                 {...register('property_name', { required: 'Nome proprietà richiesto' })}
                 className="input-field"
@@ -185,7 +185,7 @@ export default function CreateChatbotPage() {
             </div>
 
             <div>
-              <label className="label">Tipo di Proprietà</label>
+              <label className="label">{t.chatbots.create.form.propertyType}</label>
               <select
                 {...register('property_type', { required: 'Tipo richiesto' })}
                 className="input-field"
@@ -473,10 +473,10 @@ export default function CreateChatbotPage() {
       case 6:
         return (
           <div className="space-y-6">
-            <h2 className="text-2xl font-bold mb-4">Contatti e FAQ</h2>
+            <h2 className="text-2xl font-bold mb-4">{t.chatbots.create.steps.final}</h2>
             
             <div>
-              <label className="label">Contatti di Emergenza</label>
+              <label className="label">{t.chatbots.create.form.emergencyContacts}</label>
               {contactFields.map((field, index) => (
                 <div key={field.id} className="bg-gray-50 p-4 rounded-lg mb-3">
                   <div className="grid md:grid-cols-3 gap-3">
@@ -559,10 +559,10 @@ export default function CreateChatbotPage() {
       case 7:
         return (
           <div className="space-y-6">
-            <h2 className="text-2xl font-bold mb-4">Configurazione Chatbot</h2>
+            <h2 className="text-2xl font-bold mb-4">{t.chatbots.create.steps.final}</h2>
             
             <div>
-              <label className="label">Messaggio di Benvenuto</label>
+              <label className="label">{t.chatbots.create.form.welcomeMessage}</label>
               <textarea
                 {...register('welcome_message', { required: 'Messaggio di benvenuto richiesto' })}
                 className="input-field min-h-24"

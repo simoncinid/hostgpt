@@ -250,7 +250,7 @@ export default function EditChatbotPage() {
                   <input {...register('property_name')} className="input-field" />
                 </div>
                 <div>
-                  <label className="label">Tipo Proprietà</label>
+                  <label className="label">{t.chatbots.edit.form.propertyType}</label>
                   <select {...register('property_type')} className="input-field">
                     <option value="">Seleziona tipo</option>
                     <option value="appartamento">Appartamento</option>
@@ -261,19 +261,19 @@ export default function EditChatbotPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="label">Città</label>
+                  <label className="label">{t.chatbots.edit.form.propertyCity}</label>
                   <input {...register('property_city')} className="input-field" />
                 </div>
                 <div className="md:col-span-2">
-                  <label className="label">Indirizzo</label>
+                  <label className="label">{t.chatbots.edit.form.propertyAddress}</label>
                   <input {...register('property_address')} className="input-field" />
                 </div>
                 <div>
-                  <label className="label">Check-in</label>
+                  <label className="label">{t.chatbots.edit.form.checkInTime}</label>
                   <input {...register('check_in_time')} className="input-field" placeholder="es. 15:00-20:00" />
                 </div>
                 <div>
-                  <label className="label">Check-out</label>
+                  <label className="label">{t.chatbots.edit.form.checkOutTime}</label>
                   <input {...register('check_out_time')} className="input-field" placeholder="es. 10:00" />
                 </div>
               </div>
@@ -281,16 +281,16 @@ export default function EditChatbotPage() {
 
             {/* Descrizione Proprietà */}
             <div className="border-b pb-6">
-              <h2 className="text-lg font-semibold mb-4">Descrizione Proprietà</h2>
+              <h2 className="text-lg font-semibold mb-4">{t.chatbots.create.steps.property}</h2>
               <div>
-                <label className="label">Descrizione Dettagliata</label>
+                <label className="label">{t.chatbots.edit.form.propertyDescription}</label>
                 <textarea {...register('property_description')} className="input-field min-h-24" placeholder="Descrivi la proprietà, le stanze, i servizi disponibili..." />
               </div>
             </div>
 
             {/* Servizi */}
             <div className="border-b pb-6">
-              <h2 className="text-lg font-semibold mb-4">Servizi Disponibili</h2>
+              <h2 className="text-lg font-semibold mb-4">{t.chatbots.create.steps.amenities}</h2>
               <div className="space-y-2">
                 {watchedAmenities.filter(amenity => amenity && amenity.trim()).map((amenity, index) => (
                   <div key={index} className="flex items-center gap-2">
@@ -314,21 +314,21 @@ export default function EditChatbotPage() {
                   className="w-full py-3 px-4 border-2 border-rose-500 text-rose-500 rounded-lg hover:bg-rose-50 transition-colors font-medium"
                 >
                   <Plus className="w-4 h-4 mr-2 inline" />
-                  Gestisci Servizi
+                  {t.chatbots.edit.form.amenities}
                 </button>
               </div>
             </div>
 
             {/* WiFi */}
             <div className="border-b pb-6">
-              <h2 className="text-lg font-semibold mb-4">Informazioni WiFi</h2>
+              <h2 className="text-lg font-semibold mb-4">{t.chatbots.edit.form.wifiInfo}</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="label">Nome Rete</label>
+                  <label className="label">{t.chatbots.edit.form.wifiNetwork}</label>
                   <input {...register('wifi_info.network')} className="input-field" />
                 </div>
                 <div>
-                  <label className="label">Password</label>
+                  <label className="label">{t.chatbots.edit.form.wifiPassword}</label>
                   <input {...register('wifi_info.password')} className="input-field" />
                 </div>
               </div>
@@ -336,45 +336,45 @@ export default function EditChatbotPage() {
 
             {/* Parcheggio */}
             <div className="border-b pb-6">
-              <h2 className="text-lg font-semibold mb-4">Informazioni Parcheggio</h2>
+              <h2 className="text-lg font-semibold mb-4">{t.chatbots.edit.form.parkingInfo}</h2>
               <div>
-                <label className="label">Dettagli Parcheggio</label>
+                <label className="label">{t.chatbots.edit.form.parkingInfo}</label>
                 <textarea {...register('parking_info')} className="input-field min-h-20" placeholder="Informazioni su parcheggio gratuito, a pagamento, garage..." />
               </div>
             </div>
 
             {/* Regole Casa */}
             <div className="border-b pb-6">
-              <h2 className="text-lg font-semibold mb-4">Regole della Casa</h2>
+              <h2 className="text-lg font-semibold mb-4">{t.chatbots.edit.form.houseRules}</h2>
               <div>
-                <label className="label">Regole e Norme</label>
+                <label className="label">{t.chatbots.edit.form.houseRules}</label>
                 <textarea {...register('house_rules')} className="input-field min-h-24" placeholder="Regole della casa, orari, divieti..." />
               </div>
             </div>
 
             {/* Istruzioni Speciali */}
             <div className="border-b pb-6">
-              <h2 className="text-lg font-semibold mb-4">Istruzioni Speciali</h2>
+              <h2 className="text-lg font-semibold mb-4">{t.chatbots.edit.form.specialInstructions}</h2>
               <div>
-                <label className="label">Istruzioni Aggiuntive</label>
+                <label className="label">{t.chatbots.edit.form.specialInstructions}</label>
                 <textarea {...register('special_instructions')} className="input-field min-h-24" placeholder="Istruzioni per check-in, accesso, problemi comuni..." />
               </div>
             </div>
 
             {/* Zona e Quartiere */}
             <div className="border-b pb-6">
-              <h2 className="text-lg font-semibold mb-4">Zona e Quartiere</h2>
+              <h2 className="text-lg font-semibold mb-4">{t.chatbots.create.steps.location}</h2>
               <div className="space-y-4">
                 <div>
-                  <label className="label">Descrizione Quartiere</label>
+                  <label className="label">{t.chatbots.edit.form.neighborhoodDescription}</label>
                   <textarea {...register('neighborhood_description')} className="input-field min-h-20" placeholder="Descrizione della zona, atmosfera, caratteristiche..." />
                 </div>
                 <div>
-                  <label className="label">Trasporti</label>
+                  <label className="label">{t.chatbots.edit.form.transportationInfo}</label>
                   <textarea {...register('transportation_info')} className="input-field min-h-20" placeholder="Metro, bus, taxi, stazioni..." />
                 </div>
                 <div>
-                  <label className="label">Shopping</label>
+                  <label className="label">{t.chatbots.edit.form.shoppingInfo}</label>
                   <textarea {...register('shopping_info')} className="input-field min-h-20" placeholder="Centri commerciali, negozi, mercati..." />
                 </div>
               </div>
@@ -382,7 +382,7 @@ export default function EditChatbotPage() {
 
             {/* Attrazioni Vicine */}
             <div className="border-b pb-6">
-              <h2 className="text-lg font-semibold mb-4">Attrazioni Vicine</h2>
+              <h2 className="text-lg font-semibold mb-4">{t.chatbots.edit.form.nearbyAttractions}</h2>
               <div className="space-y-4">
                 {watchedAttractions
                   .filter(attraction => 
@@ -401,16 +401,16 @@ export default function EditChatbotPage() {
                     </button>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <label className="label">Nome</label>
+                        <label className="label">{t.chatbots.edit.form.attractionName}</label>
                         <input {...register(`nearby_attractions.${index}.name`)} className="input-field" />
                       </div>
                       <div>
-                        <label className="label">Distanza</label>
+                        <label className="label">{t.chatbots.edit.form.attractionDistance}</label>
                         <input {...register(`nearby_attractions.${index}.distance`)} className="input-field" placeholder="es. 500m" />
                       </div>
                     </div>
                     <div className="mt-2">
-                      <label className="label">Descrizione</label>
+                      <label className="label">{t.chatbots.edit.form.attractionDescription}</label>
                       <textarea {...register(`nearby_attractions.${index}.description`)} className="input-field min-h-16" />
                     </div>
                   </div>
@@ -421,14 +421,14 @@ export default function EditChatbotPage() {
                   className="w-full py-3 px-4 border-2 border-rose-500 text-rose-500 rounded-lg hover:bg-rose-50 transition-colors font-medium"
                 >
                   <Plus className="w-4 h-4 mr-2 inline" />
-                  Gestisci Attrazioni
+                  {t.chatbots.edit.form.nearbyAttractions}
                 </button>
               </div>
             </div>
 
             {/* Ristoranti e Bar */}
             <div className="border-b pb-6">
-              <h2 className="text-lg font-semibold mb-4">Ristoranti e Bar</h2>
+              <h2 className="text-lg font-semibold mb-4">{t.chatbots.edit.form.restaurantsBars}</h2>
               <div className="space-y-4">
                 {watchedRestaurants
                   .filter(restaurant => 
@@ -577,12 +577,12 @@ export default function EditChatbotPage() {
                 {isSubmitting ? (
                   <>
                     <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                    Salvataggio e Riallenamento...
+                    {t.chatbots.edit.messages.saving}
                   </>
                 ) : (
                   <>
                     <Save className="w-5 h-5 mr-2" />
-                    Salva e Riallena Chatbot
+                    {t.chatbots.edit.buttons.save}
                   </>
                 )}
               </button>
