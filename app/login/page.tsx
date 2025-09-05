@@ -192,7 +192,6 @@ function LoginContent() {
                     <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                     <input
                       type="email"
-                      name="email"
                       {...register('email', {
                         required: t.auth.login.email + ' richiesta',
                         pattern: {
@@ -227,7 +226,6 @@ function LoginContent() {
                     <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                     <input
                       type={showPassword ? 'text' : 'password'}
-                      name="password"
                       {...register('password', {
                         required: t.auth.login.password + ' richiesta',
                         minLength: {
