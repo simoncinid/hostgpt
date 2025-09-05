@@ -79,7 +79,7 @@ export default function ChatbotsListPage() {
             <h1 className="text-xl font-semibold">{t.chatbots.title}</h1>
             {/* Nasconde il pulsante Crea se esiste già un chatbot */}
             {chatbots.length === 0 ? (
-              <Link href="/dashboard/chatbots/create" className="btn-primary">{t.chatbots.create}</Link>
+              <Link href="/dashboard/chatbots/create" className="btn-primary">{t.chatbots.create.title}</Link>
             ) : null}
           </div>
         </div>
