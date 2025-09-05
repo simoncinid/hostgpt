@@ -17,6 +17,7 @@ import {
 } from 'lucide-react'
 import { guardian } from '@/lib/api'
 import { useAuthStore } from '@/lib/store'
+import { useLanguage } from '@/lib/languageContext'
 import toast from 'react-hot-toast'
 import { loadStripe } from '@stripe/stripe-js'
 import {
@@ -30,7 +31,7 @@ import {
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
 
 // Componente per il form di pagamento
-function CheckoutForm({ clientSecret, onSuccess }: { clientSecret: string, onSuccess: () => void }) {
+function CheckoutForm({ clientSecret, onSuccess, t }: { clientSecret: string, onSuccess: () => void, t: any }) {
   const stripe = useStripe()
   const elements = useElements()
   const [isProcessing, setIsProcessing] = useState(false)
@@ -113,12 +114,12 @@ function CheckoutForm({ clientSecret, onSuccess }: { clientSecret: string, onSuc
         {isProcessing ? (
           <>
             <Loader2 className="w-5 h-5 animate-spin" />
-            <span>Elaborazione...</span>
+            <span>{t.checkout.guardian.processing}</span>
           </>
         ) : (
           <>
             <Shield className="w-5 h-5" />
-            <span>Attiva Guardian - 9€/mese</span>
+            <span>{t.checkout.guardian.button}</span>
           </>
         )}
       </button>
@@ -131,6 +132,7 @@ function CheckoutContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { setAuth, user, setUser } = useAuthStore()
+  const { t } = useLanguage()
 
   const [status, setStatus] = useState<'idle' | 'processing' | 'error' | 'cancelled' | 'success' | 'checkout'>('idle')
   const [errorMessage, setErrorMessage] = useState<string>('')
@@ -263,7 +265,7 @@ function CheckoutContent() {
                   className="bg-white rounded-xl shadow-lg p-6 border"
                 >
                   <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-lg font-semibold text-gray-900">Pagamento</h2>
+                    <h2 className="text-lg font-semibold text-gray-900">{t.checkout.guardian.paymentTitle}</h2>
                     <CreditCard className="w-5 h-5 text-gray-400" />
                   </div>
 
@@ -271,15 +273,16 @@ function CheckoutContent() {
                     <CheckoutForm 
                       clientSecret={clientSecret} 
                       onSuccess={handlePaymentSuccess}
+                      t={t}
                     />
                   </Elements>
 
                   <div className="mt-3 text-center">
                     <p className="text-xs text-gray-500">
-                      Cliccando su "Attiva Guardian" accetti i nostri{' '}
-                      <Link href="/terms" className="text-purple-600 hover:underline">Termini</Link>
+                      {t.checkout.guardian.termsText}{' '}
+                      <Link href="/terms" className="text-purple-600 hover:underline">{t.checkout.guardian.termsLink}</Link>
                       {' '}e la{' '}
-                      <Link href="/privacy" className="text-purple-600 hover:underline">Privacy</Link>
+                      <Link href="/privacy" className="text-purple-600 hover:underline">{t.checkout.guardian.privacyLink}</Link>
                     </p>
                   </div>
                 </motion.div>
@@ -354,45 +357,45 @@ function CheckoutContent() {
               className="flex flex-col justify-center space-y-4"
             >
               <div className="bg-white rounded-xl shadow-lg p-6 border">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Riepilogo</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">{t.checkout.guardian.summaryTitle}</h3>
                 
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-600">HostGPT Guardian</span>
+                    <span className="text-gray-600">{t.checkout.guardian.planName}</span>
                     <span className="font-semibold">9€/mese</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-600">Fatturazione</span>
-                    <span className="text-sm text-gray-500">Mensile</span>
+                    <span className="text-gray-600">{t.checkout.guardian.billing}</span>
+                    <span className="text-sm text-gray-500">{t.checkout.guardian.billingType}</span>
                   </div>
                 </div>
 
                 <div className="border-t pt-4 mt-4">
                   <div className="flex items-center justify-between text-lg font-semibold">
-                    <span>Totale</span>
+                    <span>{t.checkout.guardian.total}</span>
                     <span>9€/mese</span>
                   </div>
                 </div>
               </div>
 
               <div className="bg-gradient-to-r from-purple-600/10 to-indigo-600/10 rounded-xl p-6 border border-purple-600/20">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Include</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">{t.checkout.guardian.includes}</h3>
                 <div className="space-y-3">
                   <div className="flex items-center space-x-3">
                     <Eye className="w-5 h-5 text-purple-600" />
-                    <span className="text-gray-700">Monitoraggio automatico</span>
+                    <span className="text-gray-700">{t.checkout.guardian.features.monitoring}</span>
                   </div>
                   <div className="flex items-center space-x-3">
                     <AlertTriangle className="w-5 h-5 text-purple-600" />
-                    <span className="text-gray-700">Alert ospiti insoddisfatti</span>
+                    <span className="text-gray-700">{t.checkout.guardian.features.alerts}</span>
                   </div>
                   <div className="flex items-center space-x-3">
                     <Zap className="w-5 h-5 text-purple-600" />
-                    <span className="text-gray-700">Rilevamento in tempo reale</span>
+                    <span className="text-gray-700">{t.checkout.guardian.features.detection}</span>
                   </div>
                   <div className="flex items-center space-x-3">
                     <Star className="w-5 h-5 text-purple-600" />
-                    <span className="text-gray-700">Suggerimenti di azione</span>
+                    <span className="text-gray-700">{t.checkout.guardian.features.suggestions}</span>
                   </div>
                 </div>
               </div>

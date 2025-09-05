@@ -172,6 +172,31 @@ export interface Translations {
     privacy: string
     terms: string
     contact: string
+    done: string
+  }
+  
+  // Services
+  services: {
+    wifi: string
+    airConditioning: string
+    heating: string
+    tv: string
+    netflix: string
+    kitchen: string
+    dishwasher: string
+    washingMachine: string
+    dryer: string
+    iron: string
+    parking: string
+    pool: string
+    gym: string
+    balcony: string
+    garden: string
+    elevator: string
+    safe: string
+    alarm: string
+    petsAllowed: string
+    smokingAllowed: string
   }
   
   // Conversations translations
@@ -203,6 +228,134 @@ export interface Translations {
     processing: string
     success: string
     error: string
+    monthly: {
+      title: string
+      subtitle: string
+      headerTitle: string
+      paymentTitle: string
+      summaryTitle: string
+      planName: string
+      billing: string
+      billingType: string
+      total: string
+      includes: string
+      features: {
+        messages: string
+        chatbots: string
+        responses: string
+        support: string
+      }
+      button: string
+      processing: string
+      referralCode: string
+      referralCodeOptional: string
+      referralCodePlaceholder: string
+      referralCodeHelp: string
+      termsText: string
+      termsLink: string
+      privacyLink: string
+      successMessage: string
+      successMessageWithBonus: string
+      errorMessages: {
+        missingToken: string
+        checkoutError: string
+        paymentError: string
+        cardNotFound: string
+        paymentNotCompleted: string
+      }
+      statusMessages: {
+        preparing: string
+        wait: string
+        cancelled: string
+        tryAgain: string
+        completed: string
+        goToDashboard: string
+      }
+    }
+    combined: {
+      title: string
+      subtitle: string
+      headerTitle: string
+      paymentTitle: string
+      summaryTitle: string
+      hostgptPro: string
+      guardian: string
+      billing: string
+      billingType: string
+      total: string
+      includes: string
+      features: {
+        messages: string
+        chatbots: string
+        monitoring: string
+        alerts: string
+      }
+      button: string
+      processing: string
+      referralCode: string
+      referralCodeOptional: string
+      referralCodePlaceholder: string
+      referralCodeHelp: string
+      termsText: string
+      termsLink: string
+      privacyLink: string
+      successMessage: string
+      successMessageWithBonus: string
+      errorMessages: {
+        missingToken: string
+        checkoutError: string
+        paymentError: string
+        cardNotFound: string
+        paymentNotCompleted: string
+      }
+      statusMessages: {
+        preparing: string
+        wait: string
+        cancelled: string
+        tryAgain: string
+        completed: string
+        goToDashboard: string
+      }
+    }
+    guardian: {
+      title: string
+      subtitle: string
+      headerTitle: string
+      paymentTitle: string
+      summaryTitle: string
+      planName: string
+      billing: string
+      billingType: string
+      total: string
+      includes: string
+      features: {
+        monitoring: string
+        alerts: string
+        detection: string
+        suggestions: string
+      }
+      button: string
+      processing: string
+      termsText: string
+      termsLink: string
+      privacyLink: string
+      successMessage: string
+      errorMessages: {
+        missingToken: string
+        checkoutError: string
+        paymentError: string
+        cardNotFound: string
+        paymentNotCompleted: string
+      }
+      statusMessages: {
+        preparing: string
+        wait: string
+        cancelled: string
+        tryAgain: string
+        completed: string
+        goToDashboard: string
+      }
+    }
   }
   
   // Auth Pages
@@ -389,61 +542,71 @@ export interface Translations {
         saving: string
       }
     }
-    edit: {
-      title: string
-      subtitle: string
-      form: {
-        name: string
-        propertyName: string
-        propertyType: string
-        propertyAddress: string
-        propertyCity: string
-        propertyDescription: string
-        checkInTime: string
-        checkOutTime: string
-        houseRules: string
-        amenities: string
-        neighborhoodDescription: string
-        transportationInfo: string
-        shoppingInfo: string
-        parkingInfo: string
-        specialInstructions: string
-        welcomeMessage: string
-        nearbyAttractions: string
-        restaurantsBars: string
-        emergencyContacts: string
-        wifiInfo: string
-        faq: string
-        addAttraction: string
-        addRestaurant: string
-        addContact: string
-        addFaq: string
-        attractionName: string
-        attractionDistance: string
-        attractionDescription: string
-        restaurantName: string
-        restaurantType: string
-        restaurantDistance: string
-        contactName: string
-        contactNumber: string
-        contactType: string
-        wifiNetwork: string
-        wifiPassword: string
-        question: string
-        answer: string
-        remove: string
-      }
-      buttons: {
-        save: string
-        cancel: string
-        add: string
-      }
-      messages: {
-        saving: string
-        saved: string
-        error: string
-      }
-    }
+         edit: {
+       title: string
+       subtitle: string
+       form: {
+         name: string
+         propertyName: string
+         propertyType: string
+         propertyAddress: string
+         propertyCity: string
+         propertyDescription: string
+         checkInTime: string
+         checkOutTime: string
+         houseRules: string
+         amenities: string
+         neighborhoodDescription: string
+         transportationInfo: string
+         shoppingInfo: string
+         parkingInfo: string
+         specialInstructions: string
+         welcomeMessage: string
+         nearbyAttractions: string
+         restaurantsBars: string
+         emergencyContacts: string
+         wifiInfo: string
+         faq: string
+         addAttraction: string
+         addRestaurant: string
+         addContact: string
+         addFaq: string
+         attractionName: string
+         attractionDistance: string
+         attractionDescription: string
+         restaurantName: string
+         restaurantType: string
+         restaurantDistance: string
+         contactName: string
+         contactNumber: string
+         contactType: string
+         wifiNetwork: string
+         wifiPassword: string
+         question: string
+         answer: string
+         remove: string
+         selectServices: string
+         manageAttractions: string
+         manageRestaurants: string
+         manageFaq: string
+         emergencyContactsTitle: string
+         addContactTitle: string
+         customFaq: string
+         manageFaqTitle: string
+         welcomeMessageTitle: string
+         initialMessage: string
+       }
+       buttons: {
+         save: string
+         cancel: string
+         add: string
+       }
+       messages: {
+         saving: string
+         saved: string
+         error: string
+       }
+     }
   }
   
   // Guardian
@@ -911,7 +1074,32 @@ export const translations: Record<Language, Translations> = {
       about: "Chi siamo",
       privacy: "Privacy",
       terms: "Termini",
-      contact: "Contatti"
+      contact: "Contatti",
+      done: "Fatto"
+    },
+    
+    // Services
+    services: {
+      wifi: "WiFi",
+      airConditioning: "Aria Condizionata",
+      heating: "Riscaldamento",
+      tv: "TV",
+      netflix: "Netflix",
+      kitchen: "Cucina",
+      dishwasher: "Lavastoviglie",
+      washingMachine: "Lavatrice",
+      dryer: "Asciugatrice",
+      iron: "Ferro da stiro",
+      parking: "Parcheggio",
+      pool: "Piscina",
+      gym: "Palestra",
+      balcony: "Balcone",
+      garden: "Giardino",
+      elevator: "Ascensore",
+      safe: "Cassaforte",
+      alarm: "Allarme",
+      petsAllowed: "Animali ammessi",
+      smokingAllowed: "Fumatori ammessi"
     },
     
     // Conversations translations
@@ -942,7 +1130,135 @@ export const translations: Record<Language, Translations> = {
       loading: "Caricamento...",
       processing: "Elaborazione pagamento...",
       success: "Pagamento completato con successo!",
-      error: "Errore durante il pagamento"
+      error: "Errore durante il pagamento",
+      monthly: {
+        title: "Completa l'abbonamento",
+        subtitle: "Inizia subito a creare chatbot intelligenti",
+        headerTitle: "HostGPT",
+        paymentTitle: "Pagamento",
+        summaryTitle: "Riepilogo",
+        planName: "HostGPT Pro",
+        billing: "Fatturazione",
+        billingType: "Mensile",
+        total: "Totale",
+        includes: "Include",
+        features: {
+          messages: "1000 messaggi/mese",
+          chatbots: "Chatbot illimitati",
+          responses: "Risposte istantanee",
+          support: "Supporto prioritario"
+        },
+        button: "Paga 29€/mese",
+        processing: "Elaborazione...",
+        referralCode: "Codice Referral (opzionale)",
+        referralCodeOptional: "Codice Referral (opzionale)",
+        referralCodePlaceholder: "Inserisci il codice referral",
+        referralCodeHelp: "Inserisci un codice referral valido per ricevere messaggi bonus al mese",
+        termsText: "Cliccando su \"Paga\" accetti i nostri",
+        termsLink: "Termini",
+        privacyLink: "Privacy",
+        successMessage: "Abbonamento attivato! Reindirizzamento alla dashboard...",
+        successMessageWithBonus: "Abbonamento attivato con messaggi bonus! Reindirizzamento alla dashboard...",
+        errorMessages: {
+          missingToken: "Token mancante. Accedi nuovamente per continuare.",
+          checkoutError: "Errore durante il reindirizzamento al pagamento",
+          paymentError: "Errore durante il pagamento",
+          cardNotFound: "Elemento carta non trovato",
+          paymentNotCompleted: "Pagamento non completato"
+        },
+        statusMessages: {
+          preparing: "Preparazione...",
+          wait: "Attendi qualche secondo.",
+          cancelled: "Pagamento annullato",
+          tryAgain: "Riprova",
+          completed: "Completato!",
+          goToDashboard: "Vai alla Dashboard"
+        }
+      },
+      combined: {
+        title: "Pacchetto Completo",
+        subtitle: "HostGPT Pro + Guardian per la massima efficienza",
+        headerTitle: "HostGPT Pro + Guardian",
+        paymentTitle: "Pagamento",
+        summaryTitle: "Riepilogo",
+        hostgptPro: "HostGPT Pro",
+        guardian: "Guardian",
+        billing: "Fatturazione",
+        billingType: "Mensile",
+        total: "Totale",
+        includes: "Include",
+        features: {
+          messages: "1000 messaggi/mese",
+          chatbots: "Chatbot illimitati",
+          monitoring: "Monitoraggio automatico",
+          alerts: "Alert ospiti insoddisfatti"
+        },
+        button: "Attiva Pacchetto Completo - 38€/mese",
+        processing: "Elaborazione...",
+        referralCode: "Codice Referral (opzionale)",
+        referralCodeOptional: "Codice Referral (opzionale)",
+        referralCodePlaceholder: "Inserisci il codice referral",
+        referralCodeHelp: "Inserisci un codice referral valido per ricevere messaggi bonus al mese",
+        termsText: "Cliccando su \"Attiva Pacchetto Completo\" accetti i nostri",
+        termsLink: "Termini",
+        privacyLink: "Privacy",
+        successMessage: "Pacchetto completo attivato! Reindirizzamento alla dashboard...",
+        successMessageWithBonus: "Pacchetto completo attivato con messaggi bonus! Reindirizzamento alla dashboard...",
+        errorMessages: {
+          missingToken: "Token mancante. Accedi nuovamente per continuare.",
+          checkoutError: "Errore durante il reindirizzamento al pagamento",
+          paymentError: "Errore durante il pagamento",
+          cardNotFound: "Elemento carta non trovato",
+          paymentNotCompleted: "Pagamento non completato"
+        },
+        statusMessages: {
+          preparing: "Preparazione...",
+          wait: "Attendi qualche secondo.",
+          cancelled: "Pagamento annullato",
+          tryAgain: "Riprova",
+          completed: "Completato!",
+          goToDashboard: "Vai alla Dashboard"
+        }
+      },
+      guardian: {
+        title: "Attiva Guardian",
+        subtitle: "Proteggi la soddisfazione dei tuoi ospiti",
+        headerTitle: "HostGPT Guardian",
+        paymentTitle: "Pagamento",
+        summaryTitle: "Riepilogo",
+        planName: "HostGPT Guardian",
+        billing: "Fatturazione",
+        billingType: "Mensile",
+        total: "Totale",
+        includes: "Include",
+        features: {
+          monitoring: "Monitoraggio automatico",
+          alerts: "Alert ospiti insoddisfatti",
+          detection: "Rilevamento in tempo reale",
+          suggestions: "Suggerimenti di azione"
+        },
+        button: "Attiva Guardian - 9€/mese",
+        processing: "Elaborazione...",
+        termsText: "Cliccando su \"Attiva Guardian\" accetti i nostri",
+        termsLink: "Termini",
+        privacyLink: "Privacy",
+        successMessage: "Guardian attivato! Reindirizzamento alla dashboard...",
+        errorMessages: {
+          missingToken: "Token mancante. Accedi nuovamente per continuare.",
+          checkoutError: "Errore durante il reindirizzamento al pagamento",
+          paymentError: "Errore durante il pagamento",
+          cardNotFound: "Elemento carta non trovato",
+          paymentNotCompleted: "Pagamento non completato"
+        },
+        statusMessages: {
+          preparing: "Preparazione...",
+          wait: "Attendi qualche secondo.",
+          cancelled: "Pagamento annullato",
+          tryAgain: "Riprova",
+          completed: "Completato!",
+          goToDashboard: "Vai alla Dashboard Guardian"
+        }
+      }
     },
     
     auth: {
@@ -1166,7 +1482,17 @@ export const translations: Record<Language, Translations> = {
           wifiPassword: "Password",
           question: "Domanda",
           answer: "Risposta",
-          remove: "Rimuovi"
+          remove: "Rimuovi",
+          selectServices: "Seleziona Servizi",
+          manageAttractions: "Gestisci Attrazioni",
+          manageRestaurants: "Gestisci Ristoranti e Bar",
+          manageFaq: "Gestisci FAQ",
+          emergencyContactsTitle: "Contatti di Emergenza",
+          addContactTitle: "Aggiungi Contatto",
+          customFaq: "FAQ Personalizzate",
+          manageFaqTitle: "Gestisci FAQ",
+          welcomeMessageTitle: "Messaggio di Benvenuto",
+          initialMessage: "Messaggio Iniziale"
         },
         buttons: {
           save: "Salva Modifiche",
@@ -1654,7 +1980,32 @@ export const translations: Record<Language, Translations> = {
       about: "About",
       privacy: "Privacy",
       terms: "Terms",
-      contact: "Contact"
+      contact: "Contact",
+      done: "Done"
+    },
+    
+    // Services
+    services: {
+      wifi: "WiFi",
+      airConditioning: "Air Conditioning",
+      heating: "Heating",
+      tv: "TV",
+      netflix: "Netflix",
+      kitchen: "Kitchen",
+      dishwasher: "Dishwasher",
+      washingMachine: "Washing Machine",
+      dryer: "Dryer",
+      iron: "Iron",
+      parking: "Parking",
+      pool: "Pool",
+      gym: "Gym",
+      balcony: "Balcony",
+      garden: "Garden",
+      elevator: "Elevator",
+      safe: "Safe",
+      alarm: "Alarm",
+      petsAllowed: "Pets Allowed",
+      smokingAllowed: "Smoking Allowed"
     },
     
     // Conversations translations
@@ -1685,7 +2036,135 @@ export const translations: Record<Language, Translations> = {
       loading: "Loading...",
       processing: "Processing payment...",
       success: "Payment completed successfully!",
-      error: "Error during payment"
+      error: "Error during payment",
+      monthly: {
+        title: "Complete Subscription",
+        subtitle: "Start creating intelligent chatbots right away",
+        headerTitle: "HostGPT",
+        paymentTitle: "Payment",
+        summaryTitle: "Summary",
+        planName: "HostGPT Pro",
+        billing: "Billing",
+        billingType: "Monthly",
+        total: "Total",
+        includes: "Includes",
+        features: {
+          messages: "1000 messages/month",
+          chatbots: "Unlimited chatbots",
+          responses: "Instant responses",
+          support: "Priority support"
+        },
+        button: "Pay €29/month",
+        processing: "Processing...",
+        referralCode: "Referral Code (optional)",
+        referralCodeOptional: "Referral Code (optional)",
+        referralCodePlaceholder: "Enter referral code",
+        referralCodeHelp: "Enter a valid referral code to receive bonus messages per month",
+        termsText: "By clicking \"Pay\" you accept our",
+        termsLink: "Terms",
+        privacyLink: "Privacy",
+        successMessage: "Subscription activated! Redirecting to dashboard...",
+        successMessageWithBonus: "Subscription activated with bonus messages! Redirecting to dashboard...",
+        errorMessages: {
+          missingToken: "Missing token. Please log in again to continue.",
+          checkoutError: "Error during payment redirection",
+          paymentError: "Error during payment",
+          cardNotFound: "Card element not found",
+          paymentNotCompleted: "Payment not completed"
+        },
+        statusMessages: {
+          preparing: "Preparing...",
+          wait: "Please wait a moment.",
+          cancelled: "Payment cancelled",
+          tryAgain: "Try again",
+          completed: "Completed!",
+          goToDashboard: "Go to Dashboard"
+        }
+      },
+      combined: {
+        title: "Complete Package",
+        subtitle: "HostGPT Pro + Guardian for maximum efficiency",
+        headerTitle: "HostGPT Pro + Guardian",
+        paymentTitle: "Payment",
+        summaryTitle: "Summary",
+        hostgptPro: "HostGPT Pro",
+        guardian: "Guardian",
+        billing: "Billing",
+        billingType: "Monthly",
+        total: "Total",
+        includes: "Includes",
+        features: {
+          messages: "1000 messages/month",
+          chatbots: "Unlimited chatbots",
+          monitoring: "Automatic monitoring",
+          alerts: "Dissatisfied guest alerts"
+        },
+        button: "Activate Complete Package - €38/month",
+        processing: "Processing...",
+        referralCode: "Referral Code (optional)",
+        referralCodeOptional: "Referral Code (optional)",
+        referralCodePlaceholder: "Enter referral code",
+        referralCodeHelp: "Enter a valid referral code to receive bonus messages per month",
+        termsText: "By clicking \"Activate Complete Package\" you accept our",
+        termsLink: "Terms",
+        privacyLink: "Privacy",
+        successMessage: "Complete package activated! Redirecting to dashboard...",
+        successMessageWithBonus: "Complete package activated with bonus messages! Redirecting to dashboard...",
+        errorMessages: {
+          missingToken: "Missing token. Please log in again to continue.",
+          checkoutError: "Error during payment redirection",
+          paymentError: "Error during payment",
+          cardNotFound: "Card element not found",
+          paymentNotCompleted: "Payment not completed"
+        },
+        statusMessages: {
+          preparing: "Preparing...",
+          wait: "Please wait a moment.",
+          cancelled: "Payment cancelled",
+          tryAgain: "Try again",
+          completed: "Completed!",
+          goToDashboard: "Go to Dashboard"
+        }
+      },
+      guardian: {
+        title: "Activate Guardian",
+        subtitle: "Protect your guests' satisfaction",
+        headerTitle: "HostGPT Guardian",
+        paymentTitle: "Payment",
+        summaryTitle: "Summary",
+        planName: "HostGPT Guardian",
+        billing: "Billing",
+        billingType: "Monthly",
+        total: "Total",
+        includes: "Includes",
+        features: {
+          monitoring: "Automatic monitoring",
+          alerts: "Dissatisfied guest alerts",
+          detection: "Real-time detection",
+          suggestions: "Action suggestions"
+        },
+        button: "Activate Guardian - €9/month",
+        processing: "Processing...",
+        termsText: "By clicking \"Activate Guardian\" you accept our",
+        termsLink: "Terms",
+        privacyLink: "Privacy",
+        successMessage: "Guardian activated! Redirecting to dashboard...",
+        errorMessages: {
+          missingToken: "Missing token. Please log in again to continue.",
+          checkoutError: "Error during payment redirection",
+          paymentError: "Error during payment",
+          cardNotFound: "Card element not found",
+          paymentNotCompleted: "Payment not completed"
+        },
+        statusMessages: {
+          preparing: "Preparing...",
+          wait: "Please wait a moment.",
+          cancelled: "Payment cancelled",
+          tryAgain: "Try again",
+          completed: "Completed!",
+          goToDashboard: "Go to Guardian Dashboard"
+        }
+      }
     },
     
     auth: {
@@ -1909,7 +2388,17 @@ export const translations: Record<Language, Translations> = {
           wifiPassword: "Password",
           question: "Question",
           answer: "Answer",
-          remove: "Remove"
+          remove: "Remove",
+          selectServices: "Select Services",
+          manageAttractions: "Manage Attractions",
+          manageRestaurants: "Manage Restaurants and Bars",
+          manageFaq: "Manage FAQ",
+          emergencyContactsTitle: "Emergency Contacts",
+          addContactTitle: "Add Contact",
+          customFaq: "Custom FAQ",
+          manageFaqTitle: "Manage FAQ",
+          welcomeMessageTitle: "Welcome Message",
+          initialMessage: "Initial Message"
         },
         buttons: {
           save: "Save Changes",

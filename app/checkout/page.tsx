@@ -32,7 +32,7 @@ import {
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
 
 // Componente per il form di pagamento
-function CheckoutForm({ clientSecret, onSuccess }: { clientSecret: string, onSuccess: (referralCode?: string) => void }) {
+function CheckoutForm({ clientSecret, onSuccess, t }: { clientSecret: string, onSuccess: (referralCode?: string) => void, t: any }) {
   const stripe = useStripe()
   const elements = useElements()
   const [isProcessing, setIsProcessing] = useState(false)
@@ -154,7 +154,7 @@ function CheckoutForm({ clientSecret, onSuccess }: { clientSecret: string, onSuc
       <div className="space-y-2">
         <label htmlFor="referralCode" className="flex items-center space-x-2 text-sm font-medium text-gray-700">
           <Gift className="w-4 h-4" />
-          <span>Codice Referral (opzionale)</span>
+          <span>{t.checkout.monthly.referralCode}</span>
         </label>
         <div className="relative">
           <input
@@ -162,7 +162,7 @@ function CheckoutForm({ clientSecret, onSuccess }: { clientSecret: string, onSuc
             id="referralCode"
             value={referralCode}
             onChange={handleReferralCodeChange}
-            placeholder="Inserisci il codice referral"
+            placeholder={t.checkout.monthly.referralCodePlaceholder}
             className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent ${
               referralCodeValid === true 
                 ? 'border-green-300 bg-green-50' 
@@ -196,7 +196,7 @@ function CheckoutForm({ clientSecret, onSuccess }: { clientSecret: string, onSuc
         )}
         {!referralCodeMessage && (
           <p className="text-xs text-gray-500">
-            Inserisci un codice referral valido per ricevere messaggi bonus al mese
+            {t.checkout.monthly.referralCodeHelp}
           </p>
         )}
       </div>
@@ -219,12 +219,12 @@ function CheckoutForm({ clientSecret, onSuccess }: { clientSecret: string, onSuc
         {isProcessing ? (
           <>
             <Loader2 className="w-5 h-5 animate-spin" />
-            <span>Elaborazione...</span>
+            <span>{t.checkout.monthly.processing}</span>
           </>
         ) : (
           <>
             <CreditCard className="w-5 h-5" />
-            <span>Paga 29€/mese</span>
+            <span>{t.checkout.monthly.button}</span>
           </>
         )}
       </button>
@@ -265,7 +265,7 @@ function CheckoutContent() {
           setAuth(existingToken)
         } else {
           setStatus('error')
-          setErrorMessage('Token mancante. Accedi nuovamente per continuare.')
+          setErrorMessage(t.checkout.monthly.errorMessages.missingToken)
           return
         }
 
@@ -294,7 +294,7 @@ function CheckoutContent() {
         }
       } catch (err: any) {
         const backendMsg = err?.response?.data?.detail
-        setErrorMessage(backendMsg || err?.message || 'Errore durante il reindirizzamento al pagamento')
+        setErrorMessage(backendMsg || err?.message || t.checkout.monthly.errorMessages.checkoutError)
         setStatus('error')
       }
     }
@@ -319,8 +319,8 @@ function CheckoutContent() {
       
       setStatus('success')
       const successMessage = referralCode
-        ? 'Abbonamento attivato con messaggi bonus! Reindirizzamento alla dashboard...'
-        : 'Abbonamento attivato! Reindirizzamento alla dashboard...'
+        ? t.checkout.monthly.successMessageWithBonus
+        : t.checkout.monthly.successMessage
       setErrorMessage(successMessage)
       
       // Reindirizza immediatamente alla dashboard con parametro di refresh
@@ -362,10 +362,10 @@ function CheckoutContent() {
                 className="mb-6"
               >
                 <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-2">
-                  Completa l'abbonamento
+                  {t.checkout.monthly.title}
                 </h1>
                 <p className="text-gray-600 text-sm lg:text-base">
-                  Inizia subito a creare chatbot intelligenti
+                  {t.checkout.monthly.subtitle}
                 </p>
               </motion.div>
 
@@ -377,7 +377,7 @@ function CheckoutContent() {
                   className="bg-white rounded-xl shadow-lg p-6 border"
                 >
                   <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-lg font-semibold text-gray-900">Pagamento</h2>
+                    <h2 className="text-lg font-semibold text-gray-900">{t.checkout.monthly.paymentTitle}</h2>
                     <CreditCard className="w-5 h-5 text-gray-400" />
                   </div>
 
@@ -385,15 +385,16 @@ function CheckoutContent() {
                     <CheckoutForm 
                       clientSecret={clientSecret} 
                       onSuccess={handlePaymentSuccess}
+                      t={t}
                     />
                   </Elements>
 
                   <div className="mt-3 text-center">
                     <p className="text-xs text-gray-500">
-                      Cliccando su "Paga" accetti i nostri{' '}
-                      <Link href="/terms" className="text-primary hover:underline">Termini</Link>
+                      {t.checkout.monthly.termsText}{' '}
+                      <Link href="/terms" className="text-primary hover:underline">{t.checkout.monthly.termsLink}</Link>
                       {' '}e la{' '}
-                      <Link href="/privacy" className="text-primary hover:underline">Privacy</Link>
+                      <Link href="/privacy" className="text-primary hover:underline">{t.checkout.monthly.privacyLink}</Link>
                     </p>
                   </div>
                 </motion.div>
@@ -406,8 +407,8 @@ function CheckoutContent() {
                   className="bg-white rounded-xl shadow-lg p-8 text-center"
                 >
                   <Loader2 className="w-12 h-12 text-primary animate-spin mx-auto mb-4" />
-                  <h2 className="text-xl font-semibold mb-2">Preparazione...</h2>
-                  <p className="text-gray-600">Attendi qualche secondo.</p>
+                  <h2 className="text-xl font-semibold mb-2">{t.checkout.monthly.statusMessages.preparing}</h2>
+                  <p className="text-gray-600">{t.checkout.monthly.statusMessages.wait}</p>
                 </motion.div>
               )}
 
@@ -417,7 +418,7 @@ function CheckoutContent() {
                   animate={{ opacity: 1, y: 0 }}
                   className="bg-white rounded-xl shadow-lg p-8 text-center"
                 >
-                  <h2 className="text-xl font-semibold mb-2">Pagamento annullato</h2>
+                  <h2 className="text-xl font-semibold mb-2">{t.checkout.monthly.statusMessages.cancelled}</h2>
                   <p className="text-gray-600 mb-6">Puoi riprovare quando vuoi.</p>
                   <div className="flex flex-col sm:flex-row gap-3 justify-center">
                     <Link href="/dashboard" className="btn-secondary">Dashboard</Link>
@@ -425,7 +426,7 @@ function CheckoutContent() {
                       className="btn-primary"
                       onClick={() => router.replace('/checkout')}
                     >
-                      Riprova
+{t.checkout.monthly.statusMessages.tryAgain}
                     </button>
                   </div>
                 </motion.div>
@@ -437,7 +438,7 @@ function CheckoutContent() {
                   animate={{ opacity: 1, y: 0 }}
                   className="bg-white rounded-xl shadow-lg p-8 text-center"
                 >
-                  <h2 className="text-xl font-semibold mb-2">Errore</h2>
+                  <h2 className="text-xl font-semibold mb-2">{t.common.error}</h2>
                   <p className="text-gray-600 mb-6">{errorMessage}</p>
                   <div className="flex flex-col sm:flex-row gap-3 justify-center">
                     <Link href="/login" className="btn-secondary">Accedi</Link>
@@ -453,9 +454,9 @@ function CheckoutContent() {
                   className="bg-white rounded-xl shadow-lg p-8 text-center"
                 >
                   <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-                  <h2 className="text-xl font-semibold mb-2 text-green-600">Completato!</h2>
+                  <h2 className="text-xl font-semibold mb-2 text-green-600">{t.checkout.monthly.statusMessages.completed}</h2>
                   <p className="text-gray-600 mb-6">{errorMessage}</p>
-                  <Link href="/dashboard" className="btn-primary">Vai alla Dashboard</Link>
+                  <Link href="/dashboard" className="btn-primary">{t.checkout.monthly.statusMessages.goToDashboard}</Link>
                 </motion.div>
               )}
             </div>
@@ -468,45 +469,45 @@ function CheckoutContent() {
               className="flex flex-col justify-center space-y-4"
             >
               <div className="bg-white rounded-xl shadow-lg p-6 border">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Riepilogo</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">{t.checkout.monthly.summaryTitle}</h3>
                 
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-600">HostGPT Pro</span>
+                    <span className="text-gray-600">{t.checkout.monthly.planName}</span>
                     <span className="font-semibold">29€/mese</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-600">Fatturazione</span>
-                    <span className="text-sm text-gray-500">Mensile</span>
+                    <span className="text-gray-600">{t.checkout.monthly.billing}</span>
+                    <span className="text-sm text-gray-500">{t.checkout.monthly.billingType}</span>
                   </div>
                 </div>
 
                 <div className="border-t pt-4 mt-4">
                   <div className="flex items-center justify-between text-lg font-semibold">
-                    <span>Totale</span>
+                    <span>{t.checkout.monthly.total}</span>
                     <span>29€/mese</span>
                   </div>
                 </div>
               </div>
 
               <div className="bg-gradient-to-r from-primary/10 to-purple-600/10 rounded-xl p-6 border border-primary/20">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Include</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">{t.checkout.monthly.includes}</h3>
                 <div className="space-y-3">
                   <div className="flex items-center space-x-3">
                     <MessageSquare className="w-5 h-5 text-primary" />
-                    <span className="text-gray-700">1000 messaggi/mese</span>
+                    <span className="text-gray-700">{t.checkout.monthly.features.messages}</span>
                   </div>
                   <div className="flex items-center space-x-3">
                     <Users className="w-5 h-5 text-primary" />
-                    <span className="text-gray-700">Chatbot illimitati</span>
+                    <span className="text-gray-700">{t.checkout.monthly.features.chatbots}</span>
                   </div>
                   <div className="flex items-center space-x-3">
                     <Zap className="w-5 h-5 text-primary" />
-                    <span className="text-gray-700">Risposte istantanee</span>
+                    <span className="text-gray-700">{t.checkout.monthly.features.responses}</span>
                   </div>
                   <div className="flex items-center space-x-3">
                     <Star className="w-5 h-5 text-primary" />
-                    <span className="text-gray-700">Supporto prioritario</span>
+                    <span className="text-gray-700">{t.checkout.monthly.features.support}</span>
                   </div>
                 </div>
               </div>

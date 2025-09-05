@@ -20,6 +20,7 @@ import {
 } from 'lucide-react'
 import { subscription, referral } from '@/lib/api'
 import { useAuthStore } from '@/lib/store'
+import { useLanguage } from '@/lib/languageContext'
 import toast from 'react-hot-toast'
 import { loadStripe } from '@stripe/stripe-js'
 import {
@@ -33,7 +34,7 @@ import {
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
 
 // Componente per il form di pagamento
-function CheckoutForm({ clientSecret, onSuccess }: { clientSecret: string, onSuccess: (referralCode?: string) => void }) {
+function CheckoutForm({ clientSecret, onSuccess, t }: { clientSecret: string, onSuccess: (referralCode?: string) => void, t: any }) {
   const stripe = useStripe()
   const elements = useElements()
   const [isProcessing, setIsProcessing] = useState(false)
@@ -155,7 +156,7 @@ function CheckoutForm({ clientSecret, onSuccess }: { clientSecret: string, onSuc
       <div className="space-y-2">
         <label htmlFor="referralCode" className="flex items-center space-x-2 text-sm font-medium text-gray-700">
           <Gift className="w-4 h-4" />
-          <span>Codice Referral (opzionale)</span>
+          <span>{t.checkout.combined.referralCode}</span>
         </label>
         <div className="relative">
           <input
@@ -163,7 +164,7 @@ function CheckoutForm({ clientSecret, onSuccess }: { clientSecret: string, onSuc
             id="referralCode"
             value={referralCode}
             onChange={handleReferralCodeChange}
-            placeholder="Inserisci il codice referral"
+            placeholder={t.checkout.combined.referralCodePlaceholder}
             className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent ${
               referralCodeValid === true 
                 ? 'border-green-300 bg-green-50' 
@@ -197,7 +198,7 @@ function CheckoutForm({ clientSecret, onSuccess }: { clientSecret: string, onSuc
         )}
         {!referralCodeMessage && (
           <p className="text-xs text-gray-500">
-            Inserisci un codice referral valido per ricevere messaggi bonus al mese
+            {t.checkout.combined.referralCodeHelp}
           </p>
         )}
       </div>
@@ -220,12 +221,12 @@ function CheckoutForm({ clientSecret, onSuccess }: { clientSecret: string, onSuc
         {isProcessing ? (
           <>
             <Loader2 className="w-5 h-5 animate-spin" />
-            <span>Elaborazione...</span>
+            <span>{t.checkout.combined.processing}</span>
           </>
         ) : (
           <>
             <Shield className="w-5 h-5" />
-            <span>Attiva Pacchetto Completo - 38€/mese</span>
+            <span>{t.checkout.combined.button}</span>
           </>
         )}
       </button>
@@ -238,6 +239,7 @@ function CheckoutContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { setAuth, user, setUser } = useAuthStore()
+  const { t } = useLanguage()
 
   const [status, setStatus] = useState<'idle' | 'processing' | 'error' | 'cancelled' | 'success' | 'checkout'>('idle')
   const [errorMessage, setErrorMessage] = useState<string>('')
@@ -377,7 +379,7 @@ function CheckoutContent() {
                   className="bg-white rounded-xl shadow-lg p-6 border"
                 >
                   <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-lg font-semibold text-gray-900">Pagamento</h2>
+                    <h2 className="text-lg font-semibold text-gray-900">{t.checkout.combined.paymentTitle}</h2>
                     <CreditCard className="w-5 h-5 text-gray-400" />
                   </div>
 
@@ -385,15 +387,16 @@ function CheckoutContent() {
                     <CheckoutForm 
                       clientSecret={clientSecret} 
                       onSuccess={handlePaymentSuccess}
+                      t={t}
                     />
                   </Elements>
 
                   <div className="mt-3 text-center">
                     <p className="text-xs text-gray-500">
-                      Cliccando su "Attiva Pacchetto Completo" accetti i nostri{' '}
-                      <Link href="/terms" className="text-primary hover:underline">Termini</Link>
+                      {t.checkout.combined.termsText}{' '}
+                      <Link href="/terms" className="text-primary hover:underline">{t.checkout.combined.termsLink}</Link>
                       {' '}e la{' '}
-                      <Link href="/privacy" className="text-primary hover:underline">Privacy</Link>
+                      <Link href="/privacy" className="text-primary hover:underline">{t.checkout.combined.privacyLink}</Link>
                     </p>
                   </div>
                 </motion.div>
@@ -468,49 +471,49 @@ function CheckoutContent() {
               className="flex flex-col justify-center space-y-4"
             >
               <div className="bg-white rounded-xl shadow-lg p-6 border">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Riepilogo</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">{t.checkout.combined.summaryTitle}</h3>
                 
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-600">HostGPT Pro</span>
+                    <span className="text-gray-600">{t.checkout.combined.hostgptPro}</span>
                     <span className="font-semibold">29€/mese</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-600">Guardian</span>
+                    <span className="text-gray-600">{t.checkout.combined.guardian}</span>
                     <span className="font-semibold">9€/mese</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-600">Fatturazione</span>
-                    <span className="text-sm text-gray-500">Mensile</span>
+                    <span className="text-gray-600">{t.checkout.combined.billing}</span>
+                    <span className="text-sm text-gray-500">{t.checkout.combined.billingType}</span>
                   </div>
                 </div>
 
                 <div className="border-t pt-4 mt-4">
                   <div className="flex items-center justify-between text-lg font-semibold">
-                    <span>Totale</span>
+                    <span>{t.checkout.combined.total}</span>
                     <span>38€/mese</span>
                   </div>
                 </div>
               </div>
 
               <div className="bg-gradient-to-r from-primary/10 to-purple-600/10 rounded-xl p-6 border border-primary/20">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Include</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">{t.checkout.combined.includes}</h3>
                 <div className="space-y-3">
                   <div className="flex items-center space-x-3">
                     <MessageSquare className="w-5 h-5 text-primary" />
-                    <span className="text-gray-700">1000 messaggi/mese</span>
+                    <span className="text-gray-700">{t.checkout.combined.features.messages}</span>
                   </div>
                   <div className="flex items-center space-x-3">
                     <Users className="w-5 h-5 text-primary" />
-                    <span className="text-gray-700">Chatbot illimitati</span>
+                    <span className="text-gray-700">{t.checkout.combined.features.chatbots}</span>
                   </div>
                   <div className="flex items-center space-x-3">
                     <Eye className="w-5 h-5 text-purple-600" />
-                    <span className="text-gray-700">Monitoraggio automatico</span>
+                    <span className="text-gray-700">{t.checkout.combined.features.monitoring}</span>
                   </div>
                   <div className="flex items-center space-x-3">
                     <AlertTriangle className="w-5 h-5 text-purple-600" />
-                    <span className="text-gray-700">Alert ospiti insoddisfatti</span>
+                    <span className="text-gray-700">{t.checkout.combined.features.alerts}</span>
                   </div>
                 </div>
               </div>

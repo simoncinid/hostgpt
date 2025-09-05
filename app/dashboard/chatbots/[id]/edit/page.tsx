@@ -597,7 +597,7 @@ export default function EditChatbotPage() {
             <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
               <div className="p-6">
                 <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-2xl font-bold">Seleziona Servizi</h2>
+                  <h2 className="text-2xl font-bold">{t.chatbots.edit.form.selectServices}</h2>
                   <button
                     onClick={closeServicesModal}
                     className="text-gray-500 hover:text-gray-700"
@@ -631,7 +631,7 @@ export default function EditChatbotPage() {
                     onClick={closeServicesModal}
                     className="btn-primary"
                   >
-                    Fatto
+                    {t.common.done}
                   </button>
                 </div>
               </div>
