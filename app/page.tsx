@@ -1356,11 +1356,11 @@ export default function LandingPage() {
                     <div className="flex items-center">
                       <DemoChatbotIcon size="md" className="mr-3" />
                       <div>
-                        <h1 className={`font-semibold text-sm md:text-lg transition-colors duration-300 ${demoIsDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                        <h1 className={`font-semibold text-sm md:text-lg transition-colors duration-300 ${demoIsDarkMode ? 'text-white' : 'text-gray-900'}`} title={demoChatInfo?.property_name}>
                           {demoChatInfo?.name || 'Demo Chat'}
                         </h1>
                         <p className={`text-xs md:text-sm ${demoIsDarkMode ? 'text-gray-300' : 'text-gray-500'} transition-colors duration-300`}>
-                          {demoChatInfo?.property_name || currentDemoTexts.assistant}
+                          {currentDemoTexts.assistant}
                         </p>
                 </div>
                   </div>

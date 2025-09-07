@@ -40,7 +40,7 @@ interface FormValues {
 export default function EditChatbotPage() {
   const params = useParams()
   const router = useRouter()
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
   const id = Number(params.id)
   const { currentChatbot, setCurrentChatbot, updateChatbot } = useChatbotStore()
   
@@ -74,6 +74,7 @@ export default function EditChatbotPage() {
   const [showFaqModal, setShowFaqModal] = useState(false)
   const [iconFile, setIconFile] = useState<File | null>(null)
   const [iconPreview, setIconPreview] = useState<string | null>(null)
+  const [iconError, setIconError] = useState<string | null>(null)
 
   const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<FormValues>()
   const watchedAmenities = watch('amenities') || []
@@ -121,16 +122,33 @@ export default function EditChatbotPage() {
 
   const handleIconChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
+    setIconError(null) // Reset error
+    
     if (file) {
-      // Verifica che sia un'immagine
+      // Verifica tipo file
       if (!file.type.startsWith('image/')) {
-        toast.error('Seleziona un file immagine (PNG o JPG)')
+        const errorMsg = language === 'IT' 
+          ? 'Seleziona un file immagine valido (PNG, JPG)'
+          : 'Please select a valid image file (PNG, JPG)'
+        setIconError(errorMsg)
+        return
+      }
+      
+      // Verifica tipo specifico
+      if (!['image/png', 'image/jpeg', 'image/jpg'].includes(file.type)) {
+        const errorMsg = language === 'IT' 
+          ? 'Formato non supportato. Usa PNG o JPG'
+          : 'Unsupported format. Use PNG or JPG'
+        setIconError(errorMsg)
         return
       }
       
       // Verifica dimensione (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
-        toast.error('L\'immagine non può superare i 5MB')
+        const errorMsg = language === 'IT' 
+          ? 'L\'immagine non può superare i 5MB'
+          : 'Image cannot exceed 5MB'
+        setIconError(errorMsg)
         return
       }
       
@@ -142,10 +160,19 @@ export default function EditChatbotPage() {
         setIconPreview(e.target?.result as string)
       }
       reader.readAsDataURL(file)
+    } else {
+      setIconFile(null)
+      setIconPreview(null)
     }
   }
 
   const onSubmit = async (data: FormValues) => {
+    // Verifica se c'è un errore di validazione dell'icona
+    if (iconError) {
+      toast.error(iconError)
+      return
+    }
+    
     setIsSubmitting(true)
     try {
       console.log('Dati da inviare:', data)
@@ -158,7 +185,8 @@ export default function EditChatbotPage() {
       if (iconFile) {
         try {
           const formData = new FormData()
-          formData.append('icon', iconFile)
+          formData.append('icon', iconFile, iconFile.name)
+          console.log('FormData entries:', Array.from(formData.entries()))
           await chatbotsApi.updateIcon(id, formData)
           toast.success('Icona aggiornata con successo')
           iconUpdated = true
@@ -379,6 +407,7 @@ export default function EditChatbotPage() {
                         onClick={() => {
                           setIconFile(null)
                           setIconPreview(null)
+                          setIconError(null)
                         }}
                         className="text-red-600 hover:text-red-800 text-sm"
                       >
@@ -399,6 +428,11 @@ export default function EditChatbotPage() {
                   <p className="text-xs text-gray-500">
                     Formati supportati: PNG, JPG. Dimensione massima: 5MB
                   </p>
+                  {iconError && (
+                    <div className="text-red-600 text-sm mt-2 p-2 bg-red-50 rounded border border-red-200">
+                      {iconError}
+                    </div>
+                  )}
                 </div>
               </div>
               

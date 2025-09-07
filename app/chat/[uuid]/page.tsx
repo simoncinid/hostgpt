@@ -657,7 +657,7 @@ export default function ChatWidgetPage() {
                     onChange={(e) => setInputMessage(e.target.value)}
                     placeholder={currentTexts.placeholder}
                     disabled={isLoading}
-                    className={`flex-1 px-4 py-2.5 rounded-full border outline-none transition ${
+                    className={`flex-1 px-3 md:px-4 py-1.5 md:py-2.5 rounded-full border outline-none transition text-sm md:text-base ${
                       isDarkMode 
                         ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-primary focus:ring-2 focus:ring-primary/20' 
                         : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-primary focus:ring-2 focus:ring-primary/20'
@@ -666,9 +666,9 @@ export default function ChatWidgetPage() {
                   <button
                     type="submit"
                     disabled={isLoading || !inputMessage.trim()}
-                    className="w-10 h-10 md:w-11 md:h-11 bg-gradient-to-r from-primary to-secondary text-white rounded-full flex items-center justify-center hover:from-secondary hover:to-accent transition disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-8 h-8 md:w-11 md:h-11 bg-gradient-to-r from-primary to-secondary text-white rounded-full flex items-center justify-center hover:from-secondary hover:to-accent transition disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <Send className="w-4 h-4 md:w-5 md:h-5" />
+                    <Send className="w-3 h-3 md:w-5 md:h-5" />
                   </button>
                 </form>
               </div>
