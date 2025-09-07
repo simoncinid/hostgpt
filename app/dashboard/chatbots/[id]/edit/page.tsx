@@ -72,6 +72,8 @@ export default function EditChatbotPage() {
   const [showAttractionsModal, setShowAttractionsModal] = useState(false)
   const [showRestaurantsModal, setShowRestaurantsModal] = useState(false)
   const [showFaqModal, setShowFaqModal] = useState(false)
+  const [iconFile, setIconFile] = useState<File | null>(null)
+  const [iconPreview, setIconPreview] = useState<string | null>(null)
 
   const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<FormValues>()
   const watchedAmenities = watch('amenities') || []
@@ -117,12 +119,48 @@ export default function EditChatbotPage() {
     load()
   }, [id])
 
+  const handleIconChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (file) {
+      // Verifica che sia un'immagine
+      if (!file.type.startsWith('image/')) {
+        toast.error('Seleziona un file immagine (PNG o JPG)')
+        return
+      }
+      
+      // Verifica dimensione (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('L\'immagine non può superare i 5MB')
+        return
+      }
+      
+      setIconFile(file)
+      
+      // Crea preview
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        setIconPreview(e.target?.result as string)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
   const onSubmit = async (data: FormValues) => {
     setIsSubmitting(true)
     try {
       console.log('Dati da inviare:', data)
       console.log('Property name:', data.property_name)
       console.log('Name:', data.name)
+      
+      // Se c'è un file icona, aggiorna solo l'icona
+      if (iconFile) {
+        const formData = new FormData()
+        formData.append('icon', iconFile)
+        await chatbotsApi.updateIcon(id, formData)
+        toast.success('Icona aggiornata con successo')
+      }
+      
+      // Aggiorna gli altri dati
       await chatbotsApi.update(id, data)
       updateChatbot(id, data as any)
       toast.success(t.chatbots.edit.messages.saved)
@@ -259,6 +297,52 @@ export default function EditChatbotPage() {
             {/* Informazioni Base */}
             <div className="border-b pb-6">
               <h2 className="text-lg font-semibold mb-4">{t.chatbots.create.steps.basic}</h2>
+              
+              {/* Campo Icona */}
+              <div className="mb-6">
+                <label className="label">{t.chatbots.create.form.icon}</label>
+                <div className="space-y-3">
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/jpg"
+                    onChange={handleIconChange}
+                    className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                  />
+                  {iconPreview && (
+                    <div className="flex items-center space-x-3">
+                      <img 
+                        src={iconPreview} 
+                        alt="Preview icona" 
+                        className="w-16 h-16 rounded-lg object-cover border-2 border-gray-200"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIconFile(null)
+                          setIconPreview(null)
+                        }}
+                        className="text-red-600 hover:text-red-800 text-sm"
+                      >
+                        Rimuovi
+                      </button>
+                    </div>
+                  )}
+                  {currentChatbot.has_icon && !iconPreview && (
+                    <div className="flex items-center space-x-3">
+                      <img 
+                        src={`/api/chatbots/${id}/icon`} 
+                        alt="Icona attuale" 
+                        className="w-16 h-16 rounded-lg object-cover border-2 border-gray-200"
+                      />
+                      <span className="text-sm text-gray-600">Icona attuale</span>
+                    </div>
+                  )}
+                  <p className="text-xs text-gray-500">
+                    Formati supportati: PNG, JPG. Dimensione massima: 5MB
+                  </p>
+                </div>
+              </div>
+              
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="label">{t.chatbots.edit.form.name}</label>

@@ -64,6 +64,7 @@ export default function LandingPage() {
   const [demoVisible, setDemoVisible] = useState<typeof demoChatMessages>([])
   const [demoRunId, setDemoRunId] = useState(0)
   const demoScrollRef = useRef<HTMLDivElement | null>(null)
+  const [demoHasIcon, setDemoHasIcon] = useState(false)
 
   useEffect(() => {
     setDemoVisible([])
@@ -84,6 +85,17 @@ export default function LandingPage() {
       el.scrollTop = el.scrollHeight
     }
   }, [demoVisible])
+
+  // Controlla se il chatbot demo ha un'icona
+  useEffect(() => {
+    chat.getDemoInfo()
+      .then(response => {
+        setDemoHasIcon(response.data.has_icon)
+      })
+      .catch(() => {
+        setDemoHasIcon(false)
+      })
+  }, [])
 
   const features = t.features.items.map((feature: any, index: number) => ({
     icon: [
@@ -1484,7 +1496,11 @@ export default function LandingPage() {
                                 {message.role === 'user' ? (
                                   <User className="w-4 h-4" />
                                 ) : (
-                                  <Bot className="w-4 h-4" />
+                                  demoHasIcon ? (
+                                    <DemoChatbotIcon size="sm" className="w-4 h-4" />
+                                  ) : (
+                                    <Bot className="w-4 h-4" />
+                                  )
                                 )}
                 </div>
                               <div className={`rounded-2xl px-4 py-3 ${

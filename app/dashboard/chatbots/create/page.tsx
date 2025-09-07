@@ -222,7 +222,7 @@ export default function CreateChatbotPage() {
             </div>
 
             <div>
-              <label className="label">Icona del Chatbot (opzionale)</label>
+              <label className="label">{t.chatbots.create.form.icon} (opzionale)</label>
               <div className="space-y-3">
                 <input
                   type="file"

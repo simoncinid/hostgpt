@@ -64,7 +64,7 @@ export default function ChatWidgetPage() {
       suggestedMessages: [
         "Contatta Host",
         "Attrazioni", 
-        "Check-in/Check-out"
+        "Check-in/out"
       ],
       placeholder: "Scrivi un messaggio...",
       welcome: "Benvenuto!",
@@ -96,7 +96,7 @@ export default function ChatWidgetPage() {
       suggestedMessages: [
         "Contact Host",
         "Attractions",
-        "Check-in/Check-out"
+        "Check-in/out"
       ],
       placeholder: "Write a message...",
       welcome: "Welcome!",
@@ -132,12 +132,12 @@ export default function ChatWidgetPage() {
     IT: {
       "Contatta Host": "Voglio contattare l'host. Come faccio?",
       "Attrazioni": "Vorrei visitare la zona, che attrazioni ci sono e come posso raggiungerle?",
-      "Check-in/Check-out": "Quali sono gli orari di check-in e check-out?"
+      "Check-in/out": "Quali sono gli orari di check-in e check-out?"
     },
     ENG: {
       "Contact Host": "I want to contact the host. How can I do it?",
       "Attractions": "I'd like to visit the area, what attractions are there and how can I reach them?",
-      "Check-in/Check-out": "What are the check-in and check-out times?"
+      "Check-in/out": "What are the check-in and check-out times?"
     }
   }
 
@@ -454,8 +454,8 @@ export default function ChatWidgetPage() {
       )}
 
       {/* Main Chat Area - FISSA */}
-      <div className="flex-1 flex flex-col max-w-4xl mx-auto w-full px-4 py-4 md:py-6 overflow-hidden">
-        <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl shadow-xl overflow-hidden flex flex-col h-full transition-colors duration-300`}>
+      <div className="flex-1 flex flex-col max-w-4xl mx-auto w-full px-4 py-4 md:py-6 overflow-hidden justify-center md:justify-start">
+        <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl shadow-xl overflow-hidden flex flex-col h-[75vh] md:h-full transition-colors duration-300`}>
           {/* Error States */}
           {subscriptionCancelled && (
             <motion.div
@@ -573,7 +573,16 @@ export default function ChatWidgetPage() {
                         {message.role === 'user' ? (
                           <User className="w-4 h-4" />
                         ) : (
-                          <Bot className="w-4 h-4" />
+                          chatInfo && chatInfo.has_icon ? (
+                            <ChatbotIcon 
+                              chatbotUuid={uuid} 
+                              hasIcon={chatInfo.has_icon} 
+                              size="sm" 
+                              className="w-4 h-4" 
+                            />
+                          ) : (
+                            <Bot className="w-4 h-4" />
+                          )
                         )}
                       </div>
                       <div className={`rounded-2xl px-4 py-3 ${
@@ -637,7 +646,7 @@ export default function ChatWidgetPage() {
               </div>
 
               {/* Input Area - FISSA */}
-              <div className={`border-t p-3 md:p-4 pb-2 safe-bottom flex-shrink-0 transition-colors duration-300 ${
+              <div className={`border-t p-3 md:p-4 pb-4 md:pb-2 safe-bottom flex-shrink-0 transition-colors duration-300 ${
                 isDarkMode ? 'border-gray-700' : 'border-gray-200'
               }`}>
                 <form onSubmit={handleSendMessage} className="flex items-center gap-2 md:gap-3">

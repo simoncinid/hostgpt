@@ -505,6 +505,7 @@ export interface Translations {
         parkingInfo: string
         specialInstructions: string
         welcomeMessage: string
+        icon: string
         nearbyAttractions: string
         restaurantsBars: string
         emergencyContacts: string
@@ -594,6 +595,7 @@ export interface Translations {
          parkingInfo: string
          specialInstructions: string
          welcomeMessage: string
+         icon: string
          nearbyAttractions: string
          restaurantsBars: string
          emergencyContacts: string
@@ -1465,6 +1467,7 @@ export const translations: Record<Language, Translations> = {
           parkingInfo: "Informazioni Parcheggio",
           specialInstructions: "Istruzioni Speciali",
           welcomeMessage: "Messaggio di Benvenuto",
+          icon: "Icona del Chatbot",
           nearbyAttractions: "Attrazioni Vicine",
           restaurantsBars: "Ristoranti e Bar",
           emergencyContacts: "Contatti di Emergenza",
@@ -1554,6 +1557,7 @@ export const translations: Record<Language, Translations> = {
           parkingInfo: "Informazioni Parcheggio",
           specialInstructions: "Istruzioni Speciali",
           welcomeMessage: "Messaggio di Benvenuto",
+          icon: "Icona del Chatbot",
           nearbyAttractions: "Attrazioni Vicine",
           restaurantsBars: "Ristoranti e Bar",
           emergencyContacts: "Contatti di Emergenza",
@@ -2434,6 +2438,7 @@ export const translations: Record<Language, Translations> = {
           parkingInfo: "Parking Information",
           specialInstructions: "Special Instructions",
           welcomeMessage: "Welcome Message",
+          icon: "Chatbot Icon",
           nearbyAttractions: "Nearby Attractions",
           restaurantsBars: "Restaurants and Bars",
           emergencyContacts: "Emergency Contacts",
@@ -2523,6 +2528,7 @@ export const translations: Record<Language, Translations> = {
           parkingInfo: "Parking Information",
           specialInstructions: "Special Instructions",
           welcomeMessage: "Welcome Message",
+          icon: "Chatbot Icon",
           nearbyAttractions: "Nearby Attractions",
           restaurantsBars: "Restaurants and Bars",
           emergencyContacts: "Emergency Contacts",

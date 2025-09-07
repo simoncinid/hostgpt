@@ -2325,6 +2325,40 @@ async def get_chatbot_icon(
         media_type=chatbot.icon_content_type or "image/png"
     )
 
+@app.put("/api/chatbots/{chatbot_id}/icon")
+async def update_chatbot_icon(
+    chatbot_id: int,
+    icon: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Aggiorna l'icona del chatbot"""
+    chatbot = db.query(Chatbot).filter(
+        Chatbot.id == chatbot_id,
+        Chatbot.user_id == current_user.id
+    ).first()
+    
+    if not chatbot:
+        raise HTTPException(status_code=404, detail="Chatbot non trovato")
+    
+    # Valida il file
+    if not icon.content_type or not icon.content_type.startswith('image/'):
+        raise HTTPException(status_code=400, detail="Il file deve essere un'immagine (PNG o JPG)")
+    
+    # Verifica dimensione (max 5MB)
+    content = await icon.read()
+    if len(content) > 5 * 1024 * 1024:  # 5MB
+        raise HTTPException(status_code=400, detail="L'immagine non può superare i 5MB")
+    
+    # Aggiorna l'icona
+    chatbot.icon_data = content
+    chatbot.icon_filename = icon.filename
+    chatbot.icon_content_type = icon.content_type
+    
+    db.commit()
+    
+    return {"message": "Icona aggiornata con successo"}
+
 @app.get("/api/chat/{uuid}/icon")
 async def get_chatbot_icon_public(
     uuid: str,
