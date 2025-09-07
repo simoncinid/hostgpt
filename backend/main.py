@@ -25,15 +25,18 @@ import logging
 from database import get_db, engine
 from models import Base, User, Chatbot, Conversation, Message, KnowledgeBase, Analytics, GuardianAlert, GuardianAnalysis, ReferralCode
 from config import settings
-from email_templates import (
-    create_welcome_email,
-    create_subscription_activation_email,
-    create_subscription_cancellation_email,
-    create_chatbot_ready_email,
-    create_guardian_alert_email,
-    create_free_trial_welcome_email,
-    create_free_trial_ending_email,
-    create_free_trial_expired_email
+from email_templates_simple import (
+    create_welcome_email_simple,
+    create_subscription_activation_email_simple,
+    create_guardian_alert_email_simple,
+    create_free_trial_welcome_email_simple,
+    create_free_trial_ending_email_simple,
+    create_subscription_confirmation_email_simple,
+    create_subscription_cancellation_email_simple,
+    create_chatbot_ready_email_simple,
+    create_free_trial_expired_email_simple,
+    create_combined_subscription_confirmation_email_simple,
+    create_guardian_subscription_confirmation_email_simple
 )
 
 # Configurazione logging
@@ -99,6 +102,7 @@ class UserRegister(BaseModel):
     full_name: str
     phone: Optional[str] = None
     wants_free_trial: Optional[bool] = False
+    language: Optional[str] = "it"  # 'it' or 'en'
 
 class UserLogin(BaseModel):
     email: EmailStr
@@ -532,10 +536,11 @@ Rispondi SOLO con un JSON valido:
                 return False
             
             # Crea il contenuto dell'email
-            email_body = create_guardian_alert_email(
+            email_body = create_guardian_alert_email_simple(
                 user_name=user.full_name,
                 alert=alert,
-                conversation_summary=alert.conversation_summary
+                conversation_summary=alert.conversation_summary,
+                language=user.language or "it"
             )
             
             # Invia l'email
@@ -788,7 +793,8 @@ async def register(user: UserRegister, background_tasks: BackgroundTasks, db: Se
         phone=user.phone,
         is_verified=False,
         verification_token=verification_token,  # Aggiungeremo questo campo al modello
-        wants_free_trial=user.wants_free_trial  # Traccia se vuole il free trial
+        wants_free_trial=user.wants_free_trial,  # Traccia se vuole il free trial
+        language=user.language or "it"  # Salva la lingua preferita dell'utente
     )
     db.add(db_user)
     db.commit()
@@ -796,9 +802,18 @@ async def register(user: UserRegister, background_tasks: BackgroundTasks, db: Se
     
     # Invia email di verifica
     verification_link = f"{settings.BACKEND_URL}/api/auth/verify-email?token={verification_token}"
-    email_body = create_welcome_email(user.full_name, verification_link)
     
-    background_tasks.add_task(send_email, user.email, "Conferma la tua email - HostGPT", email_body)
+    
+    # Scegli il template in base al tipo di registrazione e lingua
+    user_language = user.language or "it"
+    if user.wants_free_trial:
+        email_body = create_free_trial_welcome_email_simple(user.full_name, user_language)
+        email_subject = "Welcome to your free trial - HostGPT" if user_language == "en" else "Benvenuto nel tuo periodo di prova gratuito - HostGPT"
+    else:
+        email_body = create_welcome_email_simple(user.full_name, verification_link, user_language)
+        email_subject = "Confirm your email - HostGPT" if user_language == "en" else "Conferma la tua email - HostGPT"
+    
+    background_tasks.add_task(send_email, user.email, email_subject, email_body)
     
     return {"message": "Registrazione completata. Controlla la tua email per verificare l'account e attivare l'abbonamento."}
 
@@ -839,12 +854,12 @@ async def verify_email(token: str, db: Session = Depends(get_db)):
         db.commit()
         
         # Invia email di benvenuto free trial
-        email_body = create_free_trial_welcome_email(user.full_name or user.email)
+        email_body = create_free_trial_welcome_email_simple(user.full_name or user.email, user.language or "it")
         background_tasks = BackgroundTasks()
         background_tasks.add_task(
             send_email, 
             user.email, 
-            "🎉 Benvenuto nel tuo periodo di prova gratuito HostGPT!", 
+"🎉 Welcome to your HostGPT free trial!" if (user.language or "it") == "en" else "🎉 Benvenuto nel tuo periodo di prova gratuito HostGPT!", 
             email_body
         )
         
@@ -1266,13 +1281,12 @@ async def confirm_payment(
         
         # Invia email di conferma abbonamento
         try:
-            from email_templates import create_subscription_confirmation_email
-            email_body = create_subscription_confirmation_email(current_user.full_name or current_user.email)
+            email_body = create_subscription_confirmation_email_simple(current_user.full_name or current_user.email, current_user.language or "it")
             background_tasks = BackgroundTasks()
             background_tasks.add_task(
                 send_email, 
                 current_user.email, 
-                "🎉 Abbonamento HostGPT attivato con successo!", 
+    "🎉 HostGPT Subscription activated successfully!" if (current_user.language or "it") == "en" else "🎉 Abbonamento HostGPT attivato con successo!", 
                 email_body
             )
             logger.info(f"Subscription confirmation email sent to {current_user.email}")
@@ -1338,13 +1352,12 @@ async def confirm_guardian_payment(
         
         # Invia email di conferma abbonamento Guardian
         try:
-            from email_templates import create_guardian_subscription_confirmation_email
-            email_body = create_guardian_subscription_confirmation_email(current_user.full_name or current_user.email)
+            email_body = create_guardian_subscription_confirmation_email_simple(current_user.full_name or current_user.email, current_user.language or "it")
             background_tasks = BackgroundTasks()
             background_tasks.add_task(
                 send_email, 
                 current_user.email, 
-                "🛡️ Abbonamento Guardian attivato con successo!", 
+    "🛡️ Guardian Subscription activated successfully!" if (current_user.language or "it") == "en" else "🛡️ Abbonamento Guardian attivato con successo!", 
                 email_body
             )
             logger.info(f"Guardian subscription confirmation email sent to {current_user.email}")
@@ -1457,12 +1470,11 @@ async def confirm_combined_payment(
         
         # Invia email di conferma per il pacchetto completo
         try:
-            from email_templates import create_combined_subscription_confirmation_email
-            email_body = create_combined_subscription_confirmation_email(current_user.full_name or current_user.email)
+            email_body = create_combined_subscription_confirmation_email_simple(current_user.full_name or current_user.email, current_user.language or "it")
             background_tasks.add_task(
                 send_email, 
                 current_user.email, 
-                "🎉 Pacchetto Completo attivato con successo!", 
+    "🎉 Complete Package activated successfully!" if (current_user.language or "it") == "en" else "🎉 Pacchetto Completo attivato con successo!", 
                 email_body
             )
             logger.info(f"Combined subscription confirmation email sent to {current_user.email}")
@@ -1740,11 +1752,11 @@ async def confirm_subscription(
                 db.commit()
                 
                 # Invia email di attivazione abbonamento
-                email_body = create_subscription_activation_email(current_user.full_name or current_user.email)
+                email_body = create_subscription_activation_email_simple(current_user.full_name or current_user.email, current_user.language or "it")
                 background_tasks.add_task(
                     send_email, 
                     current_user.email, 
-                    "🎉 Abbonamento HostGPT Attivato!", 
+"🎉 HostGPT Subscription Activated!" if (current_user.language or "it") == "en" else "🎉 Abbonamento HostGPT Attivato!", 
                     email_body
                 )
                 
@@ -1766,11 +1778,11 @@ async def confirm_subscription(
                     
                     # Invia email di attivazione abbonamento (solo se non già inviata)
                     if not is_subscription_active(current_user.subscription_status):
-                        email_body = create_subscription_activation_email(current_user.full_name or current_user.email)
+                        email_body = create_subscription_activation_email_simple(current_user.full_name or current_user.email, current_user.language or "it")
                         background_tasks.add_task(
                             send_email, 
                             current_user.email, 
-                            "🎉 Abbonamento HostGPT Attivato!", 
+        "🎉 HostGPT Subscription Activated!" if (current_user.language or "it") == "en" else "🎉 Abbonamento HostGPT Attivato!", 
                             email_body
                         )
                     
@@ -1823,11 +1835,11 @@ async def reactivate_subscription(
             db.commit()
             
             # Invia email di conferma riattivazione
-            email_body = create_subscription_activation_email(current_user.full_name or current_user.email)
+            email_body = create_subscription_activation_email_simple(current_user.full_name or current_user.email, current_user.language or "it")
             background_tasks.add_task(
                 send_email, 
                 current_user.email, 
-                "🎉 Abbonamento HostGPT Riattivato!", 
+"🎉 HostGPT Subscription Reactivated!" if (current_user.language or "it") == "en" else "🎉 Abbonamento HostGPT Riattivato!", 
                 email_body
             )
             
@@ -1996,14 +2008,15 @@ async def cancel_subscription(
         
         # Invia email di annullamento abbonamento
         end_date = current_user.subscription_end_date.strftime("%d/%m/%Y") if current_user.subscription_end_date else "fine del periodo corrente"
-        email_body = create_subscription_cancellation_email(
+        email_body = create_subscription_cancellation_email_simple(
             current_user.full_name or current_user.email,
-            end_date
+            end_date,
+            current_user.language or "it"
         )
         background_tasks.add_task(
             send_email, 
             current_user.email, 
-            "😔 Abbonamento HostGPT Annullato", 
+"😔 HostGPT Subscription Cancelled" if (current_user.language or "it") == "en" else "😔 Abbonamento HostGPT Annullato", 
             email_body
         )
         
@@ -2065,7 +2078,7 @@ async def create_chatbot(
     qr_code = generate_qr_code(chat_url)
     
     # Invia email di conferma
-    email_body = create_chatbot_ready_email(current_user.full_name or current_user.email, chatbot.property_name, chat_url)
+    email_body = create_chatbot_ready_email_simple(current_user.full_name or current_user.email, chatbot.property_name, chat_url, current_user.language or "it")
     
     # Prepara allegato QR code
     try:
@@ -2983,11 +2996,11 @@ async def confirm_guardian_subscription(
                 db.commit()
                 
                 # Invia email di attivazione abbonamento
-                email_body = create_subscription_activation_email(current_user.full_name or current_user.email)
+                email_body = create_subscription_activation_email_simple(current_user.full_name or current_user.email, current_user.language or "it")
                 background_tasks.add_task(
                     send_email, 
                     current_user.email, 
-                    "🎉 Abbonamento HostGPT Attivato!", 
+"🎉 HostGPT Subscription Activated!" if (current_user.language or "it") == "en" else "🎉 Abbonamento HostGPT Attivato!", 
                     email_body
                 )
                 
@@ -3008,11 +3021,11 @@ async def confirm_guardian_subscription(
                     
                     # Invia email di attivazione abbonamento (solo se non già inviata)
                     if not is_guardian_active(current_user.guardian_subscription_status):
-                        email_body = create_subscription_activation_email(current_user.full_name or current_user.email)
+                        email_body = create_subscription_activation_email_simple(current_user.full_name or current_user.email, current_user.language or "it")
                         background_tasks.add_task(
                             send_email, 
                             current_user.email, 
-                            "🎉 Abbonamento HostGPT Attivato!", 
+        "🎉 HostGPT Subscription Activated!" if (current_user.language or "it") == "en" else "🎉 Abbonamento HostGPT Attivato!", 
                             email_body
                         )
                     
@@ -3065,11 +3078,11 @@ async def reactivate_guardian_subscription(
             db.commit()
             
             # Invia email di conferma riattivazione
-            email_body = create_subscription_activation_email(current_user.full_name or current_user.email)
+            email_body = create_subscription_activation_email_simple(current_user.full_name or current_user.email, current_user.language or "it")
             background_tasks.add_task(
                 send_email, 
                 current_user.email, 
-                "🎉 Abbonamento HostGPT Riattivato!", 
+"🎉 HostGPT Subscription Reactivated!" if (current_user.language or "it") == "en" else "🎉 Abbonamento HostGPT Riattivato!", 
                 email_body
             )
             
@@ -3570,11 +3583,11 @@ async def start_free_trial(
         db.commit()
         
         # Invia email di benvenuto free trial
-        email_body = create_free_trial_welcome_email(current_user.full_name or current_user.email)
+        email_body = create_free_trial_welcome_email_simple(current_user.full_name or current_user.email, current_user.language or "it")
         background_tasks.add_task(
             send_email, 
             current_user.email, 
-            "🎉 Benvenuto nel tuo periodo di prova gratuito HostGPT!", 
+"🎉 Welcome to your HostGPT free trial!" if (user.language or "it") == "en" else "🎉 Benvenuto nel tuo periodo di prova gratuito HostGPT!", 
             email_body
         )
         
@@ -3641,11 +3654,12 @@ async def send_free_trial_notifications(
             
             # Invia notifica 3 giorni prima della scadenza
             if days_remaining == 3:
-                email_body = create_free_trial_ending_email(
+                email_body = create_free_trial_ending_email_simple(
                     user.full_name or user.email,
                     days_remaining,
                     user.free_trial_messages_used,
-                    user.free_trial_messages_limit
+                    user.free_trial_messages_limit,
+                    user.language or "it"
                 )
                 background_tasks.add_task(
                     send_email,
@@ -3658,11 +3672,12 @@ async def send_free_trial_notifications(
             
             # Invia notifica 1 giorno prima della scadenza
             elif days_remaining == 1:
-                email_body = create_free_trial_ending_email(
+                email_body = create_free_trial_ending_email_simple(
                     user.full_name or user.email,
                     days_remaining,
                     user.free_trial_messages_used,
-                    user.free_trial_messages_limit
+                    user.free_trial_messages_limit,
+                    user.language or "it"
                 )
                 background_tasks.add_task(
                     send_email,
@@ -3675,15 +3690,16 @@ async def send_free_trial_notifications(
             
             # Invia notifica il giorno della scadenza
             elif days_remaining == 0:
-                email_body = create_free_trial_expired_email(
+                email_body = create_free_trial_expired_email_simple(
                     user.full_name or user.email,
                     user.free_trial_messages_used,
-                    user.free_trial_messages_limit
+                    user.free_trial_messages_limit,
+                    user.language or "it"
                 )
                 background_tasks.add_task(
                     send_email,
                     user.email,
-                    "⏰ Il tuo periodo di prova HostGPT è scaduto",
+    "⏰ Your HostGPT free trial has expired" if (user.language or "it") == "en" else "⏰ Il tuo periodo di prova HostGPT è scaduto",
                     email_body
                 )
                 notifications_sent += 1
@@ -3722,15 +3738,16 @@ async def expire_free_trials(
             db.commit()
             
             # Invia email di scadenza se non già inviata
-            email_body = create_free_trial_expired_email(
+            email_body = create_free_trial_expired_email_simple(
                 user.full_name or user.email,
                 user.free_trial_messages_used,
-                user.free_trial_messages_limit
+                user.free_trial_messages_limit,
+                user.language or "it"
             )
             background_tasks.add_task(
                 send_email,
                 user.email,
-                "⏰ Il tuo periodo di prova HostGPT è scaduto",
+"⏰ Your HostGPT free trial has expired" if (user.language or "it") == "en" else "⏰ Il tuo periodo di prova HostGPT è scaduto",
                 email_body
             )
             

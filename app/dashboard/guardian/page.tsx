@@ -550,25 +550,6 @@ function GuardianContent() {
                       </p>
                     </motion.div>
                     
-                    <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.3 }}
-                      className="stats-card p-2 md:p-6"
-                    >
-                      <div className="flex items-center justify-between mb-1 md:mb-2">
-                        <Star className="w-4 h-4 md:w-8 md:h-8 text-yellow-500" />
-                        <span className="text-sm md:text-3xl font-bold text-yellow-600">{guardianStats.avg_satisfaction}</span>
-                      </div>
-                      <p className="text-gray-600 text-xs md:text-base">
-                        <span className="md:hidden">{t.guardian.stats.avgSatisfactionShort}</span>
-                        <span className="hidden md:inline">{t.guardian.stats.avgSatisfaction}</span>
-                      </p>
-                      <p className="text-xs md:text-sm text-yellow-600 mt-1">
-                        <span className="md:hidden">{t.guardian.stats.score}</span>
-                        <span className="hidden md:inline">{t.guardian.stats.score}</span>
-                      </p>
-                    </motion.div>
                   </div>
                 )}
 

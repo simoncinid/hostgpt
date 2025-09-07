@@ -151,7 +151,7 @@ export default function ChatbotDetailPage() {
                     <p className="text-gray-600 mb-1">{t.chatbots.preview.chatUrl}</p>
                     <div className="flex items-center gap-2 bg-white border rounded-lg p-2">
                       <input readOnly value={chatUrl} className="flex-1 bg-transparent text-sm"/>
-                      <button onClick={() => { if (chatUrl) { navigator.clipboard.writeText(chatUrl); toast.success('Copiato!') } }} className="text-primary hover:text-secondary">Copia</button>
+                      <button onClick={() => { if (chatUrl) { navigator.clipboard.writeText(chatUrl); toast.success(t.common.copied || 'Copiato!') } }} className="text-primary hover:text-secondary">{t.common.copy || 'Copia'}</button>
                     </div>
                   </div>
                 </div>
@@ -192,7 +192,7 @@ export default function ChatbotDetailPage() {
             <div className="bg-white rounded-2xl shadow p-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold">{t.chatbots.conversations}</h2>
-                <Link href={`/dashboard/conversations?chatbot=${currentChatbot.id}`} className="text-primary hover:text-secondary">Vedi tutte →</Link>
+                <Link href={`/dashboard/conversations?chatbot=${currentChatbot.id}`} className="text-primary hover:text-secondary">{t.common.seeAll || 'Vedi tutte'} →</Link>
               </div>
               {conversations.length === 0 ? (
                 <p className="text-gray-500">Ancora nessuna conversazione</p>

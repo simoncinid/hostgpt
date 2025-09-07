@@ -40,6 +40,9 @@ class User(Base):
     referral_code_id = Column(Integer, ForeignKey("referral_codes.id"))
     referral_code_used_at = Column(DateTime)  # Quando è stato utilizzato il referral code
     
+    # Language preference for emails and notifications
+    language = Column(String(10), default="it", nullable=False)  # 'it' or 'en'
+    
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, onupdate=func.now())
     

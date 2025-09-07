@@ -252,12 +252,12 @@ export default function EditChatbotPage() {
                 <div>
                   <label className="label">{t.chatbots.edit.form.propertyType}</label>
                   <select {...register('property_type')} className="input-field">
-                    <option value="">Seleziona tipo</option>
-                    <option value="appartamento">Appartamento</option>
-                    <option value="villa">Villa</option>
-                    <option value="casa">Casa</option>
-                    <option value="stanza">Stanza</option>
-                    <option value="loft">Loft</option>
+                    <option value="">{t.chatbots.edit.form.selectType || 'Seleziona tipo'}</option>
+                    <option value="appartamento">{t.chatbots.edit.form.apartment || 'Appartamento'}</option>
+                    <option value="villa">{t.chatbots.edit.form.villa || 'Villa'}</option>
+                    <option value="casa">{t.chatbots.edit.form.house || 'Casa'}</option>
+                    <option value="stanza">{t.chatbots.edit.form.room || 'Stanza'}</option>
+                    <option value="loft">{t.chatbots.edit.form.loft || 'Loft'}</option>
                   </select>
                 </div>
                 <div>
@@ -467,7 +467,7 @@ export default function EditChatbotPage() {
                   className="w-full py-3 px-4 border-2 border-rose-500 text-rose-500 rounded-lg hover:bg-rose-50 transition-colors font-medium"
                 >
                   <Plus className="w-4 h-4 mr-2 inline" />
-                  Gestisci Ristoranti/Bar
+                  {t.chatbots.edit.form.manageRestaurants || 'Gestisci Ristoranti/Bar'}
                 </button>
               </div>
             </div>
@@ -503,11 +503,11 @@ export default function EditChatbotPage() {
                       <div>
                         <label className="label">Tipo</label>
                         <select {...register(`emergency_contacts.${index}.type`)} className="input-field">
-                          <option value="">Seleziona tipo</option>
-                          <option value="host">Host</option>
-                          <option value="emergency">Emergenza</option>
-                          <option value="maintenance">Manutenzione</option>
-                          <option value="cleaning">Pulizie</option>
+                          <option value="">{t.chatbots.edit.form.selectType || 'Seleziona tipo'}</option>
+                          <option value="host">{t.chatbots.edit.form.host || 'Host'}</option>
+                          <option value="emergency">{t.chatbots.edit.form.emergency || 'Emergenza'}</option>
+                          <option value="maintenance">{t.chatbots.edit.form.maintenance || 'Manutenzione'}</option>
+                          <option value="cleaning">{t.chatbots.edit.form.cleaning || 'Pulizie'}</option>
                         </select>
                       </div>
                     </div>
@@ -555,17 +555,17 @@ export default function EditChatbotPage() {
                   className="w-full py-3 px-4 border-2 border-rose-500 text-rose-500 rounded-lg hover:bg-rose-50 transition-colors font-medium"
                 >
                   <Plus className="w-4 h-4 mr-2 inline" />
-                  Gestisci FAQ
+                  {t.chatbots.edit.form.manageFaq || 'Gestisci FAQ'}
                 </button>
               </div>
             </div>
 
             {/* Messaggio di Benvenuto */}
             <div className="border-b pb-6">
-              <h2 className="text-lg font-semibold mb-4">Messaggio di Benvenuto</h2>
+              <h2 className="text-lg font-semibold mb-4">{t.chatbots.edit.form.welcomeMessageTitle || 'Messaggio di Benvenuto'}</h2>
               <div>
-                <label className="label">Messaggio Iniziale</label>
-                <textarea {...register('welcome_message')} className="input-field min-h-24" placeholder="Messaggio di benvenuto che apparirà quando un ospite inizia la chat..." />
+                <label className="label">{t.chatbots.edit.form.initialMessage || 'Messaggio Iniziale'}</label>
+                <textarea {...register('welcome_message')} className="input-field min-h-24" placeholder={t.chatbots.edit.form.welcomeMessagePlaceholder || "Messaggio di benvenuto che apparirà quando un ospite inizia la chat..."} />
               </div>
             </div>
 
@@ -645,7 +645,7 @@ export default function EditChatbotPage() {
             <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
               <div className="p-6">
                 <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-2xl font-bold">Gestisci Attrazioni</h2>
+                  <h2 className="text-2xl font-bold">{t.chatbots.edit.form.manageAttractions || 'Gestisci Attrazioni'}</h2>
                   <button
                     onClick={closeAttractionsModal}
                     className="text-gray-500 hover:text-gray-700"
@@ -702,7 +702,7 @@ export default function EditChatbotPage() {
             <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
               <div className="p-6">
                 <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-2xl font-bold">Gestisci Ristoranti e Bar</h2>
+                  <h2 className="text-2xl font-bold">{t.chatbots.edit.form.manageRestaurants || 'Gestisci Ristoranti e Bar'}</h2>
                   <button
                     onClick={closeRestaurantsModal}
                     className="text-gray-500 hover:text-gray-700"
@@ -759,7 +759,7 @@ export default function EditChatbotPage() {
             <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
               <div className="p-6">
                 <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-2xl font-bold">Gestisci FAQ</h2>
+                  <h2 className="text-2xl font-bold">{t.chatbots.edit.form.manageFaq || 'Gestisci FAQ'}</h2>
                   <button
                     onClick={closeFaqModal}
                     className="text-gray-500 hover:text-gray-700"

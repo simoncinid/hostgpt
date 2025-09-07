@@ -11,7 +11,7 @@ from datetime import datetime
 import json
 from models import Conversation, Message, GuardianAlert, GuardianAnalysis, User, Chatbot
 from config import settings
-from email_templates import create_guardian_alert_email
+from email_templates_simple import create_guardian_alert_email_simple
 
 # Configurazione logging
 logging.basicConfig(level=logging.INFO)
@@ -347,10 +347,11 @@ Rispondi SOLO con un JSON valido nel seguente formato:
                 return False
             
             # Crea il contenuto dell'email
-            email_body = create_guardian_alert_email(
+            email_body = create_guardian_alert_email_simple(
                 user_name=user.full_name,
                 alert=alert,
-                conversation_summary=alert.conversation_summary
+                conversation_summary=alert.conversation_summary,
+                language=user.language or "it"
             )
             
             # Invia l'email

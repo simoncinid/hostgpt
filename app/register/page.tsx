@@ -6,7 +6,7 @@ import { useState, useEffect, Suspense } from 'react'
 export const dynamic = 'force-dynamic'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { Home, Mail, Lock, User, Phone, ArrowRight, Eye, EyeOff, Check, ArrowLeft } from 'lucide-react'
+import { Home, Mail, Lock, User, Phone, ArrowRight, Eye, EyeOff, Check, ArrowLeft, Globe } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import toast from 'react-hot-toast'
 import { useAuthStore } from '@/lib/store'
@@ -20,6 +20,7 @@ interface RegisterForm {
   confirmPassword: string
   full_name: string
   phone?: string
+  language: string
   terms: boolean
 }
 
@@ -54,7 +55,8 @@ function RegisterForm() {
         password: data.password,
         full_name: data.full_name,
         phone: data.phone,
-        wants_free_trial: isFreeTrial
+        wants_free_trial: isFreeTrial,
+        language: data.language
       })
       
       // Dopo la registrazione, mandiamo l'utente alla pagina che spiega di verificare l'email
@@ -155,7 +157,26 @@ function RegisterForm() {
                     </div>
                   </div>
 
-                  {/* Password - ROW 3 */}
+                  {/* Lingua - ROW 3 */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Lingua per email e notifiche</label>
+                    <div className="relative">
+                      <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <select
+                        {...register('language', { required: 'Seleziona una lingua' })}
+                        className="w-full px-4 py-2.5 pl-10 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary focus:ring-opacity-20 outline-none transition-all duration-200 appearance-none bg-white"
+                        defaultValue="it"
+                      >
+                        <option value="it">🇮🇹 Italiano</option>
+                        <option value="en">🇬🇧 English</option>
+                      </select>
+                    </div>
+                    {errors.language && (
+                      <p className="text-red-500 text-xs mt-1">{errors.language.message}</p>
+                    )}
+                  </div>
+
+                  {/* Password - ROW 4 */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">{t.password}</label>
                     <div className="relative">
@@ -385,6 +406,25 @@ function RegisterForm() {
                         placeholder="+39 123 456 7890"
                       />
                     </div>
+                  </div>
+
+                  {/* Lingua */}
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-0.5">Lingua per email e notifiche</label>
+                    <div className="relative">
+                      <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 w-3 h-3 text-gray-400" />
+                      <select
+                        {...register('language', { required: 'Seleziona una lingua' })}
+                        className="w-full px-3 py-2 pl-9 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary focus:ring-opacity-20 outline-none transition-all duration-200 text-sm appearance-none bg-white"
+                        defaultValue="it"
+                      >
+                        <option value="it">🇮🇹 Italiano</option>
+                        <option value="en">🇬🇧 English</option>
+                      </select>
+                    </div>
+                    {errors.language && (
+                      <p className="text-red-500 text-xs mt-0.5">{errors.language.message}</p>
+                    )}
                   </div>
 
                   {/* Password */}

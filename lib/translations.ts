@@ -156,12 +156,15 @@ export interface Translations {
     add: string
     remove: string
     copy: string
+    copied: string
+    seeAll: string
     share: string
     download: string
     upload: string
     refresh: string
     redirecting: string
     settings: string
+    security: string
     profile: string
     logout: string
     dashboard: string
@@ -549,6 +552,12 @@ export interface Translations {
          name: string
          propertyName: string
          propertyType: string
+         selectType: string
+         apartment: string
+         villa: string
+         house: string
+         room: string
+         loft: string
          propertyAddress: string
          propertyCity: string
          propertyDescription: string
@@ -588,13 +597,18 @@ export interface Translations {
          selectServices: string
          manageAttractions: string
          manageRestaurants: string
-         manageFaq: string
-         emergencyContactsTitle: string
-         addContactTitle: string
-         customFaq: string
-         manageFaqTitle: string
-         welcomeMessageTitle: string
-         initialMessage: string
+          manageFaq: string
+          host: string
+          emergency: string
+          maintenance: string
+          cleaning: string
+          emergencyContactsTitle: string
+          addContactTitle: string
+          customFaq: string
+          manageFaqTitle: string
+          welcomeMessageTitle: string
+          initialMessage: string
+          welcomeMessagePlaceholder: string
        }
        buttons: {
          save: string
@@ -752,6 +766,10 @@ export interface Translations {
     deleteAccount: string
     deleteAccountWarning: string
     deleteAccountConfirm: string
+    cancelSubscriptionTitle: string
+    cancelSubscriptionMessage: string
+    confirmCancellation: string
+    cancelling: string
   }
   
   // Statistics Section
@@ -1058,12 +1076,15 @@ export const translations: Record<Language, Translations> = {
       add: "Aggiungi",
       remove: "Rimuovi",
       copy: "Copia",
+      copied: "Copiato!",
+      seeAll: "Vedi tutte",
       share: "Condividi",
       download: "Scarica",
       upload: "Carica",
       refresh: "Aggiorna",
       redirecting: "Reindirizzamento...",
       settings: "Impostazioni",
+      security: "Sicurezza",
       profile: "Profilo",
       logout: "Esci",
       dashboard: "Dashboard",
@@ -1446,6 +1467,12 @@ export const translations: Record<Language, Translations> = {
           name: "Nome Chatbot",
           propertyName: "Nome Proprietà",
           propertyType: "Tipo di Proprietà",
+          selectType: "Seleziona tipo",
+          apartment: "Appartamento",
+          villa: "Villa",
+          house: "Casa",
+          room: "Stanza",
+          loft: "Loft",
           propertyAddress: "Indirizzo",
           propertyCity: "Città",
           propertyDescription: "Descrizione Proprietà",
@@ -1486,12 +1513,17 @@ export const translations: Record<Language, Translations> = {
           manageAttractions: "Gestisci Attrazioni",
           manageRestaurants: "Gestisci Ristoranti e Bar",
           manageFaq: "Gestisci FAQ",
+          host: "Host",
+          emergency: "Emergenza",
+          maintenance: "Manutenzione",
+          cleaning: "Pulizie",
           emergencyContactsTitle: "Contatti di Emergenza",
           addContactTitle: "Aggiungi Contatto",
           customFaq: "FAQ Personalizzate",
           manageFaqTitle: "Gestisci FAQ",
           welcomeMessageTitle: "Messaggio di Benvenuto",
-          initialMessage: "Messaggio Iniziale"
+          initialMessage: "Messaggio Iniziale",
+          welcomeMessagePlaceholder: "Messaggio di benvenuto che apparirà quando un ospite inizia la chat..."
         },
         buttons: {
           save: "Salva Modifiche",
@@ -1747,7 +1779,11 @@ export const translations: Record<Language, Translations> = {
       analytics: "Analytics",
       deleteAccount: "Elimina Account",
       deleteAccountWarning: "Questa azione non può essere annullata",
-      deleteAccountConfirm: "Conferma Eliminazione"
+      deleteAccountConfirm: "Conferma Eliminazione",
+      cancelSubscriptionTitle: "Conferma Annullamento",
+      cancelSubscriptionMessage: "Sei sicuro di voler annullare l'abbonamento? Il servizio verrà disattivato ma tutti i tuoi dati (chatbot, conversazioni, messaggi) rimarranno nel database.",
+      confirmCancellation: "Conferma Annullamento",
+      cancelling: "Annullamento..."
     }
   },
   ENG: {
@@ -1963,12 +1999,15 @@ export const translations: Record<Language, Translations> = {
       add: "Add",
       remove: "Remove",
       copy: "Copy",
+      copied: "Copied!",
+      seeAll: "See all",
       share: "Share",
       download: "Download",
       upload: "Upload",
       refresh: "Refresh",
       redirecting: "Redirecting...",
       settings: "Settings",
+      security: "Security",
       profile: "Profile",
       logout: "Logout",
       dashboard: "Dashboard",
@@ -2351,6 +2390,12 @@ export const translations: Record<Language, Translations> = {
           name: "Chatbot Name",
           propertyName: "Property Name",
           propertyType: "Property Type",
+          selectType: "Select type",
+          apartment: "Apartment",
+          villa: "Villa",
+          house: "House",
+          room: "Room",
+          loft: "Loft",
           propertyAddress: "Address",
           propertyCity: "City",
           propertyDescription: "Property Description",
@@ -2391,12 +2436,17 @@ export const translations: Record<Language, Translations> = {
           manageAttractions: "Manage Attractions",
           manageRestaurants: "Manage Restaurants and Bars",
           manageFaq: "Manage FAQ",
+          host: "Host",
+          emergency: "Emergency",
+          maintenance: "Maintenance",
+          cleaning: "Cleaning",
           emergencyContactsTitle: "Emergency Contacts",
           addContactTitle: "Add Contact",
           customFaq: "Custom FAQ",
           manageFaqTitle: "Manage FAQ",
           welcomeMessageTitle: "Welcome Message",
-          initialMessage: "Initial Message"
+          initialMessage: "Initial Message",
+          welcomeMessagePlaceholder: "Welcome message that will appear when a guest starts the chat..."
         },
         buttons: {
           save: "Save Changes",
@@ -2652,7 +2702,11 @@ export const translations: Record<Language, Translations> = {
       analytics: "Analytics",
       deleteAccount: "Delete Account",
       deleteAccountWarning: "This action cannot be undone",
-      deleteAccountConfirm: "Confirm Deletion"
+      deleteAccountConfirm: "Confirm Deletion",
+      cancelSubscriptionTitle: "Confirm Cancellation",
+      cancelSubscriptionMessage: "Are you sure you want to cancel your subscription? The service will be deactivated but all your data (chatbots, conversations, messages) will remain in the database.",
+      confirmCancellation: "Confirm Cancellation",
+      cancelling: "Cancelling..."
     }
   }
 }

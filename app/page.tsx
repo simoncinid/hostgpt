@@ -163,6 +163,11 @@ export default function LandingPage() {
   
   const demoInputRef = useRef<HTMLInputElement>(null)
 
+  // Sincronizza la lingua del demo con la lingua della landing
+  useEffect(() => {
+    setDemoLanguage(language)
+  }, [language])
+
   // Testi multilingua per demo - dinamici basati sulla lingua demo
   const demoTexts = {
     IT: {
@@ -399,7 +404,7 @@ export default function LandingPage() {
         
         return nextStep;
       })
-    }, 6000) // Cambia ogni 6 secondi per dare tempo all'animazione (0.6s + delay + transition)
+    }, 8000) // Cambia ogni 8 secondi per dare più tempo all'utente di leggere
 
     return () => clearInterval(interval)
   }, [])
@@ -800,10 +805,6 @@ export default function LandingPage() {
               <div className="p-2 rounded border-2 border-green-400 bg-green-50">
                 <div className="text-xs text-gray-600">{t.howItWorks.animations.customize.checkIn}</div>
                 <div className="text-xs font-medium">{t.howItWorks.animations.customize.checkInValue}</div>
-              </div>
-              <div className="p-2 rounded border-2 border-green-400 bg-green-50">
-                <div className="text-xs text-gray-600">{t.howItWorks.animations.customize.tips}</div>
-                <div className="text-xs font-medium">{t.howItWorks.animations.customize.tipsValue}</div>
               </div>
               <button className="w-full h-8 rounded text-xs font-semibold text-white bg-green-500 hover:bg-green-600 transition">
                 {t.howItWorks.animations.customize.button}
@@ -2153,7 +2154,7 @@ export default function LandingPage() {
                       className={`relative rounded-[2rem] p-6 md:p-8 overflow-hidden shadow-2xl flex flex-col ${
                         isAnnual 
                           ? 'bg-gradient-to-br from-amber-50 to-orange-50 border-2 border-amber-200/60 aspect-[4/5] md:aspect-square' 
-                          : 'bg-white border border-rose-100/50 aspect-square'
+                          : 'bg-white border border-rose-100/50 aspect-[5/6] md:aspect-square'
                       }`}
                       style={{ 
                         backfaceVisibility: 'hidden',
@@ -3208,7 +3209,7 @@ export default function LandingPage() {
                   
                   <Link
                     href="/register"
-                    className="relative inline-flex items-center gap-2 md:gap-4 px-6 py-3 md:px-12 md:py-6 text-sm md:text-xl font-black text-white bg-gradient-to-r from-rose-500 via-pink-500 to-rose-600 rounded-2xl md:rounded-3xl shadow-2xl transition-all duration-300 group-hover:shadow-rose-500/30 overflow-hidden"
+                    className="relative inline-flex items-center gap-2 md:gap-4 px-8 py-3 md:px-12 md:py-6 text-sm md:text-xl font-black text-white bg-gradient-to-r from-rose-500 via-pink-500 to-rose-600 rounded-2xl md:rounded-3xl shadow-2xl transition-all duration-300 group-hover:shadow-rose-500/30 overflow-hidden"
                   >
                     {/* Effetto shimmer interno */}
                     <motion.div

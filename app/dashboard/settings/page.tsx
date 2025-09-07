@@ -242,10 +242,10 @@ export default function SettingsPage() {
             </div>
 
             <div className="bg-white rounded-2xl shadow p-6">
-              <h2 className="text-lg font-semibold mb-4">Sicurezza</h2>
+              <h2 className="text-lg font-semibold mb-4">{t.common.security || 'Sicurezza'}</h2>
               <button onClick={() => { logout(); router.push('/login') }} className="btn-secondary inline-flex items-center">
                 <LogOut className="w-5 h-5 mr-2" />
-                Esci
+                {t.common.logout || 'Esci'}
               </button>
             </div>
           </div>
@@ -259,9 +259,9 @@ export default function SettingsPage() {
             <div className="flex items-start gap-3 mb-4">
               <AlertTriangle className="w-6 h-6 text-red-600 mt-0.5 flex-shrink-0" />
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-1">Conferma Annullamento</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-1">{t.settings.cancelSubscriptionTitle || 'Conferma Annullamento'}</h3>
                 <p className="text-sm text-gray-600">
-                  Sei sicuro di voler annullare l'abbonamento? Il servizio verrà disattivato ma tutti i tuoi dati (chatbot, conversazioni, messaggi) rimarranno nel database.
+                  {t.settings.cancelSubscriptionMessage || "Sei sicuro di voler annullare l'abbonamento? Il servizio verrà disattivato ma tutti i tuoi dati (chatbot, conversazioni, messaggi) rimarranno nel database."}
                 </p>
               </div>
             </div>
@@ -282,10 +282,10 @@ export default function SettingsPage() {
                 {isCancellingSubscription ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Annullamento...
+                    {t.settings.cancelling || 'Annullamento...'}
                   </>
                 ) : (
-                  'Conferma Annullamento'
+                  t.settings.confirmCancellation || 'Conferma Annullamento'
                 )}
               </button>
             </div>
