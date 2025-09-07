@@ -31,14 +31,18 @@ export default function ChatbotIcon({ chatbotId, chatbotUuid, hasIcon, size = 'm
         }
       })
         .then(response => {
-          if (!response.ok) throw new Error('Failed to fetch icon')
+          if (!response.ok) {
+            console.log('Icon fetch failed:', response.status, response.statusText)
+            throw new Error('Failed to fetch icon')
+          }
           return response.blob()
         })
         .then(blob => {
           const url = URL.createObjectURL(blob)
           setIconUrl(url)
         })
-        .catch(() => {
+        .catch((error) => {
+          console.log('Icon fetch error:', error)
           // Se c'è un errore, non mostrare nulla (fallback all'icona di default)
         })
         .finally(() => {

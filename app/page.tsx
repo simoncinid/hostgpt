@@ -65,6 +65,7 @@ export default function LandingPage() {
   const [demoRunId, setDemoRunId] = useState(0)
   const demoScrollRef = useRef<HTMLDivElement | null>(null)
   const [demoHasIcon, setDemoHasIcon] = useState(false)
+  const [demoChatInfo, setDemoChatInfo] = useState<{name: string, property_name: string} | null>(null)
 
   useEffect(() => {
     setDemoVisible([])
@@ -86,14 +87,19 @@ export default function LandingPage() {
     }
   }, [demoVisible])
 
-  // Controlla se il chatbot demo ha un'icona
+  // Controlla se il chatbot demo ha un'icona e ottieni le info
   useEffect(() => {
     chat.getDemoInfo()
       .then(response => {
         setDemoHasIcon(response.data.has_icon)
+        setDemoChatInfo({
+          name: response.data.name,
+          property_name: response.data.property_name
+        })
       })
       .catch(() => {
         setDemoHasIcon(false)
+        setDemoChatInfo(null)
       })
   }, [])
 
@@ -1350,8 +1356,12 @@ export default function LandingPage() {
                     <div className="flex items-center">
                       <DemoChatbotIcon size="md" className="mr-3" />
                       <div>
-                        <h1 className={`font-semibold text-lg transition-colors duration-300 ${demoIsDarkMode ? 'text-white' : 'text-gray-900'}`}>Demo Chat</h1>
-                        <p className={`text-sm ${demoIsDarkMode ? 'text-gray-300' : 'text-gray-500'} transition-colors duration-300`}>{currentDemoTexts.assistant}</p>
+                        <h1 className={`font-semibold text-sm md:text-lg transition-colors duration-300 ${demoIsDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                          {demoChatInfo?.name || 'Demo Chat'}
+                        </h1>
+                        <p className={`text-xs md:text-sm ${demoIsDarkMode ? 'text-gray-300' : 'text-gray-500'} transition-colors duration-300`}>
+                          {demoChatInfo?.property_name || currentDemoTexts.assistant}
+                        </p>
                 </div>
                   </div>
                     <div className="flex items-center gap-2">

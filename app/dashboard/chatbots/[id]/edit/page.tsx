@@ -164,7 +164,10 @@ export default function EditChatbotPage() {
           iconUpdated = true
         } catch (iconError: any) {
           console.error('Errore aggiornamento icona:', iconError)
-          toast.error(iconError.response?.data?.detail || 'Errore durante l\'aggiornamento dell\'icona')
+          const errorMessage = typeof iconError?.response?.data?.detail === 'string' 
+            ? iconError.response.data.detail 
+            : 'Errore durante l\'aggiornamento dell\'icona'
+          toast.error(errorMessage)
           // Non interrompere l'esecuzione, continua con l'aggiornamento degli altri dati
         }
       }
@@ -172,18 +175,41 @@ export default function EditChatbotPage() {
       // Aggiorna gli altri dati
       await chatbotsApi.update(id, data)
       
-      // Aggiorna lo store con i nuovi dati
-      const updateData = { 
-        ...data,
+      // Aggiorna lo store con i nuovi dati (solo proprietà valide)
+      const validUpdateData = {
+        name: data.name,
+        property_name: data.property_name,
+        property_type: data.property_type,
+        property_address: data.property_address,
+        property_city: data.property_city,
+        property_description: data.property_description,
+        check_in_time: data.check_in_time,
+        check_out_time: data.check_out_time,
+        house_rules: data.house_rules,
+        amenities: data.amenities,
+        neighborhood_description: data.neighborhood_description,
+        nearby_attractions: data.nearby_attractions,
+        transportation_info: data.transportation_info,
+        restaurants_bars: data.restaurants_bars,
+        shopping_info: data.shopping_info,
+        emergency_contacts: data.emergency_contacts,
+        wifi_info: data.wifi_info,
+        parking_info: data.parking_info,
+        special_instructions: data.special_instructions,
+        faq: data.faq,
+        welcome_message: data.welcome_message,
         ...(iconUpdated && { has_icon: true })
       }
-      updateChatbot(id, updateData)
+      updateChatbot(id, validUpdateData)
       toast.success(t.chatbots.edit.messages.saved)
       router.push(`/dashboard/chatbots/${id}`)
     } catch (e: any) {
       console.error('Errore aggiornamento:', e)
       console.error('Response data:', e.response?.data)
-      toast.error(e.response?.data?.detail || t.chatbots.edit.messages.error)
+      const errorMessage = typeof e?.response?.data?.detail === 'string' 
+        ? e.response.data.detail 
+        : t.chatbots.edit.messages.error
+      toast.error(errorMessage)
     } finally {
       setIsSubmitting(false)
     }
