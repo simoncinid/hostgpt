@@ -168,7 +168,6 @@ export default function LandingPage() {
     IT: {
       assistant: 'Assistente Virtuale',
       suggestedMessages: [
-        "Contatta Host",
         "Attrazioni", 
         "Check-in/Check-out"
       ],
@@ -190,7 +189,6 @@ export default function LandingPage() {
     ENG: {
       assistant: 'Virtual Assistant',
       suggestedMessages: [
-        "Contact Host",
         "Attractions",
         "Check-in/Check-out"
       ],
@@ -216,12 +214,10 @@ export default function LandingPage() {
   // Messaggi completi per i suggerimenti demo
   const demoFullMessages = {
     IT: {
-      "Contatta Host": "Voglio contattare l'host. Come faccio?",
       "Attrazioni": "Vorrei visitare la zona, che attrazioni ci sono e come posso raggiungerle?",
       "Check-in/Check-out": "Quali sono gli orari di check-in e check-out?"
     },
     ENG: {
-      "Contact Host": "I want to contact the host. How can I do it?",
       "Attractions": "I'd like to visit the area, what attractions are there and how can I reach them?",
       "Check-in/Check-out": "What are the check-in and check-out times?"
     }
@@ -889,23 +885,28 @@ export default function LandingPage() {
               </div>
 
               {/* Mobile Menu Button premium */}
-              <motion.button
-                className="md:hidden relative z-10 p-2 rounded-xl hover:bg-white/30 transition-colors duration-300"
-                onClick={() => setIsMenuOpen(!isMenuOpen)}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <motion.div
-                  animate={{ rotate: isMenuOpen ? 180 : 0 }}
-                  transition={{ duration: 0.3 }}
+              <div className="md:hidden flex items-center space-x-2">
+                {/* Language Selector Mobile - accanto all'hamburger */}
+                <LanguageSelector />
+                
+                <motion.button
+                  className="relative z-10 p-2 rounded-xl hover:bg-white/30 transition-colors duration-300"
+                  onClick={() => setIsMenuOpen(!isMenuOpen)}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                 >
-                  {isMenuOpen ? (
-                    <X className="w-6 h-6 text-gray-700" />
-                  ) : (
-                    <Menu className="w-6 h-6 text-gray-700" />
-                  )}
-                </motion.div>
-              </motion.button>
+                  <motion.div
+                    animate={{ rotate: isMenuOpen ? 180 : 0 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    {isMenuOpen ? (
+                      <X className="w-6 h-6 text-gray-700" />
+                    ) : (
+                      <Menu className="w-6 h-6 text-gray-700" />
+                    )}
+                  </motion.div>
+                </motion.button>
+              </div>
             </div>
           </motion.div>
         </div>
@@ -954,14 +955,6 @@ export default function LandingPage() {
                       </Link>
                     </motion.div>
                   ))}
-                  
-                  {/* Separatore mobile */}
-                  <div className="border-t border-white/20 my-2"></div>
-                  
-                  {/* Language Selector Mobile */}
-                  <div className="px-4 py-2">
-                    <LanguageSelector />
-                  </div>
                   
                   {/* Separatore mobile */}
                   <div className="border-t border-white/20 my-2"></div>
@@ -1648,11 +1641,11 @@ export default function LandingPage() {
                        </p>
                      </div>
                      
-                     {/* Animazioni dinamiche - posizionamento ottimizzato */}
+                     {/* Animazioni dinamiche - posizionamento ottimizzato - MOBILE: sempre stato finale */}
                      <div className="flex-1 flex items-center justify-center">
-                       {index === 0 && <RegistrationAnimation isActive={howItWorksCompleted[0]} />}
-                       {index === 1 && <CustomizationAnimation isActive={howItWorksCompleted[1]} />}
-                       {index === 2 && <SharingAnimation isActive={howItWorksCompleted[2]} />}
+                       {index === 0 && <RegistrationAnimation isActive={true} />}
+                       {index === 1 && <CustomizationAnimation isActive={true} />}
+                       {index === 2 && <SharingAnimation isActive={true} />}
                      </div>
                      
                      {/* Gradiente decorativo */}
@@ -2068,14 +2061,6 @@ export default function LandingPage() {
                           : "0 25px 50px rgba(244, 63, 94, 0.08), 0 0 0 1px rgba(251, 207, 232, 0.1)"
                       }}
                     >
-                      {/* Badge di risparmio per piano annuale */}
-                      {isAnnual && (
-                        <div className="absolute top-4 right-4 z-20">
-                          <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-3 py-1.5 rounded-full shadow-lg">
-                            <span className="text-xs font-bold">Risparmia €49</span>
-                          </div>
-                        </div>
-                      )}
 
                       {/* Background pattern interno */}
                       <div className={`absolute inset-0 ${
@@ -2113,6 +2098,13 @@ export default function LandingPage() {
                             {plan.period}
                           </span>
                         </div>
+                        
+                        {/* Testo risparmio per piano annuale - solo mobile */}
+                        {isAnnual && (
+                          <div className="md:hidden">
+                            <span className="text-sm font-semibold text-green-600">Risparmia €49</span>
+                          </div>
+                        )}
                         
                       </div>
                     </div>

@@ -860,7 +860,7 @@ export const translations: Record<Language, Translations> = {
       titlePrefix: "Risparmia ore di tempo prezioso con",
       subtitle: "Risponde automaticamente, in modo completo e immediato, alle richieste degli ospiti.",
       subtitleHighlight: "Meno messaggi per te, più soddisfazione per loro.",
-      freeTrialButton: "🎉 Prova Gratis 14 giorni",
+      freeTrialButton: "🎉 14 Giorni Gratis",
       registerButton: "Registrati per iniziare",
       demoButton: "PROVA DEMO"
     },
@@ -868,8 +868,7 @@ export const translations: Record<Language, Translations> = {
       title: "Casa Bella Vista Bot",
       assistant: "Assistente Virtuale",
       suggestedMessages: [
-        "Contatta Host",
-        "Attrazioni",
+        "Attrazioni", 
         "Check-in/Check-out"
       ],
       placeholder: "Scrivi un messaggio...",
@@ -978,7 +977,7 @@ export const translations: Record<Language, Translations> = {
             "1000 messaggi/mese",
             "Supporto 24/7"
           ],
-          freeTrialButton: "🎉 Prova 14 Giorni Gratis",
+          freeTrialButton: "🎉 14 Giorni Gratis",
           ctaButton: "Inizia Ora"
         },
         {
@@ -990,7 +989,7 @@ export const translations: Record<Language, Translations> = {
             "1000 messaggi/mese",
             "Supporto 24/7"
           ],
-          freeTrialButton: "🎉 Prova 14 Giorni Gratis",
+          freeTrialButton: "🎉 14 Giorni Gratis",
           ctaButton: "Inizia Ora",
           priceId: "price_1S3dNUClR9LCJ8qEX2DEK4SE"
         }
@@ -1766,7 +1765,7 @@ export const translations: Record<Language, Translations> = {
       titlePrefix: "Save precious hours of time with",
       subtitle: "Automatically respond completely and immediately to guest requests 24/7.",
       subtitleHighlight: "Less messages for you, more satisfaction for them.",
-      freeTrialButton: "🎉 Free Trial 14 Days",
+      freeTrialButton: "🎉 14 Days Free",
       registerButton: "Sign Up to Start",
       demoButton: "TRY DEMO"
     },
@@ -1774,7 +1773,6 @@ export const translations: Record<Language, Translations> = {
       title: "Casa Bella Vista Bot",
       assistant: "Virtual Assistant",
       suggestedMessages: [
-        "Contact Host",
         "Attractions",
         "Check-in/Check-out"
       ],
