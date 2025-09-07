@@ -6,6 +6,7 @@ import Image from 'next/image'
 import { motion } from 'framer-motion'
 import CookieBanner from '../components/CookieBanner'
 import LanguageSelector from '../components/LanguageSelector'
+import DemoChatbotIcon from '../components/DemoChatbotIcon'
 import { useLanguage } from '../lib/languageContext'
 import api from '../lib/api'
 import { chat } from '../lib/api'
@@ -1335,9 +1336,7 @@ export default function LandingPage() {
                 <div className="max-w-4xl mx-auto px-2 py-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center">
-                      <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center mr-3">
-                        <Home className="w-5 h-5 text-white" />
-              </div>
+                      <DemoChatbotIcon size="md" className="mr-3" />
                       <div>
                         <h1 className={`font-semibold text-lg transition-colors duration-300 ${demoIsDarkMode ? 'text-white' : 'text-gray-900'}`}>Demo Chat</h1>
                         <p className={`text-sm ${demoIsDarkMode ? 'text-gray-300' : 'text-gray-500'} transition-colors duration-300`}>{currentDemoTexts.assistant}</p>
@@ -1434,7 +1433,7 @@ export default function LandingPage() {
                       className="p-8 text-center flex-1 flex flex-col justify-center"
                     >
                       <div className="w-20 h-20 bg-rose-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <MessageSquare className="w-10 h-10 text-rose-500" />
+                        <DemoChatbotIcon size="lg" className="w-10 h-10" />
                 </div>
                       <h2 className={`text-2xl font-bold mb-2 ${demoIsDarkMode ? 'text-white' : 'text-gray-900'} transition-colors duration-300`}>{currentDemoTexts.welcome}</h2>
                       <p className={`mb-6 max-w-md mx-auto transition-colors duration-300 ${demoIsDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>

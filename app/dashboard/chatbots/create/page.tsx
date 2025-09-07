@@ -92,6 +92,8 @@ export default function CreateChatbotPage() {
     t.chatbots.create.amenities.smokingAllowed
   ]
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [iconFile, setIconFile] = useState<File | null>(null)
+  const [iconPreview, setIconPreview] = useState<string | null>(null)
   const { addChatbot } = useChatbotStore()
   
   // Se esiste già un chatbot, reindirizza ai dettagli (limite 1 per account)
@@ -150,10 +152,36 @@ export default function CreateChatbotPage() {
     }
   }
 
+  const handleIconChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (file) {
+      // Verifica che sia un'immagine
+      if (!file.type.startsWith('image/')) {
+        toast.error('Seleziona un file immagine (PNG o JPG)')
+        return
+      }
+      
+      // Verifica dimensione (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('L\'immagine non può superare i 5MB')
+        return
+      }
+      
+      setIconFile(file)
+      
+      // Crea preview
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        setIconPreview(e.target?.result as string)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
   const onSubmit = async (data: ChatbotFormData) => {
     setIsSubmitting(true)
     try {
-      const response = await chatbots.create(data)
+      const response = await chatbots.create(data, iconFile || undefined)
       addChatbot(response.data)
       toast.success(t.chatbots.create.messages.created)
       router.push(`/dashboard/chatbots/${response.data.id}`)
@@ -191,6 +219,40 @@ export default function CreateChatbotPage() {
                 placeholder="Es. Assistente Casa Bella Vista"
               />
               {errors.name && <p className="error-text">{errors.name.message}</p>}
+            </div>
+
+            <div>
+              <label className="label">Icona del Chatbot (opzionale)</label>
+              <div className="space-y-3">
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/jpg"
+                  onChange={handleIconChange}
+                  className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                />
+                {iconPreview && (
+                  <div className="flex items-center space-x-3">
+                    <img 
+                      src={iconPreview} 
+                      alt="Preview icona" 
+                      className="w-16 h-16 rounded-lg object-cover border-2 border-gray-200"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIconFile(null)
+                        setIconPreview(null)
+                      }}
+                      className="text-red-600 hover:text-red-800 text-sm"
+                    >
+                      Rimuovi
+                    </button>
+                  </div>
+                )}
+                <p className="text-xs text-gray-500">
+                  Formati supportati: PNG, JPG. Dimensione massima: 5MB
+                </p>
+              </div>
             </div>
 
             <div>

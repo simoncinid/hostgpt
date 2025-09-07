@@ -11,6 +11,7 @@ import { useLanguage } from '@/lib/languageContext'
 import toast from 'react-hot-toast'
 import Sidebar from '@/app/components/Sidebar'
 import ConversationItem from '@/app/components/ConversationItem'
+import ChatbotIcon from '@/app/components/ChatbotIcon'
 
 interface ConversationPreview {
   id: number
@@ -83,7 +84,8 @@ export default function ChatbotDetailPage() {
         <div className="bg-white shadow-sm">
           <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
-                              <h1 className="text-xl font-semibold flex-1 min-w-0">{currentChatbot.name}</h1>
+              <ChatbotIcon chatbotId={currentChatbot.id} hasIcon={currentChatbot.has_icon} size="md" />
+              <h1 className="text-xl font-semibold flex-1 min-w-0">{currentChatbot.name}</h1>
             </div>
             <div className="flex items-center gap-2">
               <Link href={`/dashboard/chatbots/${currentChatbot.id}/edit`} className="p-2 hover:bg-gray-100 rounded-lg" title="Modifica">

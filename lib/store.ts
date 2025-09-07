@@ -66,6 +66,7 @@ interface Chatbot {
   total_messages: number
   is_active: boolean
   created_at: string
+  has_icon: boolean
 }
 
 interface ChatbotState {

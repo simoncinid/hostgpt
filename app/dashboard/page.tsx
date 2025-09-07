@@ -23,6 +23,7 @@ import { useLanguage } from '@/lib/languageContext'
 import { chatbots as chatbotsApi, subscription, auth } from '@/lib/api'
 import toast from 'react-hot-toast'
 import Sidebar from '@/app/components/Sidebar'
+import ChatbotIcon from '@/app/components/ChatbotIcon'
 
 function DashboardContent() {
   const router = useRouter()
@@ -302,7 +303,10 @@ function DashboardContent() {
                  >
                    {/* Prima riga: Nome e Status */}
                    <div className="flex items-center justify-between mb-2">
-                     <h3 className="font-semibold text-base md:text-lg">{bot.property_name}</h3>
+                     <div className="flex items-center space-x-3">
+                       <ChatbotIcon chatbotId={bot.id} hasIcon={bot.has_icon} size="sm" />
+                       <h3 className="font-semibold text-base md:text-lg">{bot.property_name}</h3>
+                     </div>
                      {bot.is_active ? (
                        <span className="px-2 py-1 bg-green-100 text-green-600 text-xs rounded-full">
                          {t.chatbots.active}

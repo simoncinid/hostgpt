@@ -86,8 +86,29 @@ export const referral = {
 }
 
 export const chatbots = {
-  create: (data: any) =>
-    api.post('/chatbots/create', data),
+  create: (data: any, iconFile?: File) => {
+    const formData = new FormData()
+    
+    // Aggiungi tutti i campi come stringhe
+    Object.keys(data).forEach(key => {
+      if (Array.isArray(data[key]) || typeof data[key] === 'object') {
+        formData.append(key, JSON.stringify(data[key]))
+      } else {
+        formData.append(key, data[key])
+      }
+    })
+    
+    // Aggiungi il file icona se presente
+    if (iconFile) {
+      formData.append('icon', iconFile)
+    }
+    
+    return api.post('/chatbots/create', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    })
+  },
   
   list: () =>
     api.get('/chatbots'),
@@ -112,6 +133,9 @@ export const chatbots = {
   
   retrain: (id: number) =>
     api.post(`/chatbots/${id}/retrain`),
+  
+  getIcon: (id: number) =>
+    api.get(`/chatbots/${id}/icon`, { responseType: 'blob' }),
 }
 
 export const conversations = {
@@ -125,6 +149,12 @@ export const chat = {
   
   sendMessage: (uuid: string, data: any) =>
     api.post(`/chat/${uuid}/message`, data),
+  
+  getDemoInfo: () =>
+    api.get('/demo/info'),
+  
+  getDemoIcon: () =>
+    api.get('/demo/icon', { responseType: 'blob' }),
 }
 
 export const guardian = {

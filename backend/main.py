@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException, status, BackgroundTasks, Request
+from fastapi import FastAPI, Depends, HTTPException, status, BackgroundTasks, Request, File, UploadFile, Form
 from fastapi.security import OAuth2PasswordBearer
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -2070,10 +2070,33 @@ async def cancel_subscription(
 
 @app.post("/api/chatbots/create")
 async def create_chatbot(
-    chatbot: ChatbotCreate,
     background_tasks: BackgroundTasks,
     current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    # Form data
+    name: str = Form(...),
+    property_name: str = Form(...),
+    property_type: str = Form(...),
+    property_address: str = Form(...),
+    property_city: str = Form(...),
+    property_description: str = Form(...),
+    check_in_time: str = Form(...),
+    check_out_time: str = Form(...),
+    house_rules: str = Form(...),
+    amenities: str = Form(...),  # JSON string
+    neighborhood_description: str = Form(...),
+    nearby_attractions: str = Form(...),  # JSON string
+    transportation_info: str = Form(...),
+    restaurants_bars: str = Form(...),  # JSON string
+    shopping_info: str = Form(...),
+    emergency_contacts: str = Form(...),  # JSON string
+    wifi_info: str = Form(...),  # JSON string
+    parking_info: str = Form(...),
+    special_instructions: str = Form(...),
+    faq: str = Form(...),  # JSON string
+    welcome_message: str = Form(...),
+    # File upload
+    icon: Optional[UploadFile] = File(None)
 ):
     """Crea un nuovo chatbot"""
     # Verifica abbonamento attivo
@@ -2093,14 +2116,92 @@ async def create_chatbot(
             )
         )
     
+    # Valida e processa l'icona se fornita
+    icon_data = None
+    icon_filename = None
+    icon_content_type = None
+    
+    if icon:
+        # Verifica che sia un'immagine
+        if not icon.content_type or not icon.content_type.startswith('image/'):
+            raise HTTPException(status_code=400, detail="Il file deve essere un'immagine (PNG o JPG)")
+        
+        # Verifica dimensione (max 5MB)
+        content = await icon.read()
+        if len(content) > 5 * 1024 * 1024:  # 5MB
+            raise HTTPException(status_code=400, detail="L'immagine non può superare i 5MB")
+        
+        icon_data = content
+        icon_filename = icon.filename
+        icon_content_type = icon.content_type
+    
+    # Parsing dei dati JSON
+    try:
+        amenities_list = json.loads(amenities) if amenities else []
+        nearby_attractions_list = json.loads(nearby_attractions) if nearby_attractions else []
+        restaurants_bars_list = json.loads(restaurants_bars) if restaurants_bars else []
+        emergency_contacts_list = json.loads(emergency_contacts) if emergency_contacts else []
+        wifi_info_dict = json.loads(wifi_info) if wifi_info else {}
+        faq_list = json.loads(faq) if faq else []
+    except json.JSONDecodeError as e:
+        raise HTTPException(status_code=400, detail=f"Errore nel parsing dei dati JSON: {str(e)}")
+    
+    # Crea oggetto chatbot per OpenAI
+    chatbot_data = {
+        "name": name,
+        "property_name": property_name,
+        "property_type": property_type,
+        "property_address": property_address,
+        "property_city": property_city,
+        "property_description": property_description,
+        "check_in_time": check_in_time,
+        "check_out_time": check_out_time,
+        "house_rules": house_rules,
+        "amenities": amenities_list,
+        "neighborhood_description": neighborhood_description,
+        "nearby_attractions": nearby_attractions_list,
+        "transportation_info": transportation_info,
+        "restaurants_bars": restaurants_bars_list,
+        "shopping_info": shopping_info,
+        "emergency_contacts": emergency_contacts_list,
+        "wifi_info": wifi_info_dict,
+        "parking_info": parking_info,
+        "special_instructions": special_instructions,
+        "faq": faq_list,
+        "welcome_message": welcome_message
+    }
+    
     # Crea assistant OpenAI
-    assistant_id = await create_openai_assistant(chatbot.dict())
+    assistant_id = await create_openai_assistant(chatbot_data)
     
     # Salva chatbot nel database
     db_chatbot = Chatbot(
         user_id=current_user.id,
         assistant_id=assistant_id,
-        **chatbot.dict()
+        name=name,
+        property_name=property_name,
+        property_type=property_type,
+        property_address=property_address,
+        property_city=property_city,
+        property_description=property_description,
+        check_in_time=check_in_time,
+        check_out_time=check_out_time,
+        house_rules=house_rules,
+        amenities=amenities_list,
+        neighborhood_description=neighborhood_description,
+        nearby_attractions=nearby_attractions_list,
+        transportation_info=transportation_info,
+        restaurants_bars=restaurants_bars_list,
+        shopping_info=shopping_info,
+        emergency_contacts=emergency_contacts_list,
+        wifi_info=wifi_info_dict,
+        parking_info=parking_info,
+        special_instructions=special_instructions,
+        faq=faq_list,
+        welcome_message=welcome_message,
+        icon_data=icon_data,
+        icon_filename=icon_filename,
+        icon_content_type=icon_content_type
     )
     db.add(db_chatbot)
     db.commit()
@@ -2111,7 +2212,7 @@ async def create_chatbot(
     qr_code = generate_qr_code(chat_url)
     
     # Invia email di conferma
-    email_body = create_chatbot_ready_email_simple(current_user.full_name or current_user.email, chatbot.property_name, chat_url, current_user.language or "it")
+    email_body = create_chatbot_ready_email_simple(current_user.full_name or current_user.email, property_name, chat_url, current_user.language or "it")
     
     # Prepara allegato QR code
     try:
@@ -2194,10 +2295,55 @@ async def get_chatbots(
             "total_conversations": total_conversations,
             "total_messages": total_messages,
             "is_active": bot.is_active,
-            "created_at": bot.created_at
+            "created_at": bot.created_at,
+            "has_icon": bot.icon_data is not None
         })
     
     return result
+
+@app.get("/api/chatbots/{chatbot_id}/icon")
+async def get_chatbot_icon(
+    chatbot_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Ottieni l'icona del chatbot"""
+    chatbot = db.query(Chatbot).filter(
+        Chatbot.id == chatbot_id,
+        Chatbot.user_id == current_user.id
+    ).first()
+    
+    if not chatbot:
+        raise HTTPException(status_code=404, detail="Chatbot non trovato")
+    
+    if not chatbot.icon_data:
+        raise HTTPException(status_code=404, detail="Icona non trovata")
+    
+    from fastapi.responses import Response
+    return Response(
+        content=chatbot.icon_data,
+        media_type=chatbot.icon_content_type or "image/png"
+    )
+
+@app.get("/api/chat/{uuid}/icon")
+async def get_chatbot_icon_public(
+    uuid: str,
+    db: Session = Depends(get_db)
+):
+    """Ottieni l'icona del chatbot per la chat pubblica"""
+    chatbot = db.query(Chatbot).filter(Chatbot.uuid == uuid).first()
+    
+    if not chatbot or not chatbot.is_active:
+        raise HTTPException(status_code=404, detail="Chatbot non trovato")
+    
+    if not chatbot.icon_data:
+        raise HTTPException(status_code=404, detail="Icona non trovata")
+    
+    from fastapi.responses import Response
+    return Response(
+        content=chatbot.icon_data,
+        media_type=chatbot.icon_content_type or "image/png"
+    )
 
 @app.get("/api/chatbots/{chatbot_id}")
 async def get_chatbot(
@@ -2378,8 +2524,50 @@ async def get_chat_info(uuid: str, db: Session = Depends(get_db)):
         "name": chatbot.name,
         "property_name": chatbot.property_name,
         "welcome_message": chatbot.welcome_message,
-
+        "has_icon": chatbot.icon_data is not None,
+        "id": chatbot.id
     }
+
+@app.get("/api/demo/info")
+async def get_demo_info(db: Session = Depends(get_db)):
+    """Ottieni informazioni del chatbot demo per la landing page"""
+    # UUID fisso del chatbot demo
+    demo_uuid = "5e2665c8-e243-4df3-a9fd-8e0d1e4fedcc"
+    chatbot = db.query(Chatbot).filter(Chatbot.uuid == demo_uuid).first()
+    
+    if not chatbot:
+        # Se il chatbot demo non esiste, restituisci info di default
+        return {
+            "name": "Assistente Demo",
+            "property_name": "Casa Bella Vista",
+            "welcome_message": "Ciao! Sono il tuo assistente virtuale per Casa Bella Vista. Come posso aiutarti?",
+            "has_icon": False,
+            "id": None
+        }
+    
+    return {
+        "name": chatbot.name,
+        "property_name": chatbot.property_name,
+        "welcome_message": chatbot.welcome_message,
+        "has_icon": chatbot.icon_data is not None,
+        "id": chatbot.id
+    }
+
+@app.get("/api/demo/icon")
+async def get_demo_icon(db: Session = Depends(get_db)):
+    """Ottieni l'icona del chatbot demo per la landing page"""
+    # UUID fisso del chatbot demo
+    demo_uuid = "5e2665c8-e243-4df3-a9fd-8e0d1e4fedcc"
+    chatbot = db.query(Chatbot).filter(Chatbot.uuid == demo_uuid).first()
+    
+    if not chatbot or not chatbot.icon_data:
+        raise HTTPException(status_code=404, detail="Icona demo non trovata")
+    
+    from fastapi.responses import Response
+    return Response(
+        content=chatbot.icon_data,
+        media_type=chatbot.icon_content_type or "image/png"
+    )
 
 @app.post("/api/chat/{uuid}/message")
 async def send_message(

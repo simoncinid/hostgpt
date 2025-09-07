@@ -19,6 +19,7 @@ import {
 } from 'lucide-react'
 import { chat } from '@/lib/api'
 import toast from 'react-hot-toast'
+import ChatbotIcon from '@/app/components/ChatbotIcon'
 
 interface Message {
   id: string
@@ -31,6 +32,8 @@ interface ChatInfo {
   name: string
   property_name: string
   welcome_message: string
+  has_icon: boolean
+  id: number
 }
 
 export default function ChatWidgetPage() {
@@ -353,9 +356,18 @@ export default function ChatWidgetPage() {
         <div className="max-w-4xl mx-auto px-2 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
-              <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center mr-3">
-                <Home className="w-5 h-5 text-white" />
-              </div>
+              {chatInfo ? (
+                <ChatbotIcon 
+                  chatbotUuid={uuid} 
+                  hasIcon={chatInfo.has_icon} 
+                  size="md" 
+                  className="mr-3"
+                />
+              ) : (
+                <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center mr-3">
+                  <Home className="w-5 h-5 text-white" />
+                </div>
+              )}
               <div>
                 <h1 className={`font-semibold text-lg transition-colors duration-300 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{chatInfo?.name}</h1>
                 <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-500'} transition-colors duration-300`}>{currentTexts.assistant}</p>
