@@ -15,7 +15,7 @@ export default function DemoChatbotIcon({ size = 'md', className = '' }: DemoCha
   const [hasIcon, setHasIcon] = useState(false)
 
   useEffect(() => {
-    // Prima controlla se il chatbot demo ha un'icona
+    // Prima controlla se il chatbot demo ha un'iconaa
     chat.getDemoInfo()
       .then(response => {
         setHasIcon(response.data.has_icon)
