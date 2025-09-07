@@ -454,7 +454,7 @@ export default function ChatWidgetPage() {
       )}
 
       {/* Main Chat Area - FISSA */}
-      <div className="flex-1 flex flex-col max-w-4xl mx-auto w-full px-4 py-2 md:py-6 overflow-hidden justify-center md:justify-start">
+      <div className="flex-1 flex flex-col max-w-4xl mx-auto w-full px-4 py-1 md:py-6 overflow-hidden justify-center md:justify-start">
         <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl shadow-xl overflow-hidden flex flex-col h-[75vh] md:h-full transition-colors duration-300`}>
           {/* Error States */}
           {subscriptionCancelled && (
@@ -646,7 +646,7 @@ export default function ChatWidgetPage() {
               </div>
 
               {/* Input Area - FISSA */}
-              <div className={`border-t p-3 md:p-4 pb-6 md:pb-2 safe-bottom flex-shrink-0 transition-colors duration-300 ${
+              <div className={`border-t p-3 md:p-4 pb-8 md:pb-2 safe-bottom flex-shrink-0 transition-colors duration-300 ${
                 isDarkMode ? 'border-gray-700' : 'border-gray-200'
               }`}>
                 <form onSubmit={handleSendMessage} className="flex items-center gap-2 md:gap-3">
