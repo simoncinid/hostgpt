@@ -350,10 +350,10 @@ export default function ChatWidgetPage() {
       isDarkMode 
         ? 'bg-gradient-to-br from-gray-900 to-gray-800' 
         : 'bg-gradient-to-br from-primary/5 to-accent/5'
-    }`}>
+    }`} style={{ overflow: 'hidden', position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}>
       {/* Header - FISSO */}
       <div className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'} shadow-sm flex-shrink-0 border-b transition-colors duration-300`}>
-        <div className="max-w-4xl mx-auto px-2 py-4">
+        <div className="max-w-4xl mx-auto px-2 py-2 md:py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
               {chatInfo ? (
@@ -454,7 +454,7 @@ export default function ChatWidgetPage() {
       )}
 
       {/* Main Chat Area - FISSA */}
-      <div className="flex-1 flex flex-col max-w-4xl mx-auto w-full px-4 py-4 md:py-6 overflow-hidden justify-center md:justify-start">
+      <div className="flex-1 flex flex-col max-w-4xl mx-auto w-full px-4 py-2 md:py-6 overflow-hidden justify-center md:justify-start">
         <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl shadow-xl overflow-hidden flex flex-col h-[75vh] md:h-full transition-colors duration-300`}>
           {/* Error States */}
           {subscriptionCancelled && (
@@ -646,7 +646,7 @@ export default function ChatWidgetPage() {
               </div>
 
               {/* Input Area - FISSA */}
-              <div className={`border-t p-3 md:p-4 pb-4 md:pb-2 safe-bottom flex-shrink-0 transition-colors duration-300 ${
+              <div className={`border-t p-3 md:p-4 pb-6 md:pb-2 safe-bottom flex-shrink-0 transition-colors duration-300 ${
                 isDarkMode ? 'border-gray-700' : 'border-gray-200'
               }`}>
                 <form onSubmit={handleSendMessage} className="flex items-center gap-2 md:gap-3">
