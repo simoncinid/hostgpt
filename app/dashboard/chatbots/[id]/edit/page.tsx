@@ -152,17 +152,32 @@ export default function EditChatbotPage() {
       console.log('Property name:', data.property_name)
       console.log('Name:', data.name)
       
+      let iconUpdated = false
+      
       // Se c'è un file icona, aggiorna solo l'icona
       if (iconFile) {
-        const formData = new FormData()
-        formData.append('icon', iconFile)
-        await chatbotsApi.updateIcon(id, formData)
-        toast.success('Icona aggiornata con successo')
+        try {
+          const formData = new FormData()
+          formData.append('icon', iconFile)
+          await chatbotsApi.updateIcon(id, formData)
+          toast.success('Icona aggiornata con successo')
+          iconUpdated = true
+        } catch (iconError: any) {
+          console.error('Errore aggiornamento icona:', iconError)
+          toast.error(iconError.response?.data?.detail || 'Errore durante l\'aggiornamento dell\'icona')
+          // Non interrompere l'esecuzione, continua con l'aggiornamento degli altri dati
+        }
       }
       
       // Aggiorna gli altri dati
       await chatbotsApi.update(id, data)
-      updateChatbot(id, data as any)
+      
+      // Aggiorna lo store con i nuovi dati
+      const updateData = { 
+        ...data,
+        ...(iconUpdated && { has_icon: true })
+      }
+      updateChatbot(id, updateData)
       toast.success(t.chatbots.edit.messages.saved)
       router.push(`/dashboard/chatbots/${id}`)
     } catch (e: any) {
