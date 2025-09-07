@@ -164,9 +164,18 @@ export default function EditChatbotPage() {
           iconUpdated = true
         } catch (iconError: any) {
           console.error('Errore aggiornamento icona:', iconError)
-          const errorMessage = typeof iconError?.response?.data?.detail === 'string' 
-            ? iconError.response.data.detail 
-            : 'Errore durante l\'aggiornamento dell\'icona'
+          let errorMessage = 'Errore durante l\'aggiornamento dell\'icona'
+          
+          try {
+            if (iconError?.response?.data?.detail && typeof iconError.response.data.detail === 'string') {
+              errorMessage = iconError.response.data.detail
+            } else if (iconError?.message && typeof iconError.message === 'string') {
+              errorMessage = iconError.message
+            }
+          } catch (parseError) {
+            console.error('Errore nel parsing dell\'errore:', parseError)
+          }
+          
           toast.error(errorMessage)
           // Non interrompere l'esecuzione, continua con l'aggiornamento degli altri dati
         }
@@ -206,9 +215,18 @@ export default function EditChatbotPage() {
     } catch (e: any) {
       console.error('Errore aggiornamento:', e)
       console.error('Response data:', e.response?.data)
-      const errorMessage = typeof e?.response?.data?.detail === 'string' 
-        ? e.response.data.detail 
-        : t.chatbots.edit.messages.error
+      let errorMessage = t.chatbots.edit.messages.error
+      
+      try {
+        if (e?.response?.data?.detail && typeof e.response.data.detail === 'string') {
+          errorMessage = e.response.data.detail
+        } else if (e?.message && typeof e.message === 'string') {
+          errorMessage = e.message
+        }
+      } catch (parseError) {
+        console.error('Errore nel parsing dell\'errore:', parseError)
+      }
+      
       toast.error(errorMessage)
     } finally {
       setIsSubmitting(false)
