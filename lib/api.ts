@@ -120,11 +120,7 @@ export const chatbots = {
     api.put(`/chatbots/${id}`, data),
   
   updateIcon: (id: number, iconFile: FormData) =>
-    api.put(`/chatbots/${id}/icon`, iconFile, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    }),
+    api.put(`/chatbots/${id}/icon`, iconFile),
   
   delete: (id: number) =>
     api.delete(`/chatbots/${id}`),

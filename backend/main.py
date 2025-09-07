@@ -158,6 +158,43 @@ class ChatbotUpdate(BaseModel):
     faq: Optional[List[dict]] = None
     welcome_message: Optional[str] = None
 
+class ChatbotResponse(BaseModel):
+    id: int
+    user_id: int
+    assistant_id: str
+    uuid: str
+    name: str
+    property_name: str
+    property_type: Optional[str]
+    property_address: Optional[str]
+    property_city: Optional[str]
+    property_description: Optional[str]
+    check_in_time: Optional[str]
+    check_out_time: Optional[str]
+    house_rules: Optional[str]
+    amenities: Optional[dict]
+    neighborhood_description: Optional[str]
+    nearby_attractions: Optional[dict]
+    transportation_info: Optional[str]
+    restaurants_bars: Optional[dict]
+    shopping_info: Optional[str]
+    emergency_contacts: Optional[dict]
+    wifi_info: Optional[dict]
+    parking_info: Optional[str]
+    special_instructions: Optional[str]
+    faq: Optional[dict]
+    welcome_message: Optional[str]
+    icon_filename: Optional[str]
+    icon_content_type: Optional[str]
+    total_conversations: int
+    total_messages: int
+    is_active: bool
+    created_at: datetime
+    updated_at: Optional[datetime]
+    
+    class Config:
+        from_attributes = True
+
 class MessageCreate(BaseModel):
     content: str
     thread_id: Optional[str] = None
@@ -2400,7 +2437,53 @@ async def get_chatbot(
     if not chatbot:
         raise HTTPException(status_code=404, detail="Chatbot non trovato")
     
-    return chatbot
+    # Calcola statistiche reali dal database
+    total_conversations = db.query(func.count(Conversation.id)).filter(
+        Conversation.chatbot_id == chatbot.id
+    ).scalar()
+    
+    total_messages = db.query(func.count(Message.id)).join(Conversation).filter(
+        Conversation.chatbot_id == chatbot.id
+    ).scalar()
+    
+    # Crea risposta senza dati binari
+    response_data = {
+        "id": chatbot.id,
+        "user_id": chatbot.user_id,
+        "assistant_id": chatbot.assistant_id,
+        "uuid": chatbot.uuid,
+        "name": chatbot.name,
+        "property_name": chatbot.property_name,
+        "property_type": chatbot.property_type,
+        "property_address": chatbot.property_address,
+        "property_city": chatbot.property_city,
+        "property_description": chatbot.property_description,
+        "check_in_time": chatbot.check_in_time,
+        "check_out_time": chatbot.check_out_time,
+        "house_rules": chatbot.house_rules,
+        "amenities": chatbot.amenities,
+        "neighborhood_description": chatbot.neighborhood_description,
+        "nearby_attractions": chatbot.nearby_attractions,
+        "transportation_info": chatbot.transportation_info,
+        "restaurants_bars": chatbot.restaurants_bars,
+        "shopping_info": chatbot.shopping_info,
+        "emergency_contacts": chatbot.emergency_contacts,
+        "wifi_info": chatbot.wifi_info,
+        "parking_info": chatbot.parking_info,
+        "special_instructions": chatbot.special_instructions,
+        "faq": chatbot.faq,
+        "welcome_message": chatbot.welcome_message,
+        "icon_filename": chatbot.icon_filename,
+        "icon_content_type": chatbot.icon_content_type,
+        "total_conversations": total_conversations,
+        "total_messages": total_messages,
+        "is_active": chatbot.is_active,
+        "created_at": chatbot.created_at,
+        "updated_at": chatbot.updated_at,
+        "has_icon": chatbot.icon_data is not None
+    }
+    
+    return response_data
 
 @app.put("/api/chatbots/{chatbot_id}")
 async def update_chatbot(
