@@ -25,11 +25,17 @@ export default function ChatbotIcon({ chatbotId, chatbotUuid, hasIcon, size = 'm
         ? `/api/chat/${chatbotUuid}/icon`
         : `/api/chatbots/${chatbotId}/icon`
       
-      fetch(endpoint, {
-        headers: {
-          'Authorization': chatbotId ? `Bearer ${localStorage.getItem('token')}` : ''
+      const headers: HeadersInit = {}
+      
+      // Aggiungi il token solo se necessario e disponibile
+      if (chatbotId) {
+        const token = localStorage.getItem('token')
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`
         }
-      })
+      }
+      
+      fetch(endpoint, { headers })
         .then(response => {
           if (!response.ok) {
             console.log('Icon fetch failed:', response.status, response.statusText)
@@ -65,10 +71,15 @@ export default function ChatbotIcon({ chatbotId, chatbotUuid, hasIcon, size = 'm
     md: 'w-12 h-12',
     lg: 'w-16 h-16'
   }
+  
+  // Se viene passata una className personalizzata, usa quella invece delle dimensioni predefinite
+  const finalClassName = className.includes('w-') && className.includes('h-') 
+    ? className 
+    : `${sizeClasses[size]} ${className}`
 
   if (isLoading) {
     return (
-      <div className={`${sizeClasses[size]} ${className} bg-gray-100 rounded-lg flex items-center justify-center animate-pulse`}>
+      <div className={`${finalClassName} bg-gray-100 rounded-lg flex items-center justify-center animate-pulse`}>
         <div className="w-4 h-4 bg-gray-300 rounded"></div>
       </div>
     )
@@ -79,14 +90,14 @@ export default function ChatbotIcon({ chatbotId, chatbotUuid, hasIcon, size = 'm
       <img 
         src={iconUrl} 
         alt="Chatbot icon" 
-        className={`${sizeClasses[size]} ${className} rounded-lg object-cover border-2 border-gray-200`}
+        className={`${finalClassName} rounded-lg object-cover border-2 border-gray-200`}
       />
     )
   }
 
   // Icona di default
   return (
-    <div className={`${sizeClasses[size]} ${className} bg-blue-100 rounded-lg flex items-center justify-center`}>
+    <div className={`${finalClassName} bg-blue-100 rounded-lg flex items-center justify-center`}>
       <MessageSquare className="w-6 h-6 text-blue-600" />
     </div>
   )
