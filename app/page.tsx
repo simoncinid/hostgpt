@@ -737,6 +737,107 @@ export default function LandingPage() {
     )
   }
 
+  // Componenti statici per mobile - senza animazioni
+  const RegistrationAnimationStatic = () => {
+    return (
+      <div className="w-full max-w-sm bg-gradient-to-br from-blue-50 to-indigo-100 rounded-xl p-4 relative" style={{height: '18rem'}}>
+        <div className="bg-white rounded-lg shadow-lg p-3 h-full flex flex-col overflow-hidden">
+          <div className="flex items-center justify-between px-2 py-1 bg-gray-100 rounded-t-lg border-b">
+            <div className="flex space-x-1">
+              <div className="w-1.5 h-1.5 bg-red-400 rounded-full"></div>
+              <div className="w-1.5 h-1.5 bg-yellow-400 rounded-full"></div>
+              <div className="w-1.5 h-1.5 bg-green-400 rounded-full"></div>
+            </div>
+            <div className="text-xs text-gray-600">hostgpt.it/register</div>
+          </div>
+          <div className="flex-1 flex flex-col justify-start space-y-2 p-2 min-h-0">
+            <div className="text-center mb-4">
+              <div className="w-6 h-6 bg-primary rounded mx-auto mb-2 flex items-center justify-center">
+                <Home className="w-3 h-3 text-white" />
+              </div>
+              <h3 className="text-xs font-bold">{t.howItWorks.animations.register.title}</h3>
+            </div>
+            <div className="space-y-2">
+              <div className="h-6 bg-blue-50 rounded border flex items-center px-2">
+                <div className="text-xs text-gray-700">{t.howItWorks.animations.register.email}</div>
+              </div>
+              <div className="h-6 bg-blue-50 rounded border flex items-center px-2">
+                <div className="text-xs text-gray-700">{t.howItWorks.animations.register.password}</div>
+              </div>
+              <button className="w-full h-8 rounded text-xs font-semibold text-white bg-primary hover:bg-primary/90 transition">
+                {t.howItWorks.animations.register.button}
+              </button>
+              <div className="text-center mt-1">
+                <div className="w-3 h-3 bg-green-500 rounded-full mx-auto mb-1"></div>
+                <p className="text-xs text-green-600 font-medium">{t.howItWorks.animations.register.success}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  const CustomizationAnimationStatic = () => {
+    return (
+      <div className="w-full max-w-sm bg-gradient-to-br from-green-50 to-emerald-100 rounded-xl p-4 relative" style={{height: '18rem'}}>
+        <div className="bg-white rounded-lg shadow-lg p-3 h-full flex flex-col overflow-hidden">
+          <div className="flex items-center justify-between px-2 py-1 bg-gray-900 rounded-t-lg text-white">
+            <div className="flex items-center space-x-1">
+              <Home className="w-2 h-2 text-primary" />
+              <span className="text-xs font-bold">Dashboard</span>
+            </div>
+          </div>
+          <div className="flex-1 flex flex-col justify-start p-2 min-h-0">
+            <div className="text-center mb-4">
+              <h3 className="text-xs font-bold">{t.howItWorks.animations.customize.title}</h3>
+            </div>
+            <div className="space-y-2">
+              <div className="p-2 rounded border-2 border-green-400 bg-green-50">
+                <div className="text-xs text-gray-600">{t.howItWorks.animations.customize.propertyName}</div>
+                <div className="text-xs font-medium">{t.howItWorks.animations.customize.propertyValue}</div>
+              </div>
+              <div className="p-2 rounded border-2 border-green-400 bg-green-50">
+                <div className="text-xs text-gray-600">{t.howItWorks.animations.customize.checkIn}</div>
+                <div className="text-xs font-medium">{t.howItWorks.animations.customize.checkInValue}</div>
+              </div>
+              <div className="p-2 rounded border-2 border-green-400 bg-green-50">
+                <div className="text-xs text-gray-600">{t.howItWorks.animations.customize.tips}</div>
+                <div className="text-xs font-medium">{t.howItWorks.animations.customize.tipsValue}</div>
+              </div>
+              <button className="w-full h-8 rounded text-xs font-semibold text-white bg-green-500 hover:bg-green-600 transition">
+                {t.howItWorks.animations.customize.button}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  const SharingAnimationStatic = () => {
+    return (
+      <div className="w-full max-w-sm bg-gradient-to-br from-purple-50 to-violet-100 rounded-xl p-4 relative" style={{height: '18rem'}}>
+        <div className="bg-white rounded-lg shadow-lg p-3 h-full flex flex-col overflow-hidden">
+          <div className="flex items-center justify-center px-2 py-1 bg-gradient-to-r from-primary to-accent rounded-t-lg text-white">
+            <span className="text-xs font-bold">{t.howItWorks.animations.share.title}</span>
+          </div>
+          <div className="flex-1 flex flex-col justify-center items-center p-2 min-h-0">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-gray-200 rounded-lg mx-auto mb-3 flex items-center justify-center">
+                <QrCode className="w-8 h-8 text-gray-600" />
+              </div>
+              <div className="text-xs text-gray-600 mb-2">{t.howItWorks.animations.share.qrCode}</div>
+              <div className="text-xs font-medium text-primary mb-4">{t.howItWorks.animations.share.link}</div>
+              <div className="w-3 h-3 bg-green-500 rounded-full mx-auto mb-1"></div>
+              <p className="text-xs text-green-600 font-medium">{t.howItWorks.animations.share.success}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-white">
       {/* NAVBAR - Ultra Luxurious Liquid Glass */}
@@ -1641,11 +1742,11 @@ export default function LandingPage() {
                        </p>
                      </div>
                      
-                     {/* Animazioni dinamiche - posizionamento ottimizzato - MOBILE: sempre stato finale */}
+                     {/* Animazioni statiche per mobile - senza animazioni */}
                      <div className="flex-1 flex items-center justify-center">
-                       {index === 0 && <RegistrationAnimation isActive={true} />}
-                       {index === 1 && <CustomizationAnimation isActive={true} />}
-                       {index === 2 && <SharingAnimation isActive={true} />}
+                       {index === 0 && <RegistrationAnimationStatic />}
+                       {index === 1 && <CustomizationAnimationStatic />}
+                       {index === 2 && <SharingAnimationStatic />}
                      </div>
                      
                      {/* Gradiente decorativo */}
@@ -2049,10 +2150,10 @@ export default function LandingPage() {
                   <div className="relative w-full">
                     {/* Card quasi quadrata - ULTRA LUXURIOUS */}
                     <div 
-                      className={`relative rounded-[2rem] p-6 md:p-8 overflow-hidden shadow-2xl aspect-square flex flex-col ${
+                      className={`relative rounded-[2rem] p-6 md:p-8 overflow-hidden shadow-2xl flex flex-col ${
                         isAnnual 
-                          ? 'bg-gradient-to-br from-amber-50 to-orange-50 border-2 border-amber-200/60' 
-                          : 'bg-white border border-rose-100/50'
+                          ? 'bg-gradient-to-br from-amber-50 to-orange-50 border-2 border-amber-200/60 aspect-[4/5] md:aspect-square' 
+                          : 'bg-white border border-rose-100/50 aspect-square'
                       }`}
                       style={{ 
                         backfaceVisibility: 'hidden',
