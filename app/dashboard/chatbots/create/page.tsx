@@ -61,17 +61,36 @@ const steps = [
   { id: 7, name: 'Configurazione Bot', icon: MessageSquare },
 ]
 
-const amenitiesList = [
-  'WiFi', 'Aria Condizionata', 'Riscaldamento', 'TV', 'Netflix',
-  'Cucina', 'Lavastoviglie', 'Lavatrice', 'Asciugatrice', 'Ferro da stiro',
-  'Parcheggio', 'Piscina', 'Palestra', 'Balcone', 'Giardino',
-  'Ascensore', 'Cassaforte', 'Allarme', 'Animali ammessi', 'Fumatori ammessi'
-]
+// Amenities list will be created dynamically from translations
 
 export default function CreateChatbotPage() {
   const router = useRouter()
   const { t } = useLanguage()
   const [currentStep, setCurrentStep] = useState(1)
+  
+  // Create amenities list from translations
+  const amenitiesList = [
+    t.chatbots.create.amenities.wifi,
+    t.chatbots.create.amenities.airConditioning,
+    t.chatbots.create.amenities.heating,
+    t.chatbots.create.amenities.tv,
+    t.chatbots.create.amenities.netflix,
+    t.chatbots.create.amenities.kitchen,
+    t.chatbots.create.amenities.dishwasher,
+    t.chatbots.create.amenities.washingMachine,
+    t.chatbots.create.amenities.dryer,
+    t.chatbots.create.amenities.iron,
+    t.chatbots.create.amenities.parking,
+    t.chatbots.create.amenities.pool,
+    t.chatbots.create.amenities.gym,
+    t.chatbots.create.amenities.balcony,
+    t.chatbots.create.amenities.garden,
+    t.chatbots.create.amenities.elevator,
+    t.chatbots.create.amenities.safe,
+    t.chatbots.create.amenities.alarm,
+    t.chatbots.create.amenities.petsAllowed,
+    t.chatbots.create.amenities.smokingAllowed
+  ]
   const [isSubmitting, setIsSubmitting] = useState(false)
   const { addChatbot } = useChatbotStore()
   

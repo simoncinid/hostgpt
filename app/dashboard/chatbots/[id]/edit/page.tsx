@@ -11,12 +11,7 @@ import { useChatbotStore } from '@/lib/store'
 import { useLanguage } from '@/lib/languageContext'
 import toast from 'react-hot-toast'
 
-const amenitiesList = [
-  'WiFi', 'Aria Condizionata', 'Riscaldamento', 'TV', 'Netflix',
-  'Cucina', 'Lavastoviglie', 'Lavatrice', 'Asciugatrice', 'Ferro da stiro',
-  'Parcheggio', 'Piscina', 'Palestra', 'Balcone', 'Giardino',
-  'Ascensore', 'Cassaforte', 'Allarme', 'Animali ammessi', 'Fumatori ammessi'
-]
+// Amenities list will be created dynamically from translations
 
 interface FormValues {
   name?: string
@@ -48,6 +43,30 @@ export default function EditChatbotPage() {
   const { t } = useLanguage()
   const id = Number(params.id)
   const { currentChatbot, setCurrentChatbot, updateChatbot } = useChatbotStore()
+  
+  // Create amenities list from translations
+  const amenitiesList = [
+    t.chatbots.edit.amenities.wifi,
+    t.chatbots.edit.amenities.airConditioning,
+    t.chatbots.edit.amenities.heating,
+    t.chatbots.edit.amenities.tv,
+    t.chatbots.edit.amenities.netflix,
+    t.chatbots.edit.amenities.kitchen,
+    t.chatbots.edit.amenities.dishwasher,
+    t.chatbots.edit.amenities.washingMachine,
+    t.chatbots.edit.amenities.dryer,
+    t.chatbots.edit.amenities.iron,
+    t.chatbots.edit.amenities.parking,
+    t.chatbots.edit.amenities.pool,
+    t.chatbots.edit.amenities.gym,
+    t.chatbots.edit.amenities.balcony,
+    t.chatbots.edit.amenities.garden,
+    t.chatbots.edit.amenities.elevator,
+    t.chatbots.edit.amenities.safe,
+    t.chatbots.edit.amenities.alarm,
+    t.chatbots.edit.amenities.petsAllowed,
+    t.chatbots.edit.amenities.smokingAllowed
+  ]
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showServicesModal, setShowServicesModal] = useState(false)
   const [showAttractionsModal, setShowAttractionsModal] = useState(false)
@@ -474,7 +493,7 @@ export default function EditChatbotPage() {
 
             {/* Contatti Emergenza */}
             <div className="border-b pb-6">
-              <h2 className="text-lg font-semibold mb-4">Contatti di Emergenza</h2>
+              <h2 className="text-lg font-semibold mb-4">{t.chatbots.edit.form.emergencyContacts}</h2>
               <div className="space-y-4">
                 {watchedContacts
                   .filter(contact => 
@@ -526,7 +545,7 @@ export default function EditChatbotPage() {
 
             {/* FAQ */}
             <div className="border-b pb-6">
-              <h2 className="text-lg font-semibold mb-4">FAQ Personalizzate</h2>
+              <h2 className="text-lg font-semibold mb-4">{t.chatbots.edit.form.customFaq}</h2>
               <div className="space-y-4">
                 {watchedFaq
                   .filter(faq => 

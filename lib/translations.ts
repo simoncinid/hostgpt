@@ -439,7 +439,7 @@ export interface Translations {
         guardianActive: string
         guardianCancelling: string
         guardianInactive: string
-      }
+    }
   }
   
   // Chatbots
@@ -514,6 +514,7 @@ export interface Translations {
         addRestaurant: string
         addContact: string
         addFaq: string
+        customFaq: string
         attractionName: string
         attractionDistance: string
         attractionDescription: string
@@ -528,6 +529,28 @@ export interface Translations {
         question: string
         answer: string
         remove: string
+      }
+      amenities: {
+        wifi: string
+        airConditioning: string
+        heating: string
+        tv: string
+        netflix: string
+        kitchen: string
+        dishwasher: string
+        washingMachine: string
+        dryer: string
+        iron: string
+        parking: string
+        pool: string
+        gym: string
+        balcony: string
+        garden: string
+        elevator: string
+        safe: string
+        alarm: string
+        petsAllowed: string
+        smokingAllowed: string
       }
       buttons: {
         next: string
@@ -580,6 +603,7 @@ export interface Translations {
          addRestaurant: string
          addContact: string
          addFaq: string
+         customFaq: string
          attractionName: string
          attractionDistance: string
          attractionDescription: string
@@ -604,11 +628,32 @@ export interface Translations {
           cleaning: string
           emergencyContactsTitle: string
           addContactTitle: string
-          customFaq: string
           manageFaqTitle: string
           welcomeMessageTitle: string
           initialMessage: string
           welcomeMessagePlaceholder: string
+       }
+       amenities: {
+         wifi: string
+         airConditioning: string
+         heating: string
+         tv: string
+         netflix: string
+         kitchen: string
+         dishwasher: string
+         washingMachine: string
+         dryer: string
+         iron: string
+         parking: string
+         pool: string
+         gym: string
+         balcony: string
+         garden: string
+         elevator: string
+         safe: string
+         alarm: string
+         petsAllowed: string
+         smokingAllowed: string
        }
        buttons: {
          save: string
@@ -886,7 +931,7 @@ export const translations: Record<Language, Translations> = {
       title: "Casa Bella Vista Bot",
       assistant: "Assistente Virtuale",
       suggestedMessages: [
-        "Attrazioni", 
+        "Attrazioni",
         "Check-in/Check-out"
       ],
       placeholder: "Scrivi un messaggio...",
@@ -1429,6 +1474,7 @@ export const translations: Record<Language, Translations> = {
           addRestaurant: "Aggiungi Ristorante",
           addContact: "Aggiungi Contatto",
           addFaq: "Aggiungi FAQ",
+          customFaq: "FAQ Personalizzate",
           attractionName: "Nome Attrazione",
           attractionDistance: "Distanza",
           attractionDescription: "Descrizione",
@@ -1443,6 +1489,28 @@ export const translations: Record<Language, Translations> = {
           question: "Domanda",
           answer: "Risposta",
           remove: "Rimuovi"
+        },
+        amenities: {
+          wifi: "WiFi",
+          airConditioning: "Aria Condizionata",
+          heating: "Riscaldamento",
+          tv: "TV",
+          netflix: "Netflix",
+          kitchen: "Cucina",
+          dishwasher: "Lavastoviglie",
+          washingMachine: "Lavatrice",
+          dryer: "Asciugatrice",
+          iron: "Ferro da stiro",
+          parking: "Parcheggio",
+          pool: "Piscina",
+          gym: "Palestra",
+          balcony: "Balcone",
+          garden: "Giardino",
+          elevator: "Ascensore",
+          safe: "Cassaforte",
+          alarm: "Allarme",
+          petsAllowed: "Animali ammessi",
+          smokingAllowed: "Fumatori ammessi"
         },
         buttons: {
           next: "Avanti",
@@ -1495,6 +1563,7 @@ export const translations: Record<Language, Translations> = {
           addRestaurant: "Aggiungi Ristorante",
           addContact: "Aggiungi Contatto",
           addFaq: "Aggiungi FAQ",
+          customFaq: "FAQ Personalizzate",
           attractionName: "Nome Attrazione",
           attractionDistance: "Distanza",
           attractionDescription: "Descrizione",
@@ -1519,11 +1588,32 @@ export const translations: Record<Language, Translations> = {
           cleaning: "Pulizie",
           emergencyContactsTitle: "Contatti di Emergenza",
           addContactTitle: "Aggiungi Contatto",
-          customFaq: "FAQ Personalizzate",
           manageFaqTitle: "Gestisci FAQ",
           welcomeMessageTitle: "Messaggio di Benvenuto",
           initialMessage: "Messaggio Iniziale",
           welcomeMessagePlaceholder: "Messaggio di benvenuto che apparirà quando un ospite inizia la chat..."
+        },
+        amenities: {
+          wifi: "WiFi",
+          airConditioning: "Aria Condizionata",
+          heating: "Riscaldamento",
+          tv: "TV",
+          netflix: "Netflix",
+          kitchen: "Cucina",
+          dishwasher: "Lavastoviglie",
+          washingMachine: "Lavatrice",
+          dryer: "Asciugatrice",
+          iron: "Ferro da stiro",
+          parking: "Parcheggio",
+          pool: "Piscina",
+          gym: "Palestra",
+          balcony: "Balcone",
+          garden: "Giardino",
+          elevator: "Ascensore",
+          safe: "Cassaforte",
+          alarm: "Allarme",
+          petsAllowed: "Animali ammessi",
+          smokingAllowed: "Fumatori ammessi"
         },
         buttons: {
           save: "Salva Modifiche",
@@ -1786,6 +1876,7 @@ export const translations: Record<Language, Translations> = {
       cancelling: "Annullamento..."
     }
   },
+  
   ENG: {
     navbar: {
       features: "Features",
@@ -2352,6 +2443,7 @@ export const translations: Record<Language, Translations> = {
           addRestaurant: "Add Restaurant",
           addContact: "Add Contact",
           addFaq: "Add FAQ",
+          customFaq: "Custom FAQ",
           attractionName: "Attraction Name",
           attractionDistance: "Distance",
           attractionDescription: "Description",
@@ -2366,6 +2458,28 @@ export const translations: Record<Language, Translations> = {
           question: "Question",
           answer: "Answer",
           remove: "Remove"
+        },
+        amenities: {
+          wifi: "WiFi",
+          airConditioning: "Air Conditioning",
+          heating: "Heating",
+          tv: "TV",
+          netflix: "Netflix",
+          kitchen: "Kitchen",
+          dishwasher: "Dishwasher",
+          washingMachine: "Washing Machine",
+          dryer: "Dryer",
+          iron: "Iron",
+          parking: "Parking",
+          pool: "Pool",
+          gym: "Gym",
+          balcony: "Balcony",
+          garden: "Garden",
+          elevator: "Elevator",
+          safe: "Safe",
+          alarm: "Alarm",
+          petsAllowed: "Pets Allowed",
+          smokingAllowed: "Smoking Allowed"
         },
         buttons: {
           next: "Next",
@@ -2418,6 +2532,7 @@ export const translations: Record<Language, Translations> = {
           addRestaurant: "Add Restaurant",
           addContact: "Add Contact",
           addFaq: "Add FAQ",
+          customFaq: "Custom FAQ",
           attractionName: "Attraction Name",
           attractionDistance: "Distance",
           attractionDescription: "Description",
@@ -2442,11 +2557,32 @@ export const translations: Record<Language, Translations> = {
           cleaning: "Cleaning",
           emergencyContactsTitle: "Emergency Contacts",
           addContactTitle: "Add Contact",
-          customFaq: "Custom FAQ",
           manageFaqTitle: "Manage FAQ",
           welcomeMessageTitle: "Welcome Message",
           initialMessage: "Initial Message",
           welcomeMessagePlaceholder: "Welcome message that will appear when a guest starts the chat..."
+        },
+        amenities: {
+          wifi: "WiFi",
+          airConditioning: "Air Conditioning",
+          heating: "Heating",
+          tv: "TV",
+          netflix: "Netflix",
+          kitchen: "Kitchen",
+          dishwasher: "Dishwasher",
+          washingMachine: "Washing Machine",
+          dryer: "Dryer",
+          iron: "Iron",
+          parking: "Parking",
+          pool: "Pool",
+          gym: "Gym",
+          balcony: "Balcony",
+          garden: "Garden",
+          elevator: "Elevator",
+          safe: "Safe",
+          alarm: "Alarm",
+          petsAllowed: "Pets Allowed",
+          smokingAllowed: "Smoking Allowed"
         },
         buttons: {
           save: "Save Changes",

@@ -243,11 +243,21 @@ def create_guardian_alert_email_simple(user_name: str, alert, conversation_summa
         message = f"Hi <strong>{user_name}</strong>, the Guardian system has detected a potentially unsatisfied guest who might leave a negative review."
         cta_text = "Manage Alert in Guardian Dashboard"
         action_text = "Act quickly! Contacting the guest within the next few hours can make the difference between a negative review and a positive resolved experience."
+        risk_score_text = "Risk Score:"
+        severity_text = "Severity:"
+        conversation_text = "Conversation:"
+        detected_text = "Detected:"
+        suggested_action_text = "Suggested Action:"
     else:  # it
         greeting = "🚨 ALERT GUARDIAN: Ospite insoddisfatto rilevato"
         message = f"Ciao <strong>{user_name}</strong>, il sistema Guardian ha rilevato un ospite potenzialmente insoddisfatto che potrebbe lasciare una recensione negativa."
         cta_text = "Gestisci Alert nella Dashboard Guardian"
         action_text = "Agisci rapidamente! Contattare l'ospite entro le prossime ore può fare la differenza tra una recensione negativa e un'esperienza positiva risolta."
+        risk_score_text = "Punteggio di Rischio:"
+        severity_text = "Severità:"
+        conversation_text = "Conversazione:"
+        detected_text = "Rilevato:"
+        suggested_action_text = "Azione Suggerita:"
     
     content = f"""
         <div class="greeting">{greeting}</div>
@@ -257,14 +267,14 @@ def create_guardian_alert_email_simple(user_name: str, alert, conversation_summa
         </div>
         
         <div style="background-color: {HOSTGPT_SIMPLE_COLORS['light_gray']}; padding: 15px; border-radius: 8px; margin: 15px 0;">
-            <strong>Risk Score:</strong> {alert.risk_score:.1%}<br>
-            <strong>Severity:</strong> {alert.severity.upper()}<br>
-            <strong>Conversation:</strong> #{alert.conversation_id}<br>
-            <strong>Detected:</strong> {alert.created_at.strftime('%d/%m/%Y at %H:%M')}
+            <strong>{risk_score_text}</strong> {alert.risk_score:.1%}<br>
+            <strong>{severity_text}</strong> {alert.severity.upper()}<br>
+            <strong>{conversation_text}</strong> #{alert.conversation_id}<br>
+            <strong>{detected_text}</strong> {alert.created_at.strftime('%d/%m/%Y at %H:%M')}
         </div>
         
         <div style="background-color: {HOSTGPT_SIMPLE_COLORS['secondary']}; padding: 15px; border-radius: 8px; margin: 15px 0;">
-            <strong>Suggested Action:</strong><br>
+            <strong>{suggested_action_text}</strong><br>
             {alert.suggested_action}
         </div>
         

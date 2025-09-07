@@ -435,6 +435,10 @@ Rispondi SOLO con un JSON valido:
             if not chatbot:
                 raise ValueError(f"Chatbot non trovato per conversazione {conversation.id}")
             
+            # Recupera l'utente per ottenere la lingua
+            user = db.query(User).filter(User.id == chatbot.user_id).first()
+            user_language = user.language if user else "it"
+            
             # Determina la severità basata sul punteggio di rischio
             risk_score = analysis_result['risk_score']
             if risk_score >= 0.95:
@@ -447,9 +451,9 @@ Rispondi SOLO con un JSON valido:
                 severity = 'low'
             
             # Crea il messaggio dell'alert
-            message = self._create_alert_message(conversation, analysis_result)
-            suggested_action = self._create_suggested_action(analysis_result)
-            conversation_summary = self._create_conversation_summary(conversation, db)
+            message = self._create_alert_message(conversation, analysis_result, user_language)
+            suggested_action = self._create_suggested_action(analysis_result, user_language)
+            conversation_summary = self._create_conversation_summary(conversation, db, user_language)
             
             # Crea l'alert
             alert = GuardianAlert(
@@ -475,51 +479,80 @@ Rispondi SOLO con un JSON valido:
             db.rollback()
             raise
     
-    def _create_alert_message(self, conversation: Conversation, analysis_result: dict) -> str:
+    def _create_alert_message(self, conversation: Conversation, analysis_result: dict, language: str = "it") -> str:
         """Crea il messaggio dell'alert"""
         risk_score = analysis_result['risk_score']
         sentiment_score = analysis_result['sentiment_score']
         
-        if risk_score >= 0.95:
-            urgency = "CRITICO"
-            emoji = "🚨"
-        elif risk_score >= 0.90:
-            urgency = "ALTO"
-            emoji = "⚠️"
-        else:
-            urgency = "MEDIO"
-            emoji = "⚠️"
-        
-        return f"{emoji} ALERT {urgency}: Ospite insoddisfatto rilevato nella conversazione #{conversation.id}. Rischio recensione negativa: {risk_score:.1%}. Sentiment: {sentiment_score:.2f}"
+        if language == "en":
+            if risk_score >= 0.95:
+                urgency = "CRITICAL"
+                emoji = "🚨"
+            elif risk_score >= 0.90:
+                urgency = "HIGH"
+                emoji = "⚠️"
+            else:
+                urgency = "MEDIUM"
+                emoji = "⚠️"
+            
+            return f"{emoji} ALERT {urgency}: Unsatisfied guest detected in conversation #{conversation.id}. Negative review risk: {risk_score:.1%}. Sentiment: {sentiment_score:.2f}"
+        else:  # it
+            if risk_score >= 0.95:
+                urgency = "CRITICO"
+                emoji = "🚨"
+            elif risk_score >= 0.90:
+                urgency = "ALTO"
+                emoji = "⚠️"
+            else:
+                urgency = "MEDIO"
+                emoji = "⚠️"
+            
+            return f"{emoji} ALERT {urgency}: Ospite insoddisfatto rilevato nella conversazione #{conversation.id}. Rischio recensione negativa: {risk_score:.1%}. Sentiment: {sentiment_score:.2f}"
     
-    def _create_suggested_action(self, analysis_result: dict) -> str:
+    def _create_suggested_action(self, analysis_result: dict, language: str = "it") -> str:
         """Crea l'azione suggerita basata sull'analisi"""
         key_issues = analysis_result.get('analysis_details', {}).get('key_issues', [])
         
-        if not key_issues:
-            return "Contatta immediatamente l'ospite per verificare la soddisfazione e offrire assistenza."
-        
-        if 'wifi' in ' '.join(key_issues).lower():
-            return "Problema WiFi rilevato. Invia immediatamente le credenziali corrette o contatta il tecnico."
-        elif 'pulizia' in ' '.join(key_issues).lower():
-            return "Problema di pulizia rilevato. Organizza immediatamente una pulizia straordinaria."
-        elif 'rumore' in ' '.join(key_issues).lower():
-            return "Problema di rumore rilevato. Contatta i vicini o offre un cambio stanza."
-        else:
-            return "Contatta immediatamente l'ospite per risolvere il problema e offrire una compensazione."
+        if language == "en":
+            if not key_issues:
+                return "Contact the guest immediately to verify satisfaction and offer assistance."
+            
+            if 'wifi' in ' '.join(key_issues).lower():
+                return "WiFi issue detected. Send correct credentials immediately or contact technician."
+            elif 'pulizia' in ' '.join(key_issues).lower() or 'cleaning' in ' '.join(key_issues).lower():
+                return "Cleaning issue detected. Organize immediate extra cleaning."
+            elif 'rumore' in ' '.join(key_issues).lower() or 'noise' in ' '.join(key_issues).lower():
+                return "Noise issue detected. Contact neighbors or offer room change."
+            else:
+                return "Contact the guest immediately to resolve the issue and offer compensation."
+        else:  # it
+            if not key_issues:
+                return "Contatta immediatamente l'ospite per verificare la soddisfazione e offrire assistenza."
+            
+            if 'wifi' in ' '.join(key_issues).lower():
+                return "Problema WiFi rilevato. Invia immediatamente le credenziali corrette o contatta il tecnico."
+            elif 'pulizia' in ' '.join(key_issues).lower():
+                return "Problema di pulizia rilevato. Organizza immediatamente una pulizia straordinaria."
+            elif 'rumore' in ' '.join(key_issues).lower():
+                return "Problema di rumore rilevato. Contatta i vicini o offre un cambio stanza."
+            else:
+                return "Contatta immediatamente l'ospite per risolvere il problema e offrire una compensazione."
     
-    def _create_conversation_summary(self, conversation: Conversation, db: Session) -> str:
+    def _create_conversation_summary(self, conversation: Conversation, db: Session, language: str = "it") -> str:
         """Crea un riassunto della conversazione"""
         messages = db.query(Message).filter(
             Message.conversation_id == conversation.id
         ).order_by(Message.timestamp).limit(10).all()  # Ultimi 10 messaggi
         
         if not messages:
-            return "Nessun messaggio disponibile"
+            return "No messages available" if language == "en" else "Nessun messaggio disponibile"
         
         summary_lines = []
         for msg in messages:
-            role = "Ospite" if msg.role == 'user' else "Chatbot"
+            if language == "en":
+                role = "Guest" if msg.role == 'user' else "Chatbot"
+            else:
+                role = "Ospite" if msg.role == 'user' else "Chatbot"
             time = msg.timestamp.strftime("%H:%M")
             content = msg.content[:100] + "..." if len(msg.content) > 100 else msg.content
             summary_lines.append(f"[{time}] {role}: {content}")
