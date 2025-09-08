@@ -3,6 +3,16 @@
 import { useState, useEffect } from 'react'
 import { chatbots } from '@/lib/api'
 import { MessageSquare } from 'lucide-react'
+import axios from 'axios'
+
+// Importa l'istanza di axios configurata
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+const api = axios.create({
+  baseURL: `${API_URL}/api`,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+})
 
 interface ChatbotIconProps {
   chatbotId?: number
@@ -27,18 +37,11 @@ export default function ChatbotIcon({ chatbotId, chatbotUuid, hasIcon, size = 'm
         const endpoint = `/api/chat/${chatbotUuid}/icon`
         console.log('DEBUG ChatbotIcon: Using public endpoint:', endpoint)
         
-        fetch(endpoint)
+        api.get(endpoint, { responseType: 'blob' })
           .then(response => {
             console.log('DEBUG ChatbotIcon: Response status:', response.status, response.statusText)
-            if (!response.ok) {
-              console.log('DEBUG ChatbotIcon: Icon fetch failed:', response.status, response.statusText)
-              throw new Error(`Failed to fetch icon: ${response.status} ${response.statusText}`)
-            }
-            return response.blob()
-          })
-          .then(blob => {
-            console.log('DEBUG ChatbotIcon: Icon loaded successfully, blob size:', blob.size)
-            const url = URL.createObjectURL(blob)
+            console.log('DEBUG ChatbotIcon: Icon loaded successfully, blob size:', response.data.size)
+            const url = URL.createObjectURL(response.data)
             setIconUrl(url)
           })
           .catch((error) => {
@@ -50,18 +53,13 @@ export default function ChatbotIcon({ chatbotId, chatbotUuid, hasIcon, size = 'm
               const token = localStorage.getItem('token')
               if (token) {
                 const authEndpoint = `/api/chatbots/${chatbotId}/icon`
-                fetch(authEndpoint, { 
-                  headers: { 'Authorization': `Bearer ${token}` }
+                api.get(authEndpoint, { 
+                  headers: { 'Authorization': `Bearer ${token}` },
+                  responseType: 'blob'
                 })
                 .then(response => {
-                  if (response.ok) {
-                    return response.blob()
-                  }
-                  throw new Error('Auth endpoint also failed')
-                })
-                .then(blob => {
                   console.log('DEBUG ChatbotIcon: Icon loaded via auth endpoint')
-                  const url = URL.createObjectURL(blob)
+                  const url = URL.createObjectURL(response.data)
                   setIconUrl(url)
                 })
                 .catch(authError => {
@@ -85,18 +83,11 @@ export default function ChatbotIcon({ chatbotId, chatbotUuid, hasIcon, size = 'm
           headers['Authorization'] = `Bearer ${token}`
         }
         
-        fetch(endpoint, { headers })
+        api.get(endpoint, { headers, responseType: 'blob' })
           .then(response => {
             console.log('DEBUG ChatbotIcon: Response status:', response.status, response.statusText)
-            if (!response.ok) {
-              console.log('DEBUG ChatbotIcon: Icon fetch failed:', response.status, response.statusText)
-              throw new Error(`Failed to fetch icon: ${response.status} ${response.statusText}`)
-            }
-            return response.blob()
-          })
-          .then(blob => {
-            console.log('DEBUG ChatbotIcon: Icon loaded successfully, blob size:', blob.size)
-            const url = URL.createObjectURL(blob)
+            console.log('DEBUG ChatbotIcon: Icon loaded successfully, blob size:', response.data.size)
+            const url = URL.createObjectURL(response.data)
             setIconUrl(url)
           })
           .catch((error) => {
