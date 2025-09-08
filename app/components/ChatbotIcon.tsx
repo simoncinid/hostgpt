@@ -22,49 +22,67 @@ export default function ChatbotIcon({ chatbotId, chatbotUuid, hasIcon, size = 'm
     if (chatbotId || chatbotUuid) {
       setIsLoading(true)
       
-      // Scegli l'endpoint corretto
-      const endpoint = chatbotUuid 
-        ? `/api/chat/${chatbotUuid}/icon`
-        : `/api/chatbots/${chatbotId}/icon`
-      
-      console.log('DEBUG ChatbotIcon: Fetching icon from:', endpoint)
-      console.log('DEBUG ChatbotIcon: chatbotId:', chatbotId, 'chatbotUuid:', chatbotUuid, 'hasIcon:', hasIcon)
-      
-      const headers: HeadersInit = {}
-      
-      // Aggiungi il token solo se necessario e disponibile
-      // Per l'endpoint /api/chatbots/{id}/icon serve autenticazione
-      if (chatbotId) {
+      // Se abbiamo chatbotUuid, usa direttamente l'endpoint pubblico
+      if (chatbotUuid) {
+        const endpoint = `/api/chat/${chatbotUuid}/icon`
+        console.log('DEBUG ChatbotIcon: Using public endpoint:', endpoint)
+        
+        fetch(endpoint)
+          .then(response => {
+            console.log('DEBUG ChatbotIcon: Response status:', response.status, response.statusText)
+            if (!response.ok) {
+              console.log('DEBUG ChatbotIcon: Icon fetch failed:', response.status, response.statusText)
+              throw new Error(`Failed to fetch icon: ${response.status} ${response.statusText}`)
+            }
+            return response.blob()
+          })
+          .then(blob => {
+            console.log('DEBUG ChatbotIcon: Icon loaded successfully, blob size:', blob.size)
+            const url = URL.createObjectURL(blob)
+            setIconUrl(url)
+          })
+          .catch((error) => {
+            console.log('DEBUG ChatbotIcon: Icon fetch error:', error)
+          })
+          .finally(() => {
+            setIsLoading(false)
+          })
+      } else if (chatbotId) {
+        // Se abbiamo solo chatbotId, dobbiamo prima recuperare l'UUID
+        // Per ora, prova l'endpoint autenticato come fallback
+        const endpoint = `/api/chatbots/${chatbotId}/icon`
+        console.log('DEBUG ChatbotIcon: Using authenticated endpoint:', endpoint)
+        
         const token = localStorage.getItem('token')
-        console.log('DEBUG ChatbotIcon: Token found:', token ? 'YES' : 'NO')
+        const headers: HeadersInit = {}
         if (token) {
           headers['Authorization'] = `Bearer ${token}`
-          console.log('DEBUG ChatbotIcon: Authorization header added')
         }
+        
+        fetch(endpoint, { headers })
+          .then(response => {
+            console.log('DEBUG ChatbotIcon: Response status:', response.status, response.statusText)
+            if (!response.ok) {
+              console.log('DEBUG ChatbotIcon: Icon fetch failed:', response.status, response.statusText)
+              throw new Error(`Failed to fetch icon: ${response.status} ${response.statusText}`)
+            }
+            return response.blob()
+          })
+          .then(blob => {
+            console.log('DEBUG ChatbotIcon: Icon loaded successfully, blob size:', blob.size)
+            const url = URL.createObjectURL(blob)
+            setIconUrl(url)
+          })
+          .catch((error) => {
+            console.log('DEBUG ChatbotIcon: Icon fetch error:', error)
+            // Se l'endpoint autenticato fallisce, prova a recuperare l'UUID e usare l'endpoint pubblico
+            console.log('DEBUG ChatbotIcon: Trying to get UUID for public endpoint...')
+            // TODO: Implementare il recupero dell'UUID
+          })
+          .finally(() => {
+            setIsLoading(false)
+          })
       }
-      // Per l'endpoint /api/chat/{uuid}/icon non serve autenticazione (è pubblico)
-      
-      fetch(endpoint, { headers })
-        .then(response => {
-          console.log('DEBUG ChatbotIcon: Response status:', response.status, response.statusText)
-          if (!response.ok) {
-            console.log('DEBUG ChatbotIcon: Icon fetch failed:', response.status, response.statusText)
-            throw new Error(`Failed to fetch icon: ${response.status} ${response.statusText}`)
-          }
-          return response.blob()
-        })
-        .then(blob => {
-          console.log('DEBUG ChatbotIcon: Icon loaded successfully, blob size:', blob.size)
-          const url = URL.createObjectURL(blob)
-          setIconUrl(url)
-        })
-        .catch((error) => {
-          console.log('DEBUG ChatbotIcon: Icon fetch error:', error)
-          // Se c'è un errore, non mostrare nulla (fallback all'icona di default)
-        })
-        .finally(() => {
-          setIsLoading(false)
-        })
     }
   }, [chatbotId, chatbotUuid, hasIcon])
 

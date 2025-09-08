@@ -111,7 +111,7 @@ export default function ChatbotsListPage() {
                     {/* Prima riga: Nome e Status */}
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center space-x-3">
-                        <ChatbotIcon chatbotId={bot.id} hasIcon={bot.has_icon} size="sm" />
+                        <ChatbotIcon chatbotId={bot.id} chatbotUuid={bot.uuid} hasIcon={bot.has_icon} size="sm" />
                         <h3 className="font-semibold text-base md:text-lg">{bot.name}</h3>
                       </div>
                       {bot.is_active ? (
