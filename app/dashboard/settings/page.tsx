@@ -20,6 +20,9 @@ export default function SettingsPage() {
   const [isCancellingSubscription, setIsCancellingSubscription] = useState(false)
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
   const [showCancelModal, setShowCancelModal] = useState(false)
+  const [showDeleteProfileModal, setShowDeleteProfileModal] = useState(false)
+  const [deleteConfirmationText, setDeleteConfirmationText] = useState('')
+  const [isDeletingProfile, setIsDeletingProfile] = useState(false)
 
   useEffect(() => {
     const load = async () => {
@@ -98,6 +101,44 @@ export default function SettingsPage() {
   const handleLogout = () => {
     logout()
     router.push('/')
+  }
+
+  const handleDeleteProfile = async () => {
+    const confirmationTexts = [
+      'voglio eliminare il profilo',
+      'I want to delete my profile'
+    ]
+    
+    if (!confirmationTexts.includes(deleteConfirmationText.toLowerCase())) {
+      toast.error('Devi scrivere esattamente "voglio eliminare il profilo" o "I want to delete my profile" per confermare')
+      return
+    }
+
+    setIsDeletingProfile(true)
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/auth/delete-profile`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        }
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.detail || 'Errore nell\'eliminazione del profilo')
+      }
+
+      toast.success('Profilo eliminato con successo')
+      logout()
+      router.push('/')
+    } catch (e: any) {
+      toast.error(e.message || 'Errore nell\'eliminazione del profilo')
+    } finally {
+      setIsDeletingProfile(false)
+      setShowDeleteProfileModal(false)
+      setDeleteConfirmationText('')
+    }
   }
 
   if (isLoading) {
@@ -243,10 +284,40 @@ export default function SettingsPage() {
 
             <div className="bg-white rounded-2xl shadow p-6">
               <h2 className="text-lg font-semibold mb-4">{t.common.security || 'Sicurezza'}</h2>
-              <button onClick={() => { logout(); router.push('/login') }} className="btn-secondary inline-flex items-center">
-                <LogOut className="w-5 h-5 mr-2" />
-                {t.common.logout || 'Esci'}
-              </button>
+              <div className="space-y-4">
+                <button onClick={() => { logout(); router.push('/login') }} className="btn-secondary inline-flex items-center">
+                  <LogOut className="w-5 h-5 mr-2" />
+                  {t.common.logout || 'Esci'}
+                </button>
+                
+                <div className="border-t pt-4">
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                    <div className="flex items-start gap-3">
+                      <AlertTriangle className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
+                      <div className="flex-1">
+                        <h3 className="font-medium text-red-800 mb-1">Elimina Profilo</h3>
+                        <p className="text-sm text-red-700 mb-3">
+                          Questa azione eliminerà permanentemente il tuo profilo, tutti i tuoi chatbot, conversazioni, knowledge base e annullerà tutti gli abbonamenti. Questa azione non può essere annullata.
+                        </p>
+                        <button 
+                          onClick={() => setShowDeleteProfileModal(true)} 
+                          disabled={isDeletingProfile}
+                          className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center"
+                        >
+                          {isDeletingProfile ? (
+                            <>
+                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                              Eliminazione...
+                            </>
+                          ) : (
+                            'Elimina Profilo'
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -286,6 +357,71 @@ export default function SettingsPage() {
                   </>
                 ) : (
                   t.settings.confirmCancellation || 'Conferma Annullamento'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal di conferma eliminazione profilo */}
+      {showDeleteProfileModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
+            <div className="flex items-start gap-3 mb-4">
+              <AlertTriangle className="w-6 h-6 text-red-600 mt-0.5 flex-shrink-0" />
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-1">Conferma Eliminazione Profilo</h3>
+                <p className="text-sm text-gray-600 mb-4">
+                  Questa azione eliminerà permanentemente:
+                </p>
+                <ul className="text-sm text-gray-600 list-disc list-inside mb-4 space-y-1">
+                  <li>Il tuo profilo utente</li>
+                  <li>Tutti i tuoi chatbot</li>
+                  <li>Tutte le conversazioni</li>
+                  <li>La knowledge base</li>
+                  <li>Tutti gli abbonamenti Stripe</li>
+                </ul>
+                <p className="text-sm text-red-600 font-medium mb-4">
+                  Questa azione non può essere annullata!
+                </p>
+                <p className="text-sm text-gray-600 mb-4">
+                  Per confermare, scrivi esattamente: <strong>"voglio eliminare il profilo"</strong> o <strong>"I want to delete my profile"</strong>
+                </p>
+                <input
+                  type="text"
+                  value={deleteConfirmationText}
+                  onChange={(e) => setDeleteConfirmationText(e.target.value)}
+                  placeholder="Scrivi qui la conferma..."
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                  disabled={isDeletingProfile}
+                />
+              </div>
+            </div>
+            
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => {
+                  setShowDeleteProfileModal(false)
+                  setDeleteConfirmationText('')
+                }}
+                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                disabled={isDeletingProfile}
+              >
+                Annulla
+              </button>
+              <button
+                onClick={handleDeleteProfile}
+                disabled={isDeletingProfile || !deleteConfirmationText}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center"
+              >
+                {isDeletingProfile ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Eliminazione...
+                  </>
+                ) : (
+                  'Elimina Profilo'
                 )}
               </button>
             </div>

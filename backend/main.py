@@ -711,13 +711,57 @@ Rispondi SOLO con un JSON valido:
 # Istanza globale del servizio Guardian
 guardian_service = GuardianService()
 
-def generate_qr_code(url: str) -> str:
+def generate_qr_code(url: str, icon_data: bytes = None) -> str:
     """Genera QR code e ritorna come base64"""
-    qr = qrcode.QRCode(version=1, box_size=10, border=5)
+    qr = qrcode.QRCode(version=1, box_size=15, border=5)  # Aumentato box_size per QR code più grande
     qr.add_data(url)
     qr.make(fit=True)
     
     img = qr.make_image(fill_color="black", back_color="white")
+    
+    # Se c'è un'icona, aggiungila al centro del QR code (solo se il QR code è abbastanza grande)
+    if icon_data:
+        try:
+            from PIL import Image, ImageDraw
+            import io
+            
+            # Carica l'icona
+            icon_img = Image.open(io.BytesIO(icon_data))
+            
+            # Ridimensiona l'icona in modo più conservativo (1/6 del QR code invece di 1/4)
+            qr_size = img.size[0]
+            icon_size = qr_size // 6  # Più piccolo per non interferire con la scansione
+            
+            # Solo se il QR code è abbastanza grande (almeno 200px)
+            if qr_size >= 200:
+                icon_img = icon_img.resize((icon_size, icon_size), Image.Resampling.LANCZOS)
+                
+                # Crea un'icona circolare con bordo bianco per separarla dal QR code
+                mask = Image.new('L', (icon_size, icon_size), 0)
+                mask_draw = ImageDraw.Draw(mask)
+                mask_draw.ellipse((0, 0, icon_size, icon_size), fill=255)
+                
+                # Applica la maschera circolare
+                icon_img.putalpha(mask)
+                
+                # Crea un bordo bianco intorno all'icona per separarla dal QR code
+                border_size = 4
+                icon_with_border = Image.new('RGBA', (icon_size + border_size * 2, icon_size + border_size * 2), (255, 255, 255, 255))
+                icon_with_border.paste(icon_img, (border_size, border_size), icon_img)
+                
+                # Posiziona l'icona al centro del QR code
+                qr_with_icon = img.copy()
+                x = (qr_size - icon_size - border_size * 2) // 2
+                y = (qr_size - icon_size - border_size * 2) // 2
+                qr_with_icon.paste(icon_with_border, (x, y), icon_with_border)
+                
+                img = qr_with_icon
+            else:
+                print(f"QR code troppo piccolo ({qr_size}px) per aggiungere icona senza compromettere la scansione")
+        except Exception as e:
+            print(f"Errore nell'aggiunta dell'icona al QR code: {e}")
+            # Se c'è un errore, usa il QR code normale
+    
     buf = io.BytesIO()
     img.save(buf, format='PNG')
     
@@ -2247,7 +2291,7 @@ async def create_chatbot(
     
     # Genera QR code
     chat_url = f"{settings.FRONTEND_URL}/chat/{db_chatbot.uuid}"
-    qr_code = generate_qr_code(chat_url)
+    qr_code = generate_qr_code(chat_url, icon_data)
     
     # Invia email di conferma
     email_body = create_chatbot_ready_email_simple(current_user.full_name or current_user.email, property_name, chat_url, current_user.language or "it")
@@ -2329,7 +2373,7 @@ async def get_chatbots(
             "property_name": bot.property_name,
             "property_city": bot.property_city,
             "chat_url": chat_url,
-            "qr_code": generate_qr_code(chat_url),
+            "qr_code": generate_qr_code(chat_url, bot.icon_data),
             "total_conversations": total_conversations,
             "total_messages": total_messages,
             "is_active": bot.is_active,
@@ -2404,7 +2448,14 @@ async def update_chatbot_icon(
     
     db.commit()
     
-    return {"message": "Icona aggiornata con successo"}
+    # Rigenera il QR code con la nuova icona
+    chat_url = f"{settings.FRONTEND_URL}/chat/{chatbot.uuid}"
+    new_qr_code = generate_qr_code(chat_url, content)
+    
+    return {
+        "message": "Icona aggiornata con successo",
+        "qr_code": new_qr_code
+    }
 
 @app.get("/api/chat/{uuid}/debug")
 async def debug_chatbot_info(
@@ -4160,6 +4211,101 @@ async def expire_free_trials(
     except Exception as e:
         logger.error(f"Error expiring free trials: {e}")
         raise HTTPException(status_code=500, detail="Errore nella gestione delle scadenze free trial")
+
+@app.delete("/api/auth/delete-profile")
+async def delete_profile(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Elimina completamente il profilo utente e tutti i dati associati"""
+    try:
+        logger.info(f"Starting profile deletion for user {current_user.id}")
+        
+        # 1. Cancella tutti gli abbonamenti Stripe
+        try:
+            # Cancella abbonamento HostGPT se esiste
+            if current_user.stripe_subscription_id:
+                try:
+                    stripe_subscription = stripe.Subscription.retrieve(current_user.stripe_subscription_id)
+                    if stripe_subscription.status in ['active', 'trialing', 'past_due']:
+                        stripe.Subscription.delete(current_user.stripe_subscription_id)
+                        logger.info(f"Deleted HostGPT subscription {current_user.stripe_subscription_id}")
+                except stripe.error.StripeError as e:
+                    logger.error(f"Error deleting HostGPT subscription: {e}")
+            
+            # Cancella abbonamento Guardian se esiste
+            if current_user.guardian_stripe_subscription_id:
+                try:
+                    guardian_subscription = stripe.Subscription.retrieve(current_user.guardian_stripe_subscription_id)
+                    if guardian_subscription.status in ['active', 'trialing', 'past_due']:
+                        stripe.Subscription.delete(current_user.guardian_stripe_subscription_id)
+                        logger.info(f"Deleted Guardian subscription {current_user.guardian_stripe_subscription_id}")
+                except stripe.error.StripeError as e:
+                    logger.error(f"Error deleting Guardian subscription: {e}")
+            
+            # Cancella il customer Stripe se esiste
+            if current_user.stripe_customer_id:
+                try:
+                    stripe.Customer.delete(current_user.stripe_customer_id)
+                    logger.info(f"Deleted Stripe customer {current_user.stripe_customer_id}")
+                except stripe.error.StripeError as e:
+                    logger.error(f"Error deleting Stripe customer: {e}")
+                    
+        except Exception as e:
+            logger.error(f"Error in Stripe cleanup: {e}")
+            # Non bloccare l'eliminazione per errori Stripe
+        
+        # 2. Elimina tutti i chatbot dell'utente (cascade eliminerà conversazioni, messaggi, knowledge base)
+        chatbots = db.query(Chatbot).filter(Chatbot.user_id == current_user.id).all()
+        for chatbot in chatbots:
+            # Elimina l'assistant da OpenAI se esiste
+            if chatbot.assistant_id:
+                try:
+                    client = get_openai_client()
+                    client.beta.assistants.delete(chatbot.assistant_id)
+                    logger.info(f"Deleted OpenAI assistant {chatbot.assistant_id}")
+                except Exception as e:
+                    logger.error(f"Error deleting OpenAI assistant {chatbot.assistant_id}: {e}")
+        
+        # 3. Elimina tutti i referral codes dell'utente
+        referral_codes = db.query(ReferralCode).filter(ReferralCode.user_id == current_user.id).all()
+        for referral_code in referral_codes:
+            db.delete(referral_code)
+        
+        # 4. Elimina tutti i Guardian alerts e analisi
+        guardian_alerts = db.query(GuardianAlert).join(Conversation).join(Chatbot).filter(
+            Chatbot.user_id == current_user.id
+        ).all()
+        for alert in guardian_alerts:
+            db.delete(alert)
+        
+        guardian_analyses = db.query(GuardianAnalysis).join(Conversation).join(Chatbot).filter(
+            Chatbot.user_id == current_user.id
+        ).all()
+        for analysis in guardian_analyses:
+            db.delete(analysis)
+        
+        # 5. Elimina tutti i chatbot (cascade eliminerà tutto il resto)
+        for chatbot in chatbots:
+            db.delete(chatbot)
+        
+        # 6. Elimina l'utente
+        db.delete(current_user)
+        
+        # 7. Commit tutte le modifiche
+        db.commit()
+        
+        logger.info(f"Successfully deleted profile for user {current_user.id}")
+        
+        return {
+            "status": "success",
+            "message": "Profilo eliminato con successo"
+        }
+        
+    except Exception as e:
+        logger.error(f"Error deleting profile for user {current_user.id}: {e}")
+        db.rollback()
+        raise HTTPException(status_code=500, detail="Errore nell'eliminazione del profilo")
 
 if __name__ == "__main__":
     import uvicorn
