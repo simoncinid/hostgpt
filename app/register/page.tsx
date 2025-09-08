@@ -48,6 +48,12 @@ function RegisterForm() {
   const password = watch('password')
 
   const onSubmit = async (data: RegisterForm) => {
+    // Validazione manuale delle password
+    if (data.password !== data.confirmPassword) {
+      toast.error(t.errors.passwordsNotMatch)
+      return
+    }
+
     setIsLoading(true)
     try {
       const response = await api.post('/auth/register', {
@@ -245,11 +251,7 @@ function RegisterForm() {
                       <input
                         type={showConfirmPassword ? 'text' : 'password'}
                         {...register('confirmPassword', {
-                          required: t.errors.confirmPasswordRequired,
-                          validate: (value) => {
-                            if (!value) return true; // Se il campo è vuoto, non validare ancora
-                            return value === password || t.errors.passwordsNotMatch;
-                          }
+                          required: t.errors.confirmPasswordRequired
                         })}
                         className="w-full px-4 py-2.5 pl-10 pr-10 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary focus:ring-opacity-20 outline-none transition-all duration-200"
                         placeholder="••••••••"
@@ -474,11 +476,7 @@ function RegisterForm() {
                       <input
                         type={showConfirmPassword ? 'text' : 'password'}
                         {...register('confirmPassword', {
-                          required: t.errors.confirmPasswordRequired,
-                          validate: (value) => {
-                            if (!value) return true; // Se il campo è vuoto, non validare ancora
-                            return value === password || t.errors.passwordsNotMatch;
-                          }
+                          required: t.errors.confirmPasswordRequired
                         })}
                         className="w-full px-3 py-2 pl-9 pr-9 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary focus:ring-opacity-20 outline-none transition-all duration-200 text-sm"
                         placeholder="••••••••"
