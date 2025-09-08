@@ -44,6 +44,31 @@ export default function ChatbotIcon({ chatbotId, chatbotUuid, hasIcon, size = 'm
           .catch((error) => {
             console.log('DEBUG ChatbotIcon: Icon fetch error:', error)
             console.log('DEBUG ChatbotIcon: UUID che ha causato errore:', chatbotUuid)
+            // Fallback: prova l'endpoint autenticato se disponibile
+            if (chatbotId) {
+              console.log('DEBUG ChatbotIcon: Trying authenticated endpoint as fallback...')
+              const token = localStorage.getItem('token')
+              if (token) {
+                const authEndpoint = `/api/chatbots/${chatbotId}/icon`
+                fetch(authEndpoint, { 
+                  headers: { 'Authorization': `Bearer ${token}` }
+                })
+                .then(response => {
+                  if (response.ok) {
+                    return response.blob()
+                  }
+                  throw new Error('Auth endpoint also failed')
+                })
+                .then(blob => {
+                  console.log('DEBUG ChatbotIcon: Icon loaded via auth endpoint')
+                  const url = URL.createObjectURL(blob)
+                  setIconUrl(url)
+                })
+                .catch(authError => {
+                  console.log('DEBUG ChatbotIcon: Auth endpoint also failed:', authError)
+                })
+              }
+            }
           })
           .finally(() => {
             setIsLoading(false)
