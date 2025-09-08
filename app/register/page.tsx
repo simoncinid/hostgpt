@@ -44,8 +44,9 @@ function RegisterForm() {
     }
   }, [searchParams])
   
-  const { register, handleSubmit, watch, formState: { errors } } = useForm<RegisterForm>()
+  const { register, handleSubmit, watch, formState: { errors }, reset } = useForm<RegisterForm>()
   const password = watch('password')
+  
 
   const onSubmit = async (data: RegisterForm) => {
     // Validazione manuale delle password
@@ -120,7 +121,7 @@ function RegisterForm() {
           <div className="flex-1 flex flex-col">
             <form onSubmit={handleSubmit(onSubmit)} className="flex-1 flex flex-col">
               {/* Layout desktop con grid template per allineamento perfetto */}
-              <div className="hidden md:grid md:grid-cols-2 md:gap-6 flex-1" style={{gridTemplateRows: 'auto auto auto auto auto auto'}}>
+              <div key="desktop-form" className="hidden md:grid md:grid-cols-2 md:gap-6 flex-1" style={{gridTemplateRows: 'auto auto auto auto auto auto'}}>
                 {/* Colonna sinistra */}
                 <div className="space-y-3">
                   {/* Nome Completo - ROW 1 */}
@@ -249,6 +250,7 @@ function RegisterForm() {
                     <div className="relative">
                       <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                       <input
+                        id="confirmPassword-desktop"
                         type={showConfirmPassword ? 'text' : 'password'}
                         {...register('confirmPassword', {
                           required: t.errors.confirmPasswordRequired
@@ -349,7 +351,7 @@ function RegisterForm() {
               </div>
 
               {/* Layout mobile COMPLETAMENTE RIFATTO DA ZERO */}
-              <div className="md:hidden flex-1 overflow-y-auto">
+              <div key="mobile-form" className="md:hidden flex-1 overflow-y-auto">
                 <div className="space-y-3">
                   {/* Nome Completo */}
                   <div>
@@ -474,6 +476,7 @@ function RegisterForm() {
                     <div className="relative">
                       <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-3 h-3 text-gray-400" />
                       <input
+                        id="confirmPassword-mobile"
                         type={showConfirmPassword ? 'text' : 'password'}
                         {...register('confirmPassword', {
                           required: t.errors.confirmPasswordRequired
