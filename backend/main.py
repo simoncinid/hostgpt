@@ -4268,10 +4268,9 @@ async def delete_profile(
                 except Exception as e:
                     logger.error(f"Error deleting OpenAI assistant {chatbot.assistant_id}: {e}")
         
-        # 3. Elimina tutti i referral codes dell'utente
-        referral_codes = db.query(ReferralCode).filter(ReferralCode.user_id == current_user.id).all()
-        for referral_code in referral_codes:
-            db.delete(referral_code)
+        # 3. I referral codes non sono legati direttamente all'utente, 
+        # ma sono utilizzati da più utenti, quindi non li eliminiamo
+        # L'utente verrà semplicemente rimosso dalla relazione quando viene eliminato
         
         # 4. Elimina tutti i Guardian alerts e analisi
         guardian_alerts = db.query(GuardianAlert).join(Conversation).join(Chatbot).filter(

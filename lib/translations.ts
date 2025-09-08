@@ -813,6 +813,18 @@ export interface Translations {
     deleteAccount: string
     deleteAccountWarning: string
     deleteAccountConfirm: string
+    deleteProfile: string
+    deleteProfileWarning: string
+    deleteProfileModal: {
+      title: string
+      description: string
+      items: string[]
+      warning: string
+      confirmationText: string
+      placeholder: string
+      button: string
+      deleting: string
+    }
     cancelSubscriptionTitle: string
     cancelSubscriptionMessage: string
     confirmCancellation: string
@@ -1874,6 +1886,24 @@ export const translations: Record<Language, Translations> = {
       deleteAccount: "Elimina Account",
       deleteAccountWarning: "Questa azione non può essere annullata",
       deleteAccountConfirm: "Conferma Eliminazione",
+      deleteProfile: "Elimina Profilo",
+      deleteProfileWarning: "Questa azione eliminerà permanentemente il tuo profilo, tutti i tuoi chatbot, conversazioni, knowledge base e annullerà tutti gli abbonamenti. Questa azione non può essere annullata.",
+      deleteProfileModal: {
+        title: "Conferma Eliminazione Profilo",
+        description: "Questa azione eliminerà permanentemente:",
+        items: [
+          "Il tuo profilo utente",
+          "Tutti i tuoi chatbot",
+          "Tutte le conversazioni",
+          "La knowledge base",
+          "Tutti gli abbonamenti Stripe"
+        ],
+        warning: "Questa azione non può essere annullata!",
+        confirmationText: "Per confermare, scrivi esattamente: \"voglio eliminare il profilo\" o \"I want to delete my profile\"",
+        placeholder: "Scrivi qui la conferma...",
+        button: "Elimina Profilo",
+        deleting: "Eliminazione..."
+      },
       cancelSubscriptionTitle: "Conferma Annullamento",
       cancelSubscriptionMessage: "Sei sicuro di voler annullare l'abbonamento? Il servizio verrà disattivato ma tutti i tuoi dati (chatbot, conversazioni, messaggi) rimarranno nel database.",
       confirmCancellation: "Conferma Annullamento",
@@ -2845,6 +2875,24 @@ export const translations: Record<Language, Translations> = {
       deleteAccount: "Delete Account",
       deleteAccountWarning: "This action cannot be undone",
       deleteAccountConfirm: "Confirm Deletion",
+      deleteProfile: "Delete Profile",
+      deleteProfileWarning: "This action will permanently delete your profile, all your chatbots, conversations, knowledge base and cancel all subscriptions. This action cannot be undone.",
+      deleteProfileModal: {
+        title: "Confirm Profile Deletion",
+        description: "This action will permanently delete:",
+        items: [
+          "Your user profile",
+          "All your chatbots",
+          "All conversations",
+          "The knowledge base",
+          "All Stripe subscriptions"
+        ],
+        warning: "This action cannot be undone!",
+        confirmationText: "To confirm, write exactly: \"voglio eliminare il profilo\" or \"I want to delete my profile\"",
+        placeholder: "Write confirmation here...",
+        button: "Delete Profile",
+        deleting: "Deleting..."
+      },
       cancelSubscriptionTitle: "Confirm Cancellation",
       cancelSubscriptionMessage: "Are you sure you want to cancel your subscription? The service will be deactivated but all your data (chatbots, conversations, messages) will remain in the database.",
       confirmCancellation: "Confirm Cancellation",
