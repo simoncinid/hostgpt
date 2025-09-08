@@ -20,9 +20,10 @@ interface ChatbotIconProps {
   hasIcon: boolean
   size?: 'sm' | 'md' | 'lg'
   className?: string
+  noBorder?: boolean // Nuova prop per rimuovere il bordo
 }
 
-export default function ChatbotIcon({ chatbotId, chatbotUuid, hasIcon, size = 'md', className = '' }: ChatbotIconProps) {
+export default function ChatbotIcon({ chatbotId, chatbotUuid, hasIcon, size = 'md', className = '', noBorder = false }: ChatbotIconProps) {
   const [iconUrl, setIconUrl] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
 
@@ -132,11 +133,14 @@ export default function ChatbotIcon({ chatbotId, chatbotUuid, hasIcon, size = 'm
   }
 
   if (iconUrl) {
+    const borderClass = noBorder ? '' : 'border-2 border-gray-200'
+    const roundedClass = noBorder ? 'rounded-full' : 'rounded-lg'
+    
     return (
       <img 
         src={iconUrl} 
         alt="Chatbot icon" 
-        className={`${finalClassName} rounded-lg object-cover border-2 border-gray-200`}
+        className={`${finalClassName} ${roundedClass} object-cover ${borderClass}`}
       />
     )
   }

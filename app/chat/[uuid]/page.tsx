@@ -362,6 +362,7 @@ export default function ChatWidgetPage() {
                   hasIcon={chatInfo.has_icon} 
                   size="md" 
                   className="mr-3"
+                  noBorder={true}
                 />
               ) : (
                 <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center mr-3">
@@ -579,6 +580,7 @@ export default function ChatWidgetPage() {
                               hasIcon={chatInfo.has_icon} 
                               size="sm" 
                               className="w-4 h-4" 
+                              noBorder={true}
                             />
                           ) : (
                             <Bot className="w-4 h-4" />
