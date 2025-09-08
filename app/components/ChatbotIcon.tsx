@@ -34,7 +34,7 @@ export default function ChatbotIcon({ chatbotId, chatbotUuid, hasIcon, size = 'm
       
       // Se abbiamo chatbotUuid, usa direttamente l'endpoint pubblico
       if (chatbotUuid) {
-        const endpoint = `/api/chat/${chatbotUuid}/icon`
+        const endpoint = `/chat/${chatbotUuid}/icon`
         console.log('DEBUG ChatbotIcon: Using public endpoint:', endpoint)
         
         api.get(endpoint, { responseType: 'blob' })
@@ -52,7 +52,7 @@ export default function ChatbotIcon({ chatbotId, chatbotUuid, hasIcon, size = 'm
               console.log('DEBUG ChatbotIcon: Trying authenticated endpoint as fallback...')
               const token = localStorage.getItem('token')
               if (token) {
-                const authEndpoint = `/api/chatbots/${chatbotId}/icon`
+                const authEndpoint = `/chatbots/${chatbotId}/icon`
                 api.get(authEndpoint, { 
                   headers: { 'Authorization': `Bearer ${token}` },
                   responseType: 'blob'
@@ -74,7 +74,7 @@ export default function ChatbotIcon({ chatbotId, chatbotUuid, hasIcon, size = 'm
       } else if (chatbotId) {
         // Se abbiamo solo chatbotId, dobbiamo prima recuperare l'UUID
         // Per ora, prova l'endpoint autenticato come fallback
-        const endpoint = `/api/chatbots/${chatbotId}/icon`
+        const endpoint = `/chatbots/${chatbotId}/icon`
         console.log('DEBUG ChatbotIcon: Using authenticated endpoint:', endpoint)
         
         const token = localStorage.getItem('token')
