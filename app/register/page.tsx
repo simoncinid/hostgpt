@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, Suspense } from 'react'
+import { useState, useEffect, Suspense, useMemo } from 'react'
 
 // Disable static generation for this page
 export const dynamic = 'force-dynamic'
@@ -44,8 +44,8 @@ function RegisterForm() {
     }
   }, [searchParams])
   
-  const { register, handleSubmit, watch, formState: { errors }, reset } = useForm<RegisterForm>()
-  const password = watch('password')
+  const { register, handleSubmit, formState: { errors }, reset } = useForm<RegisterForm>()
+  const [password, setPassword] = useState('')
   
 
   const onSubmit = async (data: RegisterForm) => {
@@ -77,12 +77,12 @@ function RegisterForm() {
     }
   }
 
-  const passwordRequirements = [
+  const passwordRequirements = useMemo(() => [
     { text: t.passwordMinLength, check: password?.length >= 8 },
     { text: t.passwordUppercase, check: /[A-Z]/.test(password || '') },
     { text: t.passwordLowercase, check: /[a-z]/.test(password || '') },
     { text: t.passwordNumber, check: /[0-9]/.test(password || '') },
-  ]
+  ], [password, t.passwordMinLength, t.passwordUppercase, t.passwordLowercase, t.passwordNumber])
 
   return (
     <div className="h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
@@ -198,6 +198,10 @@ function RegisterForm() {
                             message: t.errors.passwordPattern
                           }
                         })}
+                        onChange={(e) => {
+                          setPassword(e.target.value)
+                          register('password').onChange(e)
+                        }}
                         className="w-full px-4 py-2.5 pl-10 pr-10 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary focus:ring-opacity-20 outline-none transition-all duration-200"
                         placeholder="••••••••"
                       />
@@ -450,6 +454,10 @@ function RegisterForm() {
                             message: t.errors.passwordPattern
                           }
                         })}
+                        onChange={(e) => {
+                          setPassword(e.target.value)
+                          register('password').onChange(e)
+                        }}
                         className="w-full px-3 py-2 pl-9 pr-9 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary focus:ring-opacity-20 outline-none transition-all duration-200 text-sm"
                         placeholder="••••••••"
                       />
