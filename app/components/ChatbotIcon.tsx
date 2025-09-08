@@ -17,7 +17,9 @@ export default function ChatbotIcon({ chatbotId, chatbotUuid, hasIcon, size = 'm
   const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
-    if (hasIcon && (chatbotId || chatbotUuid)) {
+    // Prova sempre a caricare l'icona se abbiamo un ID o UUID
+    // Il backend restituirà 404 se l'icona non esiste
+    if (chatbotId || chatbotUuid) {
       setIsLoading(true)
       
       // Scegli l'endpoint corretto
@@ -25,15 +27,20 @@ export default function ChatbotIcon({ chatbotId, chatbotUuid, hasIcon, size = 'm
         ? `/api/chat/${chatbotUuid}/icon`
         : `/api/chatbots/${chatbotId}/icon`
       
+      console.log('DEBUG ChatbotIcon: Fetching icon from:', endpoint)
+      console.log('DEBUG ChatbotIcon: chatbotId:', chatbotId, 'chatbotUuid:', chatbotUuid, 'hasIcon:', hasIcon)
+      
       const headers: HeadersInit = {}
       
       // Aggiungi il token solo se necessario e disponibile
+      // Per l'endpoint /api/chatbots/{id}/icon serve autenticazione
       if (chatbotId) {
         const token = localStorage.getItem('token')
         if (token) {
           headers['Authorization'] = `Bearer ${token}`
         }
       }
+      // Per l'endpoint /api/chat/{uuid}/icon non serve autenticazione (è pubblico)
       
       fetch(endpoint, { headers })
         .then(response => {

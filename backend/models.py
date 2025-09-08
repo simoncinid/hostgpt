@@ -91,6 +91,7 @@ class Chatbot(Base):
     icon_data = Column(LargeBinary)  # Dati dell'icona come BLOB
     icon_filename = Column(String(255))  # Nome file originale
     icon_content_type = Column(String(100))  # MIME type (image/png, image/jpeg)
+    has_icon = Column(Boolean, default=False)  # Flag per indicare se ha un'icona
     
     # Statistiche
     total_conversations = Column(Integer, default=0)

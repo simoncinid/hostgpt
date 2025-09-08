@@ -2238,7 +2238,8 @@ async def create_chatbot(
         welcome_message=welcome_message,
         icon_data=icon_data,
         icon_filename=icon_filename,
-        icon_content_type=icon_content_type
+        icon_content_type=icon_content_type,
+        has_icon=icon_data is not None
     )
     db.add(db_chatbot)
     db.commit()
@@ -2333,7 +2334,7 @@ async def get_chatbots(
             "total_messages": total_messages,
             "is_active": bot.is_active,
             "created_at": bot.created_at,
-            "has_icon": bot.icon_data is not None
+            "has_icon": bot.has_icon
         })
     
     return result
@@ -2345,16 +2346,24 @@ async def get_chatbot_icon(
     db: Session = Depends(get_db)
 ):
     """Ottieni l'icona del chatbot"""
+    print(f"DEBUG: Cercando chatbot con ID: {chatbot_id} per user: {current_user.id}")
+    
     chatbot = db.query(Chatbot).filter(
         Chatbot.id == chatbot_id,
         Chatbot.user_id == current_user.id
     ).first()
     
     if not chatbot:
+        print(f"DEBUG: Chatbot non trovato per ID: {chatbot_id}")
         raise HTTPException(status_code=404, detail="Chatbot non trovato")
     
+    print(f"DEBUG: Chatbot trovato: {chatbot.name}, has_icon_data: {chatbot.icon_data is not None}")
+    
     if not chatbot.icon_data:
+        print(f"DEBUG: Icona non trovata per chatbot: {chatbot.name}")
         raise HTTPException(status_code=404, detail="Icona non trovata")
+    
+    print(f"DEBUG: Icona trovata per chatbot: {chatbot.name}, content_type: {chatbot.icon_content_type}")
     
     from fastapi.responses import Response
     return Response(
@@ -2391,6 +2400,7 @@ async def update_chatbot_icon(
     chatbot.icon_data = content
     chatbot.icon_filename = icon.filename
     chatbot.icon_content_type = icon.content_type
+    chatbot.has_icon = True
     
     db.commit()
     
@@ -2402,13 +2412,25 @@ async def get_chatbot_icon_public(
     db: Session = Depends(get_db)
 ):
     """Ottieni l'icona del chatbot per la chat pubblica"""
+    print(f"DEBUG: Cercando chatbot con UUID: {uuid}")
+    
     chatbot = db.query(Chatbot).filter(Chatbot.uuid == uuid).first()
     
-    if not chatbot or not chatbot.is_active:
+    if not chatbot:
+        print(f"DEBUG: Chatbot non trovato per UUID: {uuid}")
         raise HTTPException(status_code=404, detail="Chatbot non trovato")
     
+    print(f"DEBUG: Chatbot trovato: {chatbot.name}, is_active: {chatbot.is_active}")
+    
+    if not chatbot.is_active:
+        print(f"DEBUG: Chatbot non attivo: {chatbot.name}")
+        raise HTTPException(status_code=404, detail="Chatbot non attivo")
+    
     if not chatbot.icon_data:
+        print(f"DEBUG: Icona non trovata per chatbot: {chatbot.name}")
         raise HTTPException(status_code=404, detail="Icona non trovata")
+    
+    print(f"DEBUG: Icona trovata per chatbot: {chatbot.name}, content_type: {chatbot.icon_content_type}")
     
     from fastapi.responses import Response
     return Response(
@@ -2480,7 +2502,7 @@ async def get_chatbot(
         "is_active": chatbot.is_active,
         "created_at": chatbot.created_at,
         "updated_at": chatbot.updated_at,
-        "has_icon": chatbot.icon_data is not None
+        "has_icon": chatbot.has_icon
     }
     
     return response_data
@@ -2641,7 +2663,7 @@ async def get_chat_info(uuid: str, db: Session = Depends(get_db)):
         "name": chatbot.name,
         "property_name": chatbot.property_name,
         "welcome_message": chatbot.welcome_message,
-        "has_icon": chatbot.icon_data is not None,
+        "has_icon": chatbot.has_icon,
         "id": chatbot.id
     }
 
@@ -2666,7 +2688,7 @@ async def get_demo_info(db: Session = Depends(get_db)):
         "name": chatbot.name,
         "property_name": chatbot.property_name,
         "welcome_message": chatbot.welcome_message,
-        "has_icon": chatbot.icon_data is not None,
+        "has_icon": chatbot.has_icon,
         "id": chatbot.id
     }
 
