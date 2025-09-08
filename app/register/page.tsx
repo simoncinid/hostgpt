@@ -86,9 +86,6 @@ function RegisterForm() {
             <div className="flex justify-between items-start mb-4">
               <div className="flex-1">
                 <h1 className="text-2xl md:text-3xl font-bold text-dark mb-2">{t.title}</h1>
-                <p className="text-gray-600 text-sm md:text-base mb-3">
-                  {isFreeTrial ? t.freeTrialSubtitle : t.paidSubtitle}
-                </p>
               </div>
               <Link 
                 href="/" 
@@ -249,7 +246,10 @@ function RegisterForm() {
                         type={showConfirmPassword ? 'text' : 'password'}
                         {...register('confirmPassword', {
                           required: t.errors.confirmPasswordRequired,
-                          validate: value => value === password || t.errors.passwordsNotMatch
+                          validate: (value) => {
+                            if (!value) return true; // Se il campo è vuoto, non validare ancora
+                            return value === password || t.errors.passwordsNotMatch;
+                          }
                         })}
                         className="w-full px-4 py-2.5 pl-10 pr-10 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary focus:ring-opacity-20 outline-none transition-all duration-200"
                         placeholder="••••••••"
@@ -288,44 +288,45 @@ function RegisterForm() {
                         </>
                       )}
                     </button>
+                    
+                    {/* Terms - subito sotto il pulsante */}
+                    <div className="mt-3 text-center">
+                      <label className="flex items-start justify-center">
+                        <input
+                          type="checkbox"
+                          {...register('terms', {
+                            required: t.errors.termsRequired
+                          })}
+                          className="mt-0.5 mr-2 flex-shrink-0"
+                        />
+                        <span className="text-xs text-gray-600">
+                          {t.termsAccept}{' '}
+                          <Link href="/terms" className="text-primary hover:text-secondary">
+                            {t.termsLink}
+                          </Link>
+                          {' '}e la{' '}
+                          <Link href="/privacy" className="text-primary hover:text-secondary">
+                            {t.privacyLink}
+                          </Link>
+                        </span>
+                      </label>
+                      {errors.terms && (
+                        <p className="text-red-500 text-xs mt-1">{errors.terms.message}</p>
+                      )}
+                    </div>
+
+                    {/* Sign In Link - sotto i termini */}
+                    <div className="text-center mt-2">
+                      <p className="text-gray-600 text-sm">
+                        {t.alreadyHaveAccount}{' '}
+                        <Link href="/login" className="text-primary hover:text-secondary font-semibold">
+                          {t.loginNow}
+                        </Link>
+                      </p>
+                    </div>
                   </div>
                 </div>
 
-                {/* Terms - ROW 4 - sopra il link "Accedi ora" */}
-                <div className="col-span-2 mt-3 text-center">
-                  <label className="flex items-start justify-center">
-                    <input
-                      type="checkbox"
-                      {...register('terms', {
-                        required: t.errors.termsRequired
-                      })}
-                      className="mt-0.5 mr-2 flex-shrink-0"
-                    />
-                    <span className="text-xs text-gray-600">
-                      {t.termsAccept}{' '}
-                      <Link href="/terms" className="text-primary hover:text-secondary">
-                        {t.termsLink}
-                      </Link>
-                      {' '}e la{' '}
-                      <Link href="/privacy" className="text-primary hover:text-secondary">
-                        {t.privacyLink}
-                      </Link>
-                    </span>
-                  </label>
-                  {errors.terms && (
-                    <p className="text-red-500 text-xs mt-1">{errors.terms.message}</p>
-                  )}
-                </div>
-
-                {/* Sign In Link - ROW 5 - sotto i termini */}
-                <div className="col-span-2 text-center mb-3">
-                  <p className="text-gray-600 text-sm">
-                    {t.alreadyHaveAccount}{' '}
-                    <Link href="/login" className="text-primary hover:text-secondary font-semibold">
-                      {t.loginNow}
-                    </Link>
-                  </p>
-                </div>
 
                 {/* Password Requirements - ROW 6 - solo se c'è password */}
                 {password && (
@@ -474,7 +475,10 @@ function RegisterForm() {
                         type={showConfirmPassword ? 'text' : 'password'}
                         {...register('confirmPassword', {
                           required: t.errors.confirmPasswordRequired,
-                          validate: value => value === password || t.errors.passwordsNotMatch
+                          validate: (value) => {
+                            if (!value) return true; // Se il campo è vuoto, non validare ancora
+                            return value === password || t.errors.passwordsNotMatch;
+                          }
                         })}
                         className="w-full px-3 py-2 pl-9 pr-9 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary focus:ring-opacity-20 outline-none transition-all duration-200 text-sm"
                         placeholder="••••••••"
