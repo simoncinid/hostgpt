@@ -36,26 +36,30 @@ export default function ChatbotIcon({ chatbotId, chatbotUuid, hasIcon, size = 'm
       // Per l'endpoint /api/chatbots/{id}/icon serve autenticazione
       if (chatbotId) {
         const token = localStorage.getItem('token')
+        console.log('DEBUG ChatbotIcon: Token found:', token ? 'YES' : 'NO')
         if (token) {
           headers['Authorization'] = `Bearer ${token}`
+          console.log('DEBUG ChatbotIcon: Authorization header added')
         }
       }
       // Per l'endpoint /api/chat/{uuid}/icon non serve autenticazione (è pubblico)
       
       fetch(endpoint, { headers })
         .then(response => {
+          console.log('DEBUG ChatbotIcon: Response status:', response.status, response.statusText)
           if (!response.ok) {
-            console.log('Icon fetch failed:', response.status, response.statusText)
-            throw new Error('Failed to fetch icon')
+            console.log('DEBUG ChatbotIcon: Icon fetch failed:', response.status, response.statusText)
+            throw new Error(`Failed to fetch icon: ${response.status} ${response.statusText}`)
           }
           return response.blob()
         })
         .then(blob => {
+          console.log('DEBUG ChatbotIcon: Icon loaded successfully, blob size:', blob.size)
           const url = URL.createObjectURL(blob)
           setIconUrl(url)
         })
         .catch((error) => {
-          console.log('Icon fetch error:', error)
+          console.log('DEBUG ChatbotIcon: Icon fetch error:', error)
           // Se c'è un errore, non mostrare nulla (fallback all'icona di default)
         })
         .finally(() => {
