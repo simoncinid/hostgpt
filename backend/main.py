@@ -2406,6 +2406,38 @@ async def update_chatbot_icon(
     
     return {"message": "Icona aggiornata con successo"}
 
+@app.get("/api/chat/{uuid}/debug")
+async def debug_chatbot_info(
+    uuid: str,
+    db: Session = Depends(get_db)
+):
+    """Debug endpoint per verificare le informazioni del chatbot"""
+    print(f"DEBUG: Cercando chatbot con UUID: {uuid}")
+    
+    chatbot = db.query(Chatbot).filter(Chatbot.uuid == uuid).first()
+    
+    if not chatbot:
+        # Debug: mostra tutti gli UUID esistenti
+        all_chatbots = db.query(Chatbot).all()
+        return {
+            "found": False,
+            "uuid_requested": uuid,
+            "existing_uuids": [bot.uuid for bot in all_chatbots],
+            "total_chatbots": len(all_chatbots)
+        }
+    
+    return {
+        "found": True,
+        "id": chatbot.id,
+        "name": chatbot.name,
+        "uuid": chatbot.uuid,
+        "is_active": chatbot.is_active,
+        "has_icon_data": chatbot.icon_data is not None,
+        "has_icon_field": getattr(chatbot, 'has_icon', 'Campo non trovato'),
+        "icon_filename": chatbot.icon_filename,
+        "icon_content_type": chatbot.icon_content_type
+    }
+
 @app.get("/api/chat/{uuid}/icon")
 async def get_chatbot_icon_public(
     uuid: str,
