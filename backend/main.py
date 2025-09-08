@@ -2418,9 +2418,14 @@ async def get_chatbot_icon_public(
     
     if not chatbot:
         print(f"DEBUG: Chatbot non trovato per UUID: {uuid}")
+        # Debug: mostra tutti gli UUID esistenti
+        all_chatbots = db.query(Chatbot).all()
+        print(f"DEBUG: UUID esistenti nel database: {[bot.uuid for bot in all_chatbots]}")
         raise HTTPException(status_code=404, detail="Chatbot non trovato")
     
     print(f"DEBUG: Chatbot trovato: {chatbot.name}, is_active: {chatbot.is_active}")
+    print(f"DEBUG: Chatbot icon_data presente: {chatbot.icon_data is not None}")
+    print(f"DEBUG: Chatbot has_icon: {getattr(chatbot, 'has_icon', 'Campo non trovato')}")
     
     if not chatbot.is_active:
         print(f"DEBUG: Chatbot non attivo: {chatbot.name}")

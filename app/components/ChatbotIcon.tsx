@@ -43,6 +43,7 @@ export default function ChatbotIcon({ chatbotId, chatbotUuid, hasIcon, size = 'm
           })
           .catch((error) => {
             console.log('DEBUG ChatbotIcon: Icon fetch error:', error)
+            console.log('DEBUG ChatbotIcon: UUID che ha causato errore:', chatbotUuid)
           })
           .finally(() => {
             setIsLoading(false)
@@ -126,8 +127,8 @@ export default function ChatbotIcon({ chatbotId, chatbotUuid, hasIcon, size = 'm
 
   // Icona di default
   return (
-    <div className={`${finalClassName} bg-blue-100 rounded-lg flex items-center justify-center`}>
-      <MessageSquare className="w-6 h-6 text-blue-600" />
+    <div className={`${finalClassName} bg-red-100 rounded-lg flex items-center justify-center`} title="Icona non caricata - problema backend">
+      <MessageSquare className="w-6 h-6 text-red-600" />
     </div>
   )
 }
