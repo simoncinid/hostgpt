@@ -713,6 +713,8 @@ guardian_service = GuardianService()
 
 def generate_qr_code(url: str, icon_data: bytes = None) -> str:
     """Genera QR code e ritorna come base64"""
+    import io  # Importa io all'inizio della funzione
+    
     qr = qrcode.QRCode(version=1, box_size=15, border=5)  # Aumentato box_size per QR code più grande
     qr.add_data(url)
     qr.make(fit=True)
@@ -723,7 +725,6 @@ def generate_qr_code(url: str, icon_data: bytes = None) -> str:
     if icon_data:
         try:
             from PIL import Image, ImageDraw
-            import io
             
             # Carica l'icona
             icon_img = Image.open(io.BytesIO(icon_data))
