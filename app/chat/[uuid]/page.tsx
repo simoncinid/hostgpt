@@ -569,7 +569,9 @@ export default function ChatWidgetPage() {
                       <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
                         message.role === 'user' 
                           ? 'bg-gradient-to-r from-rose-500 to-pink-600 text-white ml-3' 
-                          : 'bg-gray-200 text-gray-600 mr-3'
+                          : chatInfo && chatInfo.has_icon 
+                            ? 'bg-transparent text-gray-600 mr-3' 
+                            : 'bg-gray-200 text-gray-600 mr-3'
                       }`}>
                         {message.role === 'user' ? (
                           <User className="w-4 h-4" />
@@ -579,7 +581,7 @@ export default function ChatWidgetPage() {
                               chatbotUuid={uuid} 
                               hasIcon={chatInfo.has_icon} 
                               size="sm" 
-                              className="w-4 h-4" 
+                              className="w-8 h-8" 
                               noBorder={true}
                             />
                           ) : (
