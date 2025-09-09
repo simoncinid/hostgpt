@@ -538,6 +538,13 @@ export interface Translations {
           allInfoEntered: string
           backToDashboard: string
           createNewChatbot: string
+          propertyUrl: string
+          propertyUrlPlaceholder: string
+          propertyUrlHelp: string
+          autoFill: string
+          autoFilling: string
+          autoFillSuccess: string
+          autoFillError: string
           propertyTypes: {
             apartment: string
             house: string
@@ -1529,6 +1536,13 @@ export const translations: Record<Language, Translations> = {
           allInfoEntered: "Hai inserito tutte le informazioni necessarie. Il tuo chatbot sarà creato e allenato con questi dati. Potrai sempre modificarli in seguito dalla dashboard.",
           backToDashboard: "Torna alla Dashboard",
           createNewChatbot: "Crea Nuovo Chatbot",
+          propertyUrl: "URL Proprietà (Opzionale)",
+          propertyUrlPlaceholder: "Es. https://www.airbnb.com/rooms/123456",
+          propertyUrlHelp: "Incolla il link della tua proprietà (Airbnb, Booking, ecc.) e l'AI riempirà automaticamente le informazioni",
+          autoFill: "Riempimento automatico con AI",
+          autoFilling: "Analisi proprietà in corso...",
+          autoFillSuccess: "Informazioni proprietà caricate con successo!",
+          autoFillError: "Impossibile analizzare la proprietà. Compila manualmente le informazioni.",
           propertyTypes: {
             apartment: "Appartamento",
             house: "Casa",
@@ -2535,6 +2549,13 @@ export const translations: Record<Language, Translations> = {
           allInfoEntered: "You have entered all the necessary information. Your chatbot will be created and trained with this data. You can always modify them later from the dashboard.",
           backToDashboard: "Back to Dashboard",
           createNewChatbot: "Create New Chatbot",
+          propertyUrl: "Property URL (Optional)",
+          propertyUrlPlaceholder: "E.g. https://www.airbnb.com/rooms/123456",
+          propertyUrlHelp: "Paste the link to your property listing (Airbnb, Booking, etc.) and AI will automatically fill in the information",
+          autoFill: "Auto-fill with AI",
+          autoFilling: "Analyzing property...",
+          autoFillSuccess: "Property information loaded successfully!",
+          autoFillError: "Could not analyze the property. Please fill in the information manually.",
           propertyTypes: {
             apartment: "Apartment",
             house: "House",

@@ -49,6 +49,7 @@ interface ChatbotFormData {
   special_instructions: string
   faq: { question: string; answer: string }[]
   welcome_message: string
+  property_url: string
 }
 
 // Steps will be created dynamically from translations
@@ -98,6 +99,7 @@ export default function CreateChatbotPage() {
   const [iconFile, setIconFile] = useState<File | null>(null)
   const [iconPreview, setIconPreview] = useState<string | null>(null)
   const [iconError, setIconError] = useState<string | null>(null)
+  const [isAutoFilling, setIsAutoFilling] = useState(false)
   const { addChatbot } = useChatbotStore()
   
   // Se esiste già un chatbot, reindirizza ai dettagli (limite 1 per account)
@@ -199,6 +201,168 @@ export default function CreateChatbotPage() {
     } else {
       setIconFile(null)
       setIconPreview(null)
+    }
+  }
+
+  const handleAutoFill = async () => {
+    const propertyUrl = watch('property_url')
+    if (!propertyUrl) {
+      toast.error(language === 'IT' ? 'Inserisci un URL valido' : 'Please enter a valid URL')
+      return
+    }
+
+    setIsAutoFilling(true)
+    try {
+      const response = await fetch('/api/analyze-property', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ url: propertyUrl }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to analyze property')
+      }
+
+      const data = await response.json()
+      
+      // Riempie i campi con i dati ricevuti
+      if (data.property_name) setValue('property_name', data.property_name)
+      if (data.property_type) {
+        // Mappa il tipo di proprietà dall'API ai valori del frontend
+        const propertyTypeMap: { [key: string]: string } = {
+          'appartamento': 'appartamento',
+          'villa': 'villa',
+          'casa': 'casa',
+          'stanza': 'stanza',
+          'loft': 'loft',
+          'monolocale': 'monolocale',
+          'bed_breakfast': 'bed_breakfast'
+        }
+        const mappedType = propertyTypeMap[data.property_type] || data.property_type
+        setValue('property_type', mappedType)
+      }
+      if (data.property_address) setValue('property_address', data.property_address)
+      if (data.property_city) setValue('property_city', data.property_city)
+      if (data.property_description) setValue('property_description', data.property_description)
+      if (data.check_in_time) setValue('check_in_time', data.check_in_time)
+      if (data.check_out_time) setValue('check_out_time', data.check_out_time)
+      if (data.house_rules) setValue('house_rules', data.house_rules)
+      if (data.amenities && Array.isArray(data.amenities)) {
+        // Mappa i valori degli amenities dall'API ai valori del frontend
+        const mappedAmenities = data.amenities.map((amenity: string) => {
+          const amenityMap: { [key: string]: string } = {
+            'wifi': t.chatbots.create.amenities.wifi,
+            'aria_condizionata': t.chatbots.create.amenities.airConditioning,
+            'riscaldamento': t.chatbots.create.amenities.heating,
+            'tv': t.chatbots.create.amenities.tv,
+            'netflix': t.chatbots.create.amenities.netflix,
+            'cucina': t.chatbots.create.amenities.kitchen,
+            'lavastoviglie': t.chatbots.create.amenities.dishwasher,
+            'lavatrice': t.chatbots.create.amenities.washingMachine,
+            'asciugatrice': t.chatbots.create.amenities.dryer,
+            'ferro': t.chatbots.create.amenities.iron,
+            'parcheggio': t.chatbots.create.amenities.parking,
+            'piscina': t.chatbots.create.amenities.pool,
+            'palestra': t.chatbots.create.amenities.gym,
+            'balcone': t.chatbots.create.amenities.balcony,
+            'giardino': t.chatbots.create.amenities.garden,
+            'ascensore': t.chatbots.create.amenities.elevator,
+            'cassaforte': t.chatbots.create.amenities.safe,
+            'allarme': t.chatbots.create.amenities.alarm,
+            'animali_ammessi': t.chatbots.create.amenities.petsAllowed,
+            'fumatori_ammessi': t.chatbots.create.amenities.smokingAllowed
+          }
+          return amenityMap[amenity] || amenity
+        })
+        setValue('amenities', mappedAmenities)
+      }
+      if (data.neighborhood_description) setValue('neighborhood_description', data.neighborhood_description)
+      if (data.transportation_info) setValue('transportation_info', data.transportation_info)
+      if (data.shopping_info) setValue('shopping_info', data.shopping_info)
+      if (data.parking_info) setValue('parking_info', data.parking_info)
+      if (data.special_instructions) setValue('special_instructions', data.special_instructions)
+      if (data.welcome_message) setValue('welcome_message', data.welcome_message)
+      
+      // Gestisce le attrazioni vicine
+      if (data.nearby_attractions && Array.isArray(data.nearby_attractions)) {
+        data.nearby_attractions.forEach((attraction: any, index: number) => {
+          if (index === 0) {
+            setValue('nearby_attractions.0.name', attraction.name || '')
+            setValue('nearby_attractions.0.distance', attraction.distance || '')
+            setValue('nearby_attractions.0.description', attraction.description || '')
+          } else {
+            appendAttraction({
+              name: attraction.name || '',
+              distance: attraction.distance || '',
+              description: attraction.description || ''
+            })
+          }
+        })
+      }
+      
+      // Gestisce i ristoranti e bar
+      if (data.restaurants_bars && Array.isArray(data.restaurants_bars)) {
+        data.restaurants_bars.forEach((restaurant: any, index: number) => {
+          if (index === 0) {
+            setValue('restaurants_bars.0.name', restaurant.name || '')
+            setValue('restaurants_bars.0.type', restaurant.type || '')
+            setValue('restaurants_bars.0.distance', restaurant.distance || '')
+          } else {
+            appendRestaurant({
+              name: restaurant.name || '',
+              type: restaurant.type || '',
+              distance: restaurant.distance || ''
+            })
+          }
+        })
+      }
+      
+      // Gestisce i contatti di emergenza
+      if (data.emergency_contacts && Array.isArray(data.emergency_contacts)) {
+        data.emergency_contacts.forEach((contact: any, index: number) => {
+          if (index === 0) {
+            setValue('emergency_contacts.0.name', contact.name || '')
+            setValue('emergency_contacts.0.number', contact.number || '')
+            setValue('emergency_contacts.0.type', contact.type || '')
+          } else {
+            appendContact({
+              name: contact.name || '',
+              number: contact.number || '',
+              type: contact.type || ''
+            })
+          }
+        })
+      }
+      
+      // Gestisce le FAQ
+      if (data.faq && Array.isArray(data.faq)) {
+        data.faq.forEach((faq: any, index: number) => {
+          if (index === 0) {
+            setValue('faq.0.question', faq.question || '')
+            setValue('faq.0.answer', faq.answer || '')
+          } else {
+            appendFaq({
+              question: faq.question || '',
+              answer: faq.answer || ''
+            })
+          }
+        })
+      }
+      
+      // Gestisce le informazioni WiFi
+      if (data.wifi_info) {
+        if (data.wifi_info.network) setValue('wifi_info.network', data.wifi_info.network)
+        if (data.wifi_info.password) setValue('wifi_info.password', data.wifi_info.password)
+      }
+
+      toast.success(t.chatbots.create.form.autoFillSuccess)
+    } catch (error) {
+      console.error('Auto-fill error:', error)
+      toast.error(t.chatbots.create.form.autoFillError)
+    } finally {
+      setIsAutoFilling(false)
     }
   }
 
@@ -337,6 +501,39 @@ export default function CreateChatbotPage() {
                 placeholder={language === 'IT' ? "Es. Roma" : "E.g. Rome"}
               />
               {errors.property_city && <p className="error-text">{errors.property_city.message}</p>}
+            </div>
+
+            <div>
+              <label className="label">{t.chatbots.create.form.propertyUrl}</label>
+              <div className="space-y-3">
+                <input
+                  {...register('property_url')}
+                  className="input-field"
+                  placeholder={t.chatbots.create.form.propertyUrlPlaceholder}
+                  type="url"
+                />
+                <p className="text-sm text-gray-600">
+                  {t.chatbots.create.form.propertyUrlHelp}
+                </p>
+                <button
+                  type="button"
+                  onClick={handleAutoFill}
+                  disabled={isAutoFilling}
+                  className="btn-primary flex items-center justify-center"
+                >
+                  {isAutoFilling ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      {t.chatbots.create.form.autoFilling}
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="w-4 h-4 mr-2" />
+                      {t.chatbots.create.form.autoFill}
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
         )
