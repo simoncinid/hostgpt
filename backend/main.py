@@ -4534,7 +4534,7 @@ IMPORTANTE:
             if not response_text:
                 raise HTTPException(
                     status_code=500, 
-                    detail="Nessuna risposta da gpt-4o-mini"
+                    detail="Nessuna risposta da gpt-5"
                 )
             
             # Prova a parsare il JSON
@@ -4550,7 +4550,7 @@ IMPORTANTE:
                     except json.JSONDecodeError:
                         raise HTTPException(
                             status_code=500, 
-                            detail="Impossibile parsare la risposta JSON da gpt-4o-mini"
+                            detail="Impossibile parsare la risposta JSON da gpt-5"
                         )
                 else:
                     raise HTTPException(
@@ -4574,7 +4574,7 @@ IMPORTANTE:
             logger.error(f"OpenAI API error for user {current_user.id}: {e}")
             raise HTTPException(
                 status_code=500, 
-                detail=f"Errore nell'analisi con gpt-4o-mini: {str(e)}"
+                detail=f"Errore nell'analisi con gpt-5: {str(e)}"
             )
         
     except HTTPException:
@@ -4611,8 +4611,8 @@ async def analyze_property(request: PropertyAnalysisRequest):
         except Exception:
             raise HTTPException(status_code=400, detail="URL non valido")
         
-        # Non estraiamo il testo, diamo direttamente l'URL a GPT-4
-        logger.info(f"🔍 Invio URL direttamente a GPT-4: {request.url}")
+        # Non scarichiamo più la pagina, diamo direttamente l'URL a GPT-5
+        logger.info(f"🔍 Invio URL direttamente a GPT-5: {request.url}")
         
         # Usa OpenAI per analizzare il contenuto
         try:
@@ -4741,43 +4741,26 @@ IMPORTANTE:
 """
         
         try:
-            logger.info(f"🔍 Invio prompt a gpt-4o-mini...")
+            logger.info(f"🔍 Invio prompt a gpt-5...")
             logger.info(f"🔍 Prompt: {prompt[:2000]}...")
-            logger.info(f"🔍 Model: gpt-4o-mini")
+            logger.info(f"🔍 Model: gpt-5")
             logger.info(f"🔍 Con web search abilitato")
             
-            completion = client.chat.completions.create(
-                model="gpt-4o-mini",
-                messages=[
-                    {
-                        "role": "system",
-                        "content": "Sei un assistente esperto nell'analisi di pagine web di proprietà di affitto vacanze. Puoi visitare e analizzare pagine web per estrarre informazioni dettagliate. Estrai TUTTE le informazioni disponibili in modo preciso e restituisci solo JSON valido."
-                    },
-                    {
-                        "role": "user",
-                        "content": prompt
-                    }
-                ],
-                tools=[
-                    {
-                        "type": "web_search"
-                    }
-                ],
-                tool_choice="auto",
-                temperature=0.1,
-                max_tokens=3000,
-                timeout=60
+            completion = client.responses.create(
+                model="gpt-5",
+                tools=[{"type": "web_search"}],
+                input=prompt
             )
             
-            logger.info(f"✅ Risposta ricevuta da gpt-4o-mini")
-            response_text = completion.choices[0].message.content.strip()
+            logger.info(f"✅ Risposta ricevuta da gpt-5")
+            response_text = completion.output_text.strip()
             logger.info(f"🔍 Risposta completa: {response_text[:500]}...")
             logger.info(f"🔍 Lunghezza risposta: {len(response_text)} caratteri")
             
             if not response_text:
                 raise HTTPException(
                     status_code=500, 
-                    detail="Nessuna risposta da gpt-4o-mini"
+                    detail="Nessuna risposta da gpt-5"
                 )
             
             # Prova a parsare il JSON
@@ -4793,7 +4776,7 @@ IMPORTANTE:
                     except json.JSONDecodeError:
                         raise HTTPException(
                             status_code=500, 
-                            detail="Impossibile parsare la risposta JSON da gpt-4o-mini"
+                            detail="Impossibile parsare la risposta JSON da gpt-5"
                         )
                 else:
                     raise HTTPException(
@@ -4825,7 +4808,7 @@ IMPORTANTE:
                 logger.error(f"Body: {e.body}")
             raise HTTPException(
                 status_code=500, 
-                detail=f"Errore nell'analisi con gpt-4o-mini: {str(e)}"
+                detail=f"Errore nell'analisi con gpt-5: {str(e)}"
             )
         
     except HTTPException:
