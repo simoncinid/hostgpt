@@ -205,14 +205,23 @@ export default function CreateChatbotPage() {
   }
 
   const handleAutoFill = async () => {
+    console.log('🚀 FRONTEND: handleAutoFill chiamato')
+    
     const propertyUrl = watch('property_url')
+    console.log('🚀 FRONTEND: URL letto:', propertyUrl)
+    
     if (!propertyUrl) {
+      console.log('❌ FRONTEND: URL vuoto')
       toast.error(language === 'IT' ? 'Inserisci un URL valido' : 'Please enter a valid URL')
       return
     }
 
+    console.log('🚀 FRONTEND: Iniziando auto-fill per URL:', propertyUrl)
     setIsAutoFilling(true)
+    
     try {
+      console.log('🚀 FRONTEND: Chiamando /api/analyze-property')
+      
       const response = await fetch('/api/analyze-property', {
         method: 'POST',
         headers: {
@@ -221,11 +230,19 @@ export default function CreateChatbotPage() {
         body: JSON.stringify({ url: propertyUrl }),
       })
 
+      console.log('🚀 FRONTEND: Risposta ricevuta, status:', response.status)
+      console.log('🚀 FRONTEND: Response ok:', response.ok)
+
       if (!response.ok) {
+        console.log('❌ FRONTEND: Response non ok, status:', response.status)
+        const errorText = await response.text()
+        console.log('❌ FRONTEND: Error response body:', errorText)
         throw new Error('Failed to analyze property')
       }
 
+      console.log('🚀 FRONTEND: Parsing JSON response')
       const data = await response.json()
+      console.log('🚀 FRONTEND: Dati ricevuti:', data)
       
       // Riempie i campi con i dati ricevuti
       if (data.property_name) setValue('property_name', data.property_name)
@@ -357,11 +374,16 @@ export default function CreateChatbotPage() {
         if (data.wifi_info.password) setValue('wifi_info.password', data.wifi_info.password)
       }
 
+      console.log('✅ FRONTEND: Auto-fill completato con successo!')
       toast.success(t.chatbots.create.form.autoFillSuccess)
     } catch (error) {
-      console.error('Auto-fill error:', error)
+      console.error('❌ FRONTEND: Auto-fill error completo:', error)
+      console.error('❌ FRONTEND: Error type:', typeof error)
+      console.error('❌ FRONTEND: Error message:', error instanceof Error ? error.message : 'Unknown error')
+      console.error('❌ FRONTEND: Error stack:', error instanceof Error ? error.stack : 'No stack')
       toast.error(t.chatbots.create.form.autoFillError)
     } finally {
+      console.log('🚀 FRONTEND: Auto-fill completato, disabilitando loading')
       setIsAutoFilling(false)
     }
   }

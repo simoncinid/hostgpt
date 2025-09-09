@@ -234,22 +234,33 @@ def create_access_token(data: dict):
     return encoded_jwt
 
 async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+    logger.info(f"🔍 BACKEND: get_current_user chiamato")
+    logger.info(f"🔍 BACKEND: Token ricevuto: {token[:20]}..." if token else "Nessun token")
+    
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
+        logger.info(f"🔍 BACKEND: Decodificando JWT...")
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         email: str = payload.get("sub")
+        logger.info(f"🔍 BACKEND: Email dal token: {email}")
         if email is None:
+            logger.error(f"❌ BACKEND: Email non trovata nel token")
             raise credentials_exception
-    except JWTError:
+    except JWTError as e:
+        logger.error(f"❌ BACKEND: Errore JWT: {e}")
         raise credentials_exception
     
+    logger.info(f"🔍 BACKEND: Cercando utente nel database...")
     user = db.query(User).filter(User.email == email).first()
     if user is None:
+        logger.error(f"❌ BACKEND: Utente non trovato per email: {email}")
         raise credentials_exception
+    
+    logger.info(f"🔍 BACKEND: Utente trovato: {user.id} - {user.email}")
     return user
 
 async def send_email(to_email: str, subject: str, body: str, attachments: Optional[list[tuple[str, bytes, str]]] = None):
@@ -4318,15 +4329,23 @@ async def analyze_property(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+    logger.info(f"🔍 BACKEND: Endpoint analyze-property chiamato")
     """Analizza una pagina di proprietà di affitto vacanze e estrae le informazioni"""
     try:
         logger.info(f"🔍 BACKEND: Ricevuta richiesta di analisi proprietà")
         logger.info(f"🔍 BACKEND: User ID: {current_user.id}")
+        logger.info(f"🔍 BACKEND: User email: {current_user.email}")
+        logger.info(f"🔍 BACKEND: Subscription status: {current_user.subscription_status}")
         logger.info(f"🔍 BACKEND: URL da analizzare: {request.url}")
         logger.info(f"Analyzing property for user {current_user.id}: {request.url}")
         
         # Verifica che l'utente abbia un abbonamento attivo
+        logger.info(f"🔍 BACKEND: Verificando abbonamento...")
+        logger.info(f"🔍 BACKEND: is_subscription_active: {is_subscription_active(current_user.subscription_status)}")
+        logger.info(f"🔍 BACKEND: is_free_trial_active: {is_free_trial_active(current_user)}")
+        
         if not is_subscription_active(current_user.subscription_status) and not is_free_trial_active(current_user):
+            logger.error(f"❌ BACKEND: Abbonamento non attivo per user {current_user.id}")
             raise HTTPException(
                 status_code=403, 
                 detail="Abbonamento richiesto per utilizzare l'analisi proprietà"
