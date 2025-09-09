@@ -21,24 +21,6 @@ export async function POST(request: NextRequest) {
   try {
     console.log('🔍 API analyze-property chiamata')
     
-    // Verifica l'autenticazione
-    console.log('🔍 Tentando di ottenere la sessione...')
-    const session = await getSessionSafely()
-    console.log('🔍 Session:', session ? 'Presente' : 'Assente')
-    console.log('🔍 User email:', session?.user?.email)
-    console.log('🔍 Access token:', session?.user?.accessToken ? 'Presente' : 'Assente')
-    
-    // TEMPORANEO: Per ora saltiamo l'autenticazione per testare il backend
-    if (!session?.user?.email) {
-      console.log('⚠️ WARNING: Nessuna sessione trovata, procedendo senza autenticazione per test')
-      // return NextResponse.json({ error: 'Non autorizzato' }, { status: 401 })
-    }
-    
-    if (!session?.user?.accessToken) {
-      console.log('⚠️ WARNING: Nessun access token trovato, procedendo senza autenticazione per test')
-      // return NextResponse.json({ error: 'Token di accesso mancante' }, { status: 401 })
-    }
-
     const { url } = await request.json()
     console.log('🔍 URL ricevuto:', url)
     
@@ -53,26 +35,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'URL non valido' }, { status: 400 })
     }
 
-    // Chiama il backend Python
-    const backendUrl = process.env.BACKEND_URL || 'http://localhost:8001'
-    console.log('🔍 Chiamando backend:', `${backendUrl}/api/analyze-property-test`)
+    // Chiama il backend Python - come tutte le altre API
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+    console.log('🔍 Chiamando backend:', `${backendUrl}/api/analyze-property`)
     console.log('🔍 URL da analizzare:', url)
     
-    const headers: any = {
-      'Content-Type': 'application/json',
-    }
-    
-    // Aggiungi autenticazione solo se disponibile
-    if (session?.user?.accessToken) {
-      headers['Authorization'] = `Bearer ${session.user.accessToken}`
-      console.log('🔍 Token da inviare:', session.user.accessToken.substring(0, 20) + '...')
-    } else {
-      console.log('⚠️ WARNING: Chiamando backend senza autenticazione')
-    }
-    
-    const response = await fetch(`${backendUrl}/api/analyze-property-test`, {
+    const response = await fetch(`${backendUrl}/api/analyze-property`, {
       method: 'POST',
-      headers,
+      headers: {
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify({ url }),
     })
     
@@ -100,10 +72,6 @@ export async function POST(request: NextRequest) {
     }
   } catch (error) {
     console.error('❌ API: Error analyzing property completo:', error)
-    console.error('❌ API: Error type:', typeof error)
-    console.error('❌ API: Error message:', error instanceof Error ? error.message : 'Unknown error')
-    console.error('❌ API: Error stack:', error instanceof Error ? error.stack : 'No stack')
-    
     const errorMessage = error instanceof Error ? error.message : 'Errore sconosciuto'
     return NextResponse.json(
       { error: `Errore nell'analisi della proprietà: ${errorMessage}` },
