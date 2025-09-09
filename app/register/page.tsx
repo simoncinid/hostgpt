@@ -44,7 +44,7 @@ function RegisterForm() {
     }
   }, [searchParams])
   
-  const { register, handleSubmit, formState: { errors }, reset } = useForm<RegisterForm>()
+  const { register, handleSubmit, formState: { errors } } = useForm<RegisterForm>()
   const [password, setPassword] = useState('')
   
 
@@ -121,7 +121,7 @@ function RegisterForm() {
           <div className="flex-1 flex flex-col">
             <form onSubmit={handleSubmit(onSubmit)} className="flex-1 flex flex-col">
               {/* Layout desktop con grid template per allineamento perfetto */}
-              <div key="desktop-form" className="hidden md:grid md:grid-cols-2 md:gap-6 flex-1" style={{gridTemplateRows: 'auto auto auto auto auto auto'}}>
+              <div className="hidden md:grid md:grid-cols-2 md:gap-6 flex-1" style={{gridTemplateRows: 'auto auto auto auto auto auto'}}>
                 {/* Colonna sinistra */}
                 <div className="space-y-3">
                   {/* Nome Completo - ROW 1 */}
@@ -259,6 +259,9 @@ function RegisterForm() {
                         {...register('confirmPassword', {
                           required: t.errors.confirmPasswordRequired
                         })}
+                        onChange={(e) => {
+                          register('confirmPassword').onChange(e)
+                        }}
                         className="w-full px-4 py-2.5 pl-10 pr-10 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary focus:ring-opacity-20 outline-none transition-all duration-200"
                         placeholder="••••••••"
                       />
@@ -355,7 +358,7 @@ function RegisterForm() {
               </div>
 
               {/* Layout mobile COMPLETAMENTE RIFATTO DA ZERO */}
-              <div key="mobile-form" className="md:hidden flex-1 overflow-y-auto">
+              <div className="md:hidden flex-1 overflow-y-auto">
                 <div className="space-y-3">
                   {/* Nome Completo */}
                   <div>
@@ -489,6 +492,9 @@ function RegisterForm() {
                         {...register('confirmPassword', {
                           required: t.errors.confirmPasswordRequired
                         })}
+                        onChange={(e) => {
+                          register('confirmPassword').onChange(e)
+                        }}
                         className="w-full px-3 py-2 pl-9 pr-9 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary focus:ring-opacity-20 outline-none transition-all duration-200 text-sm"
                         placeholder="••••••••"
                       />
