@@ -4598,6 +4598,16 @@ async def analyze_property(request: PropertyAnalysisRequest):
             parsed_url = urlparse(request.url)
             if not parsed_url.scheme or not parsed_url.netloc:
                 raise ValueError("URL non valido")
+            
+            # Controlla che sia una pagina di proprietà specifica
+            if "airbnb.it" in parsed_url.netloc:
+                if "ghost" not in request.url:
+                    raise HTTPException(
+                        status_code=400, 
+                        detail="URL non valido: deve essere una pagina specifica di una proprietà Airbnb (deve contenere /rooms/)"
+                    )
+        except HTTPException:
+            raise
         except Exception:
             raise HTTPException(status_code=400, detail="URL non valido")
         
@@ -4694,12 +4704,15 @@ IMPORTANTE:
 """
         
         try:
+            logger.info(f"🔍 Invio prompt a GPT-4...")
+            logger.info(f"🔍 Prompt: {prompt[:200]}...")
+            
             completion = client.chat.completions.create(
                 model="gpt-4",
                 messages=[
                     {
                         "role": "system",
-                        "content": "Sei un assistente esperto nell'analisi di pagine web di proprietà di affitto vacanze. Estrai le informazioni in modo preciso e restituisci solo JSON valido."
+                        "content": "Sei un assistente esperto nell'analisi di pagine web di proprietà di affitto vacanze. Puoi visitare e analizzare pagine web per estrarre informazioni dettagliate. Estrai TUTTE le informazioni disponibili in modo preciso e restituisci solo JSON valido."
                     },
                     {
                         "role": "user",
@@ -4710,6 +4723,7 @@ IMPORTANTE:
                 max_tokens=3000,
             )
             
+            logger.info(f"✅ Risposta ricevuta da GPT-4")
             response_text = completion.choices[0].message.content.strip()
             
             if not response_text:
@@ -4748,6 +4762,8 @@ IMPORTANTE:
             
         except Exception as e:
             logger.error(f"OpenAI API error: {e}")
+            logger.error(f"Error type: {type(e)}")
+            logger.error(f"Error details: {str(e)}")
             raise HTTPException(
                 status_code=500, 
                 detail=f"Errore nell'analisi con OpenAI: {str(e)}"
