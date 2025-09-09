@@ -55,9 +55,8 @@ export async function POST(request: NextRequest) {
 
     // Chiama il backend Python
     const backendUrl = process.env.BACKEND_URL || 'http://localhost:8001'
-    console.log('🔍 Chiamando backend:', `${backendUrl}/api/analyze-property`)
+    console.log('🔍 Chiamando backend:', `${backendUrl}/api/analyze-property-test`)
     console.log('🔍 URL da analizzare:', url)
-    console.log('🔍 Token da inviare:', session.user.accessToken.substring(0, 20) + '...')
     
     const headers: any = {
       'Content-Type': 'application/json',
