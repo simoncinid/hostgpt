@@ -1,9 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import OpenAI from 'openai'
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-})
 
 export async function POST(request: NextRequest) {
   try {
@@ -103,6 +98,12 @@ function extractTextFromHTML(html: string): string {
 }
 
 async function analyzeWithOpenAI(pageContent: string, url: string) {
+  // Importa e inizializza OpenAI solo quando necessario
+  const { default: OpenAI } = await import('openai')
+  const openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+  })
+
   const prompt = `
 Analizza il contenuto di questa pagina di una proprietà di affitto vacanze e estrai tutte le informazioni disponibili.
 
