@@ -2,66 +2,33 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('=== API CALL STARTED ===')
-    
     const { url } = await request.json()
-    console.log('Received URL:', url)
     
     if (!url) {
-      console.log('No URL provided')
       return NextResponse.json({ error: 'URL is required' }, { status: 400 })
     }
 
     // Valida che sia un URL valido
     try {
       new URL(url)
-      console.log('URL is valid')
     } catch {
-      console.log('Invalid URL format')
       return NextResponse.json({ error: 'Invalid URL' }, { status: 400 })
     }
 
     // Verifica che la chiave API sia configurata
     if (!process.env.OPENAI_API_KEY) {
-      console.log('OpenAI API key not configured')
       return NextResponse.json(
         { error: 'OpenAI API key not configured' },
         { status: 500 }
       )
     }
-    
-    console.log('OpenAI API key is configured')
 
-    // Test semplice prima di fare l'analisi completa
-    console.log('Testing OpenAI connection...')
-    const { default: OpenAI } = await import('openai')
-    const openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
-    })
-    
-    // Test con un prompt semplice
-    const testCompletion = await openai.chat.completions.create({
-      model: "gpt-4",
-      messages: [
-        {
-          role: "user",
-          content: "Rispondi solo con: 'Test OpenAI funziona'"
-        }
-      ],
-      max_tokens: 10,
-    })
-    
-    console.log('OpenAI test response:', testCompletion.choices[0]?.message?.content)
-    
-    // Se il test funziona, procedi con l'analisi
+    // Analizza la pagina della proprietà
     const analysisResult = await analyzePropertyPage(url)
     
-    console.log('=== API CALL COMPLETED SUCCESSFULLY ===')
     return NextResponse.json(analysisResult)
   } catch (error) {
-    console.error('=== API CALL FAILED ===')
     console.error('Error analyzing property:', error)
-    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack')
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'
     return NextResponse.json(
       { error: `Failed to analyze property: ${errorMessage}` },
@@ -72,8 +39,6 @@ export async function POST(request: NextRequest) {
 
 async function analyzePropertyPage(url: string) {
   try {
-    console.log('Starting property analysis for URL:', url)
-    
     // Prima scarica il contenuto della pagina
     const pageContent = await fetchPageContent(url)
     
@@ -81,12 +46,9 @@ async function analyzePropertyPage(url: string) {
       throw new Error('Could not fetch page content')
     }
 
-    console.log('Page content fetched, length:', pageContent.length)
-
     // Usa OpenAI per analizzare il contenuto e estrarre le informazioni
     const analysisResult = await analyzeWithOpenAI(pageContent, url)
     
-    console.log('Analysis completed successfully')
     return analysisResult
   } catch (error) {
     console.error('Error in property analysis:', error)
@@ -96,8 +58,6 @@ async function analyzePropertyPage(url: string) {
 
 async function fetchPageContent(url: string): Promise<string | null> {
   try {
-    console.log('Fetching page content from:', url)
-    
     const response = await fetch(url, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
@@ -108,18 +68,14 @@ async function fetchPageContent(url: string): Promise<string | null> {
       },
     })
 
-    console.log('Response status:', response.status)
-
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`)
     }
 
     const html = await response.text()
-    console.log('HTML content length:', html.length)
     
     // Estrae solo il testo visibile, rimuovendo script, style, etc.
     const textContent = extractTextFromHTML(html)
-    console.log('Extracted text length:', textContent.length)
     
     return textContent
   } catch (error) {
@@ -144,15 +100,11 @@ function extractTextFromHTML(html: string): string {
 
 async function analyzeWithOpenAI(pageContent: string, url: string) {
   try {
-    console.log('Starting OpenAI analysis...')
-    
     // Importa e inizializza OpenAI solo quando necessario
     const { default: OpenAI } = await import('openai')
     const openai = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY,
     })
-
-    console.log('OpenAI client initialized')
 
   const prompt = `
 Analizza il contenuto di questa pagina di una proprietà di affitto vacanze e estrai tutte le informazioni disponibili.
@@ -222,8 +174,6 @@ IMPORTANTE:
 - Se non trovi informazioni specifiche, lascia il campo vuoto
 `
 
-    console.log('Sending request to OpenAI...')
-    
     const completion = await openai.chat.completions.create({
       model: "gpt-4",
       messages: [
@@ -240,21 +190,15 @@ IMPORTANTE:
       max_tokens: 2000,
     })
 
-    console.log('OpenAI response received')
-    
     const responseText = completion.choices[0]?.message?.content?.trim()
     
     if (!responseText) {
       throw new Error('No response from OpenAI')
     }
 
-    console.log('Response text length:', responseText.length)
-
     // Prova a parsare il JSON
     try {
-      console.log('Parsing JSON response...')
       const jsonResult = JSON.parse(responseText)
-      console.log('JSON parsed successfully')
       return jsonResult
     } catch (parseError) {
       console.error('Error parsing OpenAI response:', parseError)
@@ -264,7 +208,6 @@ IMPORTANTE:
       const jsonMatch = responseText.match(/\{[\s\S]*\}/)
       if (jsonMatch) {
         try {
-          console.log('Trying to extract JSON from text...')
           return JSON.parse(jsonMatch[0])
         } catch (e) {
           throw new Error('Could not parse JSON from response')
