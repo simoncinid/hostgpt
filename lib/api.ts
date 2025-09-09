@@ -86,7 +86,7 @@ export const referral = {
 }
 
 export const chatbots = {
-  create: (data: any, iconFile?: File) => {
+  create: async (data: any, iconFile?: File) => {
     const formData = new FormData()
     
     console.log('🚀 API: Dati ricevuti per creazione chatbot:', data)
@@ -122,7 +122,32 @@ export const chatbots = {
       console.log(`  ${key}:`, value)
     })
     
-    return api.post('/chatbots/create', formData)
+    // Usa fetch direttamente per evitare problemi con Axios e FormData
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
+    
+    const response = await fetch(`${API_URL}/api/chatbots/create`, {
+      method: 'POST',
+      headers: {
+        'Authorization': token ? `Bearer ${token}` : '',
+        // Non impostare Content-Type, lascia che il browser lo imposti automaticamente per FormData
+      },
+      body: formData
+    })
+    
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}))
+      throw {
+        response: {
+          status: response.status,
+          data: errorData
+        }
+      }
+    }
+    
+    return {
+      data: await response.json()
+    }
   },
   
   list: () =>

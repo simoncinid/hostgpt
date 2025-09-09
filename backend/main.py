@@ -2179,20 +2179,47 @@ async def create_chatbot(
     neighborhood_description: str = Form(...),
     transportation_info: str = Form(...),
     welcome_message: str = Form(...),
-    # Form data - campi opzionali
-    amenities: str = Form("[]"),  # JSON string, default array vuoto
-    nearby_attractions: str = Form("[]"),  # JSON string, default array vuoto
-    restaurants_bars: str = Form("[]"),  # JSON string, default array vuoto
-    shopping_info: str = Form(""),  # Stringa vuota di default
-    emergency_contacts: str = Form("[]"),  # JSON string, default array vuoto
-    wifi_info: str = Form("{}"),  # JSON string, default oggetto vuoto
-    parking_info: str = Form(""),  # Stringa vuota di default
-    special_instructions: str = Form(""),  # Stringa vuota di default
-    faq: str = Form("[]"),  # JSON string, default array vuoto
+    # Form data - campi opzionali con valori di default
+    amenities: str = Form(default="[]"),
+    nearby_attractions: str = Form(default="[]"),
+    restaurants_bars: str = Form(default="[]"),
+    shopping_info: str = Form(default=""),
+    emergency_contacts: str = Form(default="[]"),
+    wifi_info: str = Form(default="{}"),
+    parking_info: str = Form(default=""),
+    special_instructions: str = Form(default=""),
+    faq: str = Form(default="[]"),
+    property_url: str = Form(default=""),
     # File upload
     icon: Optional[UploadFile] = File(None)
 ):
     """Crea un nuovo chatbot"""
+    # Debug: stampa i dati ricevuti
+    print(f"🚀 Backend: Ricevuti dati per creazione chatbot:")
+    print(f"  name: {name}")
+    print(f"  property_name: {property_name}")
+    print(f"  property_type: {property_type}")
+    print(f"  property_address: {property_address}")
+    print(f"  property_city: {property_city}")
+    print(f"  property_description: {property_description}")
+    print(f"  check_in_time: {check_in_time}")
+    print(f"  check_out_time: {check_out_time}")
+    print(f"  house_rules: {house_rules}")
+    print(f"  neighborhood_description: {neighborhood_description}")
+    print(f"  transportation_info: {transportation_info}")
+    print(f"  welcome_message: {welcome_message}")
+    print(f"  amenities: {amenities}")
+    print(f"  nearby_attractions: {nearby_attractions}")
+    print(f"  restaurants_bars: {restaurants_bars}")
+    print(f"  shopping_info: {shopping_info}")
+    print(f"  emergency_contacts: {emergency_contacts}")
+    print(f"  wifi_info: {wifi_info}")
+    print(f"  parking_info: {parking_info}")
+    print(f"  special_instructions: {special_instructions}")
+    print(f"  faq: {faq}")
+    print(f"  property_url: {property_url}")
+    print(f"  icon: {icon}")
+    
     # Verifica abbonamento attivo
     if not is_subscription_active(current_user.subscription_status):
         raise HTTPException(
