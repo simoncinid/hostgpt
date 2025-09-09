@@ -69,7 +69,6 @@ export default function CreateChatbotPage() {
     { id: 4, name: t.chatbots.create.steps.location, icon: Car },
     { id: 5, name: t.chatbots.create.steps.services, icon: Coffee },
     { id: 6, name: t.chatbots.create.steps.final, icon: Phone },
-    { id: 7, name: t.chatbots.create.steps.final, icon: MessageSquare },
   ]
   
   // Create amenities list from translations
@@ -100,6 +99,7 @@ export default function CreateChatbotPage() {
   const [iconPreview, setIconPreview] = useState<string | null>(null)
   const [iconError, setIconError] = useState<string | null>(null)
   const [isAutoFilling, setIsAutoFilling] = useState(false)
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({})
   const { addChatbot } = useChatbotStore()
   
   // Se esiste già un chatbot, reindirizza ai dettagli (limite 1 per account)
@@ -155,6 +155,17 @@ export default function CreateChatbotPage() {
       setValue('amenities', current.filter(a => a !== amenity))
     } else {
       setValue('amenities', [...current, amenity])
+    }
+  }
+
+  // Funzione per pulire gli errori quando l'utente inizia a digitare
+  const clearFieldError = (fieldName: string) => {
+    if (formErrors[fieldName]) {
+      setFormErrors(prev => {
+        const newErrors = { ...prev }
+        delete newErrors[fieldName]
+        return newErrors
+      })
     }
   }
 
@@ -397,25 +408,171 @@ export default function CreateChatbotPage() {
     
     setIsSubmitting(true)
     try {
-      const response = await chatbots.create(data, iconFile || undefined)
-      addChatbot(response.data)
-      toast.success(t.chatbots.create.messages.created)
-      router.push(`/dashboard/chatbots/${response.data.id}`)
+      // Pulisce e valida i dati prima dell'invio
+      const cleanData = {
+        ...data,
+        // Assicura che gli array non siano undefined
+        amenities: data.amenities || [],
+        nearby_attractions: data.nearby_attractions || [],
+        restaurants_bars: data.restaurants_bars || [],
+        emergency_contacts: data.emergency_contacts || [],
+        faq: data.faq || [],
+        // Assicura che gli oggetti non siano undefined
+        wifi_info: data.wifi_info || { network: '', password: '' },
+        // Assicura che le stringhe non siano undefined
+        name: data.name || '',
+        property_name: data.property_name || '',
+        property_type: data.property_type || '',
+        property_address: data.property_address || '',
+        property_city: data.property_city || '',
+        property_description: data.property_description || '',
+        check_in_time: data.check_in_time || '',
+        check_out_time: data.check_out_time || '',
+        house_rules: data.house_rules || '',
+        neighborhood_description: data.neighborhood_description || '',
+        transportation_info: data.transportation_info || '',
+        shopping_info: data.shopping_info || '',
+        parking_info: data.parking_info || '',
+        special_instructions: data.special_instructions || '',
+        welcome_message: data.welcome_message || '',
+        property_url: data.property_url || ''
+      }
+      
+      console.log('🚀 Invio dati chatbot:', cleanData)
+      const response = await chatbots.create(cleanData, iconFile || undefined)
+      
+      if (response?.data) {
+        addChatbot(response.data)
+        toast.success(t.chatbots.create.messages.created)
+        router.push(`/dashboard/chatbots/${response.data.id}`)
+      } else {
+        throw new Error('Risposta non valida dal server')
+      }
     } catch (error: any) {
-      toast.error(error.response?.data?.detail || t.chatbots.create.messages.error)
+      console.error('❌ Errore creazione chatbot:', error)
+      const errorMessage = error.response?.data?.detail || error.message || t.chatbots.create.messages.error
+      toast.error(errorMessage)
     } finally {
       setIsSubmitting(false)
     }
   }
 
-  const nextStep = () => {
+  const nextStep = async () => {
     if (currentStep < steps.length) {
-      setCurrentStep(currentStep + 1)
+      // Validazione specifica per ogni step
+      const isValid = await validateCurrentStep()
+      if (isValid) {
+        setCurrentStep(currentStep + 1)
+      }
     }
+  }
+
+  const validateCurrentStep = async (): Promise<boolean> => {
+    const currentData = watch()
+    let hasErrors = false
+    const newErrors: Record<string, string> = {}
+
+    switch (currentStep) {
+      case 1: // Step 1 - Informazioni Base
+        if (!currentData.name?.trim()) {
+          newErrors.name = language === 'IT' ? 'Nome richiesto' : 'Name required'
+          hasErrors = true
+        }
+        if (!currentData.property_name?.trim()) {
+          newErrors.property_name = language === 'IT' ? 'Nome proprietà richiesto' : 'Property name required'
+          hasErrors = true
+        }
+        if (!currentData.property_type?.trim()) {
+          newErrors.property_type = language === 'IT' ? 'Tipo richiesto' : 'Type required'
+          hasErrors = true
+        }
+        if (!currentData.property_address?.trim()) {
+          newErrors.property_address = language === 'IT' ? 'Indirizzo richiesto' : 'Address required'
+          hasErrors = true
+        }
+        if (!currentData.property_city?.trim()) {
+          newErrors.property_city = language === 'IT' ? 'Città richiesta' : 'City required'
+          hasErrors = true
+        }
+        break
+
+      case 2: // Step 2 - Proprietà
+        if (!currentData.property_description?.trim()) {
+          newErrors.property_description = language === 'IT' ? 'Descrizione richiesta' : 'Description required'
+          hasErrors = true
+        }
+        if (!currentData.check_in_time?.trim()) {
+          newErrors.check_in_time = language === 'IT' ? 'Orario check-in richiesto' : 'Check-in time required'
+          hasErrors = true
+        }
+        if (!currentData.check_out_time?.trim()) {
+          newErrors.check_out_time = language === 'IT' ? 'Orario check-out richiesto' : 'Check-out time required'
+          hasErrors = true
+        }
+        if (!currentData.house_rules?.trim()) {
+          newErrors.house_rules = language === 'IT' ? 'Regole richieste' : 'Rules required'
+          hasErrors = true
+        }
+        break
+
+      case 3: // Step 3 - Servizi (tutti opzionali)
+        // Nessun campo obbligatorio in questo step
+        break
+
+      case 4: // Step 4 - Posizione
+        if (!currentData.neighborhood_description?.trim()) {
+          newErrors.neighborhood_description = language === 'IT' ? 'Descrizione quartiere richiesta' : 'Neighborhood description required'
+          hasErrors = true
+        }
+        if (!currentData.transportation_info?.trim()) {
+          newErrors.transportation_info = language === 'IT' ? 'Info trasporti richieste' : 'Transportation info required'
+          hasErrors = true
+        }
+        break
+
+      case 5: // Step 5 - Servizi Locali (tutti opzionali)
+        // Nessun campo obbligatorio in questo step
+        break
+
+      case 6: // Step 6 - Finalizzazione
+        if (!currentData.welcome_message?.trim()) {
+          newErrors.welcome_message = language === 'IT' ? 'Messaggio di benvenuto richiesto' : 'Welcome message required'
+          hasErrors = true
+        }
+        break
+    }
+
+    // Aggiorna gli errori del form
+    if (hasErrors) {
+      setFormErrors(newErrors)
+      
+      // Focus sul primo campo con errore
+      const firstErrorField = Object.keys(newErrors)[0]
+      if (firstErrorField) {
+        setTimeout(() => {
+          const element = document.querySelector(`[name="${firstErrorField}"]`) as HTMLElement
+          if (element) {
+            element.focus()
+            element.scrollIntoView({ behavior: 'smooth', block: 'center' })
+          }
+        }, 100)
+      }
+      
+      // Mostra toast di errore
+      const errorCount = Object.keys(newErrors).length
+      const errorMessage = language === 'IT' 
+        ? `Compila ${errorCount} campo${errorCount > 1 ? 'i' : ''} obbligatorio${errorCount > 1 ? 'i' : ''} per continuare`
+        : `Fill in ${errorCount} required field${errorCount > 1 ? 's' : ''} to continue`
+      toast.error(errorMessage)
+    }
+
+    return !hasErrors
   }
 
   const prevStep = () => {
     if (currentStep > 1) {
+      // Pulisce gli errori quando si torna indietro
+      setFormErrors({})
       setCurrentStep(currentStep - 1)
     }
   }
@@ -431,10 +588,16 @@ export default function CreateChatbotPage() {
               <label className="label">{t.chatbots.create.form.name}</label>
               <input
                 {...register('name', { required: language === 'IT' ? 'Nome richiesto' : 'Name required' })}
-                className="input-field"
+                className={`input-field ${formErrors.name ? 'border-red-500' : ''}`}
                 placeholder={language === 'IT' ? "Es. Assistente Casa Bella Vista" : "E.g. Bella Vista House Assistant"}
+                onChange={(e) => {
+                  register('name').onChange(e)
+                  clearFieldError('name')
+                }}
               />
-              {errors.name && <p className="error-text">{errors.name.message}</p>}
+              {(errors.name || formErrors.name) && (
+                <p className="error-text">{errors.name?.message || formErrors.name}</p>
+              )}
             </div>
 
             <div>
@@ -481,17 +644,27 @@ export default function CreateChatbotPage() {
               <label className="label">{t.chatbots.create.form.propertyName}</label>
               <input
                 {...register('property_name', { required: language === 'IT' ? 'Nome proprietà richiesto' : 'Property name required' })}
-                className="input-field"
+                className={`input-field ${formErrors.property_name ? 'border-red-500' : ''}`}
                 placeholder={language === 'IT' ? "Es. Casa Bella Vista" : "E.g. Bella Vista House"}
+                onChange={(e) => {
+                  register('property_name').onChange(e)
+                  clearFieldError('property_name')
+                }}
               />
-              {errors.property_name && <p className="error-text">{errors.property_name.message}</p>}
+              {(errors.property_name || formErrors.property_name) && (
+                <p className="error-text">{errors.property_name?.message || formErrors.property_name}</p>
+              )}
             </div>
 
             <div>
               <label className="label">{t.chatbots.create.form.propertyType}</label>
               <select
                 {...register('property_type', { required: language === 'IT' ? 'Tipo richiesto' : 'Type required' })}
-                className="input-field"
+                className={`input-field ${formErrors.property_type ? 'border-red-500' : ''}`}
+                onChange={(e) => {
+                  register('property_type').onChange(e)
+                  clearFieldError('property_type')
+                }}
               >
                 <option value="">{t.chatbots.create.form.select}</option>
                 <option value="appartamento">{t.chatbots.create.form.propertyTypes.apartment}</option>
@@ -502,27 +675,41 @@ export default function CreateChatbotPage() {
                 <option value="monolocale">{t.chatbots.create.form.propertyTypes.studio}</option>
                 <option value="bed_breakfast">{t.chatbots.create.form.propertyTypes.bedBreakfast}</option>
               </select>
-              {errors.property_type && <p className="error-text">{errors.property_type.message}</p>}
+              {(errors.property_type || formErrors.property_type) && (
+                <p className="error-text">{errors.property_type?.message || formErrors.property_type}</p>
+              )}
             </div>
 
             <div>
               <label className="label">{t.chatbots.create.form.propertyAddress}</label>
               <input
                 {...register('property_address', { required: language === 'IT' ? 'Indirizzo richiesto' : 'Address required' })}
-                className="input-field"
+                className={`input-field ${formErrors.property_address ? 'border-red-500' : ''}`}
                 placeholder={language === 'IT' ? "Es. Via Roma 123" : "E.g. 123 Main Street"}
+                onChange={(e) => {
+                  register('property_address').onChange(e)
+                  clearFieldError('property_address')
+                }}
               />
-              {errors.property_address && <p className="error-text">{errors.property_address.message}</p>}
+              {(errors.property_address || formErrors.property_address) && (
+                <p className="error-text">{errors.property_address?.message || formErrors.property_address}</p>
+              )}
             </div>
 
             <div>
               <label className="label">{t.chatbots.create.form.propertyCity}</label>
               <input
                 {...register('property_city', { required: language === 'IT' ? 'Città richiesta' : 'City required' })}
-                className="input-field"
+                className={`input-field ${formErrors.property_city ? 'border-red-500' : ''}`}
                 placeholder={language === 'IT' ? "Es. Roma" : "E.g. Rome"}
+                onChange={(e) => {
+                  register('property_city').onChange(e)
+                  clearFieldError('property_city')
+                }}
               />
-              {errors.property_city && <p className="error-text">{errors.property_city.message}</p>}
+              {(errors.property_city || formErrors.property_city) && (
+                <p className="error-text">{errors.property_city?.message || formErrors.property_city}</p>
+              )}
             </div>
 
             <div>
@@ -569,10 +756,16 @@ export default function CreateChatbotPage() {
               <label className="label">{t.chatbots.create.form.propertyDescription}</label>
               <textarea
                 {...register('property_description', { required: language === 'IT' ? 'Descrizione richiesta' : 'Description required' })}
-                className="input-field min-h-32"
+                className={`input-field min-h-32 ${formErrors.property_description ? 'border-red-500' : ''}`}
                 placeholder={language === 'IT' ? "Descrivi la tua proprietà, gli spazi, le camere, etc..." : "Describe your property, spaces, rooms, etc..."}
+                onChange={(e) => {
+                  register('property_description').onChange(e)
+                  clearFieldError('property_description')
+                }}
               />
-              {errors.property_description && <p className="error-text">{errors.property_description.message}</p>}
+              {(errors.property_description || formErrors.property_description) && (
+                <p className="error-text">{errors.property_description?.message || formErrors.property_description}</p>
+              )}
             </div>
 
             <div className="grid md:grid-cols-2 gap-4">
@@ -580,20 +773,32 @@ export default function CreateChatbotPage() {
                 <label className="label">{t.chatbots.create.form.checkInTime}</label>
                 <input
                   {...register('check_in_time', { required: language === 'IT' ? 'Orario check-in richiesto' : 'Check-in time required' })}
-                  className="input-field"
+                  className={`input-field ${formErrors.check_in_time ? 'border-red-500' : ''}`}
                   placeholder={language === 'IT' ? "Es. 15:00 - 20:00" : "E.g. 3:00 PM - 8:00 PM"}
+                  onChange={(e) => {
+                    register('check_in_time').onChange(e)
+                    clearFieldError('check_in_time')
+                  }}
                 />
-                {errors.check_in_time && <p className="error-text">{errors.check_in_time.message}</p>}
+                {(errors.check_in_time || formErrors.check_in_time) && (
+                  <p className="error-text">{errors.check_in_time?.message || formErrors.check_in_time}</p>
+                )}
               </div>
 
               <div>
                 <label className="label">{t.chatbots.create.form.checkOutTime}</label>
                 <input
                   {...register('check_out_time', { required: language === 'IT' ? 'Orario check-out richiesto' : 'Check-out time required' })}
-                  className="input-field"
+                  className={`input-field ${formErrors.check_out_time ? 'border-red-500' : ''}`}
                   placeholder={language === 'IT' ? "Es. 10:00" : "E.g. 10:00 AM"}
+                  onChange={(e) => {
+                    register('check_out_time').onChange(e)
+                    clearFieldError('check_out_time')
+                  }}
                 />
-                {errors.check_out_time && <p className="error-text">{errors.check_out_time.message}</p>}
+                {(errors.check_out_time || formErrors.check_out_time) && (
+                  <p className="error-text">{errors.check_out_time?.message || formErrors.check_out_time}</p>
+                )}
               </div>
             </div>
 
@@ -601,10 +806,16 @@ export default function CreateChatbotPage() {
               <label className="label">{t.chatbots.create.form.houseRules}</label>
               <textarea
                 {...register('house_rules', { required: language === 'IT' ? 'Regole richieste' : 'Rules required' })}
-                className="input-field min-h-24"
+                className={`input-field min-h-24 ${formErrors.house_rules ? 'border-red-500' : ''}`}
                 placeholder={language === 'IT' ? "Es. Non fumatori, no party, rispettare il vicinato..." : "E.g. No smoking, no parties, respect neighbors..."}
+                onChange={(e) => {
+                  register('house_rules').onChange(e)
+                  clearFieldError('house_rules')
+                }}
               />
-              {errors.house_rules && <p className="error-text">{errors.house_rules.message}</p>}
+              {(errors.house_rules || formErrors.house_rules) && (
+                <p className="error-text">{errors.house_rules?.message || formErrors.house_rules}</p>
+              )}
             </div>
           </div>
         )
@@ -686,20 +897,32 @@ export default function CreateChatbotPage() {
               <label className="label">{t.chatbots.create.form.neighborhoodDescription}</label>
               <textarea
                 {...register('neighborhood_description', { required: language === 'IT' ? 'Descrizione quartiere richiesta' : 'Neighborhood description required' })}
-                className="input-field min-h-24"
+                className={`input-field min-h-24 ${formErrors.neighborhood_description ? 'border-red-500' : ''}`}
                 placeholder={language === 'IT' ? "Descrivi il quartiere, l'atmosfera, cosa c'è nelle vicinanze..." : "Describe the neighborhood, atmosphere, what's nearby..."}
+                onChange={(e) => {
+                  register('neighborhood_description').onChange(e)
+                  clearFieldError('neighborhood_description')
+                }}
               />
-              {errors.neighborhood_description && <p className="error-text">{errors.neighborhood_description.message}</p>}
+              {(errors.neighborhood_description || formErrors.neighborhood_description) && (
+                <p className="error-text">{errors.neighborhood_description?.message || formErrors.neighborhood_description}</p>
+              )}
             </div>
 
             <div>
               <label className="label">{t.chatbots.create.form.transportationInfo}</label>
               <textarea
                 {...register('transportation_info', { required: language === 'IT' ? 'Info trasporti richieste' : 'Transportation info required' })}
-                className="input-field min-h-24"
+                className={`input-field min-h-24 ${formErrors.transportation_info ? 'border-red-500' : ''}`}
                 placeholder={language === 'IT' ? "Come muoversi: metro, bus, taxi, noleggio auto..." : "How to get around: metro, bus, taxi, car rental..."}
+                onChange={(e) => {
+                  register('transportation_info').onChange(e)
+                  clearFieldError('transportation_info')
+                }}
               />
-              {errors.transportation_info && <p className="error-text">{errors.transportation_info.message}</p>}
+              {(errors.transportation_info || formErrors.transportation_info) && (
+                <p className="error-text">{errors.transportation_info?.message || formErrors.transportation_info}</p>
+              )}
             </div>
 
             <div>
@@ -889,22 +1112,21 @@ export default function CreateChatbotPage() {
                 {t.chatbots.create.form.addFaq}
               </button>
             </div>
-          </div>
-        )
 
-      case 7:
-        return (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-bold mb-4">{t.chatbots.create.steps.final}</h2>
-            
             <div>
               <label className="label">{t.chatbots.create.form.welcomeMessage}</label>
               <textarea
                 {...register('welcome_message', { required: language === 'IT' ? 'Messaggio di benvenuto richiesto' : 'Welcome message required' })}
-                className="input-field min-h-24"
+                className={`input-field min-h-24 ${formErrors.welcome_message ? 'border-red-500' : ''}`}
                 placeholder={language === 'IT' ? "Es. Ciao! Sono l'assistente virtuale di Casa Bella Vista. Come posso aiutarti?" : "E.g. Hi! I'm the virtual assistant of Bella Vista House. How can I help you?"}
+                onChange={(e) => {
+                  register('welcome_message').onChange(e)
+                  clearFieldError('welcome_message')
+                }}
               />
-              {errors.welcome_message && <p className="error-text">{errors.welcome_message.message}</p>}
+              {(errors.welcome_message || formErrors.welcome_message) && (
+                <p className="error-text">{errors.welcome_message?.message || formErrors.welcome_message}</p>
+              )}
             </div>
 
             <div className="bg-green-50 border border-green-200 rounded-lg p-6">
@@ -915,6 +1137,7 @@ export default function CreateChatbotPage() {
             </div>
           </div>
         )
+
 
       default:
         return null

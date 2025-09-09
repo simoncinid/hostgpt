@@ -89,12 +89,18 @@ export const chatbots = {
   create: (data: any, iconFile?: File) => {
     const formData = new FormData()
     
-    // Aggiungi tutti i campi come stringhe
+    // Aggiungi tutti i campi come stringhe, gestendo i valori null/undefined
     Object.keys(data).forEach(key => {
-      if (Array.isArray(data[key]) || typeof data[key] === 'object') {
-        formData.append(key, JSON.stringify(data[key]))
+      const value = data[key]
+      if (value === null || value === undefined) {
+        // Salta i valori null/undefined
+        return
+      }
+      
+      if (Array.isArray(value) || (typeof value === 'object' && value !== null)) {
+        formData.append(key, JSON.stringify(value))
       } else {
-        formData.append(key, data[key])
+        formData.append(key, String(value))
       }
     })
     
