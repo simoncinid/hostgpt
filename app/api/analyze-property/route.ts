@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Chiama il backend Python
-    const backendUrl = process.env.BACKEND_URL || 'http://localhost:8000'
+    const backendUrl = process.env.BACKEND_URL || 'http://localhost:8001'
     const response = await fetch(`${backendUrl}/api/analyze-property`, {
       method: 'POST',
       headers: {

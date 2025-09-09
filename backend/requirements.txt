@@ -18,7 +18,7 @@ pydantic==2.10.6
 pydantic[email]==2.10.6
 redis==5.0.1
 httpx==0.25.2
-aiohttp==3.9.1
+aiohttp==3.12.15
 cryptography==41.0.7
 colorama==0.4.6
 pydantic-settings==2.1.0
