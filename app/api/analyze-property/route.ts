@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session.accessToken}`,
+        'Authorization': `Bearer ${session.user.accessToken}`,
       },
       body: JSON.stringify({ url }),
     })
