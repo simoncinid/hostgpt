@@ -4307,6 +4307,240 @@ async def delete_profile(
         db.rollback()
         raise HTTPException(status_code=500, detail="Errore nell'eliminazione del profilo")
 
+# ============= Property Analysis Endpoint =============
+
+class PropertyAnalysisRequest(BaseModel):
+    url: str
+
+@app.post("/api/analyze-property")
+async def analyze_property(
+    request: PropertyAnalysisRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Analizza una pagina di proprietà di affitto vacanze e estrae le informazioni"""
+    try:
+        logger.info(f"Analyzing property for user {current_user.id}: {request.url}")
+        
+        # Verifica che l'utente abbia un abbonamento attivo
+        if not is_subscription_active(current_user.subscription_status) and not is_free_trial_active(current_user):
+            raise HTTPException(
+                status_code=403, 
+                detail="Abbonamento richiesto per utilizzare l'analisi proprietà"
+            )
+        
+        # Verifica i limiti del free trial
+        if current_user.subscription_status == 'free_trial':
+            remaining_messages = get_free_trial_messages_remaining(current_user)
+            if remaining_messages <= 0:
+                raise HTTPException(
+                    status_code=403,
+                    detail="Limite messaggi free trial raggiunto"
+                )
+        
+        # Valida l'URL
+        try:
+            from urllib.parse import urlparse
+            parsed_url = urlparse(request.url)
+            if not parsed_url.scheme or not parsed_url.netloc:
+                raise ValueError("URL non valido")
+        except Exception:
+            raise HTTPException(status_code=400, detail="URL non valido")
+        
+        # Scarica il contenuto della pagina
+        import aiohttp
+        import re
+        
+        async with aiohttp.ClientSession() as session:
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                'Accept-Language': 'en-US,en;q=0.5',
+                'Accept-Encoding': 'gzip, deflate',
+                'Connection': 'keep-alive',
+            }
+            
+            try:
+                async with session.get(request.url, headers=headers, timeout=30) as response:
+                    if response.status != 200:
+                        raise HTTPException(
+                            status_code=400, 
+                            detail=f"Errore nel caricamento della pagina: {response.status}"
+                        )
+                    
+                    html_content = await response.text()
+            except aiohttp.ClientError as e:
+                raise HTTPException(
+                    status_code=400, 
+                    detail=f"Errore nel caricamento della pagina: {str(e)}"
+                )
+        
+        # Estrae il testo dalla pagina HTML
+        def extract_text_from_html(html: str) -> str:
+            # Rimuove script, style, e altri tag non necessari
+            clean_html = re.sub(r'<script[^>]*>[\s\S]*?</script>', '', html, flags=re.IGNORECASE)
+            clean_html = re.sub(r'<style[^>]*>[\s\S]*?</style>', '', clean_html, flags=re.IGNORECASE)
+            clean_html = re.sub(r'<noscript[^>]*>[\s\S]*?</noscript>', '', clean_html, flags=re.IGNORECASE)
+            clean_html = re.sub(r'<[^>]+>', ' ', clean_html)
+            clean_html = re.sub(r'\s+', ' ', clean_html)
+            clean_html = clean_html.strip()
+            
+            # Limita la lunghezza per evitare token eccessivi
+            return clean_html[:8000]
+        
+        page_content = extract_text_from_html(html_content)
+        
+        if not page_content:
+            raise HTTPException(
+                status_code=400, 
+                detail="Impossibile estrarre contenuto dalla pagina"
+            )
+        
+        # Usa OpenAI per analizzare il contenuto
+        client = get_openai_client()
+        
+        prompt = f"""
+Analizza il contenuto di questa pagina di una proprietà di affitto vacanze e estrai tutte le informazioni disponibili.
+
+URL: {request.url}
+
+Contenuto della pagina:
+{page_content}
+
+Estrai le informazioni e restituisci SOLO un JSON valido con questa struttura esatta:
+
+{{
+  "property_name": "Nome della proprietà",
+  "property_type": "appartamento|villa|casa|stanza|loft|monolocale|bed_breakfast",
+  "property_address": "Indirizzo completo",
+  "property_city": "Città",
+  "property_description": "Descrizione dettagliata della proprietà",
+  "check_in_time": "Orario check-in (es. 15:00 - 20:00)",
+  "check_out_time": "Orario check-out (es. 10:00)",
+  "house_rules": "Regole della casa",
+  "amenities": ["wifi", "aria_condizionata", "riscaldamento", "tv", "netflix", "cucina", "lavastoviglie", "lavatrice", "asciugatrice", "ferro", "parcheggio", "piscina", "palestra", "balcone", "giardino", "ascensore", "cassaforte", "allarme", "animali_ammessi", "fumatori_ammessi"],
+  "neighborhood_description": "Descrizione del quartiere",
+  "transportation_info": "Informazioni sui trasporti",
+  "shopping_info": "Informazioni sui negozi e shopping",
+  "parking_info": "Informazioni sul parcheggio",
+  "special_instructions": "Istruzioni speciali",
+  "welcome_message": "Messaggio di benvenuto",
+  "nearby_attractions": [
+    {{
+      "name": "Nome attrazione",
+      "distance": "Distanza",
+      "description": "Descrizione"
+    }}
+  ],
+  "restaurants_bars": [
+    {{
+      "name": "Nome locale",
+      "type": "Tipo (es. Ristorante, Bar)",
+      "distance": "Distanza"
+    }}
+  ],
+  "emergency_contacts": [
+    {{
+      "name": "Nome contatto",
+      "number": "Numero di telefono",
+      "type": "Tipo (es. Host, Emergenza, Polizia)"
+    }}
+  ],
+  "faq": [
+    {{
+      "question": "Domanda frequente",
+      "answer": "Risposta"
+    }}
+  ],
+  "wifi_info": {{
+    "network": "Nome rete WiFi",
+    "password": "Password WiFi"
+  }}
+}}
+
+IMPORTANTE:
+- Restituisci SOLO il JSON, senza testo aggiuntivo
+- Se un'informazione non è disponibile, usa una stringa vuota ""
+- Per gli array, se non ci sono elementi, restituisci un array vuoto []
+- Per gli amenities, usa solo i valori esatti dalla lista fornita
+- Per property_type, usa solo uno dei valori esatti dalla lista
+- Se non trovi informazioni specifiche, lascia il campo vuoto
+"""
+        
+        try:
+            completion = client.chat.completions.create(
+                model="gpt-4",
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "Sei un assistente esperto nell'analisi di pagine web di proprietà di affitto vacanze. Estrai le informazioni in modo preciso e restituisci solo JSON valido."
+                    },
+                    {
+                        "role": "user",
+                        "content": prompt
+                    }
+                ],
+                temperature=0.1,
+                max_tokens=2000,
+            )
+            
+            response_text = completion.choices[0].message.content.strip()
+            
+            if not response_text:
+                raise HTTPException(
+                    status_code=500, 
+                    detail="Nessuna risposta da OpenAI"
+                )
+            
+            # Prova a parsare il JSON
+            try:
+                analysis_result = json.loads(response_text)
+            except json.JSONDecodeError:
+                # Prova a estrarre il JSON dal testo se è circondato da altro testo
+                import re
+                json_match = re.search(r'\{[\s\S]*\}', response_text)
+                if json_match:
+                    try:
+                        analysis_result = json.loads(json_match.group())
+                    except json.JSONDecodeError:
+                        raise HTTPException(
+                            status_code=500, 
+                            detail="Impossibile parsare la risposta JSON da OpenAI"
+                        )
+                else:
+                    raise HTTPException(
+                        status_code=500, 
+                        detail="Nessun JSON valido trovato nella risposta"
+                    )
+            
+            # Aggiorna il contatore dei messaggi per il free trial
+            if current_user.subscription_status == 'free_trial':
+                current_user.free_trial_messages_used += 1
+                db.commit()
+            
+            logger.info(f"Successfully analyzed property for user {current_user.id}")
+            
+            return {
+                "status": "success",
+                "data": analysis_result
+            }
+            
+        except Exception as e:
+            logger.error(f"OpenAI API error for user {current_user.id}: {e}")
+            raise HTTPException(
+                status_code=500, 
+                detail=f"Errore nell'analisi con OpenAI: {str(e)}"
+            )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error analyzing property for user {current_user.id}: {e}")
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Errore nell'analisi della proprietà: {str(e)}"
+        )
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
