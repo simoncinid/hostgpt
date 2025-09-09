@@ -335,22 +335,20 @@ function RegisterForm() {
                 </div>
 
 
-                {/* Password Requirements - ROW 6 - solo se c'è password */}
-                {password && (
-                  <div className="col-span-2 bg-gray-50 p-3 rounded-lg">
-                    <h4 className="text-xs font-medium text-gray-700 mb-2">{t.passwordRequirements}</h4>
-                    <div className="space-y-1">
-                      {passwordRequirements.map((req, index) => (
-                        <div key={index} className="flex items-center text-xs">
-                          <Check className={`w-3 h-3 mr-1 flex-shrink-0 ${req.check ? 'text-green-500' : 'text-gray-300'}`} />
-                          <span className={req.check ? 'text-green-600' : 'text-gray-400'}>
-                            {req.text}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
+                {/* Password Requirements - ROW 6 - sempre visibile per evitare re-render */}
+                <div className="col-span-2 bg-gray-50 p-3 rounded-lg">
+                  <h4 className="text-xs font-medium text-gray-700 mb-2">{t.passwordRequirements}</h4>
+                  <div className="space-y-1">
+                    {passwordRequirements.map((req, index) => (
+                      <div key={index} className="flex items-center text-xs">
+                        <Check className={`w-3 h-3 mr-1 flex-shrink-0 ${req.check ? 'text-green-500' : 'text-gray-300'}`} />
+                        <span className={req.check ? 'text-green-600' : 'text-gray-400'}>
+                          {req.text}
+                        </span>
+                      </div>
+                    ))}
                   </div>
-                )}
+                </div>
               </div>
 
               {/* Layout mobile COMPLETAMENTE RIFATTO DA ZERO */}
@@ -507,22 +505,20 @@ function RegisterForm() {
                     )}
                   </div>
 
-                  {/* Password Requirements */}
-                  {password && (
-                    <div className="bg-gray-50 p-3 rounded-lg">
-                      <h4 className="text-xs font-medium text-gray-700 mb-2">{t.passwordRequirements}</h4>
-                      <div className="space-y-1">
-                        {passwordRequirements.map((req, index) => (
-                          <div key={index} className="flex items-center text-xs">
-                            <Check className={`w-3 h-3 mr-1 flex-shrink-0 ${req.check ? 'text-green-500' : 'text-gray-300'}`} />
-                            <span className={req.check ? 'text-green-600' : 'text-gray-400'}>
-                              {req.text}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
+                  {/* Password Requirements - sempre visibile per evitare re-render */}
+                  <div className="bg-gray-50 p-3 rounded-lg">
+                    <h4 className="text-xs font-medium text-gray-700 mb-2">{t.passwordRequirements}</h4>
+                    <div className="space-y-1">
+                      {passwordRequirements.map((req, index) => (
+                        <div key={index} className="flex items-center text-xs">
+                          <Check className={`w-3 h-3 mr-1 flex-shrink-0 ${req.check ? 'text-green-500' : 'text-gray-300'}`} />
+                          <span className={req.check ? 'text-green-600' : 'text-gray-400'}>
+                            {req.text}
+                          </span>
+                        </div>
+                      ))}
                     </div>
-                  )}
+                  </div>
 
                   {/* Submit Button */}
                   <div className="pt-1">
