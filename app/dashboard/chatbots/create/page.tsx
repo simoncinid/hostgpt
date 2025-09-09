@@ -410,16 +410,7 @@ export default function CreateChatbotPage() {
     try {
       // Pulisce e valida i dati prima dell'invio
       const cleanData = {
-        ...data,
-        // Assicura che gli array non siano undefined
-        amenities: data.amenities || [],
-        nearby_attractions: data.nearby_attractions || [],
-        restaurants_bars: data.restaurants_bars || [],
-        emergency_contacts: data.emergency_contacts || [],
-        faq: data.faq || [],
-        // Assicura che gli oggetti non siano undefined
-        wifi_info: data.wifi_info || { network: '', password: '' },
-        // Assicura che le stringhe non siano undefined
+        // Campi obbligatori (sempre presenti)
         name: data.name || '',
         property_name: data.property_name || '',
         property_type: data.property_type || '',
@@ -431,10 +422,17 @@ export default function CreateChatbotPage() {
         house_rules: data.house_rules || '',
         neighborhood_description: data.neighborhood_description || '',
         transportation_info: data.transportation_info || '',
+        welcome_message: data.welcome_message || '',
+        // Campi opzionali (con valori di default)
+        amenities: data.amenities || [],
+        nearby_attractions: data.nearby_attractions || [],
+        restaurants_bars: data.restaurants_bars || [],
+        emergency_contacts: data.emergency_contacts || [],
+        faq: data.faq || [],
+        wifi_info: data.wifi_info || { network: '', password: '' },
         shopping_info: data.shopping_info || '',
         parking_info: data.parking_info || '',
         special_instructions: data.special_instructions || '',
-        welcome_message: data.welcome_message || '',
         property_url: data.property_url || ''
       }
       
@@ -450,7 +448,34 @@ export default function CreateChatbotPage() {
       }
     } catch (error: any) {
       console.error('❌ Errore creazione chatbot:', error)
-      const errorMessage = error.response?.data?.detail || error.message || t.chatbots.create.messages.error
+      console.error('❌ Error response:', error.response?.data)
+      console.error('❌ Error status:', error.response?.status)
+      
+      let errorMessage = t.chatbots.create.messages.error
+      
+      if (error.response?.status === 422) {
+        // Errore di validazione
+        if (error.response?.data?.detail) {
+          if (Array.isArray(error.response.data.detail)) {
+            // Lista di errori di validazione
+            const validationErrors = error.response.data.detail.map((err: any) => err.msg || err.message).join(', ')
+            errorMessage = language === 'IT' 
+              ? `Errore di validazione: ${validationErrors}`
+              : `Validation error: ${validationErrors}`
+          } else {
+            errorMessage = error.response.data.detail
+          }
+        } else {
+          errorMessage = language === 'IT' 
+            ? 'Errore di validazione dei dati. Controlla che tutti i campi obbligatori siano compilati.'
+            : 'Data validation error. Check that all required fields are filled.'
+        }
+      } else if (error.response?.data?.detail) {
+        errorMessage = error.response.data.detail
+      } else if (error.message) {
+        errorMessage = error.message
+      }
+      
       toast.error(errorMessage)
     } finally {
       setIsSubmitting(false)

@@ -89,6 +89,8 @@ export const chatbots = {
   create: (data: any, iconFile?: File) => {
     const formData = new FormData()
     
+    console.log('🚀 API: Dati ricevuti per creazione chatbot:', data)
+    
     // Aggiungi tutti i campi come stringhe, gestendo i valori null/undefined
     Object.keys(data).forEach(key => {
       const value = data[key]
@@ -98,22 +100,29 @@ export const chatbots = {
       }
       
       if (Array.isArray(value) || (typeof value === 'object' && value !== null)) {
-        formData.append(key, JSON.stringify(value))
+        const jsonValue = JSON.stringify(value)
+        formData.append(key, jsonValue)
+        console.log(`🚀 API: Aggiunto ${key} (JSON):`, jsonValue)
       } else {
-        formData.append(key, String(value))
+        const stringValue = String(value)
+        formData.append(key, stringValue)
+        console.log(`🚀 API: Aggiunto ${key} (string):`, stringValue)
       }
     })
     
     // Aggiungi il file icona se presente
     if (iconFile) {
       formData.append('icon', iconFile)
+      console.log('🚀 API: Aggiunto file icona:', iconFile.name)
     }
     
-    return api.post('/chatbots/create', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
+    // Debug: mostra tutti i campi del FormData
+    console.log('🚀 API: FormData entries:')
+    Array.from(formData.entries()).forEach(([key, value]) => {
+      console.log(`  ${key}:`, value)
     })
+    
+    return api.post('/chatbots/create', formData)
   },
   
   list: () =>

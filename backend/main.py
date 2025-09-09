@@ -2166,7 +2166,7 @@ async def create_chatbot(
     background_tasks: BackgroundTasks,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
-    # Form data
+    # Form data - campi obbligatori
     name: str = Form(...),
     property_name: str = Form(...),
     property_type: str = Form(...),
@@ -2176,18 +2176,19 @@ async def create_chatbot(
     check_in_time: str = Form(...),
     check_out_time: str = Form(...),
     house_rules: str = Form(...),
-    amenities: str = Form(...),  # JSON string
     neighborhood_description: str = Form(...),
-    nearby_attractions: str = Form(...),  # JSON string
     transportation_info: str = Form(...),
-    restaurants_bars: str = Form(...),  # JSON string
-    shopping_info: str = Form(...),
-    emergency_contacts: str = Form(...),  # JSON string
-    wifi_info: str = Form(...),  # JSON string
-    parking_info: str = Form(...),
-    special_instructions: str = Form(...),
-    faq: str = Form(...),  # JSON string
     welcome_message: str = Form(...),
+    # Form data - campi opzionali
+    amenities: str = Form("[]"),  # JSON string, default array vuoto
+    nearby_attractions: str = Form("[]"),  # JSON string, default array vuoto
+    restaurants_bars: str = Form("[]"),  # JSON string, default array vuoto
+    shopping_info: str = Form(""),  # Stringa vuota di default
+    emergency_contacts: str = Form("[]"),  # JSON string, default array vuoto
+    wifi_info: str = Form("{}"),  # JSON string, default oggetto vuoto
+    parking_info: str = Form(""),  # Stringa vuota di default
+    special_instructions: str = Form(""),  # Stringa vuota di default
+    faq: str = Form("[]"),  # JSON string, default array vuoto
     # File upload
     icon: Optional[UploadFile] = File(None)
 ):
