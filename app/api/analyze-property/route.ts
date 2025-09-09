@@ -11,36 +11,6 @@ export async function POST(request: NextRequest) {
   try {
     console.log('🔍 API analyze-property chiamata')
     
-    // TEST: Restituiamo subito un risultato fittizio per testare
-    console.log('🔍 TEST: Restituendo risultato fittizio')
-    return NextResponse.json({
-      property_name: "Test Property",
-      property_type: "appartamento",
-      property_address: "Via Test 123",
-      property_city: "Milano",
-      property_description: "Test description",
-      check_in_time: "15:00",
-      check_out_time: "10:00",
-      house_rules: "Test rules",
-      amenities: ["wifi", "aria_condizionata"],
-      neighborhood_description: "Test neighborhood",
-      transportation_info: "Test transport",
-      shopping_info: "Test shopping",
-      parking_info: "Test parking",
-      special_instructions: "Test instructions",
-      welcome_message: "Test welcome",
-      nearby_attractions: [],
-      restaurants_bars: [],
-      emergency_contacts: [],
-      faq: [],
-      wifi_info: {
-        network: "TestWiFi",
-        password: "test123"
-      }
-    })
-    
-    // Codice originale commentato per ora
-    /*
     // Verifica l'autenticazione
     console.log('🔍 Tentando di ottenere la sessione...')
     const session = await getServerSession(authOptions)
@@ -59,6 +29,7 @@ export async function POST(request: NextRequest) {
     }
 
     const { url } = await request.json()
+    console.log('🔍 URL ricevuto:', url)
     
     if (!url) {
       return NextResponse.json({ error: 'URL richiesto' }, { status: 400 })
@@ -75,6 +46,7 @@ export async function POST(request: NextRequest) {
     const backendUrl = process.env.BACKEND_URL || 'http://localhost:8001'
     console.log('🔍 Chiamando backend:', `${backendUrl}/api/analyze-property`)
     console.log('🔍 URL da analizzare:', url)
+    console.log('🔍 Token da inviare:', session.user.accessToken.substring(0, 20) + '...')
     
     const response = await fetch(`${backendUrl}/api/analyze-property`, {
       method: 'POST',
@@ -89,6 +61,7 @@ export async function POST(request: NextRequest) {
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({ error: 'Errore sconosciuto' }))
+      console.log('❌ Backend error:', errorData)
       return NextResponse.json(
         { error: errorData.detail || errorData.error || 'Errore nell\'analisi della proprietà' },
         { status: response.status }
@@ -96,6 +69,7 @@ export async function POST(request: NextRequest) {
     }
 
     const result = await response.json()
+    console.log('🔍 Risultato backend:', result)
     
     if (result.status === 'success') {
       return NextResponse.json(result.data)
@@ -105,7 +79,6 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       )
     }
-    */
   } catch (error) {
     console.error('❌ API: Error analyzing property completo:', error)
     console.error('❌ API: Error type:', typeof error)
