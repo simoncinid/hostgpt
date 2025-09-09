@@ -4526,7 +4526,7 @@ IMPORTANTE:
                     }
                 ],
                 temperature=0.1,
-                max_tokens=2000,
+                max_tokens=3000,
             )
             
             response_text = completion.choices[0].message.content.strip()
@@ -4601,62 +4601,37 @@ async def analyze_property(request: PropertyAnalysisRequest):
         except Exception:
             raise HTTPException(status_code=400, detail="URL non valido")
         
-        # Scarica il contenuto della pagina
-        import aiohttp
-        import re
-        
-        async with aiohttp.ClientSession() as session:
-            headers = {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-                'Accept-Language': 'en-US,en;q=0.5',
-                'Accept-Encoding': 'gzip, deflate',
-                'Connection': 'keep-alive',
-            }
-            
-            try:
-                async with session.get(request.url, headers=headers, timeout=30) as response:
-                    if response.status != 200:
-                        raise HTTPException(
-                            status_code=400, 
-                            detail=f"Errore nel caricamento della pagina: {response.status}"
-                        )
-                    
-                    html_content = await response.text()
-            except aiohttp.ClientError as e:
-                raise HTTPException(
-                    status_code=400, 
-                    detail=f"Errore nel caricamento della pagina: {str(e)}"
-                )
-        
-        # Estrae il testo dalla pagina HTML
-        def extract_text_from_html(html: str) -> str:
-            clean_html = re.sub(r'<script[^>]*>[\s\S]*?</script>', '', html, flags=re.IGNORECASE)
-            clean_html = re.sub(r'<style[^>]*>[\s\S]*?</style>', '', clean_html, flags=re.IGNORECASE)
-            clean_html = re.sub(r'<noscript[^>]*>[\s\S]*?</noscript>', '', clean_html, flags=re.IGNORECASE)
-            clean_html = re.sub(r'<[^>]+>', ' ', clean_html)
-            clean_html = re.sub(r'\s+', ' ', clean_html)
-            clean_html = clean_html.strip()
-            return clean_html[:8000]
-        
-        page_content = extract_text_from_html(html_content)
-        
-        if not page_content:
-            raise HTTPException(
-                status_code=400, 
-                detail="Impossibile estrarre contenuto dalla pagina"
-            )
+        # Non estraiamo il testo, diamo direttamente l'URL a GPT-4
+        logger.info(f"🔍 Invio URL direttamente a GPT-4: {request.url}")
         
         # Usa OpenAI per analizzare il contenuto
         client = get_openai_client()
         
         prompt = f"""
-Analizza il contenuto di questa pagina di una proprietà di affitto vacanze e estrai tutte le informazioni disponibili.
+Analizza questa pagina di una proprietà di affitto vacanze e estrai tutte le informazioni disponibili.
 
-URL: {request.url}
+URL da analizzare: {request.url}
 
-Contenuto della pagina:
-{page_content}
+Visita questa pagina e analizza tutto il contenuto disponibile, incluse:
+- Nome della proprietà
+- Tipo di proprietà  
+- Indirizzo completo
+- Città
+- Descrizione dettagliata
+- Orari di check-in e check-out
+- Regole della casa
+- Tutti i servizi e amenità disponibili
+- Descrizione del quartiere
+- Informazioni sui trasporti
+- Informazioni sui negozi e shopping
+- Informazioni sul parcheggio
+- Istruzioni speciali
+- Messaggio di benvenuto
+- Attrazioni nelle vicinanze
+- Ristoranti e bar nelle vicinanze
+- Contatti di emergenza
+- FAQ
+- Informazioni WiFi (nome rete e password)
 
 Estrai le informazioni e restituisci SOLO un JSON valido con questa struttura esatta:
 
@@ -4732,7 +4707,7 @@ IMPORTANTE:
                     }
                 ],
                 temperature=0.1,
-                max_tokens=2000,
+                max_tokens=3000,
             )
             
             response_text = completion.choices[0].message.content.strip()
