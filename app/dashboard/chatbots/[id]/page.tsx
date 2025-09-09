@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { ArrowLeft, MessageSquare, Users, ExternalLink, Edit, BarChart3, Loader2 } from 'lucide-react'
+import { ArrowLeft, MessageSquare, Users, ExternalLink, Edit, BarChart3, Loader2, Download } from 'lucide-react'
 import { chatbots as chatbotsApi } from '@/lib/api'
 import { useChatbotStore, useAuthStore } from '@/lib/store'
 import { useLanguage } from '@/lib/languageContext'
@@ -58,6 +58,31 @@ export default function ChatbotDetailPage() {
   const handleLogout = () => {
     logout()
     router.push('/')
+  }
+
+  const handleDownloadQR = async () => {
+    if (!currentChatbot?.uuid) {
+      toast.error('UUID del chatbot non disponibile')
+      return
+    }
+
+    try {
+      // Genera il QR Code usando un servizio online
+      const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(chatUrl)}`
+      
+      // Crea un link temporaneo per il download
+      const link = document.createElement('a')
+      link.href = qrUrl
+      link.download = `qr-code-${currentChatbot.name.replace(/[^a-zA-Z0-9]/g, '-')}.png`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      
+      toast.success('QR Code scaricato con successo!')
+    } catch (error) {
+      console.error('Errore nel download del QR Code:', error)
+      toast.error('Errore nel download del QR Code')
+    }
   }
 
   if (isLoading) {
@@ -129,10 +154,12 @@ export default function ChatbotDetailPage() {
               <div className="bg-white rounded-2xl shadow p-6">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-lg font-semibold">{t.chatbots.preview.title}</h2>
-                  <button className="p-2 hover:bg-gray-100 rounded-lg" title="Scarica QR Code">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
+                  <button 
+                    onClick={handleDownloadQR}
+                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors" 
+                    title="Scarica QR Code"
+                  >
+                    <Download className="w-5 h-5" />
                   </button>
                 </div>
                 <div className="bg-gray-50 p-4 rounded-lg">
