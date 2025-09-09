@@ -51,15 +51,7 @@ interface ChatbotFormData {
   welcome_message: string
 }
 
-const steps = [
-  { id: 1, name: 'Informazioni Base', icon: Home },
-  { id: 2, name: 'Dettagli Proprietà', icon: MapPin },
-  { id: 3, name: 'Servizi e Regole', icon: Wifi },
-  { id: 4, name: 'Zona e Trasporti', icon: Car },
-  { id: 5, name: 'Luoghi di Interesse', icon: Coffee },
-  { id: 6, name: 'Contatti e FAQ', icon: Phone },
-  { id: 7, name: 'Configurazione Bot', icon: MessageSquare },
-]
+// Steps will be created dynamically from translations
 
 // Amenities list will be created dynamically from translations
 
@@ -67,6 +59,17 @@ export default function CreateChatbotPage() {
   const router = useRouter()
   const { t, language } = useLanguage()
   const [currentStep, setCurrentStep] = useState(1)
+  
+  // Create steps list from translations
+  const steps = [
+    { id: 1, name: t.chatbots.create.steps.basic, icon: Home },
+    { id: 2, name: t.chatbots.create.steps.property, icon: MapPin },
+    { id: 3, name: t.chatbots.create.steps.amenities, icon: Wifi },
+    { id: 4, name: t.chatbots.create.steps.location, icon: Car },
+    { id: 5, name: t.chatbots.create.steps.services, icon: Coffee },
+    { id: 6, name: t.chatbots.create.steps.final, icon: Phone },
+    { id: 7, name: t.chatbots.create.steps.final, icon: MessageSquare },
+  ]
   
   // Create amenities list from translations
   const amenitiesList = [
@@ -236,20 +239,20 @@ export default function CreateChatbotPage() {
       case 1:
         return (
           <div className="space-y-6">
-            <h2 className="text-2xl font-bold mb-4">Informazioni Base</h2>
+            <h2 className="text-2xl font-bold mb-4">{t.chatbots.create.steps.basic}</h2>
             
             <div>
-              <label className="label">Nome del Chatbot</label>
+              <label className="label">{t.chatbots.create.form.name}</label>
               <input
-                {...register('name', { required: 'Nome richiesto' })}
+                {...register('name', { required: language === 'IT' ? 'Nome richiesto' : 'Name required' })}
                 className="input-field"
-                placeholder="Es. Assistente Casa Bella Vista"
+                placeholder={language === 'IT' ? "Es. Assistente Casa Bella Vista" : "E.g. Bella Vista House Assistant"}
               />
               {errors.name && <p className="error-text">{errors.name.message}</p>}
             </div>
 
             <div>
-              <label className="label">{t.chatbots.create.form.icon} (opzionale)</label>
+              <label className="label">{t.chatbots.create.form.icon} ({language === 'IT' ? 'opzionale' : 'optional'})</label>
               <div className="space-y-3">
                 <input
                   type="file"
@@ -273,12 +276,12 @@ export default function CreateChatbotPage() {
                       }}
                       className="text-red-600 hover:text-red-800 text-sm"
                     >
-                      Rimuovi
+                      {t.chatbots.create.form.remove}
                     </button>
                   </div>
                 )}
                 <p className="text-xs text-gray-500">
-                  Formati supportati: PNG, JPG. Dimensione massima: 5MB
+                  {t.chatbots.create.form.supportedFormats}
                 </p>
                 {iconError && (
                   <div className="text-red-600 text-sm mt-2 p-2 bg-red-50 rounded border border-red-200">
@@ -291,9 +294,9 @@ export default function CreateChatbotPage() {
             <div>
               <label className="label">{t.chatbots.create.form.propertyName}</label>
               <input
-                {...register('property_name', { required: 'Nome proprietà richiesto' })}
+                {...register('property_name', { required: language === 'IT' ? 'Nome proprietà richiesto' : 'Property name required' })}
                 className="input-field"
-                placeholder="Es. Casa Bella Vista"
+                placeholder={language === 'IT' ? "Es. Casa Bella Vista" : "E.g. Bella Vista House"}
               />
               {errors.property_name && <p className="error-text">{errors.property_name.message}</p>}
             </div>
@@ -301,17 +304,17 @@ export default function CreateChatbotPage() {
             <div>
               <label className="label">{t.chatbots.create.form.propertyType}</label>
               <select
-                {...register('property_type', { required: 'Tipo richiesto' })}
+                {...register('property_type', { required: language === 'IT' ? 'Tipo richiesto' : 'Type required' })}
                 className="input-field"
               >
-                <option value="">Seleziona...</option>
-                <option value="appartamento">Appartamento</option>
-                <option value="casa">Casa</option>
-                <option value="villa">Villa</option>
-                <option value="stanza">Stanza</option>
-                <option value="loft">Loft</option>
-                <option value="monolocale">Monolocale</option>
-                <option value="bed_breakfast">Bed & Breakfast</option>
+                <option value="">{t.chatbots.create.form.select}</option>
+                <option value="appartamento">{t.chatbots.create.form.propertyTypes.apartment}</option>
+                <option value="casa">{t.chatbots.create.form.propertyTypes.house}</option>
+                <option value="villa">{t.chatbots.create.form.propertyTypes.villa}</option>
+                <option value="stanza">{t.chatbots.create.form.propertyTypes.room}</option>
+                <option value="loft">{t.chatbots.create.form.propertyTypes.loft}</option>
+                <option value="monolocale">{t.chatbots.create.form.propertyTypes.studio}</option>
+                <option value="bed_breakfast">{t.chatbots.create.form.propertyTypes.bedBreakfast}</option>
               </select>
               {errors.property_type && <p className="error-text">{errors.property_type.message}</p>}
             </div>
@@ -319,9 +322,9 @@ export default function CreateChatbotPage() {
             <div>
               <label className="label">{t.chatbots.create.form.propertyAddress}</label>
               <input
-                {...register('property_address', { required: 'Indirizzo richiesto' })}
+                {...register('property_address', { required: language === 'IT' ? 'Indirizzo richiesto' : 'Address required' })}
                 className="input-field"
-                placeholder="Es. Via Roma 123"
+                placeholder={language === 'IT' ? "Es. Via Roma 123" : "E.g. 123 Main Street"}
               />
               {errors.property_address && <p className="error-text">{errors.property_address.message}</p>}
             </div>
@@ -329,9 +332,9 @@ export default function CreateChatbotPage() {
             <div>
               <label className="label">{t.chatbots.create.form.propertyCity}</label>
               <input
-                {...register('property_city', { required: 'Città richiesta' })}
+                {...register('property_city', { required: language === 'IT' ? 'Città richiesta' : 'City required' })}
                 className="input-field"
-                placeholder="Es. Roma"
+                placeholder={language === 'IT' ? "Es. Roma" : "E.g. Rome"}
               />
               {errors.property_city && <p className="error-text">{errors.property_city.message}</p>}
             </div>
@@ -346,9 +349,9 @@ export default function CreateChatbotPage() {
             <div>
               <label className="label">{t.chatbots.create.form.propertyDescription}</label>
               <textarea
-                {...register('property_description', { required: 'Descrizione richiesta' })}
+                {...register('property_description', { required: language === 'IT' ? 'Descrizione richiesta' : 'Description required' })}
                 className="input-field min-h-32"
-                placeholder="Descrivi la tua proprietà, gli spazi, le camere, etc..."
+                placeholder={language === 'IT' ? "Descrivi la tua proprietà, gli spazi, le camere, etc..." : "Describe your property, spaces, rooms, etc..."}
               />
               {errors.property_description && <p className="error-text">{errors.property_description.message}</p>}
             </div>
@@ -357,9 +360,9 @@ export default function CreateChatbotPage() {
               <div>
                 <label className="label">{t.chatbots.create.form.checkInTime}</label>
                 <input
-                  {...register('check_in_time', { required: 'Orario check-in richiesto' })}
+                  {...register('check_in_time', { required: language === 'IT' ? 'Orario check-in richiesto' : 'Check-in time required' })}
                   className="input-field"
-                  placeholder="Es. 15:00 - 20:00"
+                  placeholder={language === 'IT' ? "Es. 15:00 - 20:00" : "E.g. 3:00 PM - 8:00 PM"}
                 />
                 {errors.check_in_time && <p className="error-text">{errors.check_in_time.message}</p>}
               </div>
@@ -367,9 +370,9 @@ export default function CreateChatbotPage() {
               <div>
                 <label className="label">{t.chatbots.create.form.checkOutTime}</label>
                 <input
-                  {...register('check_out_time', { required: 'Orario check-out richiesto' })}
+                  {...register('check_out_time', { required: language === 'IT' ? 'Orario check-out richiesto' : 'Check-out time required' })}
                   className="input-field"
-                  placeholder="Es. 10:00"
+                  placeholder={language === 'IT' ? "Es. 10:00" : "E.g. 10:00 AM"}
                 />
                 {errors.check_out_time && <p className="error-text">{errors.check_out_time.message}</p>}
               </div>
@@ -378,9 +381,9 @@ export default function CreateChatbotPage() {
             <div>
               <label className="label">{t.chatbots.create.form.houseRules}</label>
               <textarea
-                {...register('house_rules', { required: 'Regole richieste' })}
+                {...register('house_rules', { required: language === 'IT' ? 'Regole richieste' : 'Rules required' })}
                 className="input-field min-h-24"
-                placeholder="Es. Non fumatori, no party, rispettare il vicinato..."
+                placeholder={language === 'IT' ? "Es. Non fumatori, no party, rispettare il vicinato..." : "E.g. No smoking, no parties, respect neighbors..."}
               />
               {errors.house_rules && <p className="error-text">{errors.house_rules.message}</p>}
             </div>
@@ -421,7 +424,7 @@ export default function CreateChatbotPage() {
                 <input
                   {...register('wifi_info.network')}
                   className="input-field"
-                  placeholder="Es. CasaBellaVista_WiFi"
+                  placeholder={language === 'IT' ? "Es. CasaBellaVista_WiFi" : "E.g. BellaVista_WiFi"}
                 />
               </div>
 
@@ -430,7 +433,7 @@ export default function CreateChatbotPage() {
                 <input
                   {...register('wifi_info.password')}
                   className="input-field"
-                  placeholder="Es. password123"
+                  placeholder={language === 'IT' ? "Es. password123" : "E.g. password123"}
                 />
               </div>
             </div>
@@ -440,7 +443,7 @@ export default function CreateChatbotPage() {
               <textarea
                 {...register('parking_info')}
                 className="input-field"
-                placeholder="Descrivi le opzioni di parcheggio disponibili..."
+                placeholder={language === 'IT' ? "Descrivi le opzioni di parcheggio disponibili..." : "Describe available parking options..."}
               />
             </div>
 
@@ -449,7 +452,7 @@ export default function CreateChatbotPage() {
               <textarea
                 {...register('special_instructions')}
                 className="input-field"
-                placeholder="Es. Come usare gli elettrodomestici, dove trovare le cose..."
+                placeholder={language === 'IT' ? "Es. Come usare gli elettrodomestici, dove trovare le cose..." : "E.g. How to use appliances, where to find things..."}
               />
             </div>
           </div>
@@ -463,9 +466,9 @@ export default function CreateChatbotPage() {
             <div>
               <label className="label">{t.chatbots.create.form.neighborhoodDescription}</label>
               <textarea
-                {...register('neighborhood_description', { required: 'Descrizione quartiere richiesta' })}
+                {...register('neighborhood_description', { required: language === 'IT' ? 'Descrizione quartiere richiesta' : 'Neighborhood description required' })}
                 className="input-field min-h-24"
-                placeholder="Descrivi il quartiere, l'atmosfera, cosa c'è nelle vicinanze..."
+                placeholder={language === 'IT' ? "Descrivi il quartiere, l'atmosfera, cosa c'è nelle vicinanze..." : "Describe the neighborhood, atmosphere, what's nearby..."}
               />
               {errors.neighborhood_description && <p className="error-text">{errors.neighborhood_description.message}</p>}
             </div>
@@ -473,9 +476,9 @@ export default function CreateChatbotPage() {
             <div>
               <label className="label">{t.chatbots.create.form.transportationInfo}</label>
               <textarea
-                {...register('transportation_info', { required: 'Info trasporti richieste' })}
+                {...register('transportation_info', { required: language === 'IT' ? 'Info trasporti richieste' : 'Transportation info required' })}
                 className="input-field min-h-24"
-                placeholder="Come muoversi: metro, bus, taxi, noleggio auto..."
+                placeholder={language === 'IT' ? "Come muoversi: metro, bus, taxi, noleggio auto..." : "How to get around: metro, bus, taxi, car rental..."}
               />
               {errors.transportation_info && <p className="error-text">{errors.transportation_info.message}</p>}
             </div>
@@ -485,7 +488,7 @@ export default function CreateChatbotPage() {
               <textarea
                 {...register('shopping_info')}
                 className="input-field"
-                placeholder="Supermercati, negozi, centri commerciali nelle vicinanze..."
+                placeholder={language === 'IT' ? "Supermercati, negozi, centri commerciali nelle vicinanze..." : "Supermarkets, shops, shopping centers nearby..."}
               />
             </div>
           </div>
@@ -504,17 +507,17 @@ export default function CreateChatbotPage() {
                     <input
                       {...register(`nearby_attractions.${index}.name`)}
                       className="input-field"
-                      placeholder="Nome attrazione"
+                      placeholder={language === 'IT' ? "Nome attrazione" : "Attraction name"}
                     />
                     <input
                       {...register(`nearby_attractions.${index}.distance`)}
                       className="input-field"
-                      placeholder="Distanza (es. 500m)"
+                      placeholder={language === 'IT' ? "Distanza (es. 500m)" : "Distance (e.g. 500m)"}
                     />
                     <input
                       {...register(`nearby_attractions.${index}.description`)}
                       className="input-field"
-                      placeholder="Breve descrizione"
+                      placeholder={language === 'IT' ? "Breve descrizione" : "Brief description"}
                     />
                   </div>
                   {attractionFields.length > 1 && (
@@ -524,7 +527,7 @@ export default function CreateChatbotPage() {
                       className="mt-2 text-red-600 hover:text-red-700"
                     >
                       <X className="w-4 h-4 inline mr-1" />
-                      Rimuovi
+                      {t.chatbots.create.form.remove}
                     </button>
                   )}
                 </div>
@@ -547,17 +550,17 @@ export default function CreateChatbotPage() {
                     <input
                       {...register(`restaurants_bars.${index}.name`)}
                       className="input-field"
-                      placeholder="Nome locale"
+                      placeholder={language === 'IT' ? "Nome locale" : "Venue name"}
                     />
                     <input
                       {...register(`restaurants_bars.${index}.type`)}
                       className="input-field"
-                      placeholder="Tipo (es. Pizzeria)"
+                      placeholder={language === 'IT' ? "Tipo (es. Pizzeria)" : "Type (e.g. Pizzeria)"}
                     />
                     <input
                       {...register(`restaurants_bars.${index}.distance`)}
                       className="input-field"
-                      placeholder="Distanza"
+                      placeholder={language === 'IT' ? "Distanza" : "Distance"}
                     />
                   </div>
                   {restaurantFields.length > 1 && (
@@ -567,7 +570,7 @@ export default function CreateChatbotPage() {
                       className="mt-2 text-red-600 hover:text-red-700"
                     >
                       <X className="w-4 h-4 inline mr-1" />
-                      Rimuovi
+                      {t.chatbots.create.form.remove}
                     </button>
                   )}
                 </div>
@@ -578,7 +581,7 @@ export default function CreateChatbotPage() {
                 className="text-primary hover:text-secondary"
               >
                 <Plus className="w-4 h-4 inline mr-1" />
-                Aggiungi Locale
+                {language === 'IT' ? 'Aggiungi Locale' : 'Add Venue'}
               </button>
             </div>
           </div>
@@ -597,17 +600,17 @@ export default function CreateChatbotPage() {
                     <input
                       {...register(`emergency_contacts.${index}.name`)}
                       className="input-field"
-                      placeholder="Nome/Servizio"
+                      placeholder={language === 'IT' ? "Nome/Servizio" : "Name/Service"}
                     />
                     <input
                       {...register(`emergency_contacts.${index}.number`)}
                       className="input-field"
-                      placeholder="Numero"
+                      placeholder={language === 'IT' ? "Numero" : "Number"}
                     />
                     <input
                       {...register(`emergency_contacts.${index}.type`)}
                       className="input-field"
-                      placeholder="Tipo (es. Polizia)"
+                      placeholder={language === 'IT' ? "Tipo (es. Polizia)" : "Type (e.g. Police)"}
                     />
                   </div>
                   {contactFields.length > 1 && (
@@ -617,7 +620,7 @@ export default function CreateChatbotPage() {
                       className="mt-2 text-red-600 hover:text-red-700"
                     >
                       <X className="w-4 h-4 inline mr-1" />
-                      Rimuovi
+                      {t.chatbots.create.form.remove}
                     </button>
                   )}
                 </div>
@@ -628,23 +631,23 @@ export default function CreateChatbotPage() {
                 className="text-primary hover:text-secondary"
               >
                 <Plus className="w-4 h-4 inline mr-1" />
-                Aggiungi Contatto
+                {t.chatbots.create.form.addContact}
               </button>
             </div>
 
             <div>
-              <label className="label">Domande Frequenti (FAQ)</label>
+              <label className="label">{t.chatbots.create.form.faq}</label>
               {faqFields.map((field, index) => (
                 <div key={field.id} className="bg-gray-50 p-4 rounded-lg mb-3">
                   <input
                     {...register(`faq.${index}.question`)}
                     className="input-field mb-2"
-                    placeholder="Domanda"
+                    placeholder={language === 'IT' ? "Domanda" : "Question"}
                   />
                   <textarea
                     {...register(`faq.${index}.answer`)}
                     className="input-field"
-                    placeholder="Risposta"
+                    placeholder={language === 'IT' ? "Risposta" : "Answer"}
                   />
                   {faqFields.length > 1 && (
                     <button
@@ -653,7 +656,7 @@ export default function CreateChatbotPage() {
                       className="mt-2 text-red-600 hover:text-red-700"
                     >
                       <X className="w-4 h-4 inline mr-1" />
-                      Rimuovi
+                      {t.chatbots.create.form.remove}
                     </button>
                   )}
                 </div>
@@ -664,7 +667,7 @@ export default function CreateChatbotPage() {
                 className="text-primary hover:text-secondary"
               >
                 <Plus className="w-4 h-4 inline mr-1" />
-                Aggiungi FAQ
+                {t.chatbots.create.form.addFaq}
               </button>
             </div>
           </div>
@@ -678,18 +681,17 @@ export default function CreateChatbotPage() {
             <div>
               <label className="label">{t.chatbots.create.form.welcomeMessage}</label>
               <textarea
-                {...register('welcome_message', { required: 'Messaggio di benvenuto richiesto' })}
+                {...register('welcome_message', { required: language === 'IT' ? 'Messaggio di benvenuto richiesto' : 'Welcome message required' })}
                 className="input-field min-h-24"
-                placeholder="Es. Ciao! Sono l'assistente virtuale di Casa Bella Vista. Come posso aiutarti?"
+                placeholder={language === 'IT' ? "Es. Ciao! Sono l'assistente virtuale di Casa Bella Vista. Come posso aiutarti?" : "E.g. Hi! I'm the virtual assistant of Bella Vista House. How can I help you?"}
               />
               {errors.welcome_message && <p className="error-text">{errors.welcome_message.message}</p>}
             </div>
 
             <div className="bg-green-50 border border-green-200 rounded-lg p-6">
-              <h3 className="font-semibold text-green-800 mb-2">Tutto pronto!</h3>
+              <h3 className="font-semibold text-green-800 mb-2">{t.chatbots.create.form.allReady}</h3>
               <p className="text-green-700">
-                Hai inserito tutte le informazioni necessarie. Il tuo chatbot sarà creato e allenato
-                con questi dati. Potrai sempre modificarli in seguito dalla dashboard.
+                {t.chatbots.create.form.allInfoEntered}
               </p>
             </div>
           </div>
@@ -708,9 +710,9 @@ export default function CreateChatbotPage() {
           <div className="flex items-center justify-between">
             <Link href="/dashboard" className="flex items-center text-gray-600 hover:text-primary">
               <ArrowLeft className="w-5 h-5 mr-2" />
-              Torna alla Dashboard
+              {t.chatbots.create.form.backToDashboard}
             </Link>
-            <h1 className="text-xl font-semibold">Crea Nuovo Chatbot</h1>
+            <h1 className="text-xl font-semibold">{t.chatbots.create.form.createNewChatbot}</h1>
           </div>
         </div>
       </div>

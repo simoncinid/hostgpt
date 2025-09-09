@@ -488,49 +488,66 @@ export interface Translations {
         services: string
         final: string
       }
-      form: {
-        name: string
-        propertyName: string
-        propertyType: string
-        propertyAddress: string
-        propertyCity: string
-        propertyDescription: string
-        checkInTime: string
-        checkOutTime: string
-        houseRules: string
-        amenities: string
-        neighborhoodDescription: string
-        transportationInfo: string
-        shoppingInfo: string
-        parkingInfo: string
-        specialInstructions: string
-        welcomeMessage: string
-        icon: string
-        nearbyAttractions: string
-        restaurantsBars: string
-        emergencyContacts: string
-        wifiInfo: string
-        faq: string
-        addAttraction: string
-        addRestaurant: string
-        addContact: string
-        addFaq: string
-        customFaq: string
-        attractionName: string
-        attractionDistance: string
-        attractionDescription: string
-        restaurantName: string
-        restaurantType: string
-        restaurantDistance: string
-        contactName: string
-        contactNumber: string
-        contactType: string
-        wifiNetwork: string
-        wifiPassword: string
-        question: string
-        answer: string
-        remove: string
-      }
+        form: {
+          name: string
+          propertyName: string
+          propertyType: string
+          propertyAddress: string
+          propertyCity: string
+          propertyDescription: string
+          checkInTime: string
+          checkOutTime: string
+          houseRules: string
+          amenities: string
+          neighborhoodDescription: string
+          transportationInfo: string
+          shoppingInfo: string
+          parkingInfo: string
+          specialInstructions: string
+          welcomeMessage: string
+          icon: string
+          nearbyAttractions: string
+          restaurantsBars: string
+          emergencyContacts: string
+          wifiInfo: string
+          faq: string
+          addAttraction: string
+          addRestaurant: string
+          addContact: string
+          addFaq: string
+          customFaq: string
+          attractionName: string
+          attractionDistance: string
+          attractionDescription: string
+          restaurantName: string
+          restaurantType: string
+          restaurantDistance: string
+          contactName: string
+          contactNumber: string
+          contactType: string
+          wifiNetwork: string
+          wifiPassword: string
+          question: string
+          answer: string
+          remove: string
+          noFileSelected: string
+          supportedFormats: string
+          chooseFile: string
+          select: string
+          allReady: string
+          allInfoEntered: string
+          backToDashboard: string
+          createNewChatbot: string
+          propertyTypes: {
+            apartment: string
+            house: string
+            villa: string
+            room: string
+            loft: string
+            studio: string
+            bedBreakfast: string
+          }
+        }
       amenities: {
         wifi: string
         airConditioning: string
@@ -1503,7 +1520,24 @@ export const translations: Record<Language, Translations> = {
           wifiPassword: "Password",
           question: "Domanda",
           answer: "Risposta",
-          remove: "Rimuovi"
+          remove: "Rimuovi",
+          noFileSelected: "Nessun file selezionato",
+          supportedFormats: "Formati supportati: PNG, JPG. Dimensione massima: 5MB",
+          chooseFile: "scegli file",
+          select: "Seleziona...",
+          allReady: "Tutto pronto!",
+          allInfoEntered: "Hai inserito tutte le informazioni necessarie. Il tuo chatbot sarà creato e allenato con questi dati. Potrai sempre modificarli in seguito dalla dashboard.",
+          backToDashboard: "Torna alla Dashboard",
+          createNewChatbot: "Crea Nuovo Chatbot",
+          propertyTypes: {
+            apartment: "Appartamento",
+            house: "Casa",
+            villa: "Villa",
+            room: "Stanza",
+            loft: "Loft",
+            studio: "Monolocale",
+            bedBreakfast: "Bed & Breakfast"
+          }
         },
         amenities: {
           wifi: "WiFi",
@@ -2492,7 +2526,24 @@ export const translations: Record<Language, Translations> = {
           wifiPassword: "Password",
           question: "Question",
           answer: "Answer",
-          remove: "Remove"
+          remove: "Remove",
+          noFileSelected: "No file selected",
+          supportedFormats: "Supported formats: PNG, JPG. Maximum size: 5MB",
+          chooseFile: "Choose file",
+          select: "Select...",
+          allReady: "All ready!",
+          allInfoEntered: "You have entered all the necessary information. Your chatbot will be created and trained with this data. You can always modify them later from the dashboard.",
+          backToDashboard: "Back to Dashboard",
+          createNewChatbot: "Create New Chatbot",
+          propertyTypes: {
+            apartment: "Apartment",
+            house: "House",
+            villa: "Villa",
+            room: "Room",
+            loft: "Loft",
+            studio: "Studio",
+            bedBreakfast: "Bed & Breakfast"
+          }
         },
         amenities: {
           wifi: "WiFi",

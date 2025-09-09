@@ -95,6 +95,10 @@ function RegisterForm() {
       errors.confirmPassword = t.errors.passwordsNotMatch
     }
     
+    if (!formData.language) {
+      errors.language = 'Seleziona una lingua'
+    }
+    
     if (!formData.terms) {
       errors.terms = t.errors.termsRequired
     }
@@ -514,6 +518,16 @@ function RegisterForm() {
                 </div>
               </div>
             </form>
+          </div>
+          
+          {/* Login Link - fuori dal form */}
+          <div className="text-center mt-4 pt-4 border-t border-gray-100">
+            <p className="text-gray-600 text-sm">
+              {t.alreadyHaveAccount}{' '}
+              <Link href="/login" className="text-primary hover:text-secondary font-semibold">
+                {t.loginNow}
+              </Link>
+            </p>
           </div>
         </div>
       </div>
