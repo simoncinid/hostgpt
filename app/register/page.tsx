@@ -6,8 +6,7 @@ import { useState, useEffect, Suspense } from 'react'
 export const dynamic = 'force-dynamic'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { Home, Mail, Lock, User, Phone, ArrowRight, Eye, EyeOff, Check, ArrowLeft, Globe } from 'lucide-react'
-import { useForm } from 'react-hook-form'
+import { Home, Mail, Lock, User, Phone, ArrowRight, Eye, EyeOff, ArrowLeft, Globe } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useAuthStore } from '@/lib/store'
 import api from '@/lib/api'
@@ -44,25 +43,77 @@ function RegisterForm() {
     }
   }, [searchParams])
   
-  const { register, handleSubmit, formState: { errors } } = useForm<RegisterForm>()
+  // Usiamo useState invece di react-hook-form per evitare problemi
+  const [formData, setFormData] = useState<RegisterForm>({
+    email: '',
+    password: '',
+    confirmPassword: '',
+    full_name: '',
+    phone: '',
+    language: 'it',
+    terms: false
+  })
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({})
+  
+  // Helper function to update form data
+  const updateField = (field: keyof RegisterForm, value: any) => {
+    setFormData(prev => ({...prev, [field]: value}))
+    // Clear error when user starts typing
+    if (formErrors[field]) {
+      setFormErrors(prev => {
+        const newErrors = {...prev}
+        delete newErrors[field]
+        return newErrors
+      })
+    }
+  }
   
 
-  const onSubmit = async (data: RegisterForm) => {
-    // Validazione manuale delle password
-    if (data.password !== data.confirmPassword) {
-      toast.error(t.errors.passwordsNotMatch)
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    // Validazione
+    const errors: Record<string, string> = {}
+    
+    if (!formData.full_name || formData.full_name.length < 2) {
+      errors.full_name = t.errors.nameRequired
+    }
+    
+    if (!formData.email || !/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(formData.email)) {
+      errors.email = t.errors.emailInvalid
+    }
+    
+    if (!formData.password || formData.password.length < 8) {
+      errors.password = t.errors.passwordRequired
+    }
+    
+    if (!formData.confirmPassword) {
+      errors.confirmPassword = t.errors.confirmPasswordRequired
+    }
+    
+    if (formData.password !== formData.confirmPassword) {
+      errors.confirmPassword = t.errors.passwordsNotMatch
+    }
+    
+    if (!formData.terms) {
+      errors.terms = t.errors.termsRequired
+    }
+    
+    setFormErrors(errors)
+    
+    if (Object.keys(errors).length > 0) {
       return
     }
 
     setIsLoading(true)
     try {
       const response = await api.post('/auth/register', {
-        email: data.email,
-        password: data.password,
-        full_name: data.full_name,
-        phone: data.phone,
+        email: formData.email,
+        password: formData.password,
+        full_name: formData.full_name,
+        phone: formData.phone,
         wants_free_trial: isFreeTrial,
-        language: data.language
+        language: formData.language
       })
       
       // Dopo la registrazione, mandiamo l'utente alla pagina che spiega di verificare l'email
@@ -112,7 +163,7 @@ function RegisterForm() {
 
           {/* Form Content */}
           <div className="flex-1 flex flex-col">
-            <form onSubmit={handleSubmit(onSubmit)} className="flex-1 flex flex-col">
+            <form onSubmit={onSubmit} className="flex-1 flex flex-col">
               {/* Layout desktop con grid template per allineamento perfetto */}
               <div className="hidden md:grid md:grid-cols-2 md:gap-6 flex-1" style={{gridTemplateRows: 'auto auto auto auto auto auto'}}>
                 {/* Colonna sinistra */}
@@ -124,19 +175,14 @@ function RegisterForm() {
                       <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                       <input
                         type="text"
-                        {...register('full_name', {
-                          required: t.errors.nameRequired,
-                          minLength: {
-                            value: 2,
-                            message: t.errors.nameMinLength
-                          }
-                        })}
+                        value={formData.full_name}
+                        onChange={(e) => updateField('full_name', e.target.value)}
                         className="w-full px-4 py-2.5 pl-10 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary focus:ring-opacity-20 outline-none transition-all duration-200"
                         placeholder="Mario Rossi"
                       />
                     </div>
-                    {errors.full_name && (
-                      <p className="text-red-500 text-xs mt-1">{errors.full_name.message}</p>
+                    {formErrors.full_name && (
+                      <p className="text-red-500 text-xs mt-1">{formErrors.full_name}</p>
                     )}
                   </div>
 
@@ -147,7 +193,8 @@ function RegisterForm() {
                       <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                       <input
                         type="tel"
-                        {...register('phone')}
+                        value={formData.phone || ''}
+                        onChange={(e) => updateField('phone', e.target.value)}
                         className="w-full px-4 py-2.5 pl-10 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary focus:ring-opacity-20 outline-none transition-all duration-200"
                         placeholder="+39 123 456 7890"
                       />
@@ -160,16 +207,16 @@ function RegisterForm() {
                     <div className="relative">
                       <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                       <select
-                        {...register('language', { required: 'Seleziona una lingua' })}
+                        value={formData.language}
+                        onChange={(e) => updateField('language', e.target.value)}
                         className="w-full px-4 py-2.5 pl-10 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary focus:ring-opacity-20 outline-none transition-all duration-200 appearance-none bg-white"
-                        defaultValue="it"
                       >
                         <option value="it">🇮🇹 Italiano</option>
                         <option value="en">🇬🇧 English</option>
                       </select>
                     </div>
-                    {errors.language && (
-                      <p className="text-red-500 text-xs mt-1">{errors.language.message}</p>
+                    {formErrors.language && (
+                      <p className="text-red-500 text-xs mt-1">{formErrors.language}</p>
                     )}
                   </div>
 
@@ -180,17 +227,8 @@ function RegisterForm() {
                       <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                       <input
                         type={showPassword ? 'text' : 'password'}
-                        {...register('password', {
-                          required: t.errors.passwordRequired,
-                          minLength: {
-                            value: 8,
-                            message: t.errors.passwordMinLength
-                          },
-                          pattern: {
-                            value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
-                            message: t.errors.passwordPattern
-                          }
-                        })}
+                        value={formData.password}
+                        onChange={(e) => updateField('password', e.target.value)}
                         className="w-full px-4 py-2.5 pl-10 pr-10 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary focus:ring-opacity-20 outline-none transition-all duration-200"
                         placeholder="••••••••"
                       />
@@ -206,8 +244,8 @@ function RegisterForm() {
                         )}
                       </button>
                     </div>
-                    {errors.password && (
-                      <p className="text-red-500 text-xs mt-1">{errors.password.message}</p>
+                    {formErrors.password && (
+                      <p className="text-red-500 text-xs mt-1">{formErrors.password}</p>
                     )}
                   </div>
                 </div>
@@ -221,19 +259,14 @@ function RegisterForm() {
                       <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                       <input
                         type="email"
-                        {...register('email', {
-                          required: t.errors.emailRequired,
-                          pattern: {
-                            value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                            message: t.errors.emailInvalid
-                          }
-                        })}
+                        value={formData.email}
+                        onChange={(e) => updateField('email', e.target.value)}
                         className="w-full px-4 py-2.5 pl-10 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary focus:ring-opacity-20 outline-none transition-all duration-200"
                         placeholder="nome@esempio.com"
                       />
                     </div>
-                    {errors.email && (
-                      <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>
+                    {formErrors.email && (
+                      <p className="text-red-500 text-xs mt-1">{formErrors.email}</p>
                     )}
                   </div>
 
@@ -245,9 +278,8 @@ function RegisterForm() {
                       <input
                         id="confirmPassword-desktop"
                         type={showConfirmPassword ? 'text' : 'password'}
-                        {...register('confirmPassword', {
-                          required: t.errors.confirmPasswordRequired
-                        })}
+                        value={formData.confirmPassword}
+                        onChange={(e) => updateField('confirmPassword', e.target.value)}
                         className="w-full px-4 py-2.5 pl-10 pr-10 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary focus:ring-opacity-20 outline-none transition-all duration-200"
                         placeholder="••••••••"
                       />
@@ -263,8 +295,8 @@ function RegisterForm() {
                         )}
                       </button>
                     </div>
-                    {errors.confirmPassword && (
-                      <p className="text-red-500 text-xs mt-1">{errors.confirmPassword.message}</p>
+                    {formErrors.confirmPassword && (
+                      <p className="text-red-500 text-xs mt-1">{formErrors.confirmPassword}</p>
                     )}
                   </div>
 
@@ -291,62 +323,23 @@ function RegisterForm() {
                       <label className="flex items-start justify-center">
                         <input
                           type="checkbox"
-                          {...register('terms', {
-                            required: t.errors.termsRequired
-                          })}
+                          checked={formData.terms}
+                          onChange={(e) => updateField('terms', e.target.checked)}
                           className="mt-0.5 mr-2 flex-shrink-0"
                         />
                         <span className="text-xs text-gray-600">
-                          {t.termsAccept}{' '}
-                          <Link href="/terms" className="text-primary hover:text-secondary">
-                            {t.termsLink}
-                          </Link>
-                          {' '}e la{' '}
-                          <Link href="/privacy" className="text-primary hover:text-secondary">
-                            {t.privacyLink}
-                          </Link>
+                          {t.termsAccept} termini e condizioni e la privacy policy
                         </span>
                       </label>
-                      {errors.terms && (
-                        <p className="text-red-500 text-xs mt-1">{errors.terms.message}</p>
+                      {formErrors.terms && (
+                        <p className="text-red-500 text-xs mt-1">{formErrors.terms}</p>
                       )}
                     </div>
 
-                    {/* Sign In Link - sotto i termini */}
-                    <div className="text-center mt-2">
-                      <p className="text-gray-600 text-sm">
-                        {t.alreadyHaveAccount}{' '}
-                        <Link href="/login" className="text-primary hover:text-secondary font-semibold">
-                          {t.loginNow}
-                        </Link>
-                      </p>
-                    </div>
                   </div>
                 </div>
 
 
-                {/* Password Requirements - ROW 6 - sempre visibile e statico */}
-                <div className="col-span-2 bg-gray-50 p-3 rounded-lg">
-                  <h4 className="text-xs font-medium text-gray-700 mb-2">{t.passwordRequirements}</h4>
-                  <div className="space-y-1">
-                    <div className="flex items-center text-xs">
-                      <Check className="w-3 h-3 mr-1 flex-shrink-0 text-gray-300" />
-                      <span className="text-gray-400">{t.passwordMinLength}</span>
-                    </div>
-                    <div className="flex items-center text-xs">
-                      <Check className="w-3 h-3 mr-1 flex-shrink-0 text-gray-300" />
-                      <span className="text-gray-400">{t.passwordUppercase}</span>
-                    </div>
-                    <div className="flex items-center text-xs">
-                      <Check className="w-3 h-3 mr-1 flex-shrink-0 text-gray-300" />
-                      <span className="text-gray-400">{t.passwordLowercase}</span>
-                    </div>
-                    <div className="flex items-center text-xs">
-                      <Check className="w-3 h-3 mr-1 flex-shrink-0 text-gray-300" />
-                      <span className="text-gray-400">{t.passwordNumber}</span>
-                    </div>
-                  </div>
-                </div>
               </div>
 
               {/* Layout mobile COMPLETAMENTE RIFATTO DA ZERO */}
@@ -359,19 +352,14 @@ function RegisterForm() {
                       <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-3 h-3 text-gray-400" />
                       <input
                         type="text"
-                        {...register('full_name', {
-                          required: t.errors.nameRequired,
-                          minLength: {
-                            value: 2,
-                            message: t.errors.nameMinLength
-                          }
-                        })}
+                        value={formData.full_name}
+                        onChange={(e) => updateField('full_name', e.target.value)}
                         className="w-full px-3 py-2 pl-9 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary focus:ring-opacity-20 outline-none transition-all duration-200 text-sm"
                         placeholder="Mario Rossi"
                       />
                     </div>
-                    {errors.full_name && (
-                      <p className="text-red-500 text-xs mt-0.5">{errors.full_name.message}</p>
+                    {formErrors.full_name && (
+                      <p className="text-red-500 text-xs mt-0.5">{formErrors.full_name}</p>
                     )}
                   </div>
 
@@ -382,19 +370,14 @@ function RegisterForm() {
                       <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-3 h-3 text-gray-400" />
                       <input
                         type="email"
-                        {...register('email', {
-                          required: t.errors.emailRequired,
-                          pattern: {
-                            value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                            message: t.errors.emailInvalid
-                          }
-                        })}
+                        value={formData.email}
+                        onChange={(e) => updateField('email', e.target.value)}
                         className="w-full px-3 py-2 pl-9 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary focus:ring-opacity-20 outline-none transition-all duration-200 text-sm"
                         placeholder="nome@esempio.com"
                       />
                     </div>
-                    {errors.email && (
-                      <p className="text-red-500 text-xs mt-0.5">{errors.email.message}</p>
+                    {formErrors.email && (
+                      <p className="text-red-500 text-xs mt-0.5">{formErrors.email}</p>
                     )}
                   </div>
 
@@ -405,7 +388,8 @@ function RegisterForm() {
                       <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-3 h-3 text-gray-400" />
                       <input
                         type="tel"
-                        {...register('phone')}
+                        value={formData.phone || ''}
+                        onChange={(e) => updateField('phone', e.target.value)}
                         className="w-full px-3 py-2 pl-9 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary focus:ring-opacity-20 outline-none transition-all duration-200 text-sm"
                         placeholder="+39 123 456 7890"
                       />
@@ -418,16 +402,16 @@ function RegisterForm() {
                     <div className="relative">
                       <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 w-3 h-3 text-gray-400" />
                       <select
-                        {...register('language', { required: 'Seleziona una lingua' })}
+                        value={formData.language}
+                        onChange={(e) => updateField('language', e.target.value)}
                         className="w-full px-3 py-2 pl-9 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary focus:ring-opacity-20 outline-none transition-all duration-200 text-sm appearance-none bg-white"
-                        defaultValue="it"
                       >
                         <option value="it">🇮🇹 Italiano</option>
                         <option value="en">🇬🇧 English</option>
                       </select>
                     </div>
-                    {errors.language && (
-                      <p className="text-red-500 text-xs mt-0.5">{errors.language.message}</p>
+                    {formErrors.language && (
+                      <p className="text-red-500 text-xs mt-0.5">{formErrors.language}</p>
                     )}
                   </div>
 
@@ -438,17 +422,8 @@ function RegisterForm() {
                       <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-3 h-3 text-gray-400" />
                       <input
                         type={showPassword ? 'text' : 'password'}
-                        {...register('password', {
-                          required: t.errors.passwordRequired,
-                          minLength: {
-                            value: 8,
-                            message: t.errors.passwordMinLength
-                          },
-                          pattern: {
-                            value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
-                            message: t.errors.passwordPattern
-                          }
-                        })}
+                        value={formData.password}
+                        onChange={(e) => updateField('password', e.target.value)}
                         className="w-full px-3 py-2 pl-9 pr-9 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary focus:ring-opacity-20 outline-none transition-all duration-200 text-sm"
                         placeholder="••••••••"
                       />
@@ -464,8 +439,8 @@ function RegisterForm() {
                         )}
                       </button>
                     </div>
-                    {errors.password && (
-                      <p className="text-red-500 text-xs mt-0.5">{errors.password.message}</p>
+                    {formErrors.password && (
+                      <p className="text-red-500 text-xs mt-0.5">{formErrors.password}</p>
                     )}
                   </div>
 
@@ -477,9 +452,8 @@ function RegisterForm() {
                       <input
                         id="confirmPassword-mobile"
                         type={showConfirmPassword ? 'text' : 'password'}
-                        {...register('confirmPassword', {
-                          required: t.errors.confirmPasswordRequired
-                        })}
+                        value={formData.confirmPassword}
+                        onChange={(e) => updateField('confirmPassword', e.target.value)}
                         className="w-full px-3 py-2 pl-9 pr-9 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary focus:ring-opacity-20 outline-none transition-all duration-200 text-sm"
                         placeholder="••••••••"
                       />
@@ -495,33 +469,11 @@ function RegisterForm() {
                         )}
                       </button>
                     </div>
-                    {errors.confirmPassword && (
-                      <p className="text-red-500 text-xs mt-0.5">{errors.confirmPassword.message}</p>
+                    {formErrors.confirmPassword && (
+                      <p className="text-red-500 text-xs mt-0.5">{formErrors.confirmPassword}</p>
                     )}
                   </div>
 
-                  {/* Password Requirements - sempre visibile e statico */}
-                  <div className="bg-gray-50 p-3 rounded-lg">
-                    <h4 className="text-xs font-medium text-gray-700 mb-2">{t.passwordRequirements}</h4>
-                    <div className="space-y-1">
-                      <div className="flex items-center text-xs">
-                        <Check className="w-3 h-3 mr-1 flex-shrink-0 text-gray-300" />
-                        <span className="text-gray-400">{t.passwordMinLength}</span>
-                      </div>
-                      <div className="flex items-center text-xs">
-                        <Check className="w-3 h-3 mr-1 flex-shrink-0 text-gray-300" />
-                        <span className="text-gray-400">{t.passwordUppercase}</span>
-                      </div>
-                      <div className="flex items-center text-xs">
-                        <Check className="w-3 h-3 mr-1 flex-shrink-0 text-gray-300" />
-                        <span className="text-gray-400">{t.passwordLowercase}</span>
-                      </div>
-                      <div className="flex items-center text-xs">
-                        <Check className="w-3 h-3 mr-1 flex-shrink-0 text-gray-300" />
-                        <span className="text-gray-400">{t.passwordNumber}</span>
-                      </div>
-                    </div>
-                  </div>
 
                   {/* Submit Button */}
                   <div className="pt-1">
@@ -546,36 +498,19 @@ function RegisterForm() {
                     <label className="flex items-start">
                       <input
                         type="checkbox"
-                        {...register('terms', {
-                          required: t.errors.termsRequired
-                        })}
+                        checked={formData.terms}
+                        onChange={(e) => updateField('terms', e.target.checked)}
                         className="mt-0.5 mr-2 flex-shrink-0"
                       />
                       <span className="text-xs text-gray-600">
-                        {t.termsAccept}{' '}
-                        <Link href="/terms" className="text-primary hover:text-secondary">
-                          {t.termsLink}
-                        </Link>
-                        {' '}e la{' '}
-                        <Link href="/privacy" className="text-primary hover:text-secondary">
-                          {t.privacyLink}
-                        </Link>
+                        {t.termsAccept} termini e condizioni e la privacy policy
                       </span>
                     </label>
-                    {errors.terms && (
-                      <p className="text-red-500 text-xs mt-0.5">{errors.terms.message}</p>
+                    {formErrors.terms && (
+                      <p className="text-red-500 text-xs mt-0.5">{formErrors.terms}</p>
                     )}
                   </div>
 
-                  {/* Sign In Link */}
-                  <div className="text-center pt-2 border-t border-gray-100">
-                    <p className="text-gray-600 text-xs">
-                      {t.alreadyHaveAccount}{' '}
-                      <Link href="/login" className="text-primary hover:text-secondary font-semibold">
-                        {t.loginNow}
-                      </Link>
-                    </p>
-                  </div>
                 </div>
               </div>
             </form>
