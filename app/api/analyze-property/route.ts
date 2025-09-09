@@ -2,33 +2,66 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export async function POST(request: NextRequest) {
   try {
+    console.log('=== API CALL STARTED ===')
+    
     const { url } = await request.json()
+    console.log('Received URL:', url)
     
     if (!url) {
+      console.log('No URL provided')
       return NextResponse.json({ error: 'URL is required' }, { status: 400 })
     }
 
     // Valida che sia un URL valido
     try {
       new URL(url)
+      console.log('URL is valid')
     } catch {
+      console.log('Invalid URL format')
       return NextResponse.json({ error: 'Invalid URL' }, { status: 400 })
     }
 
     // Verifica che la chiave API sia configurata
     if (!process.env.OPENAI_API_KEY) {
+      console.log('OpenAI API key not configured')
       return NextResponse.json(
         { error: 'OpenAI API key not configured' },
         { status: 500 }
       )
     }
+    
+    console.log('OpenAI API key is configured')
 
-    // Analizza la pagina della proprietà
+    // Test semplice prima di fare l'analisi completa
+    console.log('Testing OpenAI connection...')
+    const { default: OpenAI } = await import('openai')
+    const openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+    })
+    
+    // Test con un prompt semplice
+    const testCompletion = await openai.chat.completions.create({
+      model: "gpt-4",
+      messages: [
+        {
+          role: "user",
+          content: "Rispondi solo con: 'Test OpenAI funziona'"
+        }
+      ],
+      max_tokens: 10,
+    })
+    
+    console.log('OpenAI test response:', testCompletion.choices[0]?.message?.content)
+    
+    // Se il test funziona, procedi con l'analisi
     const analysisResult = await analyzePropertyPage(url)
     
+    console.log('=== API CALL COMPLETED SUCCESSFULLY ===')
     return NextResponse.json(analysisResult)
   } catch (error) {
+    console.error('=== API CALL FAILED ===')
     console.error('Error analyzing property:', error)
+    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack')
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'
     return NextResponse.json(
       { error: `Failed to analyze property: ${errorMessage}` },
