@@ -44,8 +44,8 @@ function RegisterForm() {
     }
   }, [searchParams])
   
-  const { register, handleSubmit, formState: { errors } } = useForm<RegisterForm>()
-  const [password, setPassword] = useState('')
+  const { register, handleSubmit, formState: { errors }, watch } = useForm<RegisterForm>()
+  const password = watch('password')
   
 
   const onSubmit = async (data: RegisterForm) => {
@@ -78,7 +78,7 @@ function RegisterForm() {
   }
 
   const passwordRequirements = useMemo(() => [
-    { text: t.passwordMinLength, check: password?.length >= 8 },
+    { text: t.passwordMinLength, check: (password || '').length >= 8 },
     { text: t.passwordUppercase, check: /[A-Z]/.test(password || '') },
     { text: t.passwordLowercase, check: /[a-z]/.test(password || '') },
     { text: t.passwordNumber, check: /[0-9]/.test(password || '') },
@@ -198,10 +198,6 @@ function RegisterForm() {
                             message: t.errors.passwordPattern
                           }
                         })}
-                        onChange={(e) => {
-                          setPassword(e.target.value)
-                          register('password').onChange(e)
-                        }}
                         className="w-full px-4 py-2.5 pl-10 pr-10 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary focus:ring-opacity-20 outline-none transition-all duration-200"
                         placeholder="••••••••"
                       />
@@ -457,10 +453,6 @@ function RegisterForm() {
                             message: t.errors.passwordPattern
                           }
                         })}
-                        onChange={(e) => {
-                          setPassword(e.target.value)
-                          register('password').onChange(e)
-                        }}
                         className="w-full px-3 py-2 pl-9 pr-9 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary focus:ring-opacity-20 outline-none transition-all duration-200 text-sm"
                         placeholder="••••••••"
                       />
