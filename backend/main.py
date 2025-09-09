@@ -4534,7 +4534,7 @@ IMPORTANTE:
             if not response_text:
                 raise HTTPException(
                     status_code=500, 
-                    detail="Nessuna risposta da OpenAI"
+                    detail="Nessuna risposta da gpt-4o-mini"
                 )
             
             # Prova a parsare il JSON
@@ -4550,7 +4550,7 @@ IMPORTANTE:
                     except json.JSONDecodeError:
                         raise HTTPException(
                             status_code=500, 
-                            detail="Impossibile parsare la risposta JSON da OpenAI"
+                            detail="Impossibile parsare la risposta JSON da gpt-4o-mini"
                         )
                 else:
                     raise HTTPException(
@@ -4574,7 +4574,7 @@ IMPORTANTE:
             logger.error(f"OpenAI API error for user {current_user.id}: {e}")
             raise HTTPException(
                 status_code=500, 
-                detail=f"Errore nell'analisi con OpenAI: {str(e)}"
+                detail=f"Errore nell'analisi con gpt-4o-mini: {str(e)}"
             )
         
     except HTTPException:
@@ -4741,13 +4741,13 @@ IMPORTANTE:
 """
         
         try:
-            logger.info(f"🔍 Invio prompt a GPT-4...")
-            logger.info(f"🔍 Prompt: {prompt[:200]}...")
-            logger.info(f"🔍 Model: gpt-4")
-            logger.info(f"🔍 Max tokens: 3000")
+            logger.info(f"🔍 Invio prompt a gpt-4o-mini...")
+            logger.info(f"🔍 Prompt: {prompt[:2000]}...")
+            logger.info(f"🔍 Model: gpt-4o-mini")
+            logger.info(f"🔍 Con web search abilitato")
             
             completion = client.chat.completions.create(
-                model="gpt-4",
+                model="gpt-4o-mini",
                 messages=[
                     {
                         "role": "system",
@@ -4758,18 +4758,26 @@ IMPORTANTE:
                         "content": prompt
                     }
                 ],
+                tools=[
+                    {
+                        "type": "web_search"
+                    }
+                ],
+                tool_choice="auto",
                 temperature=0.1,
                 max_tokens=3000,
-                timeout=60,  # Timeout di 60 secondi
+                timeout=60
             )
             
-            logger.info(f"✅ Risposta ricevuta da GPT-4")
+            logger.info(f"✅ Risposta ricevuta da gpt-4o-mini")
             response_text = completion.choices[0].message.content.strip()
+            logger.info(f"🔍 Risposta completa: {response_text[:500]}...")
+            logger.info(f"🔍 Lunghezza risposta: {len(response_text)} caratteri")
             
             if not response_text:
                 raise HTTPException(
                     status_code=500, 
-                    detail="Nessuna risposta da OpenAI"
+                    detail="Nessuna risposta da gpt-4o-mini"
                 )
             
             # Prova a parsare il JSON
@@ -4785,7 +4793,7 @@ IMPORTANTE:
                     except json.JSONDecodeError:
                         raise HTTPException(
                             status_code=500, 
-                            detail="Impossibile parsare la risposta JSON da OpenAI"
+                            detail="Impossibile parsare la risposta JSON da gpt-4o-mini"
                         )
                 else:
                     raise HTTPException(
@@ -4817,7 +4825,7 @@ IMPORTANTE:
                 logger.error(f"Body: {e.body}")
             raise HTTPException(
                 status_code=500, 
-                detail=f"Errore nell'analisi con OpenAI: {str(e)}"
+                detail=f"Errore nell'analisi con gpt-4o-mini: {str(e)}"
             )
         
     except HTTPException:
