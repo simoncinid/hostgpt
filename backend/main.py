@@ -4347,6 +4347,10 @@ async def analyze_property_test(
         
         # Usa la stessa logica dell'endpoint principale
         return await analyze_property_logic(request, current_user, db)
+        
+    except Exception as e:
+        logger.error(f"❌ BACKEND TEST: Error: {e}")
+        raise HTTPException(status_code=500, detail=f"Errore nel test: {str(e)}")
 
 async def analyze_property_logic(request: PropertyAnalysisRequest, current_user, db: Session):
     """Logica principale per l'analisi della proprietà"""
