@@ -4320,6 +4320,9 @@ async def analyze_property(
 ):
     """Analizza una pagina di proprietà di affitto vacanze e estrae le informazioni"""
     try:
+        logger.info(f"🔍 BACKEND: Ricevuta richiesta di analisi proprietà")
+        logger.info(f"🔍 BACKEND: User ID: {current_user.id}")
+        logger.info(f"🔍 BACKEND: URL da analizzare: {request.url}")
         logger.info(f"Analyzing property for user {current_user.id}: {request.url}")
         
         # Verifica che l'utente abbia un abbonamento attivo

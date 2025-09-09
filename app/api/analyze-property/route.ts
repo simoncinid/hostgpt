@@ -4,9 +4,16 @@ import { authOptions } from '@/lib/auth'
 
 export async function POST(request: NextRequest) {
   try {
+    console.log('🔍 API analyze-property chiamata')
+    
     // Verifica l'autenticazione
     const session = await getServerSession(authOptions)
+    console.log('🔍 Session:', session ? 'Presente' : 'Assente')
+    console.log('🔍 User email:', session?.user?.email)
+    console.log('🔍 Access token:', session?.user?.accessToken ? 'Presente' : 'Assente')
+    
     if (!session?.user?.email) {
+      console.log('❌ Errore: Non autorizzato')
       return NextResponse.json({ error: 'Non autorizzato' }, { status: 401 })
     }
 
@@ -25,6 +32,9 @@ export async function POST(request: NextRequest) {
 
     // Chiama il backend Python
     const backendUrl = process.env.BACKEND_URL || 'http://localhost:8001'
+    console.log('🔍 Chiamando backend:', `${backendUrl}/api/analyze-property`)
+    console.log('🔍 URL da analizzare:', url)
+    
     const response = await fetch(`${backendUrl}/api/analyze-property`, {
       method: 'POST',
       headers: {
@@ -33,6 +43,8 @@ export async function POST(request: NextRequest) {
       },
       body: JSON.stringify({ url }),
     })
+    
+    console.log('🔍 Risposta backend status:', response.status)
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({ error: 'Errore sconosciuto' }))
