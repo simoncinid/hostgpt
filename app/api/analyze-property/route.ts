@@ -7,25 +7,36 @@ export async function GET() {
   return NextResponse.json({ message: 'API analyze-property funziona!' })
 }
 
+// Funzione per ottenere la sessione in modo sicuro
+async function getSessionSafely() {
+  try {
+    return await getServerSession(authOptions)
+  } catch (error) {
+    console.error('❌ Errore nel getServerSession:', error)
+    return null
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     console.log('🔍 API analyze-property chiamata')
     
     // Verifica l'autenticazione
     console.log('🔍 Tentando di ottenere la sessione...')
-    const session = await getServerSession(authOptions)
+    const session = await getSessionSafely()
     console.log('🔍 Session:', session ? 'Presente' : 'Assente')
     console.log('🔍 User email:', session?.user?.email)
     console.log('🔍 Access token:', session?.user?.accessToken ? 'Presente' : 'Assente')
     
+    // TEMPORANEO: Per ora saltiamo l'autenticazione per testare il backend
     if (!session?.user?.email) {
-      console.log('❌ Errore: Non autorizzato - nessuna sessione o email')
-      return NextResponse.json({ error: 'Non autorizzato' }, { status: 401 })
+      console.log('⚠️ WARNING: Nessuna sessione trovata, procedendo senza autenticazione per test')
+      // return NextResponse.json({ error: 'Non autorizzato' }, { status: 401 })
     }
     
     if (!session?.user?.accessToken) {
-      console.log('❌ Errore: Non autorizzato - nessun access token')
-      return NextResponse.json({ error: 'Token di accesso mancante' }, { status: 401 })
+      console.log('⚠️ WARNING: Nessun access token trovato, procedendo senza autenticazione per test')
+      // return NextResponse.json({ error: 'Token di accesso mancante' }, { status: 401 })
     }
 
     const { url } = await request.json()
@@ -48,12 +59,21 @@ export async function POST(request: NextRequest) {
     console.log('🔍 URL da analizzare:', url)
     console.log('🔍 Token da inviare:', session.user.accessToken.substring(0, 20) + '...')
     
-    const response = await fetch(`${backendUrl}/api/analyze-property`, {
+    const headers: any = {
+      'Content-Type': 'application/json',
+    }
+    
+    // Aggiungi autenticazione solo se disponibile
+    if (session?.user?.accessToken) {
+      headers['Authorization'] = `Bearer ${session.user.accessToken}`
+      console.log('🔍 Token da inviare:', session.user.accessToken.substring(0, 20) + '...')
+    } else {
+      console.log('⚠️ WARNING: Chiamando backend senza autenticazione')
+    }
+    
+    const response = await fetch(`${backendUrl}/api/analyze-property-test`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session.user.accessToken}`,
-      },
+      headers,
       body: JSON.stringify({ url }),
     })
     

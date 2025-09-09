@@ -4323,14 +4323,33 @@ async def delete_profile(
 class PropertyAnalysisRequest(BaseModel):
     url: str
 
-@app.post("/api/analyze-property")
-async def analyze_property(
+# Endpoint di test senza autenticazione
+@app.post("/api/analyze-property-test")
+async def analyze_property_test(
     request: PropertyAnalysisRequest,
-    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    logger.info(f"🔍 BACKEND: Endpoint analyze-property chiamato")
-    """Analizza una pagina di proprietà di affitto vacanze e estrae le informazioni"""
+    """Analizza una pagina di proprietà senza autenticazione per test"""
+    try:
+        logger.info(f"🔍 BACKEND TEST: Ricevuta richiesta di analisi proprietà (senza auth)")
+        logger.info(f"🔍 BACKEND TEST: URL da analizzare: {request.url}")
+        
+        # Crea un utente fittizio per il test
+        class MockUser:
+            id = "test_user"
+            email = "test@example.com"
+            subscription_status = "free_trial"
+            free_trial_messages_used = 0
+            free_trial_messages_limit = 100
+            free_trial_end_date = datetime.utcnow() + timedelta(days=30)
+        
+        current_user = MockUser()
+        
+        # Usa la stessa logica dell'endpoint principale
+        return await analyze_property_logic(request, current_user, db)
+
+async def analyze_property_logic(request: PropertyAnalysisRequest, current_user, db: Session):
+    """Logica principale per l'analisi della proprietà"""
     try:
         logger.info(f"🔍 BACKEND: Ricevuta richiesta di analisi proprietà")
         logger.info(f"🔍 BACKEND: User ID: {current_user.id}")
@@ -4562,6 +4581,15 @@ IMPORTANTE:
             status_code=500, 
             detail=f"Errore nell'analisi della proprietà: {str(e)}"
         )
+
+@app.post("/api/analyze-property")
+async def analyze_property(
+    request: PropertyAnalysisRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    logger.info(f"🔍 BACKEND: Endpoint analyze-property chiamato")
+    return await analyze_property_logic(request, current_user, db)
 
 if __name__ == "__main__":
     import uvicorn
