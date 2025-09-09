@@ -4615,7 +4615,44 @@ async def analyze_property(request: PropertyAnalysisRequest):
         logger.info(f"🔍 Invio URL direttamente a GPT-4: {request.url}")
         
         # Usa OpenAI per analizzare il contenuto
-        client = get_openai_client()
+        try:
+            client = get_openai_client()
+            logger.info(f"✅ OpenAI client creato")
+        except Exception as e:
+            logger.error(f"❌ Errore nella creazione del client OpenAI: {e}")
+            raise HTTPException(
+                status_code=500, 
+                detail=f"Errore nella creazione del client OpenAI: {str(e)}"
+            )
+        
+        # Verifica che l'API key sia configurata
+        if not client.api_key:
+            logger.error("❌ OpenAI API key non configurata!")
+            raise HTTPException(
+                status_code=500, 
+                detail="OpenAI API key non configurata"
+            )
+        
+        logger.info(f"✅ OpenAI client configurato correttamente")
+        logger.info(f"🔍 API Key presente: {client.api_key[:10]}...")
+        
+        # Verifica che l'API key sia valida
+        try:
+            import os
+            api_key = os.getenv('OPENAI_API_KEY')
+            if not api_key:
+                logger.error("❌ OPENAI_API_KEY non trovata nelle variabili d'ambiente!")
+                raise HTTPException(
+                    status_code=500, 
+                    detail="OPENAI_API_KEY non trovata nelle variabili d'ambiente"
+                )
+            logger.info(f"✅ OPENAI_API_KEY trovata nelle variabili d'ambiente")
+        except Exception as e:
+            logger.error(f"❌ Errore nella verifica dell'API key: {e}")
+            raise HTTPException(
+                status_code=500, 
+                detail=f"Errore nella verifica dell'API key: {str(e)}"
+            )
         
         prompt = f"""
 Analizza questa pagina di una proprietà di affitto vacanze e estrai tutte le informazioni disponibili.
@@ -4706,6 +4743,8 @@ IMPORTANTE:
         try:
             logger.info(f"🔍 Invio prompt a GPT-4...")
             logger.info(f"🔍 Prompt: {prompt[:200]}...")
+            logger.info(f"🔍 Model: gpt-4")
+            logger.info(f"🔍 Max tokens: 3000")
             
             completion = client.chat.completions.create(
                 model="gpt-4",
@@ -4721,6 +4760,7 @@ IMPORTANTE:
                 ],
                 temperature=0.1,
                 max_tokens=3000,
+                timeout=60,  # Timeout di 60 secondi
             )
             
             logger.info(f"✅ Risposta ricevuta da GPT-4")
@@ -4764,6 +4804,17 @@ IMPORTANTE:
             logger.error(f"OpenAI API error: {e}")
             logger.error(f"Error type: {type(e)}")
             logger.error(f"Error details: {str(e)}")
+            logger.error(f"Error repr: {repr(e)}")
+            if hasattr(e, 'response'):
+                logger.error(f"Response: {e.response}")
+            if hasattr(e, 'status_code'):
+                logger.error(f"Status code: {e.status_code}")
+            if hasattr(e, 'message'):
+                logger.error(f"Message: {e.message}")
+            if hasattr(e, 'error'):
+                logger.error(f"Error object: {e.error}")
+            if hasattr(e, 'body'):
+                logger.error(f"Body: {e.body}")
             raise HTTPException(
                 status_code=500, 
                 detail=f"Errore nell'analisi con OpenAI: {str(e)}"
