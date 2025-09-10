@@ -5,6 +5,7 @@ import { useStripe, useElements, CardElement } from '@stripe/react-stripe-js'
 import { motion } from 'framer-motion'
 import { CreditCard, Loader2, Check, AlertCircle, Shield } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { printOrders } from '@/lib/api'
 
 interface PaymentFormProps {
   amount: number
@@ -50,25 +51,14 @@ export default function PaymentForm({ amount, orderId, onSuccess, onError }: Pay
         throw new Error('Elemento carta non trovato')
       }
 
-      // Crea il Payment Intent
-      const response = await fetch('/api/print-orders/create-payment-intent', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          order_id: orderId,
-          amount: Math.round(amount * 100), // Stripe usa centesimi
-          currency: 'eur',
-        }),
-      })
+      // Crea il Payment Intent usando l'API
+      const response = await printOrders.createPaymentIntent(
+        orderId,
+        Math.round(amount * 100), // Stripe usa centesimi
+        'eur'
+      )
 
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.detail || 'Errore nella creazione del pagamento')
-      }
-
-      const { client_secret } = await response.json()
+      const { client_secret } = response.data
 
       // Conferma il pagamento
       const { error, paymentIntent } = await stripe.confirmCardPayment(client_secret, {

@@ -234,11 +234,48 @@ export const guardian = {
 }
 
 export const printOrders = {
-  create: (data: any) =>
-    api.post('/print-orders/create', data),
+  create: (data: any) => {
+    // Usa l'endpoint del frontend che fa proxy al backend
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
+    return fetch('/api/print-orders/create', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': token ? `Bearer ${token}` : '',
+      },
+      body: JSON.stringify(data),
+    }).then(response => {
+      if (!response.ok) {
+        return response.json().then(errorData => {
+          throw { response: { status: response.status, data: errorData } }
+        })
+      }
+      return response.json()
+    }).then(data => ({ data }))
+  },
   
   createPayment: (orderId: number, amount: number, currency: string = 'eur') =>
     api.post('/print-orders/create-payment', { order_id: orderId, amount, currency }),
+  
+  createPaymentIntent: (orderId: number, amount: number, currency: string = 'eur') => {
+    // Usa l'endpoint del frontend che fa proxy al backend
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
+    return fetch('/api/print-orders/create-payment-intent', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': token ? `Bearer ${token}` : '',
+      },
+      body: JSON.stringify({ order_id: orderId, amount, currency }),
+    }).then(response => {
+      if (!response.ok) {
+        return response.json().then(errorData => {
+          throw { response: { status: response.status, data: errorData } }
+        })
+      }
+      return response.json()
+    }).then(data => ({ data }))
+  },
   
   getOrders: () =>
     api.get('/print-orders'),
