@@ -129,6 +129,8 @@ Posizionare HostGPT ai primi posti per le ricerche di:
 - [x] Performance ottimizzate
 - [x] Mobile-friendly
 - [x] Multilingue (IT/EN)
+- [x] Pagina 404 personalizzata
+- [x] Build ottimizzato
 - [ ] Google Analytics configurato
 - [ ] Search Console verificato
 - [ ] Social media configurati
@@ -145,8 +147,8 @@ Posizionare HostGPT ai primi posti per le ricerche di:
 
 ### File Creati
 - `components/SEOHead.tsx`
-- `components/PerformanceOptimizer.tsx`
 - `components/SEOImage.tsx`
+- `app/not-found.tsx`
 - `lib/seo-translations.ts`
 - `lib/page-seo.ts`
 - `lib/social-seo.ts`

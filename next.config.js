@@ -40,6 +40,15 @@ const nextConfig = {
   experimental: {
     optimizeCss: true,
   },
+  // Optimize build output
+  output: 'standalone',
+  // Enable static optimization
+  trailingSlash: false,
+  // Optimize images
+  images: {
+    domains: ['localhost', 'api.hostgpt.it'],
+    formats: ['image/webp', 'image/avif'],
+  },
 }
 
 module.exports = nextConfig
