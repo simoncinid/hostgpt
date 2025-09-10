@@ -455,7 +455,7 @@ export default function ChatWidgetPage() {
       )}
 
       {/* Main Chat Area - FISSA */}
-      <div className="flex-1 flex flex-col max-w-4xl mx-auto w-full px-4 py-2 md:py-6 overflow-hidden justify-center md:justify-start">
+      <div className="flex-1 flex flex-col max-w-4xl mx-auto w-full px-4 pt-[6vh] md:py-6 overflow-hidden justify-center md:justify-start">
         <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl shadow-xl overflow-hidden flex flex-col h-[68vh] md:h-full transition-colors duration-300 mb-4 md:mb-0`}>
           {/* Error States */}
           {subscriptionCancelled && (
@@ -554,7 +554,7 @@ export default function ChatWidgetPage() {
           {/* Messages Area - FISSA */}
           {(!showWelcome || messages.length > 1) && !subscriptionCancelled && !freeTrialLimitReached && !freeTrialExpired && (
             <>
-              <div className="flex-1 overflow-y-auto p-2 md:p-6 space-y-4">
+              <div className="flex-1 overflow-y-auto chat-scrollbar p-2 md:p-6 space-y-4">
                 {messages.map((message, index) => (
                   <motion.div
                     key={message.id}

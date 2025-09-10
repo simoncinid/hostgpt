@@ -348,6 +348,32 @@
   @apply bg-gray-500;
 }
 
+/* Custom scrollbar per chat - più fine con colori rosa */
+.chat-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.chat-scrollbar::-webkit-scrollbar-track {
+  background-color: #fce7f3; /* rosa chiaro */
+  border-radius: 3px;
+}
+
+.chat-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #ec4899; /* rosa più scuro */
+  border-radius: 3px;
+}
+
+.chat-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: #db2777; /* rosa ancora più scuro al hover */
+}
+
+/* Per Firefox */
+.chat-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #ec4899 #fce7f3;
+}
+
 /* Animations */
 @keyframes fadeIn {
   from {
