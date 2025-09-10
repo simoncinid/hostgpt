@@ -1,0 +1,17 @@
+# Esempio di configurazione crontab per HostGPT
+# Aggiungi queste righe al tuo crontab con: crontab -e
+
+# Report mensili - ogni primo del mese alle 9:00
+0 9 1 * * /usr/bin/python3 /path/to/host-gpt/backend/monthly_reports_cron.py
+
+# Notifiche free trial - ogni giorno alle 10:00
+0 10 * * * curl -X POST http://localhost:8000/api/free-trial/send-notifications
+
+# Backup database (esempio) - ogni giorno alle 2:00
+0 2 * * * /path/to/backup_script.sh
+
+# Pulizia log vecchi (esempio) - ogni domenica alle 3:00
+0 3 * * 0 find /path/to/logs -name "*.log" -mtime +30 -delete
+
+# Per vedere il crontab attuale: crontab -l
+# Per rimuovere il crontab: crontab -r

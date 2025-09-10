@@ -21,6 +21,9 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.image import MIMEImage
 import secrets
 import logging
+import asyncio
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.triggers.cron import CronTrigger
 
 from database import get_db, engine
 from models import Base, User, Chatbot, Conversation, Message, KnowledgeBase, Analytics, GuardianAlert, GuardianAnalysis, ReferralCode
@@ -36,7 +39,12 @@ from email_templates_simple import (
     create_chatbot_ready_email_simple,
     create_free_trial_expired_email_simple,
     create_combined_subscription_confirmation_email_simple,
-    create_guardian_subscription_confirmation_email_simple
+    create_guardian_subscription_confirmation_email_simple,
+    create_purchase_confirmation_email_simple,
+    create_guardian_subscription_cancellation_email_simple,
+    create_subscription_reactivation_email_simple,
+    create_guardian_subscription_reactivation_email_simple,
+    create_monthly_report_email_simple
 )
 
 # Configurazione logging
@@ -49,6 +57,71 @@ Base.metadata.create_all(bind=engine)
 # Inizializza app FastAPI
 app = FastAPI(title="HostGPT API", version="1.0.0")
 
+# Inizializza scheduler
+scheduler = AsyncIOScheduler()
+
+async def send_monthly_reports_job():
+    """Job per inviare i report mensili"""
+    try:
+        logger.info("Starting monthly reports job...")
+        
+        # Crea una sessione database
+        from database import SessionLocal
+        db = SessionLocal()
+        
+        try:
+            # Ottieni tutti gli utenti con abbonamento attivo
+            active_users = db.query(User).filter(
+                User.subscription_status.in_(['active', 'cancelling'])
+            ).all()
+            
+            reports_sent = 0
+            
+            for user in active_users:
+                try:
+                    # Genera i dati del report
+                    report_data = generate_monthly_report_data(user.id, db)
+                    
+                    # Crea l'email
+                    email_body = create_monthly_report_email_simple(
+                        user_name=user.full_name or user.email,
+                        report_data=report_data,
+                        language=user.language or "it"
+                    )
+                    
+                    email_subject = "Your Monthly HostGPT Report 📊" if (user.language or "it") == "en" else "Il tuo Report Mensile HostGPT 📊"
+                    
+                    # Invia l'email
+                    await send_email(
+                        to_email=user.email,
+                        subject=email_subject,
+                        body=email_body
+                    )
+                    
+                    reports_sent += 1
+                    logger.info(f"Monthly report sent to user {user.id}")
+                    
+                except Exception as e:
+                    logger.error(f"Error sending report to user {user.id}: {e}")
+                    continue
+            
+            logger.info(f"Monthly reports job completed: {reports_sent} reports sent")
+            
+        finally:
+            db.close()
+            
+    except Exception as e:
+        logger.error(f"Error in monthly reports job: {e}")
+
+# Configura il job mensile
+scheduler.add_job(
+    send_monthly_reports_job,
+    trigger=CronTrigger(day=1, hour=9, minute=0),  # Ogni primo del mese alle 9:00
+    id='monthly_reports',
+    name='Send Monthly Reports',
+    replace_existing=True
+)
+
 # CORS
 app.add_middleware(
     CORSMiddleware,
@@ -57,6 +130,19 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Eventi di startup e shutdown
+@app.on_event("startup")
+async def startup_event():
+    """Avvia il scheduler all'avvio dell'app"""
+    scheduler.start()
+    logger.info("Scheduler started - Monthly reports will be sent on the 1st of each month at 9:00 AM")
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Ferma il scheduler allo shutdown dell'app"""
+    scheduler.shutdown()
+    logger.info("Scheduler stopped")
 
 # Configurazione
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -298,6 +384,79 @@ async def send_email(to_email: str, subject: str, body: str, attachments: Option
         logger.info(f"Email sent to {to_email}")
     except Exception as e:
         logger.error(f"Failed to send email: {e}")
+
+# ============= Monthly Report Service =============
+
+def generate_monthly_report_data(user_id: int, db: Session, start_date: datetime = None, end_date: datetime = None) -> dict:
+    """Genera i dati per il report mensile di un utente"""
+    try:
+        # Se non specificate, usa l'ultimo mese
+        if not end_date:
+            end_date = datetime.utcnow()
+        if not start_date:
+            start_date = end_date - timedelta(days=30)
+        
+        # Ottieni tutti i chatbot dell'utente
+        chatbots = db.query(Chatbot).filter(Chatbot.user_id == user_id).all()
+        
+        chatbot_data = []
+        total_conversations = 0
+        total_messages = 0
+        
+        for chatbot in chatbots:
+            # Statistiche del chatbot per il periodo
+            conversations_count = db.query(func.count(Conversation.id)).filter(
+                Conversation.chatbot_id == chatbot.id,
+                Conversation.started_at >= start_date,
+                Conversation.started_at <= end_date
+            ).scalar() or 0
+            
+            messages_count = db.query(func.count(Message.id)).join(Conversation).filter(
+                Conversation.chatbot_id == chatbot.id,
+                Message.timestamp >= start_date,
+                Message.timestamp <= end_date
+            ).scalar() or 0
+            
+            avg_messages = messages_count / max(conversations_count, 1)
+            
+            chatbot_data.append({
+                'name': chatbot.name,
+                'conversations': conversations_count,
+                'messages': messages_count,
+                'avg_messages': avg_messages
+            })
+            
+            total_conversations += conversations_count
+            total_messages += messages_count
+        
+        # Statistiche Guardian (se l'utente ha Guardian attivo)
+        guardian_stats = None
+        user = db.query(User).filter(User.id == user_id).first()
+        if user and is_guardian_active(user.guardian_subscription_status):
+            guardian_stats = guardian_service.get_guardian_statistics(user_id, db)
+        
+        # Periodo del report
+        period = f"{start_date.strftime('%d/%m/%Y')} - {end_date.strftime('%d/%m/%Y')}"
+        
+        return {
+            'period': period,
+            'chatbots': chatbot_data,
+            'total_conversations': total_conversations,
+            'total_messages': total_messages,
+            'active_chatbots': len([c for c in chatbot_data if c['conversations'] > 0]),
+            'guardian_stats': guardian_stats
+        }
+        
+    except Exception as e:
+        logger.error(f"Error generating monthly report data for user {user_id}: {e}")
+        return {
+            'period': 'Errore nel recupero dati',
+            'chatbots': [],
+            'total_conversations': 0,
+            'total_messages': 0,
+            'active_chatbots': 0,
+            'guardian_stats': None
+        }
 
 # ============= Guardian Service =============
 
@@ -1719,6 +1878,22 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
                     db.commit()
                     logger.info(f"User {user.id} combined subscription completed successfully")
                     
+                    # Invia email di conferma acquisto
+                    email_body = create_purchase_confirmation_email_simple(
+                        user_name=user.full_name or user.email,
+                        subscription_type="combined",
+                        amount="38€",
+                        language=user.language or "it"
+                    )
+                    email_subject = "Purchase completed successfully - HostGPT" if (user.language or "it") == "en" else "Acquisto completato con successo - HostGPT"
+                    
+                    import asyncio
+                    asyncio.create_task(send_email(
+                        to_email=user.email,
+                        subject=email_subject,
+                        body=email_body
+                    ))
+                    
                 else:
                     # Gestisci checkout singolo (comportamento esistente)
                     subscription = stripe.Subscription.retrieve(session['subscription'])
@@ -1733,6 +1908,22 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
                         else:
                             logger.warning(f"current_period_end non trovato per subscription {session['subscription']}")
                         logger.info(f"User {user.id} Guardian subscription updated with new subscription_id: {session['subscription']}")
+                        
+                        # Invia email di conferma acquisto Guardian
+                        email_body = create_purchase_confirmation_email_simple(
+                            user_name=user.full_name or user.email,
+                            subscription_type="guardian",
+                            amount="9€",
+                            language=user.language or "it"
+                        )
+                        email_subject = "Purchase completed successfully - HostGPT" if (user.language or "it") == "en" else "Acquisto completato con successo - HostGPT"
+                        
+                        import asyncio
+                        asyncio.create_task(send_email(
+                            to_email=user.email,
+                            subject=email_subject,
+                            body=email_body
+                        ))
                     else:
                         # Gestisci abbonamento HostGPT (default)
                         user.stripe_subscription_id = session['subscription']
@@ -1749,6 +1940,22 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
                             user.messages_reset_date = datetime.utcnow()
                         
                         logger.info(f"User {user.id} HostGPT subscription updated with new subscription_id: {session['subscription']}")
+                        
+                        # Invia email di conferma acquisto HostGPT
+                        email_body = create_purchase_confirmation_email_simple(
+                            user_name=user.full_name or user.email,
+                            subscription_type="hostgpt",
+                            amount="29€",
+                            language=user.language or "it"
+                        )
+                        email_subject = "Purchase completed successfully - HostGPT" if (user.language or "it") == "en" else "Acquisto completato con successo - HostGPT"
+                        
+                        import asyncio
+                        asyncio.create_task(send_email(
+                            to_email=user.email,
+                            subject=email_subject,
+                            body=email_body
+                        ))
                     
                     db.commit()
         
@@ -1963,7 +2170,7 @@ async def reactivate_subscription(
             db.commit()
             
             # Invia email di conferma riattivazione
-            email_body = create_subscription_activation_email_simple(current_user.full_name or current_user.email, current_user.language or "it")
+            email_body = create_subscription_reactivation_email_simple(current_user.full_name or current_user.email, current_user.language or "it")
             background_tasks.add_task(
                 send_email, 
                 current_user.email, 
@@ -3568,11 +3775,11 @@ async def reactivate_guardian_subscription(
             db.commit()
             
             # Invia email di conferma riattivazione
-            email_body = create_subscription_activation_email_simple(current_user.full_name or current_user.email, current_user.language or "it")
+            email_body = create_guardian_subscription_reactivation_email_simple(current_user.full_name or current_user.email, current_user.language or "it")
             background_tasks.add_task(
                 send_email, 
                 current_user.email, 
-"🎉 HostGPT Subscription Reactivated!" if (current_user.language or "it") == "en" else "🎉 Abbonamento HostGPT Riattivato!", 
+"🛡️ Guardian Subscription Reactivated!" if (current_user.language or "it") == "en" else "🛡️ Abbonamento Guardian Riattivato!", 
                 email_body
             )
             
@@ -3737,17 +3944,16 @@ async def cancel_guardian_subscription(
         logger.info(f"STEP 9: Inviando email di annullamento")
         # Invia email di annullamento abbonamento Guardian
         end_date = current_user.guardian_subscription_end_date.strftime("%d/%m/%Y") if current_user.guardian_subscription_end_date else "fine del periodo corrente"
-        email_body = f"""
-        <h2>Abbonamento Guardian Annullato</h2>
-        <p>Ciao {current_user.full_name},</p>
-        <p>Il tuo abbonamento HostGPT Guardian è stato annullato con successo.</p>
-        <p>Il servizio rimarrà attivo fino al {end_date}.</p>
-        <p>Grazie per aver utilizzato HostGPT Guardian!</p>
-        """
+        email_body = create_guardian_subscription_cancellation_email_simple(
+            current_user.full_name or current_user.email,
+            end_date,
+            current_user.language or "it"
+        )
+        email_subject = "😔 Guardian Subscription Cancelled" if (current_user.language or "it") == "en" else "😔 Abbonamento Guardian Annullato"
         background_tasks.add_task(
             send_email, 
             current_user.email, 
-            "😔 Abbonamento Guardian Annullato", 
+            email_subject, 
             email_body
         )
         logger.info(f"STEP 9 PASSED: Email inviata in background")
@@ -3833,6 +4039,135 @@ async def reactivate_guardian_subscription(
     except Exception as e:
         logger.error(f"Guardian subscription reactivate error: {e}")
         raise HTTPException(status_code=500, detail="Errore durante la riattivazione dell'abbonamento Guardian")
+
+# ============= Monthly Report APIs =============
+
+@app.get("/api/reports/monthly")
+async def get_monthly_report(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Ottieni il report mensile per l'utente corrente"""
+    try:
+        # Genera i dati del report
+        report_data = generate_monthly_report_data(current_user.id, db)
+        
+        return report_data
+        
+    except Exception as e:
+        logger.error(f"Error getting monthly report for user {current_user.id}: {e}")
+        raise HTTPException(status_code=500, detail="Errore nel recupero del report mensile")
+
+@app.post("/api/reports/monthly/send")
+async def send_monthly_report(
+    background_tasks: BackgroundTasks,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Invia il report mensile via email all'utente corrente"""
+    try:
+        # Genera i dati del report
+        report_data = generate_monthly_report_data(current_user.id, db)
+        
+        # Crea l'email
+        email_body = create_monthly_report_email_simple(
+            user_name=current_user.full_name or current_user.email,
+            report_data=report_data,
+            language=current_user.language or "it"
+        )
+        
+        email_subject = "Your Monthly HostGPT Report 📊" if (current_user.language or "it") == "en" else "Il tuo Report Mensile HostGPT 📊"
+        
+        # Invia l'email
+        background_tasks.add_task(
+            send_email,
+            current_user.email,
+            email_subject,
+            email_body
+        )
+        
+        logger.info(f"Monthly report email sent to user {current_user.id}")
+        
+        return {"status": "sent", "message": "Report mensile inviato con successo"}
+        
+    except Exception as e:
+        logger.error(f"Error sending monthly report for user {current_user.id}: {e}")
+        raise HTTPException(status_code=500, detail="Errore nell'invio del report mensile")
+
+@app.post("/api/reports/monthly/send-all")
+async def send_monthly_reports_to_all_users(
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db)
+):
+    """Invia il report mensile a tutti gli utenti attivi (da chiamare via cron job)"""
+    try:
+        # Ottieni tutti gli utenti con abbonamento attivo
+        active_users = db.query(User).filter(
+            User.subscription_status.in_(['active', 'cancelling'])
+        ).all()
+        
+        reports_sent = 0
+        
+        for user in active_users:
+            try:
+                # Genera i dati del report
+                report_data = generate_monthly_report_data(user.id, db)
+                
+                # Crea l'email
+                email_body = create_monthly_report_email_simple(
+                    user_name=user.full_name or user.email,
+                    report_data=report_data,
+                    language=user.language or "it"
+                )
+                
+                email_subject = "Your Monthly HostGPT Report 📊" if (user.language or "it") == "en" else "Il tuo Report Mensile HostGPT 📊"
+                
+                # Invia l'email
+                background_tasks.add_task(
+                    send_email,
+                    user.email,
+                    email_subject,
+                    email_body
+                )
+                
+                reports_sent += 1
+                logger.info(f"Monthly report queued for user {user.id}")
+                
+            except Exception as e:
+                logger.error(f"Error processing monthly report for user {user.id}: {e}")
+                continue
+        
+        logger.info(f"Monthly reports sent to {reports_sent} users")
+        
+        return {
+            "status": "completed",
+            "reports_sent": reports_sent,
+            "total_users": len(active_users)
+        }
+        
+    except Exception as e:
+        logger.error(f"Error sending monthly reports to all users: {e}")
+        raise HTTPException(status_code=500, detail="Errore nell'invio dei report mensili")
+
+@app.get("/api/reports/monthly/test/{user_id}")
+async def test_monthly_report(
+    user_id: int,
+    db: Session = Depends(get_db)
+):
+    """Endpoint di test per verificare il report mensile di un utente specifico"""
+    try:
+        # Genera i dati del report
+        report_data = generate_monthly_report_data(user_id, db)
+        
+        return {
+            "user_id": user_id,
+            "report_data": report_data,
+            "test_mode": True
+        }
+        
+    except Exception as e:
+        logger.error(f"Error testing monthly report for user {user_id}: {e}")
+        raise HTTPException(status_code=500, detail="Errore nel test del report mensile")
 
 # ============= Guardian Analytics APIs =============
 

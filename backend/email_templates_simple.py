@@ -601,3 +601,294 @@ def create_guardian_subscription_confirmation_email_simple(user_name: str, langu
     """
     
     return get_simple_email_template(content, language)
+
+def create_subscription_reactivation_email_simple(user_name: str, language: str = "it") -> str:
+    """Template email per riattivazione abbonamento HostGPT semplificato"""
+    
+    if language == "en":
+        greeting = "Welcome back! 🎉"
+        message = f"Hi <strong>{user_name}</strong>, your HostGPT subscription has been successfully reactivated! We're glad to have you back."
+        cta_text = "Go to Dashboard"
+        reactivation_info = "Your HostGPT Pro subscription is now active again. You have access to 1000 monthly messages, unlimited chatbots, and all premium features. Your data and chatbots have been restored."
+    else:  # it
+        greeting = "Bentornato! 🎉"
+        message = f"Ciao <strong>{user_name}</strong>, il tuo abbonamento HostGPT è stato riattivato con successo! Siamo felici di averti di nuovo con noi."
+        cta_text = "Vai alla Dashboard"
+        reactivation_info = "Il tuo abbonamento HostGPT Pro è ora di nuovo attivo. Hai accesso a 1000 messaggi mensili, chatbot illimitati e tutte le funzionalità premium. I tuoi dati e chatbot sono stati ripristinati."
+    
+    content = f"""
+        <div class="greeting">{greeting}</div>
+        
+        <div class="message">
+            {message}
+        </div>
+        
+        <div style="background-color: {HOSTGPT_SIMPLE_COLORS['light_gray']}; padding: 15px; border-radius: 8px; margin: 15px 0;">
+            {reactivation_info}
+        </div>
+        
+        <div style="text-align: center;">
+            <a href="https://hostgpt.com/dashboard" class="cta-button">
+                {cta_text}
+            </a>
+        </div>
+        
+        <div class="message">
+            Grazie per essere tornato! Continua a migliorare l'esperienza dei tuoi ospiti con HostGPT.
+        </div>
+    """
+    
+    return get_simple_email_template(content, language)
+
+def create_monthly_report_email_simple(user_name: str, report_data: dict, language: str = "it") -> str:
+    """Template email per report mensile semplificato"""
+    
+    if language == "en":
+        greeting = f"Your Monthly HostGPT Report 📊"
+        message = f"Hi <strong>{user_name}</strong>, here's your monthly report with all the activity from your chatbots and Guardian system."
+        cta_text = "View Full Dashboard"
+        
+        # Dati chatbot
+        chatbot_section = ""
+        if report_data.get('chatbots'):
+            chatbot_section = "<h3 style='color: #FF5A5F; margin: 20px 0 10px 0;'>🤖 Your Chatbots Activity</h3>"
+            for chatbot in report_data['chatbots']:
+                chatbot_section += f"""
+                <div style="background-color: {HOSTGPT_SIMPLE_COLORS['light_gray']}; padding: 15px; border-radius: 8px; margin: 10px 0;">
+                    <strong>{chatbot['name']}</strong><br>
+                    • Conversations: {chatbot['conversations']}<br>
+                    • Messages: {chatbot['messages']}<br>
+                    • Avg messages per conversation: {chatbot['avg_messages']:.1f}
+                </div>
+                """
+        
+        # Dati Guardian
+        guardian_section = ""
+        if report_data.get('guardian_stats'):
+            guardian = report_data['guardian_stats']
+            guardian_section = f"""
+            <h3 style='color: #8b5cf6; margin: 20px 0 10px 0;'>🛡️ Guardian Protection</h3>
+            <div style="background-color: {HOSTGPT_SIMPLE_COLORS['light_gray']}; padding: 15px; border-radius: 8px; margin: 10px 0;">
+                • Total guests monitored: {guardian['total_guests']}<br>
+                • High-risk guests detected: {guardian['high_risk_guests']}<br>
+                • Issues resolved: {guardian['resolved_issues']}<br>
+                • Average satisfaction: {guardian['avg_satisfaction']}/5.0<br>
+                • Negative reviews prevented: {guardian['negative_reviews_prevented']}
+            </div>
+            """
+        
+        # Riepilogo
+        summary_text = f"""
+        <h3 style='color: #FF5A5F; margin: 20px 0 10px 0;'>📈 Monthly Summary</h3>
+        <div style="background-color: {HOSTGPT_SIMPLE_COLORS['secondary']}; padding: 15px; border-radius: 8px; margin: 10px 0;">
+            • Total conversations: {report_data.get('total_conversations', 0)}<br>
+            • Total messages: {report_data.get('total_messages', 0)}<br>
+            • Active chatbots: {report_data.get('active_chatbots', 0)}<br>
+            {f"• Guardian interventions: {guardian['resolved_issues']}" if report_data.get('guardian_stats') else ""}
+        </div>
+        """
+        
+    else:  # it
+        greeting = f"Il tuo Report Mensile HostGPT 📊"
+        message = f"Ciao <strong>{user_name}</strong>, ecco il tuo report mensile con tutta l'attività dei tuoi chatbot e del sistema Guardian."
+        cta_text = "Vai alla Dashboard"
+        
+        # Dati chatbot
+        chatbot_section = ""
+        if report_data.get('chatbots'):
+            chatbot_section = "<h3 style='color: #FF5A5F; margin: 20px 0 10px 0;'>🤖 Attività dei tuoi Chatbot</h3>"
+            for chatbot in report_data['chatbots']:
+                chatbot_section += f"""
+                <div style="background-color: {HOSTGPT_SIMPLE_COLORS['light_gray']}; padding: 15px; border-radius: 8px; margin: 10px 0;">
+                    <strong>{chatbot['name']}</strong><br>
+                    • Conversazioni: {chatbot['conversations']}<br>
+                    • Messaggi: {chatbot['messages']}<br>
+                    • Media messaggi per conversazione: {chatbot['avg_messages']:.1f}
+                </div>
+                """
+        
+        # Dati Guardian
+        guardian_section = ""
+        if report_data.get('guardian_stats'):
+            guardian = report_data['guardian_stats']
+            guardian_section = f"""
+            <h3 style='color: #8b5cf6; margin: 20px 0 10px 0;'>🛡️ Protezione Guardian</h3>
+            <div style="background-color: {HOSTGPT_SIMPLE_COLORS['light_gray']}; padding: 15px; border-radius: 8px; margin: 10px 0;">
+                • Ospiti monitorati: {guardian['total_guests']}<br>
+                • Ospiti ad alto rischio rilevati: {guardian['high_risk_guests']}<br>
+                • Problemi risolti: {guardian['resolved_issues']}<br>
+                • Soddisfazione media: {guardian['avg_satisfaction']}/5.0<br>
+                • Recensioni negative prevenute: {guardian['negative_reviews_prevented']}
+            </div>
+            """
+        
+        # Riepilogo
+        summary_text = f"""
+        <h3 style='color: #FF5A5F; margin: 20px 0 10px 0;'>📈 Riepilogo Mensile</h3>
+        <div style="background-color: {HOSTGPT_SIMPLE_COLORS['secondary']}; padding: 15px; border-radius: 8px; margin: 10px 0;">
+            • Conversazioni totali: {report_data.get('total_conversations', 0)}<br>
+            • Messaggi totali: {report_data.get('total_messages', 0)}<br>
+            • Chatbot attivi: {report_data.get('active_chatbots', 0)}<br>
+            {f"• Interventi Guardian: {guardian['resolved_issues']}" if report_data.get('guardian_stats') else ""}
+        </div>
+        """
+    
+    content = f"""
+        <div class="greeting">{greeting}</div>
+        
+        <div class="message">
+            {message}
+        </div>
+        
+        {summary_text}
+        
+        {chatbot_section}
+        
+        {guardian_section}
+        
+        <div style="text-align: center;">
+            <a href="https://hostgpt.com/dashboard" class="cta-button">
+                {cta_text}
+            </a>
+        </div>
+        
+        <div class="message" style="font-size: 14px;">
+            <strong>Periodo:</strong> {report_data.get('period', 'Ultimo mese')}
+        </div>
+        
+        <div class="message">
+            Continua a migliorare l'esperienza dei tuoi ospiti con HostGPT! 🏠✨
+        </div>
+    """
+    
+    return get_simple_email_template(content, language)
+
+def create_guardian_subscription_reactivation_email_simple(user_name: str, language: str = "it") -> str:
+    """Template email per riattivazione abbonamento Guardian semplificato"""
+    
+    if language == "en":
+        greeting = "Welcome back to Guardian! 🛡️"
+        message = f"Hi <strong>{user_name}</strong>, your HostGPT Guardian subscription has been successfully reactivated! We're glad to have you back protecting your guests."
+        cta_text = "Go to Guardian Dashboard"
+        reactivation_info = "Your Guardian subscription is now active again. You have access to automatic guest monitoring, satisfaction alerts, and all Guardian features. Your monitoring history has been restored."
+    else:  # it
+        greeting = "Bentornato a Guardian! 🛡️"
+        message = f"Ciao <strong>{user_name}</strong>, il tuo abbonamento HostGPT Guardian è stato riattivato con successo! Siamo felici di averti di nuovo a proteggere i tuoi ospiti."
+        cta_text = "Vai alla Dashboard Guardian"
+        reactivation_info = "Il tuo abbonamento Guardian è ora di nuovo attivo. Hai accesso al monitoraggio automatico degli ospiti, agli alert di soddisfazione e a tutte le funzionalità Guardian. La tua cronologia di monitoraggio è stata ripristinata."
+    
+    content = f"""
+        <div class="greeting">{greeting}</div>
+        
+        <div class="message">
+            {message}
+        </div>
+        
+        <div style="background-color: {HOSTGPT_SIMPLE_COLORS['light_gray']}; padding: 15px; border-radius: 8px; margin: 15px 0;">
+            {reactivation_info}
+        </div>
+        
+        <div style="text-align: center;">
+            <a href="https://hostgpt.com/dashboard/guardian" class="cta-button">
+                {cta_text}
+            </a>
+        </div>
+        
+        <div class="message">
+            Grazie per essere tornato! Continua a proteggere la soddisfazione dei tuoi ospiti con Guardian.
+        </div>
+    """
+    
+    return get_simple_email_template(content, language)
+
+def create_guardian_subscription_cancellation_email_simple(user_name: str, end_date: str, language: str = "it") -> str:
+    """Template email per annullamento abbonamento Guardian semplificato"""
+    
+    if language == "en":
+        greeting = f"We'll miss you, {user_name}! 😔"
+        message = f"We've received your request to cancel your HostGPT Guardian subscription. We're sorry to see you go."
+        cta_text = "Reactivate Your Guardian Subscription"
+        important_note = f"Your Guardian subscription will remain active until: {end_date}. You can continue to use all Guardian features until that date. Your data and monitoring history will not be deleted. You can reactivate your Guardian subscription at any time."
+    else:  # it
+        greeting = f"Ci mancherai, {user_name}! 😔"
+        message = f"Abbiamo ricevuto la tua richiesta di annullamento dell'abbonamento HostGPT Guardian. Siamo dispiaciuti di vederti andare via."
+        cta_text = "Riattiva il tuo Abbonamento Guardian"
+        important_note = f"Il tuo abbonamento Guardian rimarrà attivo fino al: {end_date}. Potrai continuare ad utilizzare tutte le funzionalità Guardian fino a quella data. I tuoi dati e la cronologia di monitoraggio non verranno cancellati. Puoi riattivare l'abbonamento Guardian in qualsiasi momento."
+    
+    content = f"""
+        <div class="greeting">{greeting}</div>
+        
+        <div class="message">
+            {message}
+        </div>
+        
+        <div style="background-color: {HOSTGPT_SIMPLE_COLORS['light_gray']}; padding: 15px; border-radius: 8px; margin: 15px 0;">
+            <strong>{important_note}</strong>
+        </div>
+        
+        <div style="text-align: center;">
+            <a href="https://hostgpt.com/dashboard/guardian" class="cta-button">
+                {cta_text}
+            </a>
+        </div>
+        
+        <div class="message">
+            Grazie per aver utilizzato HostGPT Guardian. Speriamo di rivederti presto!
+        </div>
+    """
+    
+    return get_simple_email_template(content, language)
+
+def create_purchase_confirmation_email_simple(user_name: str, subscription_type: str, amount: str, language: str = "it") -> str:
+    """Template email per confermare l'acquisto avvenuto semplificato"""
+    
+    if language == "en":
+        greeting = "Purchase completed successfully! 🎉"
+        message = f"Hi <strong>{user_name}</strong>, your purchase has been completed successfully! Thank you for choosing HostGPT."
+        cta_text = "Go to Dashboard"
+        
+        if subscription_type == "hostgpt":
+            purchase_info = f"Your HostGPT Pro subscription has been activated for {amount}/month. You now have access to 1000 monthly messages, unlimited chatbots, and all premium features."
+        elif subscription_type == "guardian":
+            purchase_info = f"Your Guardian subscription has been activated for {amount}/month. You now have access to automatic guest monitoring and satisfaction alerts."
+        elif subscription_type == "combined":
+            purchase_info = f"Your complete HostGPT Pro + Guardian package has been activated for {amount}/month. You now have access to all features and advanced guest protection."
+        else:
+            purchase_info = f"Your subscription has been activated for {amount}/month. You now have access to all premium features."
+    else:  # it
+        greeting = "Acquisto completato con successo! 🎉"
+        message = f"Ciao <strong>{user_name}</strong>, il tuo acquisto è stato completato con successo! Grazie per aver scelto HostGPT."
+        cta_text = "Vai alla Dashboard"
+        
+        if subscription_type == "hostgpt":
+            purchase_info = f"Il tuo abbonamento HostGPT Pro è stato attivato per {amount}/mese. Ora hai accesso a 1000 messaggi mensili, chatbot illimitati e tutte le funzionalità premium."
+        elif subscription_type == "guardian":
+            purchase_info = f"Il tuo abbonamento Guardian è stato attivato per {amount}/mese. Ora hai accesso al monitoraggio automatico degli ospiti e agli alert di soddisfazione."
+        elif subscription_type == "combined":
+            purchase_info = f"Il tuo pacchetto completo HostGPT Pro + Guardian è stato attivato per {amount}/mese. Ora hai accesso a tutte le funzionalità e alla protezione avanzata degli ospiti."
+        else:
+            purchase_info = f"Il tuo abbonamento è stato attivato per {amount}/mese. Ora hai accesso a tutte le funzionalità premium."
+    
+    content = f"""
+        <div class="greeting">{greeting}</div>
+        
+        <div class="message">
+            {message}
+        </div>
+        
+        <div style="background-color: {HOSTGPT_SIMPLE_COLORS['light_gray']}; padding: 15px; border-radius: 8px; margin: 15px 0;">
+            {purchase_info}
+        </div>
+        
+        <div style="text-align: center;">
+            <a href="https://hostgpt.com/dashboard" class="cta-button">
+                {cta_text}
+            </a>
+        </div>
+        
+        <div class="message" style="font-size: 14px;">
+            <strong>Fatturazione:</strong> Il tuo abbonamento si rinnoverà automaticamente ogni mese. Puoi gestire le impostazioni di fatturazione dalla tua dashboard in qualsiasi momento.
+        </div>
+    """
+    
+    return get_simple_email_template(content, language)
