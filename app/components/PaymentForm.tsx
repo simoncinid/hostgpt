@@ -88,7 +88,7 @@ export default function PaymentForm({ amount, orderId, onSuccess, onError }: Pay
       }
     } catch (error) {
       console.error('Errore checkout:', error)
-      onError(error.message || 'Errore durante il pagamento')
+      onError(error instanceof Error ? error.message : 'Errore durante il pagamento')
     } finally {
       setIsProcessing(false)
     }
