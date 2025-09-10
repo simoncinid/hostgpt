@@ -38,7 +38,7 @@ const nextConfig = {
   compress: true,
   // Enable experimental features for better SEO
   experimental: {
-    optimizeCss: true,
+    // optimizeCss: true, // Removed to avoid critters dependency
   },
   // Optimize build output
   output: 'standalone',
