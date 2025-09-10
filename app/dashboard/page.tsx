@@ -422,7 +422,7 @@ function DashboardContent() {
               <img
                 src={`data:image/png;base64,${currentQR.qr}`}
                 alt="QR Code"
-                className="w-full h-auto max-h-[200px] md:max-h-[250px] object-contain"
+                className="w-full h-auto max-h-[180px] md:max-h-[200px] object-contain"
                 id="qr-code-image"
               />
             </div>

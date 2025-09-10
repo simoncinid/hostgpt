@@ -298,50 +298,40 @@ function GuardianContent() {
                 {/* Sezione Benefici Guardian */}
                 <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl shadow-lg p-8 mb-8">
                   <div className="text-center mb-6">
-                    <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <Shield className="w-8 h-8 text-white" />
-                    </div>
-                    <h2 className="text-3xl font-bold text-gray-900 mb-2">Guardian Service</h2>
-                    <p className="text-lg text-gray-600">Monitoraggio intelligente delle conversazioni</p>
+                    <h2 className="text-3xl font-bold text-gray-900 mb-2">{t.guardian.benefits.title}</h2>
+                    <p className="text-lg text-gray-600">{t.guardian.benefits.subtitle}</p>
                   </div>
 
-                  {/* Statistica Principale */}
+                  {/* Main Statistic */}
                   <div className="bg-white rounded-xl p-6 mb-6 text-center shadow-sm">
-                    <div className="text-4xl font-bold text-green-600 mb-2">73%</div>
-                    <p className="text-lg text-gray-800 font-semibold">Riduzione degli ospiti insoddisfatti</p>
+                    <div className="text-4xl font-bold text-green-600 mb-2">{t.guardian.benefits.statistic.percentage}</div>
+                    <p className="text-lg text-gray-800 font-semibold">{t.guardian.benefits.statistic.description}</p>
                   </div>
 
-                  {/* Benefici Essenziali */}
+                  {/* Essential Benefits */}
                   <div className="grid md:grid-cols-2 gap-6">
                     <div className="bg-white rounded-xl p-6 shadow-sm">
                       <h3 className="text-xl font-semibold text-gray-900 mb-3 flex items-center">
                         <Target className="w-5 h-5 text-green-500 mr-2" />
-                        Cos'è Guardian?
+                        {t.guardian.benefits.whatIs.title}
                       </h3>
                       <p className="text-gray-700 leading-relaxed">
-                        Monitora in tempo reale le conversazioni tra ospiti e chatbot. 
-                        Rileva automaticamente problemi e frustrazioni prima che diventino recensioni negative.
+                        {t.guardian.benefits.whatIs.description}
                       </p>
                     </div>
 
                     <div className="bg-white rounded-xl p-6 shadow-sm">
                       <h3 className="text-xl font-semibold text-gray-900 mb-3 flex items-center">
                         <TrendingUp className="w-5 h-5 text-green-500 mr-2" />
-                        Benefici Principali
+                        {t.guardian.benefits.keyBenefits.title}
                       </h3>
                       <ul className="space-y-2 text-gray-700">
-                        <li className="flex items-center">
-                          <CheckCircle className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" />
-                          Prevenzione recensioni negative
-                        </li>
-                        <li className="flex items-center">
-                          <CheckCircle className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" />
-                          Risoluzione problemi in tempo reale
-                        </li>
-                        <li className="flex items-center">
-                          <CheckCircle className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" />
-                          Monitoraggio automatico 24/7
-                        </li>
+                        {t.guardian.benefits.keyBenefits.items.map((item, index) => (
+                          <li key={index} className="flex items-center">
+                            <CheckCircle className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" />
+                            {item}
+                          </li>
+                        ))}
                       </ul>
                     </div>
                   </div>

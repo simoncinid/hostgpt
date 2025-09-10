@@ -786,6 +786,22 @@ export interface Translations {
       problemSolved: string
       negativeReviewAvoided: string
     }
+    benefits: {
+      title: string
+      subtitle: string
+      statistic: {
+        percentage: string
+        description: string
+      }
+      whatIs: {
+        title: string
+        description: string
+      }
+      keyBenefits: {
+        title: string
+        items: string[]
+      }
+    }
     success: {
       subscriptionActivated: string
       alertResolved: string
@@ -1786,6 +1802,26 @@ export const translations: Record<Language, Translations> = {
         phoneCall: "📞 Host chiama l'ospite",
         problemSolved: "🎉 Problema risolto!",
         negativeReviewAvoided: "Recensione negativa evitata"
+      },
+      benefits: {
+        title: "Guardian Service",
+        subtitle: "Monitoraggio intelligente delle conversazioni",
+        statistic: {
+          percentage: "73%",
+          description: "Riduzione degli ospiti insoddisfatti"
+        },
+        whatIs: {
+          title: "Cos'è Guardian?",
+          description: "Monitora in tempo reale le conversazioni tra ospiti e chatbot. Rileva automaticamente problemi e frustrazioni prima che diventino recensioni negative."
+        },
+        keyBenefits: {
+          title: "Benefici Principali",
+          items: [
+            "Prevenzione recensioni negative",
+            "Risoluzione problemi in tempo reale",
+            "Monitoraggio automatico 24/7"
+          ]
+        }
       },
       success: {
         subscriptionActivated: "🎉 Abbonamento Guardian attivato con successo!",
@@ -2799,6 +2835,26 @@ export const translations: Record<Language, Translations> = {
         phoneCall: "📞 Host calls guest",
         problemSolved: "🎉 Problem solved!",
         negativeReviewAvoided: "Negative review avoided"
+      },
+      benefits: {
+        title: "Guardian Service",
+        subtitle: "Intelligent conversation monitoring",
+        statistic: {
+          percentage: "73%",
+          description: "Reduction in unsatisfied guests"
+        },
+        whatIs: {
+          title: "What is Guardian?",
+          description: "Monitors in real-time conversations between guests and chatbot. Automatically detects problems and frustrations before they become negative reviews."
+        },
+        keyBenefits: {
+          title: "Key Benefits",
+          items: [
+            "Prevent negative reviews",
+            "Real-time problem resolution",
+            "Automatic 24/7 monitoring"
+          ]
+        }
       },
       success: {
         subscriptionActivated: "🎉 Guardian subscription activated successfully!",

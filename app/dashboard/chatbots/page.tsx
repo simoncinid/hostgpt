@@ -200,7 +200,7 @@ export default function ChatbotsListPage() {
             <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-white rounded-2xl p-4 md:p-6 max-w-md w-full mx-4 md:h-[80vh] md:overflow-y-auto">
               <h3 className="text-lg md:text-xl font-bold mb-2 md:mb-3">QR Code Chatbot</h3>
               <div className="bg-gray-100 p-2 md:p-3 rounded-lg mb-2 md:mb-3">
-                <img src={`data:image/png;base64,${currentQR.qr}`} alt="QR Code" className="w-full h-auto max-h-[200px] md:max-h-[250px] object-contain" />
+                <img src={`data:image/png;base64,${currentQR.qr}`} alt="QR Code" className="w-full h-auto max-h-[180px] md:max-h-[200px] object-contain" />
               </div>
               <div className="flex items-center gap-1 md:gap-2 p-1 md:p-2 bg-gray-100 rounded-lg mb-2 md:mb-3">
                 <input type="text" value={currentQR.url} readOnly className="flex-1 bg-transparent text-xs md:text-sm" />
