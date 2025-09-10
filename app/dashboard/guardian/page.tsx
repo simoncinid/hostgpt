@@ -292,169 +292,138 @@ function GuardianContent() {
                 <div className="p-4 md:p-8">
           <div className="max-w-4xl mx-auto space-y-6">
 
-            {/* Se non abbonato, mostra animazione (ma non se è in cancellazione) */}
+            {/* Se non abbonato, mostra informazioni sui benefici del Guardian */}
             {!guardianStatus?.is_active ? (
               <div className="max-w-4xl mx-auto">
-                {/* Animazione esempio */}
+                {/* Sezione Benefici Guardian */}
                 <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl shadow-lg p-8 mb-8">
-                  <div className="bg-white rounded-xl p-6 relative overflow-hidden">
-                    <div className="text-left min-h-[280px]">
-                      {/* Fase 1: Chat normale con messaggi che arrivano uno per volta (0-6s) */}
-                      <motion.div
-                        initial={{ opacity: 1 }}
-                        animate={{ opacity: [1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] }}
-                        transition={{ duration: 24, repeat: Infinity, ease: "easeInOut" }}
-                        className="space-y-4"
-                      >
-                        {/* Messaggio 1 - User (0-1s) */}
-                        <motion.div
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1] }}
-                          transition={{ duration: 24, repeat: Infinity, ease: "easeInOut" }}
-                          className="flex items-start justify-end"
-                        >
-                          <div className="flex items-start max-w-[70%] flex-row-reverse">
-                            <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-gradient-to-r from-rose-500 to-pink-600 text-white ml-3">
-                              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-                              </svg>
-                            </div>
-                            <div className="rounded-2xl px-4 py-3 bg-gradient-to-r from-rose-500 to-pink-600 text-white rounded-br-sm">
-                              <p className="whitespace-pre-wrap">{t.guardian.demo.messages.guest}</p>
-                              <p className="text-xs mt-1 text-white/70">{t.guardian.demo.messages.time}</p>
-                            </div>
+                  <div className="text-center mb-8">
+                    <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <Shield className="w-8 h-8 text-white" />
+                    </div>
+                    <h2 className="text-3xl font-bold text-gray-900 mb-2">Guardian Service</h2>
+                    <p className="text-lg text-gray-600">Il tuo assistente intelligente per la gestione degli ospiti</p>
+                  </div>
+
+                  {/* Statistica Principale */}
+                  <div className="bg-white rounded-xl p-6 mb-8 text-center shadow-sm">
+                    <div className="text-4xl font-bold text-green-600 mb-2">73%</div>
+                    <p className="text-lg text-gray-800 font-semibold">Riduzione degli ospiti insoddisfatti</p>
+                    <p className="text-sm text-gray-500 mt-1">Grazie al monitoraggio proattivo delle conversazioni</p>
+                  </div>
+
+                  {/* Benefici in Italiano */}
+                  <div className="grid md:grid-cols-2 gap-6 mb-8">
+                    <div className="bg-white rounded-xl p-6 shadow-sm">
+                      <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                        <Target className="w-5 h-5 text-green-500 mr-2" />
+                        Cos'è Guardian?
+                      </h3>
+                      <p className="text-gray-700 leading-relaxed mb-4">
+                        Guardian è un sistema di monitoraggio intelligente che analizza in tempo reale tutte le conversazioni 
+                        tra i tuoi ospiti e il chatbot. Rileva automaticamente situazioni problematiche, frustrazioni o 
+                        potenziali recensioni negative prima che si trasformino in problemi gravi.
+                      </p>
+                      <ul className="space-y-2 text-sm text-gray-600">
+                        <li className="flex items-center">
+                          <CheckCircle className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" />
+                          Monitoraggio 24/7 delle conversazioni
+                        </li>
+                        <li className="flex items-center">
+                          <CheckCircle className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" />
+                          Alert immediati per situazioni critiche
+                        </li>
+                        <li className="flex items-center">
+                          <CheckCircle className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" />
+                          Suggerimenti per risolvere i problemi
+                        </li>
+                      </ul>
+                    </div>
+
+                    <div className="bg-white rounded-xl p-6 shadow-sm">
+                      <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                        <TrendingUp className="w-5 h-5 text-green-500 mr-2" />
+                        Benefici Principali
+                      </h3>
+                      <ul className="space-y-3 text-gray-700">
+                        <li className="flex items-start">
+                          <div className="w-2 h-2 bg-green-500 rounded-full mt-2 mr-3 flex-shrink-0"></div>
+                          <div>
+                            <strong>Prevenzione recensioni negative:</strong> Intervieni prima che l'ospite lasci una recensione negativa
                           </div>
-                        </motion.div>
-                        
-                        {/* Messaggio 2 - Assistant (1-2s) */}
-                        <motion.div
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: [0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1] }}
-                          transition={{ duration: 24, repeat: Infinity, ease: "easeInOut" }}
-                          className="flex items-start justify-start"
-                        >
-                          <div className="flex items-start max-w-[70%]">
-                            <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-gray-200 text-gray-600 mr-3">
-                              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                              </svg>
-                            </div>
-                            <div className="rounded-2xl px-4 py-3 bg-gray-100 text-gray-900 rounded-bl-sm">
-                              <p className="whitespace-pre-wrap">{t.guardian.demo.messages.assistant}</p>
-                              <p className="text-xs mt-1 text-gray-400">14:33</p>
-                            </div>
+                        </li>
+                        <li className="flex items-start">
+                          <div className="w-2 h-2 bg-green-500 rounded-full mt-2 mr-3 flex-shrink-0"></div>
+                          <div>
+                            <strong>Miglioramento della soddisfazione:</strong> Risolvi i problemi in tempo reale
                           </div>
-                        </motion.div>
-                        
-                        {/* Messaggio 3 - User frustrato (2-3s) */}
-                        <motion.div
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: [0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1] }}
-                          transition={{ duration: 24, repeat: Infinity, ease: "easeInOut" }}
-                          className="flex items-start justify-end"
-                        >
-                          <div className="flex items-start max-w-[70%] flex-row-reverse">
-                            <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-gradient-to-r from-rose-500 to-pink-600 text-white ml-3">
-                              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-                              </svg>
-                            </div>
-                            <div className="rounded-2xl px-4 py-3 bg-gradient-to-r from-rose-500 to-pink-600 text-white rounded-br-sm">
-                              <p className="whitespace-pre-wrap">{t.guardian.demo.messages.guestFrustrated}</p>
-                              <p className="text-xs mt-1 text-white/70">14:34</p>
-                            </div>
+                        </li>
+                        <li className="flex items-start">
+                          <div className="w-2 h-2 bg-green-500 rounded-full mt-2 mr-3 flex-shrink-0"></div>
+                          <div>
+                            <strong>Risparmio di tempo:</strong> Non devi monitorare manualmente ogni conversazione
                           </div>
-                        </motion.div>
-                      </motion.div>
-                      
-                      {/* Fase 2: Alert Critico (7-12s) */}
-                      <motion.div
-                        initial={{ opacity: 0, scale: 0.8 }}
-                        animate={{ 
-                          opacity: [0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                          scale: [0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 1, 1, 1, 1, 1, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8]
-                        }}
-                        transition={{ duration: 24, repeat: Infinity, ease: "easeInOut" }}
-                        className="absolute inset-0 flex items-center justify-center z-10"
-                      >
-                        <div className="bg-gradient-to-br from-red-500 via-red-600 to-red-700 text-white px-10 py-8 rounded-3xl shadow-2xl flex items-center space-x-6 animate-pulse border-4 border-red-300 transform rotate-1">
-                          <div className="relative">
-                            <div className="absolute inset-0 bg-red-400 rounded-full blur-lg opacity-50 animate-ping"></div>
-                            <AlertTriangle className="w-10 h-10 relative z-10" />
+                        </li>
+                        <li className="flex items-start">
+                          <div className="w-2 h-2 bg-green-500 rounded-full mt-2 mr-3 flex-shrink-0"></div>
+                          <div>
+                            <strong>Aumento delle prenotazioni:</strong> Ospiti più soddisfatti = più prenotazioni future
                           </div>
-                          <div className="text-center">
-                            <p className="text-2xl font-black tracking-wider">{t.guardian.demo.alert.title}</p>
-                            <p className="text-lg font-semibold mt-1">{t.guardian.demo.alert.subtitle}</p>
-                            <div className="flex space-x-2 mt-3 justify-center">
-                              <div className="w-2 h-2 bg-red-300 rounded-full animate-bounce"></div>
-                              <div className="w-2 h-2 bg-red-300 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
-                              <div className="w-2 h-2 bg-red-300 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
-                            </div>
-                          </div>
-                        </div>
-                      </motion.div>
-                      
-                      {/* Fase 3: Telefono Host (13-20s) */}
-                      <motion.div
-                        initial={{ opacity: 0, x: -100, scale: 0.8 }}
-                        animate={{ 
-                          opacity: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0],
-                          x: [-100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, 0, 0, 0, 0, 0, 0, 0, 0, -100, -100, -100],
-                          scale: [0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 1, 1, 1, 1, 1, 1, 1, 1, 0.8, 0.8, 0.8]
-                        }}
-                        transition={{ duration: 24, repeat: Infinity, ease: "easeInOut" }}
-                        className="absolute inset-0 flex items-center justify-center z-10"
-                      >
-                        <div className="bg-gradient-to-br from-white via-green-50 to-emerald-50 rounded-3xl p-8 shadow-2xl max-w-lg border-4 border-green-200 transform -rotate-1">
-                          <div className="flex items-center space-x-6">
-                            <div className="relative">
-                              <div className="absolute inset-0 bg-green-400 rounded-full blur-lg opacity-30 animate-pulse"></div>
-                              <div className="w-20 h-20 bg-gradient-to-br from-green-500 via-green-600 to-emerald-600 rounded-full flex items-center justify-center relative z-10 shadow-lg">
-                                <svg className="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                  <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
-                                </svg>
-                              </div>
-                            </div>
-                            <div className="flex-1">
-                              <div className="flex items-center space-x-2 mb-3">
-                                <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-                                <p className="text-xl font-black text-gray-800">{t.guardian.demo.phoneCall}</p>
-                              </div>
-                              <div className="bg-white rounded-2xl p-4 shadow-inner border-l-4 border-green-500">
-                                <p className="text-gray-700 italic">"Mi scusi per il problema! Le mando subito il tecnico e le offro uno sconto del 20% sul soggiorno"</p>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </motion.div>
-                      
-                      {/* Fase 4: Problema Risolto (21-24s) */}
-                      <motion.div
-                        initial={{ opacity: 0, scale: 0.8 }}
-                        animate={{ 
-                          opacity: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0],
-                          scale: [0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 1, 1, 0.8]
-                        }}
-                        transition={{ duration: 24, repeat: Infinity, ease: "easeInOut" }}
-                        className="absolute inset-0 flex items-center justify-center z-10"
-                      >
-                        <div className="bg-gradient-to-br from-green-500 via-emerald-500 to-green-600 text-white px-12 py-10 rounded-3xl shadow-2xl flex items-center space-x-6 border-4 border-green-300 transform rotate-1">
-                          <div className="relative">
-                            <div className="absolute inset-0 bg-green-400 rounded-full blur-lg opacity-50 animate-ping"></div>
-                            <CheckCircle className="w-12 h-12 relative z-10" />
-                          </div>
-                          <div className="text-center">
-                            <p className="text-3xl font-black tracking-wider">{t.guardian.demo.problemSolved}</p>
-                            <p className="text-xl font-semibold mt-2">{t.guardian.demo.negativeReviewAvoided}</p>
-                            <div className="flex space-x-3 mt-4 justify-center">
-                              <div className="w-3 h-3 bg-green-300 rounded-full animate-bounce"></div>
-                              <div className="w-3 h-3 bg-green-300 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
-                              <div className="w-3 h-3 bg-green-300 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
-                              <div className="w-3 h-3 bg-green-300 rounded-full animate-bounce" style={{animationDelay: '0.3s'}}></div>
-                            </div>
-                          </div>
-                        </div>
-                      </motion.div>
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+
+                  {/* Benefici in Inglese */}
+                  <div className="bg-white rounded-xl p-6 shadow-sm">
+                    <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                      <Heart className="w-5 h-5 text-green-500 mr-2" />
+                      Why Choose Guardian? (English)
+                    </h3>
+                    <div className="grid md:grid-cols-2 gap-6">
+                      <div>
+                        <h4 className="font-semibold text-gray-800 mb-2">What is Guardian?</h4>
+                        <p className="text-gray-700 text-sm leading-relaxed mb-3">
+                          Guardian is an intelligent monitoring system that analyzes in real-time all conversations 
+                          between your guests and the chatbot. It automatically detects problematic situations, 
+                          frustrations, or potential negative reviews before they become serious issues.
+                        </p>
+                        <ul className="space-y-1 text-xs text-gray-600">
+                          <li className="flex items-center">
+                            <CheckCircle className="w-3 h-3 text-green-500 mr-2 flex-shrink-0" />
+                            24/7 conversation monitoring
+                          </li>
+                          <li className="flex items-center">
+                            <CheckCircle className="w-3 h-3 text-green-500 mr-2 flex-shrink-0" />
+                            Immediate alerts for critical situations
+                          </li>
+                          <li className="flex items-center">
+                            <CheckCircle className="w-3 h-3 text-green-500 mr-2 flex-shrink-0" />
+                            Actionable resolution suggestions
+                          </li>
+                        </ul>
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-gray-800 mb-2">Key Benefits</h4>
+                        <ul className="space-y-2 text-sm text-gray-700">
+                          <li className="flex items-start">
+                            <div className="w-1.5 h-1.5 bg-green-500 rounded-full mt-2 mr-2 flex-shrink-0"></div>
+                            <span><strong>Prevent negative reviews:</strong> Intervene before guests leave bad reviews</span>
+                          </li>
+                          <li className="flex items-start">
+                            <div className="w-1.5 h-1.5 bg-green-500 rounded-full mt-2 mr-2 flex-shrink-0"></div>
+                            <span><strong>Improve satisfaction:</strong> Resolve issues in real-time</span>
+                          </li>
+                          <li className="flex items-start">
+                            <div className="w-1.5 h-1.5 bg-green-500 rounded-full mt-2 mr-2 flex-shrink-0"></div>
+                            <span><strong>Save time:</strong> No need to manually monitor every conversation</span>
+                          </li>
+                          <li className="flex items-start">
+                            <div className="w-1.5 h-1.5 bg-green-500 rounded-full mt-2 mr-2 flex-shrink-0"></div>
+                            <span><strong>Increase bookings:</strong> Happier guests = more future bookings</span>
+                          </li>
+                        </ul>
+                      </div>
                     </div>
                   </div>
                 </div>

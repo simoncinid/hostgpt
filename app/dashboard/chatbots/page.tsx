@@ -197,7 +197,7 @@ export default function ChatbotsListPage() {
 
         {showQRModal && currentQR && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-white rounded-2xl p-8 max-w-md w-full mx-4 md:scale-64">
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-white rounded-2xl p-8 max-w-md w-full mx-4 md:h-[80vh] md:overflow-y-auto">
               <h3 className="text-xl font-bold mb-4">QR Code Chatbot</h3>
               <div className="bg-gray-100 p-4 rounded-lg mb-4">
                 <img src={`data:image/png;base64,${currentQR.qr}`} alt="QR Code" className="w-full h-auto" />

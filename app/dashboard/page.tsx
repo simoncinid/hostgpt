@@ -415,7 +415,7 @@ function DashboardContent() {
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-white rounded-2xl p-6 md:p-8 max-w-md w-full md:scale-64"
+            className="bg-white rounded-2xl p-6 md:p-8 max-w-md w-full md:h-[80vh] md:overflow-y-auto"
           >
             <h3 className="text-xl font-bold mb-4">{t.dashboard.qrModal.title}</h3>
             <div className="bg-gray-100 p-4 rounded-lg mb-4">
