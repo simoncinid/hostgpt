@@ -197,16 +197,16 @@ export default function ChatbotsListPage() {
 
         {showQRModal && currentQR && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-white rounded-2xl p-8 max-w-md w-full mx-4 md:h-[80vh] md:overflow-y-auto">
-              <h3 className="text-xl font-bold mb-4">QR Code Chatbot</h3>
-              <div className="bg-gray-100 p-4 rounded-lg mb-4">
-                <img src={`data:image/png;base64,${currentQR.qr}`} alt="QR Code" className="w-full h-auto" />
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-white rounded-2xl p-4 md:p-6 max-w-md w-full mx-4 md:h-[80vh] md:overflow-y-auto">
+              <h3 className="text-lg md:text-xl font-bold mb-2 md:mb-3">QR Code Chatbot</h3>
+              <div className="bg-gray-100 p-2 md:p-3 rounded-lg mb-2 md:mb-3">
+                <img src={`data:image/png;base64,${currentQR.qr}`} alt="QR Code" className="w-full h-auto max-h-[200px] md:max-h-[250px] object-contain" />
               </div>
-              <div className="flex items-center gap-2 p-2 bg-gray-100 rounded-lg mb-4">
-                <input type="text" value={currentQR.url} readOnly className="flex-1 bg-transparent text-sm" />
-                <button onClick={() => { navigator.clipboard.writeText(currentQR.url); toast.success('Link copiato!') }} className="text-primary hover:text-secondary">Copia</button>
+              <div className="flex items-center gap-1 md:gap-2 p-1 md:p-2 bg-gray-100 rounded-lg mb-2 md:mb-3">
+                <input type="text" value={currentQR.url} readOnly className="flex-1 bg-transparent text-xs md:text-sm" />
+                <button onClick={() => { navigator.clipboard.writeText(currentQR.url); toast.success('Link copiato!') }} className="text-primary hover:text-secondary text-xs md:text-sm">Copia</button>
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-1 md:gap-2">
                 <button
                   onClick={() => {
                     const link = document.createElement('a')
@@ -215,11 +215,11 @@ export default function ChatbotsListPage() {
                     link.click()
                     toast.success('QR Code scaricato!')
                   }}
-                  className="flex-1 btn-secondary"
+                  className="flex-1 btn-secondary text-xs md:text-sm py-1 md:py-2"
                 >
                   Scarica QR
                 </button>
-                <button onClick={() => setShowQRModal(false)} className="flex-1 btn-primary">Chiudi</button>
+                <button onClick={() => setShowQRModal(false)} className="flex-1 btn-primary text-xs md:text-sm py-1 md:py-2">Chiudi</button>
               </div>
             </motion.div>
                       </div>

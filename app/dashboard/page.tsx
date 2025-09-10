@@ -415,38 +415,38 @@ function DashboardContent() {
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-white rounded-2xl p-6 md:p-8 max-w-md w-full md:h-[80vh] md:overflow-y-auto"
+            className="bg-white rounded-2xl p-4 md:p-6 max-w-md w-full md:h-[80vh] md:overflow-y-auto"
           >
-            <h3 className="text-xl font-bold mb-4">{t.dashboard.qrModal.title}</h3>
-            <div className="bg-gray-100 p-4 rounded-lg mb-4">
+            <h3 className="text-lg md:text-xl font-bold mb-2 md:mb-3">{t.dashboard.qrModal.title}</h3>
+            <div className="bg-gray-100 p-2 md:p-3 rounded-lg mb-2 md:mb-3">
               <img
                 src={`data:image/png;base64,${currentQR.qr}`}
                 alt="QR Code"
-                className="w-full h-auto"
+                className="w-full h-auto max-h-[200px] md:max-h-[250px] object-contain"
                 id="qr-code-image"
               />
             </div>
-            <p className="text-sm text-gray-600 mb-4">
+            <p className="text-xs md:text-sm text-gray-600 mb-2 md:mb-3">
               {t.dashboard.qrModal.description}
             </p>
-            <div className="flex items-center gap-2 p-2 bg-gray-100 rounded-lg mb-4">
+            <div className="flex items-center gap-1 md:gap-2 p-1 md:p-2 bg-gray-100 rounded-lg mb-2 md:mb-3">
               <input
                 type="text"
                 value={currentQR.url}
                 readOnly
-                className="flex-1 bg-transparent text-sm"
+                className="flex-1 bg-transparent text-xs md:text-sm"
               />
               <button
                 onClick={() => {
                   navigator.clipboard.writeText(currentQR.url)
                   toast.success('Link copiato!')
                 }}
-                className="text-primary hover:text-secondary"
+                className="text-primary hover:text-secondary text-xs md:text-sm"
               >
 {t.dashboard.qrModal.copyButton}
               </button>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-1 md:gap-2">
               <button
                 onClick={() => {
                   const link = document.createElement('a')
@@ -455,13 +455,13 @@ function DashboardContent() {
                   link.click()
                   toast.success('QR Code scaricato!')
                 }}
-                className="flex-1 btn-secondary"
+                className="flex-1 btn-secondary text-xs md:text-sm py-1 md:py-2"
               >
 {t.dashboard.qrModal.downloadButton}
               </button>
               <button
                 onClick={() => setShowQRModal(false)}
-                className="flex-1 btn-primary"
+                className="flex-1 btn-primary text-xs md:text-sm py-1 md:py-2"
               >
 {t.dashboard.qrModal.closeButton}
               </button>

@@ -297,133 +297,52 @@ function GuardianContent() {
               <div className="max-w-4xl mx-auto">
                 {/* Sezione Benefici Guardian */}
                 <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl shadow-lg p-8 mb-8">
-                  <div className="text-center mb-8">
+                  <div className="text-center mb-6">
                     <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
                       <Shield className="w-8 h-8 text-white" />
                     </div>
                     <h2 className="text-3xl font-bold text-gray-900 mb-2">Guardian Service</h2>
-                    <p className="text-lg text-gray-600">Il tuo assistente intelligente per la gestione degli ospiti</p>
+                    <p className="text-lg text-gray-600">Monitoraggio intelligente delle conversazioni</p>
                   </div>
 
                   {/* Statistica Principale */}
-                  <div className="bg-white rounded-xl p-6 mb-8 text-center shadow-sm">
+                  <div className="bg-white rounded-xl p-6 mb-6 text-center shadow-sm">
                     <div className="text-4xl font-bold text-green-600 mb-2">73%</div>
                     <p className="text-lg text-gray-800 font-semibold">Riduzione degli ospiti insoddisfatti</p>
-                    <p className="text-sm text-gray-500 mt-1">Grazie al monitoraggio proattivo delle conversazioni</p>
                   </div>
 
-                  {/* Benefici in Italiano */}
-                  <div className="grid md:grid-cols-2 gap-6 mb-8">
+                  {/* Benefici Essenziali */}
+                  <div className="grid md:grid-cols-2 gap-6">
                     <div className="bg-white rounded-xl p-6 shadow-sm">
-                      <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                      <h3 className="text-xl font-semibold text-gray-900 mb-3 flex items-center">
                         <Target className="w-5 h-5 text-green-500 mr-2" />
                         Cos'è Guardian?
                       </h3>
-                      <p className="text-gray-700 leading-relaxed mb-4">
-                        Guardian è un sistema di monitoraggio intelligente che analizza in tempo reale tutte le conversazioni 
-                        tra i tuoi ospiti e il chatbot. Rileva automaticamente situazioni problematiche, frustrazioni o 
-                        potenziali recensioni negative prima che si trasformino in problemi gravi.
+                      <p className="text-gray-700 leading-relaxed">
+                        Monitora in tempo reale le conversazioni tra ospiti e chatbot. 
+                        Rileva automaticamente problemi e frustrazioni prima che diventino recensioni negative.
                       </p>
-                      <ul className="space-y-2 text-sm text-gray-600">
-                        <li className="flex items-center">
-                          <CheckCircle className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" />
-                          Monitoraggio 24/7 delle conversazioni
-                        </li>
-                        <li className="flex items-center">
-                          <CheckCircle className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" />
-                          Alert immediati per situazioni critiche
-                        </li>
-                        <li className="flex items-center">
-                          <CheckCircle className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" />
-                          Suggerimenti per risolvere i problemi
-                        </li>
-                      </ul>
                     </div>
 
                     <div className="bg-white rounded-xl p-6 shadow-sm">
-                      <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                      <h3 className="text-xl font-semibold text-gray-900 mb-3 flex items-center">
                         <TrendingUp className="w-5 h-5 text-green-500 mr-2" />
                         Benefici Principali
                       </h3>
-                      <ul className="space-y-3 text-gray-700">
-                        <li className="flex items-start">
-                          <div className="w-2 h-2 bg-green-500 rounded-full mt-2 mr-3 flex-shrink-0"></div>
-                          <div>
-                            <strong>Prevenzione recensioni negative:</strong> Intervieni prima che l'ospite lasci una recensione negativa
-                          </div>
+                      <ul className="space-y-2 text-gray-700">
+                        <li className="flex items-center">
+                          <CheckCircle className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" />
+                          Prevenzione recensioni negative
                         </li>
-                        <li className="flex items-start">
-                          <div className="w-2 h-2 bg-green-500 rounded-full mt-2 mr-3 flex-shrink-0"></div>
-                          <div>
-                            <strong>Miglioramento della soddisfazione:</strong> Risolvi i problemi in tempo reale
-                          </div>
+                        <li className="flex items-center">
+                          <CheckCircle className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" />
+                          Risoluzione problemi in tempo reale
                         </li>
-                        <li className="flex items-start">
-                          <div className="w-2 h-2 bg-green-500 rounded-full mt-2 mr-3 flex-shrink-0"></div>
-                          <div>
-                            <strong>Risparmio di tempo:</strong> Non devi monitorare manualmente ogni conversazione
-                          </div>
-                        </li>
-                        <li className="flex items-start">
-                          <div className="w-2 h-2 bg-green-500 rounded-full mt-2 mr-3 flex-shrink-0"></div>
-                          <div>
-                            <strong>Aumento delle prenotazioni:</strong> Ospiti più soddisfatti = più prenotazioni future
-                          </div>
+                        <li className="flex items-center">
+                          <CheckCircle className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" />
+                          Monitoraggio automatico 24/7
                         </li>
                       </ul>
-                    </div>
-                  </div>
-
-                  {/* Benefici in Inglese */}
-                  <div className="bg-white rounded-xl p-6 shadow-sm">
-                    <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-                      <Heart className="w-5 h-5 text-green-500 mr-2" />
-                      Why Choose Guardian? (English)
-                    </h3>
-                    <div className="grid md:grid-cols-2 gap-6">
-                      <div>
-                        <h4 className="font-semibold text-gray-800 mb-2">What is Guardian?</h4>
-                        <p className="text-gray-700 text-sm leading-relaxed mb-3">
-                          Guardian is an intelligent monitoring system that analyzes in real-time all conversations 
-                          between your guests and the chatbot. It automatically detects problematic situations, 
-                          frustrations, or potential negative reviews before they become serious issues.
-                        </p>
-                        <ul className="space-y-1 text-xs text-gray-600">
-                          <li className="flex items-center">
-                            <CheckCircle className="w-3 h-3 text-green-500 mr-2 flex-shrink-0" />
-                            24/7 conversation monitoring
-                          </li>
-                          <li className="flex items-center">
-                            <CheckCircle className="w-3 h-3 text-green-500 mr-2 flex-shrink-0" />
-                            Immediate alerts for critical situations
-                          </li>
-                          <li className="flex items-center">
-                            <CheckCircle className="w-3 h-3 text-green-500 mr-2 flex-shrink-0" />
-                            Actionable resolution suggestions
-                          </li>
-                        </ul>
-                      </div>
-                      <div>
-                        <h4 className="font-semibold text-gray-800 mb-2">Key Benefits</h4>
-                        <ul className="space-y-2 text-sm text-gray-700">
-                          <li className="flex items-start">
-                            <div className="w-1.5 h-1.5 bg-green-500 rounded-full mt-2 mr-2 flex-shrink-0"></div>
-                            <span><strong>Prevent negative reviews:</strong> Intervene before guests leave bad reviews</span>
-                          </li>
-                          <li className="flex items-start">
-                            <div className="w-1.5 h-1.5 bg-green-500 rounded-full mt-2 mr-2 flex-shrink-0"></div>
-                            <span><strong>Improve satisfaction:</strong> Resolve issues in real-time</span>
-                          </li>
-                          <li className="flex items-start">
-                            <div className="w-1.5 h-1.5 bg-green-500 rounded-full mt-2 mr-2 flex-shrink-0"></div>
-                            <span><strong>Save time:</strong> No need to manually monitor every conversation</span>
-                          </li>
-                          <li className="flex items-start">
-                            <div className="w-1.5 h-1.5 bg-green-500 rounded-full mt-2 mr-2 flex-shrink-0"></div>
-                            <span><strong>Increase bookings:</strong> Happier guests = more future bookings</span>
-                          </li>
-                        </ul>
-                      </div>
                     </div>
                   </div>
                 </div>
