@@ -1067,7 +1067,9 @@ async def get_me(current_user: User = Depends(get_current_user)):
         "is_free_trial_active": is_free_trial_active(current_user),
         # Referral code info
         "referral_code_used": current_user.referral_code.code if current_user.referral_code else None,
-        "referral_code_used_at": current_user.referral_code_used_at.isoformat() if current_user.referral_code_used_at else None
+        "referral_code_used_at": current_user.referral_code_used_at.isoformat() if current_user.referral_code_used_at else None,
+        # Language preference
+        "language": current_user.language or "it"
     }
 
 # ============= Referral Code Management =============

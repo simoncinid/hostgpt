@@ -2924,7 +2924,7 @@ export const translations: Record<Language, Translations> = {
           cookies: "Cookies"
         }
       },
-      copyright: "© 2024 HostGPT. All rights reserved."
+      copyright: "© 2025 HostGPT. All rights reserved."
     },
     register: {
       title: "Create your Account",

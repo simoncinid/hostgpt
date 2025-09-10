@@ -19,7 +19,7 @@ interface LoginForm {
 function LoginContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { t } = useLanguage()
+  const { t, setLanguage } = useLanguage()
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const { setAuth } = useAuthStore()
@@ -124,6 +124,13 @@ function LoginContent() {
         const subscriptionStatus = me.data?.subscription_status
         const isVerified = me.data?.is_verified
         const wantsFreeTrial = me.data?.wants_free_trial
+        const userLanguage = me.data?.language
+        
+        // Imposta la lingua corretta se disponibile
+        if (userLanguage && (userLanguage === 'en' || userLanguage === 'it')) {
+          const frontendLanguage = userLanguage === 'en' ? 'ENG' : 'IT'
+          setLanguage(frontendLanguage)
+        }
         
         if (!isVerified) {
           toast.error('Devi verificare la tua email. Controlla la posta e clicca il link di verifica.')

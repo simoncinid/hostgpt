@@ -16,7 +16,7 @@ import {
   Gift
 } from 'lucide-react'
 import HostGPTLogo from '../components/HostGPTLogo'
-import { subscription, referral } from '@/lib/api'
+import api, { subscription, referral } from '@/lib/api'
 import { useAuthStore } from '@/lib/store'
 import { useLanguage } from '@/lib/languageContext'
 import toast from 'react-hot-toast'
@@ -237,7 +237,7 @@ function CheckoutContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { setAuth, user, setUser } = useAuthStore()
-  const { t } = useLanguage()
+  const { t, setLanguage } = useLanguage()
 
   const [status, setStatus] = useState<'idle' | 'processing' | 'error' | 'cancelled' | 'success' | 'checkout'>('idle')
   const [errorMessage, setErrorMessage] = useState<string>('')
@@ -267,6 +267,19 @@ function CheckoutContent() {
           setStatus('error')
           setErrorMessage(t.checkout.monthly.errorMessages.missingToken)
           return
+        }
+
+        // Ottieni le informazioni dell'utente per impostare la lingua corretta
+        try {
+          const me = await api.get('/auth/me')
+          const userLanguage = me.data?.language
+          if (userLanguage && (userLanguage === 'en' || userLanguage === 'it')) {
+            // Converti la lingua dal backend al formato del frontend
+            const frontendLanguage = userLanguage === 'en' ? 'ENG' : 'IT'
+            setLanguage(frontendLanguage)
+          }
+        } catch (error) {
+          console.warn('Could not fetch user language:', error)
         }
 
         const resp = await subscription.createCheckout()
