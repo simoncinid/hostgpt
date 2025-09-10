@@ -34,6 +34,9 @@ class Settings(BaseSettings):
     STRIPE_WEBHOOK_SECRET: str = os.getenv("STRIPE_WEBHOOK_SECRET", "whsec_your-webhook-secret")
     STRIPE_PRICE_ID: str = os.getenv("STRIPE_PRICE_ID", "price_your-monthly-29eur-price-id")  # IMPORTANTE: Deve essere 29€/mese
     
+    # Printful - Servizio di stampa on-demand
+    PRINTFUL_API_KEY: str = os.getenv("PRINTFUL_API_KEY", "your-printful-api-key")
+    
     # Email
     SMTP_HOST: str = os.getenv("SMTP_HOST", "smtp.gmail.com")
     SMTP_PORT: int = int(os.getenv("SMTP_PORT", "587"))

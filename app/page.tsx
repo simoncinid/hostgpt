@@ -904,8 +904,8 @@ export default function LandingPage() {
               {/* Desktop Menu premium - Ripensato per essere più pulito e organizzato */}
               <div className="hidden md:flex items-center space-x-2 relative z-10">
                 {[
-                  { href: "#features", label: t.navbar.features },
                   { href: "https://wa.me/393391797616", label: t.navbar.contactUs, isExternal: true },
+                  { href: "#features", label: t.navbar.features },
                   { href: "#demo", label: t.navbar.demo },
                   { href: "#how-it-works", label: t.navbar.howItWorks },
                   { href: "#pricing", label: t.navbar.pricing },
@@ -1064,8 +1064,8 @@ export default function LandingPage() {
 
                 <div className="space-y-2 relative z-10">
                   {[
-                    { href: "#features", label: t.navbar.features },
                     { href: "https://wa.me/393391797616", label: t.navbar.contactUs, isExternal: true },
+                    { href: "#features", label: t.navbar.features },
                     { href: "#demo", label: t.navbar.demo },
                     { href: "#how-it-works", label: t.navbar.howItWorks },
                     { href: "#pricing", label: t.navbar.pricing },

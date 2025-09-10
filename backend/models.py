@@ -282,3 +282,70 @@ class ReferralCode(Base):
     
     # Relationships
     users = relationship("User", back_populates="referral_code")
+
+# Nuovi modelli per il sistema di stampa QR-Code
+class PrintOrder(Base):
+    __tablename__ = "print_orders"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    chatbot_id = Column(Integer, ForeignKey("chatbots.id"), nullable=False)
+    
+    # Dettagli ordine
+    order_number = Column(String(100), unique=True, nullable=False, index=True)
+    total_amount = Column(Float, nullable=False)  # Importo totale in euro
+    currency = Column(String(3), default="EUR")
+    
+    # Stato ordine
+    status = Column(String(50), default="pending")  # pending, paid, processing, shipped, delivered, cancelled
+    payment_status = Column(String(50), default="pending")  # pending, paid, failed, refunded
+    
+    # Informazioni pagamento
+    stripe_payment_intent_id = Column(String(255))
+    stripe_session_id = Column(String(255))
+    
+    # Informazioni spedizione
+    shipping_address = Column(JSON)  # Indirizzo completo per la spedizione
+    tracking_number = Column(String(255))
+    tracking_url = Column(String(500))
+    
+    # Informazioni Printful
+    printful_order_id = Column(String(255))
+    printful_status = Column(String(50))
+    
+    # Timestamps
+    created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, onupdate=func.now())
+    shipped_at = Column(DateTime)
+    delivered_at = Column(DateTime)
+    
+    # Relationships
+    user = relationship("User")
+    chatbot = relationship("Chatbot")
+    items = relationship("PrintOrderItem", back_populates="order", cascade="all, delete-orphan")
+
+class PrintOrderItem(Base):
+    __tablename__ = "print_order_items"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    order_id = Column(Integer, ForeignKey("print_orders.id"), nullable=False)
+    
+    # Dettagli prodotto
+    product_type = Column(String(50), nullable=False)  # sticker
+    product_name = Column(String(255), nullable=False)
+    quantity = Column(Integer, nullable=False)
+    unit_price = Column(Float, nullable=False)
+    total_price = Column(Float, nullable=False)
+    
+    # Dettagli stampa
+    qr_code_data = Column(Text)  # Base64 del QR code
+    design_data = Column(JSON)  # Dati del design per Printful
+    
+    # Informazioni Printful
+    printful_variant_id = Column(String(255))
+    printful_product_id = Column(String(255))
+    
+    created_at = Column(DateTime, server_default=func.now())
+    
+    # Relationships
+    order = relationship("PrintOrder", back_populates="items")

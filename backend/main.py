@@ -26,7 +26,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 
 from database import get_db, engine
-from models import Base, User, Chatbot, Conversation, Message, KnowledgeBase, Analytics, GuardianAlert, GuardianAnalysis, ReferralCode
+from models import Base, User, Chatbot, Conversation, Message, KnowledgeBase, Analytics, GuardianAlert, GuardianAnalysis, ReferralCode, PrintOrder, PrintOrderItem
 from config import settings
 from email_templates_simple import (
     create_welcome_email_simple,
@@ -5243,6 +5243,246 @@ IMPORTANTE:
             status_code=500, 
             detail=f"Errore nell'analisi della proprietà: {str(e)}"
         )
+
+# --- Print Orders API ---
+
+class PrintOrderCreate(BaseModel):
+    chatbot_id: int
+    products: List[dict]
+    shipping_address: dict
+    total_amount: float
+
+class PrintOrderResponse(BaseModel):
+    id: int
+    order_number: str
+    status: str
+    total_amount: float
+    created_at: datetime
+
+@app.post("/api/print-orders/create", response_model=PrintOrderResponse)
+async def create_print_order(
+    order_data: PrintOrderCreate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Crea un nuovo ordine di stampa"""
+    
+    # Verifica che il chatbot appartenga all'utente
+    chatbot = db.query(Chatbot).filter(
+        Chatbot.id == order_data.chatbot_id,
+        Chatbot.user_id == current_user.id
+    ).first()
+    
+    if not chatbot:
+        raise HTTPException(status_code=404, detail="Chatbot non trovato")
+    
+    # Genera numero ordine unico
+    order_number = f"PRINT-{datetime.now().strftime('%Y%m%d')}-{secrets.token_hex(4).upper()}"
+    
+    # Crea l'ordine
+    print_order = PrintOrder(
+        user_id=current_user.id,
+        chatbot_id=order_data.chatbot_id,
+        order_number=order_number,
+        total_amount=order_data.total_amount,
+        shipping_address=order_data.shipping_address,
+        status="pending",
+        payment_status="pending"
+    )
+    
+    db.add(print_order)
+    db.commit()
+    db.refresh(print_order)
+    
+    # Aggiungi gli item dell'ordine
+    for product in order_data.products:
+        if product["quantity"] > 0:
+            order_item = PrintOrderItem(
+                order_id=print_order.id,
+                product_type=product["type"],
+                product_name=product["name"],
+                quantity=product["quantity"],
+                unit_price=product["price"],
+                total_price=product["price"] * product["quantity"],
+                qr_code_data=chatbot.qr_code if hasattr(chatbot, 'qr_code') else None
+            )
+            db.add(order_item)
+    
+    db.commit()
+    
+    return PrintOrderResponse(
+        id=print_order.id,
+        order_number=print_order.order_number,
+        status=print_order.status,
+        total_amount=print_order.total_amount,
+        created_at=print_order.created_at
+    )
+
+@app.post("/api/print-orders/create-payment")
+async def create_payment_session(
+    order_id: int,
+    amount: int,
+    currency: str = "eur",
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Crea una sessione di pagamento Stripe per l'ordine"""
+    
+    # Verifica che l'ordine appartenga all'utente
+    order = db.query(PrintOrder).filter(
+        PrintOrder.id == order_id,
+        PrintOrder.user_id == current_user.id
+    ).first()
+    
+    if not order:
+        raise HTTPException(status_code=404, detail="Ordine non trovato")
+    
+    try:
+        # Crea la sessione di pagamento Stripe
+        session = stripe.checkout.Session.create(
+            payment_method_types=['card'],
+            line_items=[{
+                'price_data': {
+                    'currency': currency,
+                    'product_data': {
+                        'name': f'QR-Code Stampa - {order.order_number}',
+                        'description': 'Adesivi e placche personalizzate con QR-Code'
+                    },
+                    'unit_amount': amount,
+                },
+                'quantity': 1,
+            }],
+            mode='payment',
+            success_url=f"{settings.FRONTEND_URL}/stampe/success?session_id={{CHECKOUT_SESSION_ID}}",
+            cancel_url=f"{settings.FRONTEND_URL}/stampe/cancel",
+            metadata={
+                'order_id': str(order_id),
+                'order_number': order.order_number
+            }
+        )
+        
+        # Salva l'ID della sessione nell'ordine
+        order.stripe_session_id = session.id
+        db.commit()
+        
+        return {
+            "checkout_url": session.url,
+            "session_id": session.id
+        }
+        
+    except stripe.error.StripeError as e:
+        logger.error(f"Stripe error: {e}")
+        raise HTTPException(status_code=400, detail=f"Errore nel pagamento: {str(e)}")
+
+@app.post("/api/print-orders/webhook")
+async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
+    """Webhook per gestire i pagamenti completati"""
+    
+    payload = await request.body()
+    sig_header = request.headers.get('stripe-signature')
+    
+    try:
+        event = stripe.Webhook.construct_event(
+            payload, sig_header, settings.STRIPE_WEBHOOK_SECRET
+        )
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid payload")
+    except stripe.error.SignatureVerificationError:
+        raise HTTPException(status_code=400, detail="Invalid signature")
+    
+    if event['type'] == 'checkout.session.completed':
+        session = event['data']['object']
+        order_id = session['metadata']['order_id']
+        
+        # Aggiorna lo stato dell'ordine
+        order = db.query(PrintOrder).filter(PrintOrder.id == order_id).first()
+        if order:
+            order.payment_status = "paid"
+            order.status = "processing"
+            order.stripe_payment_intent_id = session['payment_intent']
+            db.commit()
+            
+            # Invia l'ordine a Printful per la produzione
+            from printful_service import send_order_to_printful
+            await send_order_to_printful(order, db)
+    
+    return {"status": "success"}
+
+@app.get("/api/print-orders")
+async def get_print_orders(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Ottieni tutti gli ordini di stampa dell'utente"""
+    
+    orders = db.query(PrintOrder).filter(
+        PrintOrder.user_id == current_user.id
+    ).order_by(PrintOrder.created_at.desc()).all()
+    
+    result = []
+    for order in orders:
+        chatbot = db.query(Chatbot).filter(Chatbot.id == order.chatbot_id).first()
+        result.append({
+            "id": order.id,
+            "order_number": order.order_number,
+            "status": order.status,
+            "payment_status": order.payment_status,
+            "total_amount": order.total_amount,
+            "created_at": order.created_at,
+            "shipped_at": order.shipped_at,
+            "tracking_number": order.tracking_number,
+            "chatbot_name": chatbot.property_name if chatbot else "N/A"
+        })
+    
+    return result
+
+@app.get("/api/print-orders/{order_id}")
+async def get_print_order(
+    order_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Ottieni i dettagli di un ordine specifico"""
+    
+    order = db.query(PrintOrder).filter(
+        PrintOrder.id == order_id,
+        PrintOrder.user_id == current_user.id
+    ).first()
+    
+    if not order:
+        raise HTTPException(status_code=404, detail="Ordine non trovato")
+    
+    chatbot = db.query(Chatbot).filter(Chatbot.id == order.chatbot_id).first()
+    items = db.query(PrintOrderItem).filter(PrintOrderItem.order_id == order.id).all()
+    
+    return {
+        "id": order.id,
+        "order_number": order.order_number,
+        "status": order.status,
+        "payment_status": order.payment_status,
+        "total_amount": order.total_amount,
+        "shipping_address": order.shipping_address,
+        "tracking_number": order.tracking_number,
+        "tracking_url": order.tracking_url,
+        "created_at": order.created_at,
+        "shipped_at": order.shipped_at,
+        "chatbot": {
+            "id": chatbot.id,
+            "name": chatbot.property_name,
+            "city": chatbot.property_city
+        } if chatbot else None,
+        "items": [
+            {
+                "id": item.id,
+                "product_type": item.product_type,
+                "product_name": item.product_name,
+                "quantity": item.quantity,
+                "unit_price": item.unit_price,
+                "total_price": item.total_price
+            }
+            for item in items
+        ]
+    }
 
 if __name__ == "__main__":
     import uvicorn

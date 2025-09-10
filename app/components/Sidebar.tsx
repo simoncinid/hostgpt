@@ -11,7 +11,8 @@ import {
   Users,
   Menu,
   X,
-  Shield
+  Shield,
+  Package
 } from 'lucide-react'
 import { useAuthStore } from '@/lib/store'
 import { useLanguage } from '@/lib/languageContext'
@@ -87,6 +88,13 @@ export default function Sidebar({ currentPath, onLogout, isSidebarCollapsed: ext
             {!isSidebarCollapsed && t.guardian.title}
           </Link>
           <Link 
+            href="/dashboard/stampe" 
+            className={`flex items-center ${isSidebarCollapsed ? 'justify-center px-2 py-3' : 'px-6 py-3'} ${currentPath.startsWith('/dashboard/stampe') || currentPath.startsWith('/stampe') ? 'bg-yellow-100 text-yellow-600 border-r-3 border-yellow-500' : 'text-gray-600 hover:bg-gray-50'}`}
+          >
+            <Package className={`${isSidebarCollapsed ? 'w-6 h-6' : 'w-5 h-5'} ${!isSidebarCollapsed ? 'mr-3' : ''}`} />
+            {!isSidebarCollapsed && 'Stampe QR-Code'}
+          </Link>
+          <Link 
             href="/dashboard/settings" 
             className={`flex items-center ${isSidebarCollapsed ? 'justify-center px-2 py-3' : 'px-6 py-3'} ${currentPath === '/dashboard/settings' ? 'bg-primary/10 text-primary border-r-3 border-primary' : 'text-gray-600 hover:bg-gray-50'}`}
           >
@@ -128,7 +136,7 @@ export default function Sidebar({ currentPath, onLogout, isSidebarCollapsed: ext
             )}
             
             {/* Language Selector */}
-            <div className="mt-4">
+            <div className="mt-4 flex justify-end">
               <LanguageSelector />
             </div>
           </div>

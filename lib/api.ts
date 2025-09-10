@@ -232,3 +232,17 @@ export const guardian = {
   resolveAlert: (alertId: number) =>
     api.post(`/guardian/alerts/${alertId}/resolve`),
 }
+
+export const printOrders = {
+  create: (data: any) =>
+    api.post('/print-orders/create', data),
+  
+  createPayment: (orderId: number, amount: number, currency: string = 'eur') =>
+    api.post('/print-orders/create-payment', { order_id: orderId, amount, currency }),
+  
+  getOrders: () =>
+    api.get('/print-orders'),
+  
+  getOrder: (orderId: number) =>
+    api.get(`/print-orders/${orderId}`),
+}
