@@ -455,7 +455,7 @@ export default function ChatWidgetPage() {
       )}
 
       {/* Main Chat Area - FISSA */}
-      <div className="flex-1 flex flex-col max-w-4xl mx-auto w-full px-4 pt-[6vh] md:py-6 overflow-hidden justify-center md:justify-start">
+      <div className="flex-1 flex flex-col max-w-4xl mx-auto w-full px-4 pt-[6vh] md:pt-6 md:pb-6 overflow-hidden justify-center md:justify-start">
         <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl shadow-xl overflow-hidden flex flex-col h-[68vh] md:h-full transition-colors duration-300 mb-4 md:mb-0`}>
           {/* Error States */}
           {subscriptionCancelled && (
