@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
@@ -13,6 +13,18 @@ import {
 } from 'lucide-react'
 import { useAuthStore } from '@/lib/store'
 import Sidebar from '@/app/components/Sidebar'
+
+// Componente di loading per il fallback di Suspense
+function LoadingFallback() {
+  return (
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="text-center">
+        <div className="loading-spinner w-8 h-8 mx-auto mb-4"></div>
+        <p className="text-gray-600">Caricamento...</p>
+      </div>
+    </div>
+  )
+}
 
 function SuccessContent() {
   const router = useRouter()
@@ -203,7 +215,11 @@ function SuccessContent() {
 }
 
 export default function SuccessPage() {
-  return <SuccessContent />
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <SuccessContent />
+    </Suspense>
+  )
 }
 
 // Disabilita prerendering per questa pagina
