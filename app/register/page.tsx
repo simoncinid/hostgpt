@@ -338,6 +338,16 @@ function RegisterForm() {
                       {formErrors.terms && (
                         <p className="text-red-500 text-xs mt-1">{formErrors.terms}</p>
                       )}
+                      
+                      {/* Login Link - solo per desktop, sotto i termini */}
+                      <div className="mt-3 pt-3 border-t border-gray-100">
+                        <p className="text-gray-600 text-sm">
+                          {t.alreadyHaveAccount}{' '}
+                          <Link href="/login" className="text-primary hover:text-secondary font-semibold">
+                            {t.loginNow}
+                          </Link>
+                        </p>
+                      </div>
                     </div>
 
                   </div>
@@ -513,21 +523,21 @@ function RegisterForm() {
                     {formErrors.terms && (
                       <p className="text-red-500 text-xs mt-0.5">{formErrors.terms}</p>
                     )}
+                    
+                    {/* Login Link - solo per mobile, sotto i termini */}
+                    <div className="mt-3 pt-3 border-t border-gray-100">
+                      <p className="text-gray-600 text-sm text-center">
+                        {t.alreadyHaveAccount}{' '}
+                        <Link href="/login" className="text-primary hover:text-secondary font-semibold">
+                          {t.loginNow}
+                        </Link>
+                      </p>
+                    </div>
                   </div>
 
                 </div>
               </div>
             </form>
-          </div>
-          
-          {/* Login Link - fuori dal form */}
-          <div className="text-center mt-4 pt-4 border-t border-gray-100">
-            <p className="text-gray-600 text-sm">
-              {t.alreadyHaveAccount}{' '}
-              <Link href="/login" className="text-primary hover:text-secondary font-semibold">
-                {t.loginNow}
-              </Link>
-            </p>
           </div>
         </div>
       </div>

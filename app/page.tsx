@@ -4,7 +4,6 @@ import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { motion } from 'framer-motion'
-import CookieBanner from '../components/CookieBanner'
 import LanguageSelector from '../components/LanguageSelector'
 import DemoChatbotIcon from './components/DemoChatbotIcon'
 import { useLanguage } from '../lib/languageContext'
@@ -3342,8 +3341,6 @@ export default function LandingPage() {
         </div>
       </footer>
 
-      {/* Cookie Banner */}
-      <CookieBanner />
 
     </div>
   )
