@@ -1,0 +1,30 @@
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://hostgpt.it/sitemap.xml
+
+# HostGPT specific keywords for better indexing
+# hostgpt, assistente AI, proprietà affitto breve, gestione ospiti airbnb, chatbot host, AI airbnb
+
+# Block admin and private areas
+Disallow: /api/
+Disallow: /dashboard/
+Disallow: /admin/
+Disallow: /_next/
+Disallow: /test/
+
+# Allow important pages
+Allow: /
+Allow: /chat/
+Allow: /chatbots/
+Allow: /conversations/
+Allow: /login/
+Allow: /register/
+Allow: /privacy/
+Allow: /terms/
+Allow: /cookiepolicy/
+
+# Crawl delay for better server performance
+Crawl-delay: 1
+
