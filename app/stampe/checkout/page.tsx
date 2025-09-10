@@ -16,6 +16,9 @@ import { useAuthStore } from '@/lib/store'
 import { printOrders } from '@/lib/api'
 import toast from 'react-hot-toast'
 import Sidebar from '@/app/components/Sidebar'
+import { Elements } from '@stripe/react-stripe-js'
+import { stripePromise } from '@/lib/stripe'
+import PaymentForm from '@/app/components/PaymentForm'
 
 interface ShippingAddress {
   firstName: string
@@ -52,6 +55,8 @@ function CheckoutContent() {
   const [isProcessing, setIsProcessing] = useState(false)
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
   const [errors, setErrors] = useState<{[key: string]: string}>({})
+  const [createdOrder, setCreatedOrder] = useState<any>(null)
+  const [paymentCompleted, setPaymentCompleted] = useState(false)
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -125,7 +130,7 @@ function CheckoutContent() {
     }
   }
 
-  const handleCheckout = async () => {
+  const handleCreateOrder = async () => {
     if (!validateForm() || !orderData) {
       toast.error('Compila tutti i campi obbligatori')
       return
@@ -134,7 +139,11 @@ function CheckoutContent() {
     setIsProcessing(true)
 
     try {
-      // 1. Crea l'ordine nel database
+      console.log('Creando ordine nel database...')
+      console.log('Dati ordine:', orderData)
+      console.log('Indirizzo spedizione:', shippingAddress)
+
+      // Crea l'ordine nel database
       const orderResponse = await printOrders.create({
         chatbot_id: orderData.chatbot.id,
         products: orderData.products,
@@ -143,25 +152,43 @@ function CheckoutContent() {
       })
 
       const order = orderResponse.data
-
-      // 2. Crea la sessione di pagamento Stripe
-      const paymentResponse = await printOrders.createPayment(
-        order.id,
-        Math.round(orderData.totalPrice * 100), // Stripe usa centesimi
-        'eur'
-      )
-
-      const paymentData = paymentResponse.data
-
-      // 3. Reindirizza a Stripe Checkout
-      window.location.href = paymentData.checkout_url
+      console.log('Ordine creato:', order)
+      setCreatedOrder(order)
+      toast.success('Ordine creato! Ora puoi procedere con il pagamento.')
 
     } catch (error) {
-      console.error('Checkout error:', error)
-      toast.error('Errore durante il checkout. Riprova.')
+      console.error('Errore creazione ordine:', error)
+      toast.error(`Errore durante la creazione dell'ordine: ${error instanceof Error ? error.message : 'Riprova.'}`)
     } finally {
       setIsProcessing(false)
     }
+  }
+
+  const handlePaymentSuccess = (paymentIntentId: string) => {
+    console.log('Pagamento completato:', paymentIntentId)
+    setPaymentCompleted(true)
+    
+    // Salva i dati dell'ordine per la pagina di successo
+    const successData = {
+      chatbot: orderData?.chatbot,
+      products: orderData?.products,
+      totalPrice: orderData?.totalPrice,
+      totalItems: orderData?.totalItems,
+      order: createdOrder,
+      paymentIntentId
+    }
+    
+    localStorage.setItem('printOrderSuccess', JSON.stringify(successData))
+    
+    // Reindirizza alla pagina di successo
+    setTimeout(() => {
+      router.push('/stampe/success')
+    }, 2000)
+  }
+
+  const handlePaymentError = (error: string) => {
+    console.error('Errore pagamento:', error)
+    toast.error(`Errore nel pagamento: ${error}`)
   }
 
   if (!orderData) {
@@ -352,17 +379,63 @@ function CheckoutContent() {
                 <h2 className="text-xl font-bold text-dark">Metodo di Pagamento</h2>
               </div>
 
-              <div className="bg-gray-50 rounded-lg p-4">
-                <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 bg-blue-600 rounded flex items-center justify-center">
-                    <CreditCard className="w-4 h-4 text-white" />
+              {!createdOrder ? (
+                <div className="space-y-4">
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-8 h-8 bg-blue-600 rounded flex items-center justify-center">
+                        <CreditCard className="w-4 h-4 text-white" />
+                      </div>
+                      <div>
+                        <p className="font-semibold">Pagamento con Carta</p>
+                        <p className="text-sm text-gray-600">Gestito in modo sicuro da Stripe</p>
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-semibold">Pagamento con Carta</p>
-                    <p className="text-sm text-gray-600">Gestito in modo sicuro da Stripe</p>
+
+                  <div className="p-4 bg-blue-50 rounded-lg">
+                    <div className="flex items-start space-x-2">
+                      <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5" />
+                      <div className="text-sm text-blue-800">
+                        <p className="font-semibold mb-1">Come funziona:</p>
+                        <p>1. Compila l'indirizzo di spedizione</p>
+                        <p>2. Clicca "Crea Ordine" per procedere</p>
+                        <p>3. Inserisci i dati della tua carta di credito</p>
+                        <p>4. Completa il pagamento in modo sicuro</p>
+                      </div>
+                    </div>
                   </div>
+
+                  <motion.button
+                    onClick={handleCreateOrder}
+                    disabled={isProcessing}
+                    className="w-full bg-primary hover:bg-primary/90 disabled:bg-gray-300 disabled:cursor-not-allowed text-white py-4 rounded-xl font-semibold text-lg transition flex items-center justify-center space-x-2"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    {isProcessing ? (
+                      <>
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        <span>Creazione Ordine...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Check className="w-5 h-5" />
+                        <span>Crea Ordine</span>
+                      </>
+                    )}
+                  </motion.button>
                 </div>
-              </div>
+              ) : (
+                <Elements stripe={stripePromise}>
+                  <PaymentForm
+                    amount={orderData.totalPrice}
+                    orderId={createdOrder.id}
+                    onSuccess={handlePaymentSuccess}
+                    onError={handlePaymentError}
+                  />
+                </Elements>
+              )}
 
               <div className="mt-4 p-4 bg-green-50 rounded-lg">
                 <div className="flex items-center space-x-2">
@@ -418,26 +491,18 @@ function CheckoutContent() {
                 </div>
               </div>
 
-              {/* Bottone Checkout */}
-              <motion.button
-                onClick={handleCheckout}
-                disabled={isProcessing}
-                className="w-full bg-primary hover:bg-primary/90 disabled:bg-gray-300 disabled:cursor-not-allowed text-white py-4 rounded-xl font-semibold text-lg transition flex items-center justify-center space-x-2 mt-6"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                {isProcessing ? (
-                  <>
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                    <span>Elaborazione...</span>
-                  </>
-                ) : (
-                  <>
-                    <CreditCard className="w-5 h-5" />
-                    <span>Paga €{orderData.totalPrice.toFixed(2)}</span>
-                  </>
-                )}
-              </motion.button>
+              {/* Stato Ordine */}
+              {createdOrder && (
+                <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                  <div className="flex items-center space-x-2">
+                    <Check className="w-5 h-5 text-green-600" />
+                    <span className="text-green-800 font-semibold">Ordine Creato</span>
+                  </div>
+                  <p className="text-sm text-green-600 mt-1">
+                    Numero ordine: {createdOrder.order_number}
+                  </p>
+                </div>
+              )}
 
               {/* Note */}
               <div className="mt-4 p-3 bg-blue-50 rounded-lg">

@@ -5374,6 +5374,51 @@ async def create_payment_session(
         logger.error(f"Stripe error: {e}")
         raise HTTPException(status_code=400, detail=f"Errore nel pagamento: {str(e)}")
 
+@app.post("/api/print-orders/create-payment-intent")
+async def create_payment_intent(
+    order_id: int,
+    amount: int,
+    currency: str = "eur",
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Crea un Payment Intent Stripe per il pagamento integrato"""
+    
+    # Verifica che l'ordine appartenga all'utente
+    order = db.query(PrintOrder).filter(
+        PrintOrder.id == order_id,
+        PrintOrder.user_id == current_user.id
+    ).first()
+    
+    if not order:
+        raise HTTPException(status_code=404, detail="Ordine non trovato")
+    
+    try:
+        # Crea il Payment Intent
+        intent = stripe.PaymentIntent.create(
+            amount=amount,
+            currency=currency,
+            metadata={
+                'order_id': str(order_id),
+                'order_number': order.order_number,
+                'user_id': str(current_user.id)
+            },
+            description=f'QR-Code Stampa - {order.order_number}'
+        )
+        
+        # Salva l'ID del Payment Intent nell'ordine
+        order.stripe_payment_intent_id = intent.id
+        db.commit()
+        
+        return {
+            "client_secret": intent.client_secret,
+            "payment_intent_id": intent.id
+        }
+        
+    except stripe.error.StripeError as e:
+        logger.error(f"Stripe error: {e}")
+        raise HTTPException(status_code=400, detail=f"Errore nel pagamento: {str(e)}")
+
 @app.post("/api/print-orders/webhook")
 async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
     """Webhook per gestire i pagamenti completati"""
@@ -5400,6 +5445,22 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
             order.payment_status = "paid"
             order.status = "processing"
             order.stripe_payment_intent_id = session['payment_intent']
+            db.commit()
+            
+            # Invia l'ordine a Printful per la produzione
+            from printful_service import send_order_to_printful
+            await send_order_to_printful(order, db)
+    
+    elif event['type'] == 'payment_intent.succeeded':
+        payment_intent = event['data']['object']
+        order_id = payment_intent['metadata']['order_id']
+        
+        # Aggiorna lo stato dell'ordine
+        order = db.query(PrintOrder).filter(PrintOrder.id == order_id).first()
+        if order:
+            order.payment_status = "paid"
+            order.status = "processing"
+            order.stripe_payment_intent_id = payment_intent['id']
             db.commit()
             
             # Invia l'ordine a Printful per la produzione
