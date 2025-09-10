@@ -888,14 +888,10 @@ export default function LandingPage() {
               >
                 <Link href="/" className="flex items-center space-x-3">
                   <motion.div
-                    className="relative"
-                    whileHover={{ rotate: 5 }}
+                    whileHover={{ scale: 1.05 }}
                     transition={{ type: "spring", stiffness: 300 }}
                   >
-                    <div className="absolute -inset-1 bg-gradient-to-r from-rose-400 to-pink-500 rounded-xl blur opacity-30"></div>
-                    <div className="relative w-10 h-10 bg-gradient-to-r from-rose-500 to-pink-600 rounded-xl flex items-center justify-center shadow-lg">
-                      <HostGPTLogo size="sm" className="text-white" />
-                    </div>
+                    <HostGPTLogo size="lg" className="h-10" />
                   </motion.div>
                   <span className="text-2xl font-black text-gray-900 tracking-tight">HostGPT</span>
                 </Link>
@@ -3305,7 +3301,7 @@ export default function LandingPage() {
             </div>
 
             {/* Sezioni - Layout diverso per mobile/desktop */}
-            <div className="grid grid-cols-2 gap-4 md:col-span-3 md:grid-cols-2 md:gap-8">
+            <div className="grid grid-cols-2 gap-4 md:col-span-3 md:grid-cols-3 md:gap-8">
               <div className="text-center md:text-left">
                 <h4 className="font-semibold mb-3 text-sm md:text-base">{t.footer.sections.product.title}</h4>
                 <ul className="space-y-1 md:space-y-2 text-gray-400 text-xs md:text-sm">
@@ -3317,7 +3313,6 @@ export default function LandingPage() {
               <div className="text-center md:text-left">
                 <h4 className="font-semibold mb-3 text-sm md:text-base">{t.footer.sections.company.title}</h4>
                 <ul className="space-y-1 md:space-y-2 text-gray-400 text-xs md:text-sm">
-                <li><Link href="#" className="hover:text-white transition">{t.footer.sections.company.about}</Link></li>
                 <li><a href="https://wa.me/393391797616" target="_blank" rel="noopener noreferrer" className="hover:text-white transition">{t.footer.sections.company.contact}</a></li>
               </ul>
             </div>
