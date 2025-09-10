@@ -2,7 +2,6 @@ import type { Metadata, Viewport } from 'next'
 import '@/styles/globals.css'
 import { Toaster } from 'react-hot-toast'
 import { LanguageProvider } from '../lib/languageContext'
-import PerformanceOptimizer from '../components/PerformanceOptimizer'
 
 export const metadata: Metadata = {
   title: 'HostGPT - Assistente AI per Proprietà in Affitto Breve | Gestione Ospiti Airbnb',
@@ -66,6 +65,10 @@ export const metadata: Metadata = {
   },
   category: 'technology',
   classification: 'AI Assistant for Short-term Rental Management',
+  other: {
+    // Performance optimizations
+    'preload': '/icons/logohostgpt.png',
+  },
 }
 
 export const viewport: Viewport = {
@@ -118,7 +121,6 @@ export default function RootLayout({
         />
       </head>
       <body className="font-sans">
-        <PerformanceOptimizer />
         <LanguageProvider>
           {children}
         </LanguageProvider>

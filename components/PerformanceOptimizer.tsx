@@ -1,8 +1,6 @@
-import Head from 'next/head'
-
 export default function PerformanceOptimizer() {
   return (
-    <Head>
+    <>
       {/* Preload critical resources */}
       <link rel="preload" href="/icons/logohostgpt.png" as="image" type="image/png" />
       <link rel="preload" href="/fonts/apfel_grotezk/apfelGrotezk/ApfelGrotezk-Regular.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
@@ -94,6 +92,6 @@ export default function PerformanceOptimizer() {
           })
         }}
       />
-    </Head>
+    </>
   )
 }

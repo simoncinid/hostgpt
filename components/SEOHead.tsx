@@ -1,5 +1,3 @@
-import Head from 'next/head'
-
 interface SEOHeadProps {
   title?: string
   description?: string
@@ -20,7 +18,7 @@ export default function SEOHead({
   noindex = false
 }: SEOHeadProps) {
   return (
-    <Head>
+    <>
       <title>{title}</title>
       <meta name="description" content={description} />
       <meta name="keywords" content={keywords} />
@@ -67,6 +65,6 @@ export default function SEOHead({
       {/* Preconnect for performance */}
       <link rel="preconnect" href="https://fonts.googleapis.com" />
       <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-    </Head>
+    </>
   )
 }
