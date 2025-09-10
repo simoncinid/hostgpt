@@ -205,3 +205,6 @@ function SuccessContent() {
 export default function SuccessPage() {
   return <SuccessContent />
 }
+
+// Disabilita prerendering per questa pagina
+export const dynamic = 'force-dynamic'

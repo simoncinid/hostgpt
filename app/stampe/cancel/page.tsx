@@ -117,3 +117,6 @@ function CancelContent() {
 export default function CancelPage() {
   return <CancelContent />
 }
+
+// Disabilita prerendering per questa pagina
+export const dynamic = 'force-dynamic'

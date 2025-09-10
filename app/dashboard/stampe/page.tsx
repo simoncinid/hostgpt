@@ -280,3 +280,6 @@ function StampeDashboardContent() {
 export default function StampeDashboardPage() {
   return <StampeDashboardContent />
 }
+
+// Disabilita prerendering per questa pagina
+export const dynamic = 'force-dynamic'

@@ -461,3 +461,6 @@ function CheckoutContent() {
 export default function CheckoutPage() {
   return <CheckoutContent />
 }
+
+// Disabilita prerendering per questa pagina
+export const dynamic = 'force-dynamic'

@@ -374,3 +374,6 @@ export default function StampePage() {
     </Suspense>
   )
 }
+
+// Disabilita prerendering per questa pagina
+export const dynamic = 'force-dynamic'
