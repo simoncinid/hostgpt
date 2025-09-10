@@ -6,6 +6,7 @@ import Image from 'next/image'
 import { motion } from 'framer-motion'
 import LanguageSelector from '../components/LanguageSelector'
 import DemoChatbotIcon from './components/DemoChatbotIcon'
+import HostGPTLogo from './components/HostGPTLogo'
 import { useLanguage } from '../lib/languageContext'
 import api from '../lib/api'
 import { chat } from '../lib/api'
@@ -549,7 +550,7 @@ export default function LandingPage() {
                 transition={{ delay: 0.5, type: "spring" }}
                 className="w-6 h-6 bg-primary rounded mx-auto mb-2 flex items-center justify-center"
               >
-                <Home className="w-3 h-3 text-white" />
+                <HostGPTLogo size="sm" className="text-white" />
               </motion.div>
               <h3 className="text-xs font-bold">{t.howItWorks.animations.register.title}</h3>
             </div>
@@ -600,7 +601,7 @@ export default function LandingPage() {
         <div className="bg-white rounded-lg shadow-lg p-3 h-full flex flex-col overflow-hidden">
           <div className="flex items-center justify-between px-2 py-1 bg-gray-900 rounded-t-lg text-white">
             <div className="flex items-center space-x-1">
-              <Home className="w-2 h-2 text-primary" />
+              <HostGPTLogo size="sm" className="text-primary" />
               <span className="text-xs font-bold">Dashboard</span>
             </div>
           </div>
@@ -673,7 +674,7 @@ export default function LandingPage() {
                 </div>
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="w-3 h-3 bg-primary rounded flex items-center justify-center">
-                    <Home className="w-1.5 h-1.5 text-white" />
+                    <HostGPTLogo size="sm" className="text-white" />
                   </div>
                 </div>
               </div>
@@ -776,7 +777,7 @@ export default function LandingPage() {
           <div className="flex-1 flex flex-col justify-start space-y-2 p-2 min-h-0">
             <div className="text-center mb-4">
               <div className="w-6 h-6 bg-primary rounded mx-auto mb-2 flex items-center justify-center">
-                <Home className="w-3 h-3 text-white" />
+                <HostGPTLogo size="sm" className="text-white" />
               </div>
               <h3 className="text-xs font-bold">{t.howItWorks.animations.register.title}</h3>
             </div>
@@ -807,7 +808,7 @@ export default function LandingPage() {
         <div className="bg-white rounded-lg shadow-lg p-3 h-full flex flex-col overflow-hidden">
           <div className="flex items-center justify-between px-2 py-1 bg-gray-900 rounded-t-lg text-white">
             <div className="flex items-center space-x-1">
-              <Home className="w-2 h-2 text-primary" />
+              <HostGPTLogo size="sm" className="text-primary" />
               <span className="text-xs font-bold">Dashboard</span>
             </div>
           </div>
@@ -893,7 +894,7 @@ export default function LandingPage() {
                   >
                     <div className="absolute -inset-1 bg-gradient-to-r from-rose-400 to-pink-500 rounded-xl blur opacity-30"></div>
                     <div className="relative w-10 h-10 bg-gradient-to-r from-rose-500 to-pink-600 rounded-xl flex items-center justify-center shadow-lg">
-                      <Home className="w-5 h-5 text-white" />
+                      <HostGPTLogo size="sm" className="text-white" />
                     </div>
                   </motion.div>
                   <span className="text-2xl font-black text-gray-900 tracking-tight">HostGPT</span>
@@ -3283,7 +3284,7 @@ export default function LandingPage() {
               {/* Logo desktop */}
               <div className="hidden md:block text-left mb-8">
                 <div className="flex items-center space-x-2 mb-3">
-                <Home className="w-6 h-6 text-primary" />
+                <HostGPTLogo size="md" className="text-primary" />
                 <span className="text-xl font-bold">HostGPT</span>
               </div>
               <p className="text-gray-400 text-sm">
@@ -3294,7 +3295,7 @@ export default function LandingPage() {
               {/* Logo mobile */}
               <div className="md:hidden text-center mb-6">
                 <div className="flex items-center justify-center space-x-2 mb-2">
-                  <Home className="w-6 h-6 text-primary" />
+                  <HostGPTLogo size="md" className="text-primary" />
                   <span className="text-lg font-bold">HostGPT</span>
                 </div>
                 <p className="text-gray-400 text-xs">
@@ -3304,13 +3305,12 @@ export default function LandingPage() {
             </div>
 
             {/* Sezioni - Layout diverso per mobile/desktop */}
-            <div className="grid grid-cols-3 gap-4 md:col-span-3 md:grid-cols-3 md:gap-8">
+            <div className="grid grid-cols-2 gap-4 md:col-span-3 md:grid-cols-2 md:gap-8">
               <div className="text-center md:text-left">
                 <h4 className="font-semibold mb-3 text-sm md:text-base">{t.footer.sections.product.title}</h4>
                 <ul className="space-y-1 md:space-y-2 text-gray-400 text-xs md:text-sm">
                 <li><Link href="#features" className="hover:text-white transition">{t.footer.sections.product.features}</Link></li>
                 <li><Link href="#pricing" className="hover:text-white transition">{t.footer.sections.product.pricing}</Link></li>
-                <li><Link href="#" className="hover:text-white transition">{t.footer.sections.product.api}</Link></li>
               </ul>
             </div>
             
@@ -3318,8 +3318,7 @@ export default function LandingPage() {
                 <h4 className="font-semibold mb-3 text-sm md:text-base">{t.footer.sections.company.title}</h4>
                 <ul className="space-y-1 md:space-y-2 text-gray-400 text-xs md:text-sm">
                 <li><Link href="#" className="hover:text-white transition">{t.footer.sections.company.about}</Link></li>
-                <li><Link href="#" className="hover:text-white transition">{t.footer.sections.company.blog}</Link></li>
-                <li><Link href="#" className="hover:text-white transition">{t.footer.sections.company.contact}</Link></li>
+                <li><a href="https://wa.me/393391797616" target="_blank" rel="noopener noreferrer" className="hover:text-white transition">{t.footer.sections.company.contact}</a></li>
               </ul>
             </div>
             
@@ -3328,7 +3327,7 @@ export default function LandingPage() {
                 <ul className="space-y-1 md:space-y-2 text-gray-400 text-xs md:text-sm">
                   <li><Link href="/privacy" className="hover:text-white transition">{t.footer.sections.legal.privacy}</Link></li>
                   <li><Link href="/terms" className="hover:text-white transition">{t.footer.sections.legal.terms}</Link></li>
-                <li><Link href="#" className="hover:text-white transition">{t.footer.sections.legal.cookies}</Link></li>
+                <li><Link href="/cookiepolicy" className="hover:text-white transition">{t.footer.sections.legal.cookies}</Link></li>
               </ul>
               </div>
             </div>

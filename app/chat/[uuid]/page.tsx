@@ -20,6 +20,7 @@ import {
 import { chat } from '@/lib/api'
 import toast from 'react-hot-toast'
 import ChatbotIcon from '@/app/components/ChatbotIcon'
+import HostGPTLogo from '@/app/components/HostGPTLogo'
 
 interface Message {
   id: string
@@ -366,7 +367,7 @@ export default function ChatWidgetPage() {
                 />
               ) : (
                 <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center mr-3">
-                  <Home className="w-5 h-5 text-white" />
+                  <HostGPTLogo size="sm" className="text-white" />
                 </div>
               )}
               <div>
@@ -650,7 +651,7 @@ export default function ChatWidgetPage() {
               </div>
 
               {/* Input Area - FISSA */}
-              <div className={`border-t p-3 md:p-4 pb-12 md:pb-2 safe-bottom flex-shrink-0 transition-colors duration-300 ${
+              <div className={`border-t p-3 md:p-4 pb-12 md:pb-2 mb-[2vh] md:mb-0 safe-bottom flex-shrink-0 transition-colors duration-300 ${
                 isDarkMode ? 'border-gray-700' : 'border-gray-200'
               }`}>
                 <form onSubmit={handleSendMessage} className="flex items-center gap-2 md:gap-3">

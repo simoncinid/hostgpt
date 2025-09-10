@@ -2,7 +2,8 @@
 
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { Home, ArrowLeft, Cookie, Mail, Phone, MapPin } from 'lucide-react'
+import { ArrowLeft, Cookie, Mail, Phone, MapPin } from 'lucide-react'
+import HostGPTLogo from '../components/HostGPTLogo'
 
 export default function CookiePolicyPage() {
   return (
@@ -12,7 +13,7 @@ export default function CookiePolicyPage() {
         <div className="px-4">
           <div className="flex justify-between items-center py-3 px-4 bg-white/60 backdrop-blur-lg border border-white/30 shadow-lg rounded-2xl mx-2">
             <Link href="/" className="flex items-center space-x-2">
-              <Home className="w-8 h-8 text-primary" />
+              <HostGPTLogo size="lg" className="text-primary" />
               <span className="text-2xl font-bold text-dark">HostGPT</span>
             </Link>
             <Link href="/" className="flex items-center space-x-2 text-gray-600 hover:text-primary transition">
@@ -57,103 +58,88 @@ export default function CookiePolicyPage() {
             {/* Cookie Policy Content */}
             <div className="bg-white rounded-2xl p-8 shadow-lg">
               <div className="prose prose-lg max-w-none text-gray-600">
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8">
-                  <h3 className="text-lg font-semibold text-blue-800 mb-2">Gestione Cookie</h3>
-                  <p className="text-blue-700 text-sm">
-                    Questa pagina utilizza CookieYes per gestire le tue preferenze sui cookie. 
-                    Puoi modificare le tue impostazioni in qualsiasi momento utilizzando il banner cookie.
-                  </p>
+                {/* Start CookieYes cookie policy */}
+                <style jsx>{`
+                  a.cky-banner-element {
+                    padding: 8px 30px;
+                    background: #f8f9fa;
+                    color: #858a8f;
+                    border: 1px solid #dee2e6;
+                    box-sizing: border-box;
+                    border-radius: 2px;
+                    cursor: pointer;
+                    display: inline-block;
+                    text-decoration: none;
+                    margin: 10px 0;
+                    transition: all 0.3s ease;
+                  }
+                  a.cky-banner-element:hover {
+                    background: #e9ecef;
+                    color: #495057;
+                  }
+                  .cookie-policy-h1 {
+                    font-size: 2.5rem;
+                    font-weight: bold;
+                    color: #1a1a1a;
+                    margin-bottom: 1rem;
+                  }
+                  .cookie-policy-date-container {
+                    background: #f8f9fa;
+                    padding: 1rem;
+                    border-radius: 8px;
+                    margin-bottom: 2rem;
+                    border-left: 4px solid #007bff;
+                  }
+                  .cookie-policy-p {
+                    margin-bottom: 1.5rem;
+                    line-height: 1.6;
+                  }
+                  .cky-audit-table-element {
+                    background: #f8f9fa;
+                    border: 1px solid #dee2e6;
+                    border-radius: 8px;
+                    padding: 1rem;
+                    margin: 1rem 0;
+                    min-height: 100px;
+                  }
+                `}</style>
+                
+                <h1 className="cookie-policy-h1">Cookie Policy</h1>
+                <div className="cookie-policy-date-container">
+                  <p>Effective date: September 10, 2025</p>
+                  <p>Last updated: September 10, 2025</p>
                 </div>
-
-                {/* CookieYes Script Container */}
-                <div className="cookie-policy-container">
-                  {/* Start CookieYes cookie policy */}
-                  <script 
-                    id="cky-cookie-policy" 
-                    type="text/javascript" 
-                    src="https://cdn-cookieyes.com/client_data/65fd15cbd6f7bed8d5de4f08/cookie-policy/script.js"
-                  ></script>
-                  {/* End CookieYes cookie policy */}
+                
+                <h2 className="text-2xl font-bold text-dark mb-4">What are cookies?</h2>
+                <div className="cookie-policy-p">
+                  <p>This Cookie Policy explains what cookies are, how we use them, the types of cookies we use (i.e., the information we collect using cookies and how that information is used), and how to manage your cookie settings.</p>
+                  <p>Cookies are small text files used to store small pieces of information. They are stored on your device when a website loads in your browser. These cookies help ensure that the website functions properly, enhance security, provide a better user experience, and analyse performance to identify what works and where improvements are needed.</p>
                 </div>
-
-                <div className="mt-8 pt-6 border-t border-gray-200">
-                  <h3 className="text-xl font-semibold text-dark mb-4">Informazioni sui Cookie</h3>
-                  <p className="text-gray-600 mb-4">
-                    I cookie sono piccoli file di testo che vengono memorizzati sul tuo dispositivo quando visiti il nostro sito web. 
-                    Utilizziamo i cookie per:
-                  </p>
-                  <ul className="list-disc list-inside space-y-2 ml-4 text-gray-600">
-                    <li>Migliorare le prestazioni del sito</li>
-                    <li>Personalizzare la tua esperienza</li>
-                    <li>Analizzare come utilizzi il nostro servizio</li>
-                    <li>Fornire funzionalità di marketing e pubblicità</li>
-                  </ul>
+                
+                <h2 className="text-2xl font-bold text-dark mb-4">How do we use cookies?</h2>
+                <div className="cookie-policy-p">
+                  <p>Like most online services, our website uses both first-party and third-party cookies for various purposes. First-party cookies are primarily necessary for the website to function properly and do not collect any personally identifiable data.</p>
+                  <p>The third-party cookies used on our website primarily help us understand how the website performs, track how you interact with it, keep our services secure, deliver relevant advertisements, and enhance your overall user experience while improving the speed of your future interactions with our website.</p>
                 </div>
-
-                <div className="mt-8 pt-6 border-t border-gray-200">
-                  <h3 className="text-xl font-semibold text-dark mb-4">Tipi di Cookie</h3>
-                  <div className="grid md:grid-cols-2 gap-6">
-                    <div className="bg-gray-50 rounded-lg p-4">
-                      <h4 className="font-semibold text-dark mb-2">Cookie Essenziali</h4>
-                      <p className="text-sm text-gray-600">
-                        Necessari per il funzionamento del sito. Non possono essere disabilitati.
-                      </p>
-                    </div>
-                    <div className="bg-gray-50 rounded-lg p-4">
-                      <h4 className="font-semibold text-dark mb-2">Cookie di Performance</h4>
-                      <p className="text-sm text-gray-600">
-                        Ci aiutano a capire come i visitatori interagiscono con il sito.
-                      </p>
-                    </div>
-                    <div className="bg-gray-50 rounded-lg p-4">
-                      <h4 className="font-semibold text-dark mb-2">Cookie Funzionali</h4>
-                      <p className="text-sm text-gray-600">
-                        Permettono al sito di ricordare le tue scelte e preferenze.
-                      </p>
-                    </div>
-                    <div className="bg-gray-50 rounded-lg p-4">
-                      <h4 className="font-semibold text-dark mb-2">Cookie di Marketing</h4>
-                      <p className="text-sm text-gray-600">
-                        Utilizzati per mostrare annunci pertinenti e misurare l'efficacia delle campagne.
-                      </p>
-                    </div>
-                  </div>
+                
+                <h2 className="text-2xl font-bold text-dark mb-4">Types of cookies we use</h2>
+                <div className="cky-audit-table-element"></div>
+                
+                <h2 className="text-2xl font-bold text-dark mb-4" style={{marginBottom: '20px'}}>Manage cookie preferences</h2>
+                <a className="cky-banner-element">Consent Preferences</a>
+                <br />
+                <div>
+                  <p>You can modify your cookie settings anytime by clicking the 'Consent Preferences' button above. This will allow you to revisit the cookie consent banner and update your preferences or withdraw your consent immediately.</p>
+                  <p>Additionally, different browsers offer various methods to block and delete cookies used by websites. You can adjust your browser settings to block or delete cookies. Below are links to support documents on how to manage and delete cookies in major web browsers.</p>
+                  <p>Chrome: <a target="_blank" rel="noopener noreferrer" href="https://support.google.com/accounts/answer/32050" className="text-primary hover:underline">https://support.google.com/accounts/answer/32050</a></p>
+                  <p>Safari: <a target="_blank" rel="noopener noreferrer" href="https://support.apple.com/en-in/guide/safari/sfri11471/mac" className="text-primary hover:underline">https://support.apple.com/en-in/guide/safari/sfri11471/mac</a></p>
+                  <p>Firefox: <a target="_blank" rel="noopener noreferrer" href="https://support.mozilla.org/en-US/kb/clear-cookies-and-site-data-firefox?redirectslug=delete-cookies-remove-info-websites-stored&redirectlocale=en-US" className="text-primary hover:underline">https://support.mozilla.org/en-US/kb/clear-cookies-and-site-data-firefox?redirectslug=delete-cookies-remove-info-websites-stored&redirectlocale=en-US</a></p>
+                  <p>Internet Explorer: <a target="_blank" rel="noopener noreferrer" href="https://support.microsoft.com/en-us/topic/how-to-delete-cookie-files-in-internet-explorer-bca9446f-d873-78de-77ba-d42645fa52fc" className="text-primary hover:underline">https://support.microsoft.com/en-us/topic/how-to-delete-cookie-files-in-internet-explorer-bca9446f-d873-78de-77ba-d42645fa52fc</a></p>
+                  <p>If you are using a different web browser, please refer to its official support documentation.</p>
                 </div>
-
-                <div className="mt-8 pt-6 border-t border-gray-200">
-                  <h3 className="text-xl font-semibold text-dark mb-4">Gestione delle Preferenze</h3>
-                  <p className="text-gray-600 mb-4">
-                    Puoi gestire le tue preferenze sui cookie in qualsiasi momento:
-                  </p>
-                  <ol className="list-decimal list-inside space-y-2 ml-4 text-gray-600">
-                    <li>Clicca sul banner cookie che appare quando visiti il sito</li>
-                    <li>Seleziona "Impostazioni Cookie" per personalizzare le tue preferenze</li>
-                    <li>Attiva o disattiva le categorie di cookie secondo le tue preferenze</li>
-                    <li>Salva le tue impostazioni</li>
-                  </ol>
-                </div>
-
-                <div className="mt-8 pt-6 border-t border-gray-200">
-                  <h3 className="text-xl font-semibold text-dark mb-4">Contatti</h3>
-                  <p className="text-gray-600 mb-4">
-                    Per domande sui cookie o per esercitare i tuoi diritti, contattaci:
-                  </p>
-                  <div className="bg-gray-50 rounded-lg p-6">
-                    <div className="space-y-2 text-gray-700">
-                      <p><strong>Simoncini Diego</strong></p>
-                      <p>Via Enrico Capecchi, 28</p>
-                      <p>PI 56025, Italy</p>
-                      <p>Email: simoncinidiego10@gmail.com</p>
-                      <p>Phone: 3391797616</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-8 pt-6 border-t border-gray-200">
-                  <p className="text-gray-600 text-sm">
-                    Cookie Policy powered by <a target="_blank" href="https://www.cookieyes.com/?utm_source=CP&utm_medium=footer&utm_campaign=UW" className="text-primary hover:underline">CookieYes</a>.
-                  </p>
-                </div>
+                
+                <p className="cookie-policy-p">Cookie Policy generated by <a target="_blank" rel="noopener noreferrer" href="https://www.cookieyes.com/?utm_source=CP&utm_medium=footer&utm_campaign=UW" className="text-primary hover:underline">CookieYes - Cookie Policy Generator</a></p>
+                {/* End CookieYes cookie policy */}
               </div>
             </div>
           </motion.div>
@@ -167,7 +153,7 @@ export default function CookiePolicyPage() {
             {/* Logo e descrizione */}
             <div className="md:col-span-2">
               <div className="flex items-center space-x-2 mb-4">
-                <Home className="w-8 h-8 text-primary" />
+                <HostGPTLogo size="lg" className="text-primary" />
                 <span className="text-2xl font-bold">HostGPT</span>
               </div>
               <p className="text-gray-400 mb-4 max-w-md">
@@ -209,7 +195,7 @@ export default function CookiePolicyPage() {
           
           {/* Separatore */}
           <div className="border-t border-gray-800 pt-6 text-center">
-            <p className="text-gray-400 text-sm">&copy; 2024 HostGPT. Tutti i diritti riservati.</p>
+            <p className="text-gray-400 text-sm">&copy; 2025 HostGPT. Tutti i diritti riservati.</p>
           </div>
         </div>
       </footer>

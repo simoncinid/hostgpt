@@ -9,13 +9,13 @@ import {
   Shield, 
   CheckCircle, 
   Loader2,
-  Home,
   MessageSquare,
   Users,
   Zap,
   Star,
   Gift
 } from 'lucide-react'
+import HostGPTLogo from '../components/HostGPTLogo'
 import { subscription, referral } from '@/lib/api'
 import { useAuthStore } from '@/lib/store'
 import { useLanguage } from '@/lib/languageContext'
@@ -339,7 +339,7 @@ function CheckoutContent() {
       <div className="bg-white shadow-sm border-b px-6 py-4">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <Link href="/" className="flex items-center space-x-3">
-            <Home className="w-8 h-8 text-primary" />
+            <HostGPTLogo size="lg" className="text-primary" />
             <span className="text-xl font-bold text-dark">HostGPT</span>
           </Link>
           <div className="flex items-center space-x-3 text-sm text-gray-600">

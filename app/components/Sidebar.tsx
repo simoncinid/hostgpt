@@ -16,6 +16,7 @@ import {
 import { useAuthStore } from '@/lib/store'
 import { useLanguage } from '@/lib/languageContext'
 import LanguageSelector from '@/components/LanguageSelector'
+import HostGPTLogo from './HostGPTLogo'
 
 interface SidebarProps {
   currentPath: string
@@ -50,7 +51,7 @@ export default function Sidebar({ currentPath, onLogout, isSidebarCollapsed: ext
           </button>
           {!isSidebarCollapsed && (
             <Link href="/" className="flex items-center space-x-2">
-              <Home className="w-8 h-8 text-primary" />
+              <HostGPTLogo size="lg" className="text-primary" />
               <span className="text-2xl font-bold text-dark">HostGPT</span>
             </Link>
           )}
@@ -140,7 +141,7 @@ export default function Sidebar({ currentPath, onLogout, isSidebarCollapsed: ext
           <Menu />
         </button>
         <Link href="/" className="flex items-center space-x-2">
-          <Home className="w-7 h-7 text-primary" />
+          <HostGPTLogo size="md" className="text-primary" />
           <span className="text-xl font-bold text-dark">HostGPT</span>
         </Link>
         <div className="flex items-center space-x-2">

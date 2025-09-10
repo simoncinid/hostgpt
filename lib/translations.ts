@@ -1891,7 +1891,7 @@ export const translations: Record<Language, Translations> = {
           cookies: "Cookie"
         }
       },
-      copyright: "© 2024 HostGPT. Tutti i diritti riservati."
+      copyright: "© 2025 HostGPT. Tutti i diritti riservati."
     },
     register: {
       title: "Crea il tuo Account",
