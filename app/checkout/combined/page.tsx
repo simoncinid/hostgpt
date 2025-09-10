@@ -68,8 +68,8 @@ function CheckoutForm({ clientSecret, onSuccess, t }: { clientSecret: string, on
       }
     } catch (error) {
       setReferralCodeValid(false)
-      setReferralCodeMessage('Errore nella validazione del codice')
-      toast.error('Errore nella validazione del codice')
+      setReferralCodeMessage(t.checkout.combined.errorMessages.validationError)
+      toast.error(t.checkout.combined.errorMessages.validationError)
     } finally {
       setValidatingCode(false)
     }
@@ -118,18 +118,18 @@ function CheckoutForm({ clientSecret, onSuccess, t }: { clientSecret: string, on
       })
 
       if (stripeError) {
-        setError(stripeError.message || 'Errore durante il pagamento')
-        toast.error(stripeError.message || 'Errore durante il pagamento')
+        setError(stripeError.message || t.checkout.combined.errorMessages.paymentError)
+        toast.error(stripeError.message || t.checkout.combined.errorMessages.paymentError)
       } else if (paymentIntent.status === 'succeeded') {
-        toast.success('Pagamento completato con successo!')
+        toast.success(t.checkout.combined.paymentSuccess)
         onSuccess(referralCodeValid && referralCode.trim() ? referralCode.toUpperCase() : undefined)
       } else {
-        setError('Pagamento non completato')
-        toast.error('Pagamento non completato')
+        setError(t.checkout.combined.errorMessages.paymentNotCompleted)
+        toast.error(t.checkout.combined.errorMessages.paymentNotCompleted)
       }
     } catch (err: any) {
-      setError(err.message || 'Errore durante il pagamento')
-      toast.error(err.message || 'Errore durante il pagamento')
+      setError(err.message || t.checkout.combined.errorMessages.paymentError)
+      toast.error(err.message || t.checkout.combined.errorMessages.paymentError)
     } finally {
       setIsProcessing(false)
     }
@@ -296,7 +296,7 @@ function CheckoutContent() {
         }
       } catch (err: any) {
         const backendMsg = err?.response?.data?.detail
-        setErrorMessage(backendMsg || err?.message || 'Errore durante il reindirizzamento al pagamento')
+        setErrorMessage(backendMsg || err?.message || t.checkout.combined.errorMessages.checkoutError)
         setStatus('error')
       }
     }
@@ -331,7 +331,7 @@ function CheckoutContent() {
       }, 1500)
     } catch (error: any) {
       console.error('Errore nella conferma del pagamento:', error)
-      toast.error('Errore nella conferma del pagamento. Contatta il supporto.')
+      toast.error(t.checkout.combined.errorMessages.paymentConfirmationError)
     }
   }
 
@@ -342,11 +342,11 @@ function CheckoutContent() {
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <Link href="/" className="flex items-center space-x-3">
             <HostGPTLogo size="lg" className="text-primary" />
-            <span className="text-xl font-bold text-dark">HostGPT Pro + Guardian</span>
+            <span className="text-xl font-bold text-dark">{t.checkout.combined.headerTitle}</span>
           </Link>
           <div className="flex items-center space-x-3 text-sm text-gray-600">
             <Shield className="w-4 h-4" />
-            <span className="hidden sm:inline">Pagamento Sicuro</span>
+            <span className="hidden sm:inline">{t.checkout.combined.securePayment}</span>
           </div>
         </div>
       </div>
@@ -364,10 +364,10 @@ function CheckoutContent() {
                 className="mb-6"
               >
                 <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-2">
-                  Pacchetto Completo
+                  {t.checkout.combined.title}
                 </h1>
                 <p className="text-gray-600 text-sm lg:text-base">
-                  HostGPT Pro + Guardian per la massima efficienza
+                  {t.checkout.combined.subtitle}
                 </p>
               </motion.div>
 
@@ -409,8 +409,8 @@ function CheckoutContent() {
                   className="bg-white rounded-xl shadow-lg p-8 text-center"
                 >
                   <Loader2 className="w-12 h-12 text-primary animate-spin mx-auto mb-4" />
-                  <h2 className="text-xl font-semibold mb-2">Preparazione...</h2>
-                  <p className="text-gray-600">Attendi qualche secondo.</p>
+                  <h2 className="text-xl font-semibold mb-2">{t.checkout.combined.statusMessages.preparing}</h2>
+                  <p className="text-gray-600">{t.checkout.combined.statusMessages.wait}</p>
                 </motion.div>
               )}
 
@@ -420,15 +420,15 @@ function CheckoutContent() {
                   animate={{ opacity: 1, y: 0 }}
                   className="bg-white rounded-xl shadow-lg p-8 text-center"
                 >
-                  <h2 className="text-xl font-semibold mb-2">Pagamento annullato</h2>
-                  <p className="text-gray-600 mb-6">Puoi riprovare quando vuoi.</p>
+                  <h2 className="text-xl font-semibold mb-2">{t.checkout.combined.statusMessages.cancelled}</h2>
+                  <p className="text-gray-600 mb-6">{t.checkout.combined.statusMessages.youCanTryAgain}</p>
                   <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                    <Link href="/dashboard" className="btn-secondary">Dashboard</Link>
+                    <Link href="/dashboard" className="btn-secondary">{t.checkout.combined.statusMessages.goToDashboard}</Link>
                     <button
                       className="btn-primary"
                       onClick={() => router.replace('/checkout/combined')}
                     >
-                      Riprova
+                      {t.checkout.combined.statusMessages.tryAgain}
                     </button>
                   </div>
                 </motion.div>
@@ -440,11 +440,11 @@ function CheckoutContent() {
                   animate={{ opacity: 1, y: 0 }}
                   className="bg-white rounded-xl shadow-lg p-8 text-center"
                 >
-                  <h2 className="text-xl font-semibold mb-2">Errore</h2>
+                  <h2 className="text-xl font-semibold mb-2">{t.checkout.combined.statusMessages.error}</h2>
                   <p className="text-gray-600 mb-6">{errorMessage}</p>
                   <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                    <Link href="/login" className="btn-secondary">Accedi</Link>
-                    <button className="btn-primary" onClick={() => router.refresh()}>Riprova</button>
+                    <Link href="/login" className="btn-secondary">{t.checkout.combined.statusMessages.login}</Link>
+                    <button className="btn-primary" onClick={() => router.refresh()}>{t.checkout.combined.statusMessages.tryAgain}</button>
                   </div>
                 </motion.div>
               )}
@@ -456,9 +456,9 @@ function CheckoutContent() {
                   className="bg-white rounded-xl shadow-lg p-8 text-center"
                 >
                   <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-                  <h2 className="text-xl font-semibold mb-2 text-green-600">Completato!</h2>
+                  <h2 className="text-xl font-semibold mb-2 text-green-600">{t.checkout.combined.statusMessages.completed}</h2>
                   <p className="text-gray-600 mb-6">{errorMessage}</p>
-                  <Link href="/dashboard" className="btn-primary">Vai alla Dashboard</Link>
+                  <Link href="/dashboard" className="btn-primary">{t.checkout.combined.statusMessages.goToDashboard}</Link>
                 </motion.div>
               )}
             </div>

@@ -295,6 +295,7 @@ export interface Translations {
       }
       button: string
       processing: string
+      securePayment: string
       referralCode: string
       referralCodeOptional: string
       referralCodePlaceholder: string
@@ -304,12 +305,15 @@ export interface Translations {
       privacyLink: string
       successMessage: string
       successMessageWithBonus: string
+      paymentSuccess: string
       errorMessages: {
         missingToken: string
         checkoutError: string
         paymentError: string
         cardNotFound: string
         paymentNotCompleted: string
+        validationError: string
+        paymentConfirmationError: string
       }
       statusMessages: {
         preparing: string
@@ -318,6 +322,9 @@ export interface Translations {
         tryAgain: string
         completed: string
         goToDashboard: string
+        login: string
+        youCanTryAgain: string
+        error: string
       }
     }
     guardian: {
@@ -339,6 +346,7 @@ export interface Translations {
       }
       button: string
       processing: string
+      securePayment: string
       termsText: string
       termsLink: string
       privacyLink: string
@@ -357,6 +365,9 @@ export interface Translations {
         tryAgain: string
         completed: string
         goToDashboard: string
+        login: string
+        youCanTryAgain: string
+        error: string
       }
     }
   }
@@ -1314,6 +1325,7 @@ export const translations: Record<Language, Translations> = {
         },
         button: "Attiva Pacchetto Completo - 38€/mese",
         processing: "Elaborazione...",
+        securePayment: "Pagamento Sicuro",
         referralCode: "Codice Referral (opzionale)",
         referralCodeOptional: "Codice Referral (opzionale)",
         referralCodePlaceholder: "Inserisci il codice referral",
@@ -1323,12 +1335,15 @@ export const translations: Record<Language, Translations> = {
         privacyLink: "Privacy",
         successMessage: "Pacchetto completo attivato! Reindirizzamento alla dashboard...",
         successMessageWithBonus: "Pacchetto completo attivato con messaggi bonus! Reindirizzamento alla dashboard...",
+        paymentSuccess: "Pagamento completato con successo!",
         errorMessages: {
           missingToken: "Token mancante. Accedi nuovamente per continuare.",
           checkoutError: "Errore durante il reindirizzamento al pagamento",
           paymentError: "Errore durante il pagamento",
           cardNotFound: "Elemento carta non trovato",
-          paymentNotCompleted: "Pagamento non completato"
+          paymentNotCompleted: "Pagamento non completato",
+          validationError: "Errore nella validazione del codice",
+          paymentConfirmationError: "Errore nella conferma del pagamento. Contatta il supporto."
         },
         statusMessages: {
           preparing: "Preparazione...",
@@ -1336,7 +1351,10 @@ export const translations: Record<Language, Translations> = {
           cancelled: "Pagamento annullato",
           tryAgain: "Riprova",
           completed: "Completato!",
-          goToDashboard: "Vai alla Dashboard"
+          goToDashboard: "Vai alla Dashboard",
+          login: "Accedi",
+          youCanTryAgain: "Puoi riprovare quando vuoi.",
+          error: "Errore"
         }
       },
       guardian: {
@@ -1358,6 +1376,7 @@ export const translations: Record<Language, Translations> = {
         },
         button: "Attiva Guardian - 9€/mese",
         processing: "Elaborazione...",
+        securePayment: "Pagamento Sicuro",
         termsText: "Cliccando su \"Attiva Guardian\" accetti i nostri",
         termsLink: "Termini",
         privacyLink: "Privacy",
@@ -1375,7 +1394,10 @@ export const translations: Record<Language, Translations> = {
           cancelled: "Pagamento annullato",
           tryAgain: "Riprova",
           completed: "Completato!",
-          goToDashboard: "Vai alla Dashboard Guardian"
+          goToDashboard: "Vai alla Dashboard Guardian",
+          login: "Accedi",
+          youCanTryAgain: "Puoi riprovare quando vuoi.",
+          error: "Errore"
         }
       }
     },
@@ -2347,6 +2369,7 @@ export const translations: Record<Language, Translations> = {
         },
         button: "Activate Complete Package - €38/month",
         processing: "Processing...",
+        securePayment: "Secure Payment",
         referralCode: "Referral Code (optional)",
         referralCodeOptional: "Referral Code (optional)",
         referralCodePlaceholder: "Enter referral code",
@@ -2356,12 +2379,15 @@ export const translations: Record<Language, Translations> = {
         privacyLink: "Privacy",
         successMessage: "Complete package activated! Redirecting to dashboard...",
         successMessageWithBonus: "Complete package activated with bonus messages! Redirecting to dashboard...",
+        paymentSuccess: "Payment completed successfully!",
         errorMessages: {
           missingToken: "Missing token. Please log in again to continue.",
           checkoutError: "Error during payment redirection",
           paymentError: "Error during payment",
           cardNotFound: "Card element not found",
-          paymentNotCompleted: "Payment not completed"
+          paymentNotCompleted: "Payment not completed",
+          validationError: "Error validating code",
+          paymentConfirmationError: "Error confirming payment. Contact support."
         },
         statusMessages: {
           preparing: "Preparing...",
@@ -2369,7 +2395,10 @@ export const translations: Record<Language, Translations> = {
           cancelled: "Payment cancelled",
           tryAgain: "Try again",
           completed: "Completed!",
-          goToDashboard: "Go to Dashboard"
+          goToDashboard: "Go to Dashboard",
+          login: "Login",
+          youCanTryAgain: "You can try again anytime.",
+          error: "Error"
         }
       },
       guardian: {
@@ -2391,6 +2420,7 @@ export const translations: Record<Language, Translations> = {
         },
         button: "Activate Guardian - €9/month",
         processing: "Processing...",
+        securePayment: "Secure Payment",
         termsText: "By clicking \"Activate Guardian\" you accept our",
         termsLink: "Terms",
         privacyLink: "Privacy",
@@ -2408,7 +2438,10 @@ export const translations: Record<Language, Translations> = {
           cancelled: "Payment cancelled",
           tryAgain: "Try again",
           completed: "Completed!",
-          goToDashboard: "Go to Guardian Dashboard"
+          goToDashboard: "Go to Guardian Dashboard",
+          login: "Login",
+          youCanTryAgain: "You can try again anytime.",
+          error: "Error"
         }
       }
     },

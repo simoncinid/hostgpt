@@ -106,10 +106,10 @@ export default function SettingsPage() {
   const handleDeleteProfile = async () => {
     const confirmationTexts = [
       'voglio eliminare il profilo',
-      'I want to delete my profile'
+      'i want to delete my profile'
     ]
     
-    if (!confirmationTexts.includes(deleteConfirmationText.toLowerCase())) {
+    if (!confirmationTexts.includes(deleteConfirmationText.toLowerCase().trim())) {
       toast.error((t.settings as any).deleteProfileModal.confirmationText)
       return
     }

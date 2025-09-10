@@ -232,7 +232,7 @@ function CheckoutContent() {
           </Link>
           <div className="flex items-center space-x-3 text-sm text-gray-600">
             <Shield className="w-4 h-4" />
-            <span className="hidden sm:inline">Pagamento Sicuro</span>
+            <span className="hidden sm:inline">{t.checkout.guardian.securePayment}</span>
           </div>
         </div>
       </div>
@@ -250,10 +250,10 @@ function CheckoutContent() {
                 className="mb-6"
               >
                 <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-2">
-                  Attiva Guardian
+                  {t.checkout.guardian.title}
                 </h1>
                 <p className="text-gray-600 text-sm lg:text-base">
-                  Proteggi la soddisfazione dei tuoi ospiti
+                  {t.checkout.guardian.subtitle}
                 </p>
               </motion.div>
 
@@ -295,8 +295,8 @@ function CheckoutContent() {
                   className="bg-white rounded-xl shadow-lg p-8 text-center"
                 >
                   <Loader2 className="w-12 h-12 text-purple-600 animate-spin mx-auto mb-4" />
-                  <h2 className="text-xl font-semibold mb-2">Preparazione...</h2>
-                  <p className="text-gray-600">Attendi qualche secondo.</p>
+                  <h2 className="text-xl font-semibold mb-2">{t.checkout.guardian.statusMessages.preparing}</h2>
+                  <p className="text-gray-600">{t.checkout.guardian.statusMessages.wait}</p>
                 </motion.div>
               )}
 
@@ -306,15 +306,15 @@ function CheckoutContent() {
                   animate={{ opacity: 1, y: 0 }}
                   className="bg-white rounded-xl shadow-lg p-8 text-center"
                 >
-                  <h2 className="text-xl font-semibold mb-2">Pagamento annullato</h2>
-                  <p className="text-gray-600 mb-6">Puoi riprovare quando vuoi.</p>
+                  <h2 className="text-xl font-semibold mb-2">{t.checkout.guardian.statusMessages.cancelled}</h2>
+                  <p className="text-gray-600 mb-6">{t.checkout.guardian.statusMessages.youCanTryAgain}</p>
                   <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                    <Link href="/dashboard/guardian" className="btn-secondary">Dashboard</Link>
+                    <Link href="/dashboard/guardian" className="btn-secondary">{t.checkout.guardian.statusMessages.goToDashboard}</Link>
                     <button
                       className="btn-primary"
                       onClick={() => router.replace('/checkout/guardian')}
                     >
-                      Riprova
+                      {t.checkout.guardian.statusMessages.tryAgain}
                     </button>
                   </div>
                 </motion.div>
@@ -326,11 +326,11 @@ function CheckoutContent() {
                   animate={{ opacity: 1, y: 0 }}
                   className="bg-white rounded-xl shadow-lg p-8 text-center"
                 >
-                  <h2 className="text-xl font-semibold mb-2">Errore</h2>
+                  <h2 className="text-xl font-semibold mb-2">{t.checkout.guardian.statusMessages.error}</h2>
                   <p className="text-gray-600 mb-6">{errorMessage}</p>
                   <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                    <Link href="/login" className="btn-secondary">Accedi</Link>
-                    <button className="btn-primary" onClick={() => router.refresh()}>Riprova</button>
+                    <Link href="/login" className="btn-secondary">{t.checkout.guardian.statusMessages.login}</Link>
+                    <button className="btn-primary" onClick={() => router.refresh()}>{t.checkout.guardian.statusMessages.tryAgain}</button>
                   </div>
                 </motion.div>
               )}
@@ -342,9 +342,9 @@ function CheckoutContent() {
                   className="bg-white rounded-xl shadow-lg p-8 text-center"
                 >
                   <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-                  <h2 className="text-xl font-semibold mb-2 text-green-600">Completato!</h2>
+                  <h2 className="text-xl font-semibold mb-2 text-green-600">{t.checkout.guardian.statusMessages.completed}</h2>
                   <p className="text-gray-600 mb-6">{errorMessage}</p>
-                  <Link href="/dashboard/guardian" className="btn-primary">Vai alla Dashboard Guardian</Link>
+                  <Link href="/dashboard/guardian" className="btn-primary">{t.checkout.guardian.statusMessages.goToDashboard}</Link>
                 </motion.div>
               )}
             </div>

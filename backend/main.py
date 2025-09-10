@@ -385,6 +385,29 @@ async def send_email(to_email: str, subject: str, body: str, attachments: Option
     except Exception as e:
         logger.error(f"Failed to send email: {e}")
 
+def send_email_background(to_email: str, subject: str, body: str, attachments: Optional[list[tuple[str, bytes, str]]] = None):
+    """Funzione helper per inviare email in background senza background_tasks"""
+    import asyncio
+    try:
+        # Crea un nuovo event loop se necessario
+        try:
+            loop = asyncio.get_event_loop()
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+        
+        # Esegui l'invio email
+        if loop.is_running():
+            # Se il loop è già in esecuzione, crea un task
+            asyncio.create_task(send_email(to_email, subject, body, attachments))
+        else:
+            # Se il loop non è in esecuzione, esegui direttamente
+            loop.run_until_complete(send_email(to_email, subject, body, attachments))
+            
+        logger.info(f"Email queued for {to_email}")
+    except Exception as e:
+        logger.error(f"Failed to queue email for {to_email}: {e}")
+
 # ============= Monthly Report Service =============
 
 def generate_monthly_report_data(user_id: int, db: Session, start_date: datetime = None, end_date: datetime = None) -> dict:
@@ -784,12 +807,12 @@ Rispondi SOLO con un JSON valido:
             )
             
             # Invia l'email
-            import asyncio
-            asyncio.create_task(send_email(
+            email_subject = "🚨 GUARDIAN ALERT: Unsatisfied guest detected" if (user.language or "it") == "en" else "🚨 ALERT GUARDIAN: Ospite insoddisfatto rilevato"
+            send_email_background(
                 to_email=user.email,
-                subject=f"🚨 ALERT GUARDIAN: Ospite insoddisfatto rilevato",
+                subject=email_subject,
                 body=email_body
-            ))
+            )
             
             # Marca l'email come inviata
             alert.email_sent = True
@@ -1887,12 +1910,11 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
                     )
                     email_subject = "Purchase completed successfully - HostGPT" if (user.language or "it") == "en" else "Acquisto completato con successo - HostGPT"
                     
-                    import asyncio
-                    asyncio.create_task(send_email(
+                    send_email_background(
                         to_email=user.email,
                         subject=email_subject,
                         body=email_body
-                    ))
+                    )
                     
                 else:
                     # Gestisci checkout singolo (comportamento esistente)
@@ -1918,12 +1940,11 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
                         )
                         email_subject = "Purchase completed successfully - HostGPT" if (user.language or "it") == "en" else "Acquisto completato con successo - HostGPT"
                         
-                        import asyncio
-                        asyncio.create_task(send_email(
+                        send_email_background(
                             to_email=user.email,
                             subject=email_subject,
                             body=email_body
-                        ))
+                        )
                     else:
                         # Gestisci abbonamento HostGPT (default)
                         user.stripe_subscription_id = session['subscription']
@@ -1950,12 +1971,11 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
                         )
                         email_subject = "Purchase completed successfully - HostGPT" if (user.language or "it") == "en" else "Acquisto completato con successo - HostGPT"
                         
-                        import asyncio
-                        asyncio.create_task(send_email(
+                        send_email_background(
                             to_email=user.email,
                             subject=email_subject,
                             body=email_body
-                        ))
+                        )
                     
                     db.commit()
         
@@ -2552,7 +2572,9 @@ async def create_chatbot(
         qr_bytes = None
     attachments = [("qrcode.png", qr_bytes, "image/png")] if qr_bytes else None
     
-    background_tasks.add_task(send_email, current_user.email, "Il tuo Chatbot è pronto!", email_body, attachments)
+    # Titolo email multilingua
+    email_subject = "Your Chatbot is ready! 🤖" if (current_user.language or "it") == "en" else "Il tuo Chatbot è pronto! 🤖"
+    background_tasks.add_task(send_email, current_user.email, email_subject, email_body, attachments)
     
     return {
         "id": db_chatbot.id,

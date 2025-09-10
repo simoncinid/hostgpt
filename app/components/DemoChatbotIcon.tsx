@@ -14,15 +14,18 @@ export default function DemoChatbotIcon({ size = 'md', className = '' }: DemoCha
   const [isLoading, setIsLoading] = useState(false)
   const [hasIcon, setHasIcon] = useState(false)
 
+  // UUID del chatbot demo reale
+  const DEMO_CHATBOT_UUID = "e413257a-f165-41f2-9f9d-2f244d11d3b4"
+
   useEffect(() => {
-    // Prima controlla se il chatbot demo ha un'iconaa
-    chat.getDemoInfo()
+    // Prima controlla se il chatbot demo ha un'icona
+    chat.getInfo(DEMO_CHATBOT_UUID)
       .then(response => {
         setHasIcon(response.data.has_icon)
         
         if (response.data.has_icon) {
           setIsLoading(true)
-          return chat.getDemoIcon()
+          return chat.getIcon(DEMO_CHATBOT_UUID)
         }
         return null
       })

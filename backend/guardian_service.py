@@ -355,9 +355,10 @@ Rispondi SOLO con un JSON valido nel seguente formato:
             )
             
             # Invia l'email
+            email_subject = "🚨 GUARDIAN ALERT: Unsatisfied guest detected" if (user.language or "it") == "en" else "🚨 ALERT GUARDIAN: Ospite insoddisfatto rilevato"
             send_email(
                 to_email=user.email,
-                subject=f"🚨 ALERT GUARDIAN: Ospite insoddisfatto rilevato",
+                subject=email_subject,
                 html_content=email_body
             )
             

@@ -368,7 +368,7 @@ function GuardianContent() {
               <div className="space-y-6">
                 {/* Statistiche */}
                 {guardianStats && (
-                  <div className="grid grid-cols-4 gap-2 md:grid-cols-4 md:gap-6 mb-8">
+                  <div className="grid grid-cols-3 gap-2 md:grid-cols-3 md:gap-6 mb-8">
                     <motion.div
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}

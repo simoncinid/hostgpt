@@ -202,6 +202,9 @@ export const chat = {
   
   getDemoIcon: () =>
     api.get('/demo/icon', { responseType: 'blob' }),
+  
+  getIcon: (uuid: string) =>
+    api.get(`/chat/${uuid}/icon`, { responseType: 'blob' }),
 }
 
 export const guardian = {

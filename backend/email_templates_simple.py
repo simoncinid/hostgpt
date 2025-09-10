@@ -223,7 +223,7 @@ def create_subscription_activation_email_simple(user_name: str, language: str = 
         </div>
         
         <div style="text-align: center;">
-            <a href="https://hostgpt.com/dashboard" class="cta-button">
+            <a href="https://www.hostgpt.it/dashboard" class="cta-button">
                 {cta_text}
             </a>
         </div>
@@ -279,7 +279,7 @@ def create_guardian_alert_email_simple(user_name: str, alert, conversation_summa
         </div>
         
         <div style="text-align: center;">
-            <a href="https://hostgpt.com/dashboard/guardian" class="cta-button">
+            <a href="https://www.hostgpt.it/dashboard/guardian" class="cta-button">
                 {cta_text}
             </a>
         </div>
@@ -319,7 +319,7 @@ def create_free_trial_welcome_email_simple(user_name: str, language: str = "it")
         </div>
         
         <div style="text-align: center;">
-            <a href="https://hostgpt.com/dashboard" class="cta-button">
+            <a href="https://www.hostgpt.it/dashboard" class="cta-button">
                 {cta_text}
             </a>
         </div>
@@ -361,7 +361,7 @@ def create_free_trial_ending_email_simple(user_name: str, days_remaining: int, m
         </div>
         
         <div style="text-align: center;">
-            <a href="https://hostgpt.com/checkout" class="cta-button">
+            <a href="https://www.hostgpt.it/checkout" class="cta-button">
                 {cta_text}
             </a>
         </div>
@@ -399,7 +399,7 @@ def create_subscription_confirmation_email_simple(user_name: str, language: str 
         </div>
         
         <div style="text-align: center;">
-            <a href="https://hostgpt.com/dashboard" class="cta-button">
+            <a href="https://www.hostgpt.it/dashboard" class="cta-button">
                 {cta_text}
             </a>
         </div>
@@ -433,7 +433,7 @@ def create_subscription_cancellation_email_simple(user_name: str, end_date: str,
         </div>
         
         <div style="text-align: center;">
-            <a href="https://hostgpt.com/dashboard/settings" class="cta-button">
+            <a href="https://www.hostgpt.it/dashboard/settings" class="cta-button">
                 {cta_text}
             </a>
         </div>
@@ -480,7 +480,7 @@ def create_chatbot_ready_email_simple(user_name: str, property_name: str, chat_u
         </div>
         
         <div style="text-align: center;">
-            <a href="https://hostgpt.com/dashboard" class="cta-button">
+            <a href="https://www.hostgpt.it/dashboard" class="cta-button">
                 {cta_text}
             </a>
         </div>
@@ -522,7 +522,7 @@ def create_free_trial_expired_email_simple(user_name: str, messages_used: int, t
         </div>
         
         <div style="text-align: center;">
-            <a href="https://hostgpt.com/checkout" class="cta-button">
+            <a href="https://www.hostgpt.it/checkout" class="cta-button">
                 {cta_text}
             </a>
         </div>
@@ -560,7 +560,7 @@ def create_combined_subscription_confirmation_email_simple(user_name: str, langu
         </div>
         
         <div style="text-align: center;">
-            <a href="https://hostgpt.com/dashboard" class="cta-button">
+            <a href="https://www.hostgpt.it/dashboard" class="cta-button">
                 {cta_text}
             </a>
         </div>
@@ -594,7 +594,7 @@ def create_guardian_subscription_confirmation_email_simple(user_name: str, langu
         </div>
         
         <div style="text-align: center;">
-            <a href="https://hostgpt.com/dashboard/guardian" class="cta-button">
+            <a href="https://www.hostgpt.it/dashboard/guardian" class="cta-button">
                 {cta_text}
             </a>
         </div>
@@ -628,7 +628,7 @@ def create_subscription_reactivation_email_simple(user_name: str, language: str 
         </div>
         
         <div style="text-align: center;">
-            <a href="https://hostgpt.com/dashboard" class="cta-button">
+            <a href="https://www.hostgpt.it/dashboard" class="cta-button">
                 {cta_text}
             </a>
         </div>
@@ -747,7 +747,7 @@ def create_monthly_report_email_simple(user_name: str, report_data: dict, langua
         {guardian_section}
         
         <div style="text-align: center;">
-            <a href="https://hostgpt.com/dashboard" class="cta-button">
+            <a href="https://www.hostgpt.it/dashboard" class="cta-button">
                 {cta_text}
             </a>
         </div>
@@ -789,7 +789,7 @@ def create_guardian_subscription_reactivation_email_simple(user_name: str, langu
         </div>
         
         <div style="text-align: center;">
-            <a href="https://hostgpt.com/dashboard/guardian" class="cta-button">
+            <a href="https://www.hostgpt.it/dashboard/guardian" class="cta-button">
                 {cta_text}
             </a>
         </div>
@@ -827,7 +827,7 @@ def create_guardian_subscription_cancellation_email_simple(user_name: str, end_d
         </div>
         
         <div style="text-align: center;">
-            <a href="https://hostgpt.com/dashboard/guardian" class="cta-button">
+            <a href="https://www.hostgpt.it/dashboard/guardian" class="cta-button">
                 {cta_text}
             </a>
         </div>
@@ -881,7 +881,7 @@ def create_purchase_confirmation_email_simple(user_name: str, subscription_type:
         </div>
         
         <div style="text-align: center;">
-            <a href="https://hostgpt.com/dashboard" class="cta-button">
+            <a href="https://www.hostgpt.it/dashboard" class="cta-button">
                 {cta_text}
             </a>
         </div>

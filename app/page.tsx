@@ -66,6 +66,9 @@ export default function LandingPage() {
   const demoScrollRef = useRef<HTMLDivElement | null>(null)
   const [demoHasIcon, setDemoHasIcon] = useState(false)
   const [demoChatInfo, setDemoChatInfo] = useState<{name: string, property_name: string} | null>(null)
+  
+  // UUID del chatbot demo reale
+  const DEMO_CHATBOT_UUID = "e413257a-f165-41f2-9f9d-2f244d11d3b4"
 
   useEffect(() => {
     setDemoVisible([])
@@ -89,7 +92,7 @@ export default function LandingPage() {
 
   // Controlla se il chatbot demo ha un'icona e ottieni le info
   useEffect(() => {
-    chat.getDemoInfo()
+    chat.getInfo(DEMO_CHATBOT_UUID)
       .then(response => {
         setDemoHasIcon(response.data.has_icon)
         setDemoChatInfo({
@@ -263,7 +266,7 @@ export default function LandingPage() {
     setIsDemoLoading(true)
 
     try {
-      const response = await chat.sendMessage('5e2665c8-e243-4df3-a9fd-8e0d1e4fedcc', {
+      const response = await chat.sendMessage(DEMO_CHATBOT_UUID, {
         content: fullMessage,
         thread_id: demoThreadId,
         guest_name: demoGuestName || undefined
@@ -311,7 +314,7 @@ export default function LandingPage() {
     setIsDemoLoading(true)
 
     try {
-      const response = await chat.sendMessage('5e2665c8-e243-4df3-a9fd-8e0d1e4fedcc', {
+      const response = await chat.sendMessage(DEMO_CHATBOT_UUID, {
         content: demoInput,
         thread_id: demoThreadId,
         guest_name: demoGuestName || undefined

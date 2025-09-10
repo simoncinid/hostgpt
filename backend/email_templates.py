@@ -231,10 +231,10 @@ def get_base_email_template(content: str):
             
             <div class="footer">
                 <div class="footer-links">
-                    <a href="https://hostgpt.com">Home</a>
-                    <a href="https://hostgpt.com/dashboard">Dashboard</a>
-                    <a href="https://hostgpt.com/support">Supporto</a>
-                    <a href="https://hostgpt.com/privacy">Privacy</a>
+                    <a href="https://www.hostgpt.it">Home</a>
+                    <a href="https://www.hostgpt.it/dashboard">Dashboard</a>
+                    <a href="https://www.hostgpt.it/support">Supporto</a>
+                    <a href="https://www.hostgpt.it/privacy">Privacy</a>
                 </div>
                 <div class="footer-text">
                     © 2024 HostGPT. Tutti i diritti riservati.<br>
@@ -305,7 +305,7 @@ def create_subscription_activation_email(user_name: str) -> str:
         </div>
         
         <div style="text-align: center;">
-            <a href="https://hostgpt.com/dashboard" class="cta-button">
+            <a href="https://www.hostgpt.it/dashboard" class="cta-button">
                 🚀 Inizia a Creare i tuoi Chatbot
             </a>
         </div>
@@ -341,7 +341,7 @@ def create_subscription_cancellation_email(user_name: str, end_date: str) -> str
         </div>
         
         <div style="text-align: center;">
-            <a href="https://hostgpt.com/dashboard/settings" class="cta-button">
+            <a href="https://www.hostgpt.it/dashboard/settings" class="cta-button">
                 🔄 Riattiva il tuo Abbonamento
             </a>
         </div>
@@ -381,7 +381,7 @@ def create_chatbot_ready_email(user_name: str, property_name: str, chat_url: str
         </div>
         
         <div style="text-align: center;">
-            <a href="https://hostgpt.com/dashboard" class="cta-button">
+            <a href="https://www.hostgpt.it/dashboard" class="cta-button">
                 📊 Vai alla Dashboard
             </a>
         </div>
@@ -442,7 +442,7 @@ def create_guardian_alert_email(user_name: str, alert, conversation_summary: str
         </div>
         
         <div style="text-align: center;">
-            <a href="https://hostgpt.com/dashboard/guardian" class="cta-button">
+            <a href="https://www.hostgpt.it/dashboard/guardian" class="cta-button">
                 🛡️ Gestisci Alert nella Dashboard Guardian
             </a>
         </div>
@@ -502,7 +502,7 @@ def create_free_trial_welcome_email(user_name: str) -> str:
         </div>
         
         <div style="text-align: center;">
-            <a href="https://hostgpt.com/dashboard" class="cta-button">
+            <a href="https://www.hostgpt.it/dashboard" class="cta-button">
                 🎯 Inizia a Creare il tuo Chatbot
             </a>
         </div>
@@ -597,7 +597,7 @@ def create_free_trial_ending_email(user_name: str, days_remaining: int, messages
         </div>
         
         <div style="text-align: center;">
-            <a href="https://hostgpt.com/checkout" class="cta-button">
+            <a href="https://www.hostgpt.it/checkout" class="cta-button">
                 💳 Attiva l'Abbonamento Completo - 29€/mese
             </a>
         </div>
@@ -660,7 +660,7 @@ def create_free_trial_expired_email(user_name: str, messages_used: int, total_me
         </div>
         
         <div style="text-align: center;">
-            <a href="https://hostgpt.com/checkout" class="cta-button">
+            <a href="https://www.hostgpt.it/checkout" class="cta-button">
                 🔓 Riattiva il tuo Chatbot - 29€/mese
             </a>
         </div>
@@ -711,7 +711,7 @@ def create_subscription_confirmation_email(user_name: str) -> str:
         </div>
         
         <div style="text-align: center;">
-            <a href="https://hostgpt.com/dashboard" class="cta-button">
+            <a href="https://www.hostgpt.it/dashboard" class="cta-button">
                 🚀 Crea il tuo Chatbot
             </a>
         </div>
@@ -792,7 +792,7 @@ def create_combined_subscription_confirmation_email(user_name: str) -> str:
         
         <div style="margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 10px;">
             <p style="color: #666; margin: 0; font-size: 14px;">
-                Hai domande? Contattaci su <a href="mailto:support@hostgpt.com" style="color: #667eea;">support@hostgpt.com</a>
+                Hai domande? Contattaci su <a href="mailto:support@hostgpt.it" style="color: #667eea;">support@hostgpt.it</a>
             </p>
         </div>
     </div>
@@ -823,7 +823,7 @@ def create_guardian_subscription_confirmation_email(user_name: str) -> str:
         </div>
         
         <div style="text-align: center;">
-            <a href="https://hostgpt.com/dashboard/guardian" class="cta-button">
+            <a href="https://www.hostgpt.it/dashboard/guardian" class="cta-button">
                 🛡️ Vai alla Dashboard Guardian
             </a>
         </div>
