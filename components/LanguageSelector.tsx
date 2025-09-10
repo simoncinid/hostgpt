@@ -2,7 +2,6 @@
 
 import React from 'react'
 import { motion } from 'framer-motion'
-import { Globe } from 'lucide-react'
 import { useLanguage } from '../lib/languageContext'
 import { Language } from '../lib/translations'
 
@@ -24,24 +23,20 @@ const LanguageSelector: React.FC = () => {
   return (
     <motion.button
       onClick={handleToggleLanguage}
-      className="flex items-center gap-2 px-3 py-2 text-gray-700 font-medium hover:text-gray-900 transition-all duration-300 rounded-lg hover:bg-white/40 group text-sm"
-      whileHover={{ scale: 1.02 }}
-      whileTap={{ scale: 0.98 }}
+      className="flex items-center justify-center w-8 h-8 text-gray-700 hover:text-gray-900 transition-all duration-300 rounded-lg hover:bg-white/40 group"
+      whileHover={{ scale: 1.1 }}
+      whileTap={{ scale: 0.9 }}
       title={`Switch to ${language === 'IT' ? 'English' : 'Italiano'}`}
     >
-      <Globe className="w-4 h-4" />
       <motion.span 
         key={language}
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ duration: 0.2 }}
-        className="text-lg"
+        className="text-xl"
       >
         {currentLanguage?.flag}
       </motion.span>
-      <span className="text-xs font-medium">
-        {currentLanguage?.code}
-      </span>
     </motion.button>
   )
 }

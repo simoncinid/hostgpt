@@ -5,6 +5,7 @@ import { ChevronDown, ChevronUp, User, Bot } from 'lucide-react'
 import { conversations as convApi } from '@/lib/api'
 import toast from 'react-hot-toast'
 import { useLanguage } from '@/lib/languageContext'
+import MarkdownText from '@/app/components/MarkdownText'
 
 interface Message {
   id: number
@@ -107,8 +108,8 @@ export default function ConversationItem({ conversation }: ConversationItemProps
                             : 'bg-gray-100 text-gray-900'
                         }`}
                     >
-                                             <div className="relative font-medium leading-relaxed text-sm md:text-base whitespace-pre-wrap break-words">
-                         {message.content}
+                                             <div className="relative font-medium leading-relaxed text-sm md:text-base break-words">
+                         <MarkdownText content={message.content} />
                        </div>
                                               <div className={`text-xs mt-2 ${
                           message.role === 'user' ? 'text-white/70' : 'text-gray-400'

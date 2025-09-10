@@ -907,6 +907,7 @@ guardian_service = GuardianService()
 def generate_qr_code(url: str, icon_data: bytes = None) -> str:
     """Genera QR code e ritorna come base64"""
     import io  # Importa io all'inizio della funzione
+    import os
     
     qr = qrcode.QRCode(version=1, box_size=15, border=5)  # Aumentato box_size per QR code più grande
     qr.add_data(url)
@@ -914,47 +915,83 @@ def generate_qr_code(url: str, icon_data: bytes = None) -> str:
     
     img = qr.make_image(fill_color="black", back_color="white")
     
-    # Se c'è un'icona, aggiungila al centro del QR code (solo se il QR code è abbastanza grande)
-    if icon_data:
-        try:
-            from PIL import Image, ImageDraw
+    # Sempre aggiungi l'icona HostGPT al centro del QR code
+    try:
+        from PIL import Image, ImageDraw, ImageFont
+        
+        # Carica l'icona HostGPT
+        hostgpt_icon_path = os.path.join(os.path.dirname(__file__), '..', 'public', 'icons', 'logohostgpt.png')
+        
+        if os.path.exists(hostgpt_icon_path):
+            # Carica l'icona HostGPT così com'è
+            icon_img = Image.open(hostgpt_icon_path)
             
-            # Carica l'icona
-            icon_img = Image.open(io.BytesIO(icon_data))
-            
-            # Ridimensiona l'icona in modo più conservativo (1/6 del QR code invece di 1/4)
+            # Ridimensiona l'icona (raddoppiata)
             qr_size = img.size[0]
-            icon_size = qr_size // 6  # Più piccolo per non interferire con la scansione
+            icon_size = qr_size // 3  # Raddoppiata: da 1/6 a 1/3
             
             # Solo se il QR code è abbastanza grande (almeno 200px)
             if qr_size >= 200:
+                # Ridimensiona semplicemente l'icona
                 icon_img = icon_img.resize((icon_size, icon_size), Image.Resampling.LANCZOS)
                 
-                # Crea un'icona circolare con bordo bianco per separarla dal QR code
-                mask = Image.new('L', (icon_size, icon_size), 0)
-                mask_draw = ImageDraw.Draw(mask)
-                mask_draw.ellipse((0, 0, icon_size, icon_size), fill=255)
-                
-                # Applica la maschera circolare
-                icon_img.putalpha(mask)
-                
-                # Crea un bordo bianco intorno all'icona per separarla dal QR code
-                border_size = 4
-                icon_with_border = Image.new('RGBA', (icon_size + border_size * 2, icon_size + border_size * 2), (255, 255, 255, 255))
-                icon_with_border.paste(icon_img, (border_size, border_size), icon_img)
+                # Converti il QR code in RGBA per supportare la trasparenza
+                qr_with_icon = img.convert('RGBA')
                 
                 # Posiziona l'icona al centro del QR code
-                qr_with_icon = img.copy()
-                x = (qr_size - icon_size - border_size * 2) // 2
-                y = (qr_size - icon_size - border_size * 2) // 2
-                qr_with_icon.paste(icon_with_border, (x, y), icon_with_border)
+                x = (qr_size - icon_size) // 2
+                y = (qr_size - icon_size) // 2
+                qr_with_icon.paste(icon_img, (x, y), icon_img)
                 
-                img = qr_with_icon
+                # Converti di nuovo in RGB per il salvataggio
+                img = qr_with_icon.convert('RGB')
             else:
                 print(f"QR code troppo piccolo ({qr_size}px) per aggiungere icona senza compromettere la scansione")
-        except Exception as e:
-            print(f"Errore nell'aggiunta dell'icona al QR code: {e}")
-            # Se c'è un errore, usa il QR code normale
+        else:
+            print(f"Icona HostGPT non trovata in: {hostgpt_icon_path}")
+    except Exception as e:
+        print(f"Errore nell'aggiunta dell'icona HostGPT al QR code: {e}")
+        # Se c'è un errore, usa il QR code normale
+    
+    # Aggiungi l'immagine text.png sotto il QR code
+    try:
+        from PIL import Image, ImageDraw, ImageFont
+        
+        # Carica l'immagine text.png
+        text_image_path = os.path.join(os.path.dirname(__file__), '..', 'public', 'icons', 'text.png')
+        
+        if os.path.exists(text_image_path):
+            # Carica l'immagine text.png
+            text_img = Image.open(text_image_path)
+            
+            # Calcola le dimensioni per l'immagine del testo (30% più piccola)
+            qr_width = img.size[0]
+            text_width = int(qr_width * 0.7)  # 30% più piccola (0.7 = 70% della dimensione originale)
+            text_height = text_img.size[1] * (text_width // text_img.size[0])  # Mantieni proporzioni
+            
+            # Ridimensiona l'immagine del testo
+            text_img = text_img.resize((text_width, text_height), Image.Resampling.LANCZOS)
+            
+            # Crea l'immagine finale
+            final_width = qr_width
+            final_height = img.size[1] + text_height
+            
+            final_img = Image.new('RGB', (final_width, final_height), 'white')
+            
+            # Incolla il QR code nella parte superiore
+            final_img.paste(img, (0, 0))
+            
+            # Incolla l'immagine del testo sotto il QR code (centrata)
+            text_x = (final_width - text_width) // 2  # Centra orizzontalmente
+            final_img.paste(text_img, (text_x, img.size[1]), text_img)
+            
+            img = final_img
+        else:
+            print(f"Immagine text.png non trovata in: {text_image_path}")
+        
+    except Exception as e:
+        print(f"Errore nell'aggiunta dell'immagine text.png: {e}")
+        # Se c'è un errore, usa l'immagine senza testo
     
     buf = io.BytesIO()
     img.save(buf, format='PNG')

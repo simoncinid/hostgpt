@@ -7,6 +7,7 @@ import { motion } from 'framer-motion'
 import LanguageSelector from '../components/LanguageSelector'
 import DemoChatbotIcon from './components/DemoChatbotIcon'
 import HostGPTLogo from './components/HostGPTLogo'
+import MarkdownText from './components/MarkdownText'
 import { useLanguage } from '../lib/languageContext'
 import api from '../lib/api'
 import { chat } from '../lib/api'
@@ -904,6 +905,7 @@ export default function LandingPage() {
               <div className="hidden md:flex items-center space-x-2 relative z-10">
                 {[
                   { href: "#features", label: t.navbar.features },
+                  { href: "https://wa.me/393391797616", label: t.navbar.contactUs, isExternal: true },
                   { href: "#demo", label: t.navbar.demo },
                   { href: "#how-it-works", label: t.navbar.howItWorks },
                   { href: "#pricing", label: t.navbar.pricing },
@@ -919,13 +921,21 @@ export default function LandingPage() {
                   >
                     <Link 
                       href={item.href} 
-                      className="relative px-3 py-2 text-gray-700 font-medium hover:text-gray-900 transition-all duration-300 rounded-lg hover:bg-white/40 group text-sm"
+                      target={item.isExternal ? "_blank" : undefined}
+                      rel={item.isExternal ? "noopener noreferrer" : undefined}
+                      className={`relative px-3 py-2 font-medium transition-all duration-300 rounded-lg group text-sm ${
+                        item.isExternal 
+                          ? "text-blue-800 bg-sky-100 hover:bg-sky-200 hover:text-blue-900" 
+                          : "text-gray-700 hover:text-gray-900 hover:bg-white/40"
+                      }`}
                     >
                       <span className="relative z-10">{item.label}</span>
-                      <motion.div
-                        className="absolute inset-0 bg-gradient-to-r from-rose-100/50 to-pink-100/50 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                        layoutId="navbar-hover"
-                      />
+                      {!item.isExternal && (
+                        <motion.div
+                          className="absolute inset-0 bg-gradient-to-r from-rose-100/50 to-pink-100/50 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                          layoutId="navbar-hover"
+                        />
+                      )}
                     </Link>
                   </motion.div>
                 ))}
@@ -1055,6 +1065,7 @@ export default function LandingPage() {
                 <div className="space-y-2 relative z-10">
                   {[
                     { href: "#features", label: t.navbar.features },
+                    { href: "https://wa.me/393391797616", label: t.navbar.contactUs, isExternal: true },
                     { href: "#demo", label: t.navbar.demo },
                     { href: "#how-it-works", label: t.navbar.howItWorks },
                     { href: "#pricing", label: t.navbar.pricing },
@@ -1068,8 +1079,14 @@ export default function LandingPage() {
                     >
                       <Link 
                         href={item.href} 
+                        target={item.isExternal ? "_blank" : undefined}
+                        rel={item.isExternal ? "noopener noreferrer" : undefined}
                         onClick={() => setIsMenuOpen(false)} 
-                        className="block px-4 py-2.5 text-gray-700 font-medium hover:text-gray-900 hover:bg-white/30 rounded-lg transition-all duration-300 text-sm"
+                        className={`block px-4 py-2.5 font-medium rounded-lg transition-all duration-300 text-sm ${
+                          item.isExternal 
+                            ? "text-blue-800 bg-sky-100 hover:bg-sky-200 hover:text-blue-900" 
+                            : "text-gray-700 hover:text-gray-900 hover:bg-white/30"
+                        }`}
                       >
                         {item.label}
                       </Link>
@@ -1485,7 +1502,7 @@ export default function LandingPage() {
                   {/* Messages Area - FISSA */}
                   {(!demoShowWelcome || demoMessages.length > 1) && (
                     <>
-                      <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4">
+                      <div className="flex-1 overflow-y-auto chat-scrollbar p-4 md:p-6 space-y-4">
                         {demoMessages.map((message, index) => (
               <motion.div
                             key={message.id || index}
@@ -1517,7 +1534,7 @@ export default function LandingPage() {
                                   ? 'bg-gradient-to-r from-rose-500 to-pink-600 text-white rounded-br-sm'
                                   : 'bg-gray-100 text-gray-900 rounded-bl-sm'
                               }`}>
-                                <p className="whitespace-pre-wrap">{message.content}</p>
+                                <MarkdownText content={message.content} />
                                 <p className={`text-xs mt-1 ${
                                   message.role === 'user' ? 'text-white/70' : 'text-gray-400'
                                 }`}>
@@ -1550,7 +1567,7 @@ export default function LandingPage() {
                       <div className={`border-t p-2 transition-colors duration-300 ${
                         demoIsDarkMode ? 'border-gray-700' : 'border-gray-100'
                       }`}>
-                        <div className="flex justify-center gap-2 md:gap-3 overflow-x-auto">
+                        <div className="flex justify-center gap-2 md:gap-3 overflow-x-auto chat-scrollbar">
                           {currentDemoTexts.suggestedMessages.map((message: string, index: number) => (
                   <motion.button
                               key={index}

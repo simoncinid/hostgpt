@@ -20,6 +20,7 @@ import {
 import { chat } from '@/lib/api'
 import toast from 'react-hot-toast'
 import ChatbotIcon from '@/app/components/ChatbotIcon'
+import MarkdownText from '@/app/components/MarkdownText'
 import HostGPTLogo from '@/app/components/HostGPTLogo'
 
 interface Message {
@@ -595,7 +596,7 @@ export default function ChatWidgetPage() {
                           ? 'bg-gradient-to-r from-rose-500 to-pink-600 text-white rounded-br-sm'
                           : 'bg-gray-100 text-gray-900 rounded-bl-sm'
                       }`}>
-                        <p className="whitespace-pre-wrap">{message.content}</p>
+                        <MarkdownText content={message.content} />
                         <p className={`text-xs mt-1 ${
                           message.role === 'user' ? 'text-white/70' : 'text-gray-400'
                         }`}>

@@ -8,6 +8,7 @@ export interface Translations {
     howItWorks: string
     pricing: string
     feedback: string
+    contactUs: string
     login: string
     register: string
   }
@@ -980,6 +981,7 @@ export const translations: Record<Language, Translations> = {
       howItWorks: "Come Funziona",
       pricing: "Prezzi",
       feedback: "Feedback",
+      contactUs: "Contattaci",
       login: "Accedi",
       register: "Registrati"
     },
@@ -2024,6 +2026,7 @@ export const translations: Record<Language, Translations> = {
       howItWorks: "How It Works",
       pricing: "Pricing",
       feedback: "Feedback",
+      contactUs: "Contact Us",
       login: "Login",
       register: "Sign Up"
     },
