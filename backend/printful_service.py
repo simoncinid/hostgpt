@@ -21,43 +21,6 @@ class PrintfulService:
             "X-PF-Store-Id": str(self.store_id)
         }
     
-    async def get_products(self) -> List[Dict]:
-        """Ottieni la lista dei prodotti disponibili"""
-        try:
-            response = requests.get(
-                f"{self.base_url}/products",
-                headers=self.headers
-            )
-            response.raise_for_status()
-            result = response.json()
-            logger.info(f"Products API response: {json.dumps(result, indent=2)}")
-            
-            # La risposta può avere diverse strutture
-            if "result" in result:
-                if isinstance(result["result"], list):
-                    return result["result"]
-                elif isinstance(result["result"], dict) and "products" in result["result"]:
-                    return result["result"]["products"]
-                else:
-                    return [result["result"]] if result["result"] else []
-            else:
-                return []
-        except Exception as e:
-            logger.error(f"Error fetching products: {e}")
-            return []
-    
-    async def get_product_variants(self, product_id: int) -> List[Dict]:
-        """Ottieni le varianti di un prodotto"""
-        try:
-            response = requests.get(
-                f"{self.base_url}/products/{product_id}",
-                headers=self.headers
-            )
-            response.raise_for_status()
-            return response.json().get("result", {}).get("variants", [])
-        except Exception as e:
-            logger.error(f"Error fetching product variants: {e}")
-            return []
     
     async def get_shipping_rates(self, shipping_address: Dict, items: List[Dict]) -> Optional[List[Dict]]:
         """Ottieni i metodi di spedizione disponibili per un ordine"""
@@ -110,65 +73,17 @@ class PrintfulService:
             logger.error(f"Error creating design: {e}")
             return None
     
-    async def get_available_products(self) -> Dict[str, Dict]:
-        """Ottieni i prodotti disponibili da Printful e crea un mapping"""
-        try:
-            products = await self.get_products()
-            product_mapping = {}
-            
-            logger.info(f"Processing {len(products)} products")
-            
-            for product in products:
-                if not isinstance(product, dict):
-                    logger.warning(f"Product is not a dict: {product}")
-                    continue
-                    
-                product_id = product.get("id")
-                if not product_id:
-                    logger.warning(f"Product missing ID: {product}")
-                    continue
-                
-                logger.info(f"Getting variants for product {product_id}: {product.get('name', 'Unknown')}")
-                variants = await self.get_product_variants(product_id)
-                
-                for variant in variants:
-                    if not isinstance(variant, dict):
-                        continue
-                        
-                    # Cerca varianti per sticker e desk plate
-                    variant_name = variant.get("name", "").lower()
-                    variant_id = variant.get("id")
-                    
-                    logger.info(f"Checking variant: {variant_name} (ID: {variant_id})")
-                    
-                    if "sticker" in variant_name:
-                        product_mapping["sticker"] = {
-                            "variant_id": variant_id,
-                            "product_id": product_id
-                        }
-                        logger.info(f"Found sticker variant: {variant_id}")
-                    elif "desk" in variant_name or "plate" in variant_name:
-                        product_mapping["desk_plate"] = {
-                            "variant_id": variant_id,
-                            "product_id": product_id
-                        }
-                        logger.info(f"Found desk plate variant: {variant_id}")
-            
-            logger.info(f"Final product mapping: {product_mapping}")
-            return product_mapping
-            
-        except Exception as e:
-            logger.error(f"Error getting available products: {e}")
-            return {}
 
     async def create_order(self, order_data: Dict) -> Optional[str]:
         """Crea un ordine su Printful"""
         try:
-            # Ottieni i prodotti disponibili dinamicamente
-            product_mapping = await self.get_available_products()
-            if not product_mapping:
-                logger.error("No products available from Printful")
-                return None
+            # Mapping hardcoded per i prodotti
+            product_mapping = {
+                "sticker": {
+                    "variant_id": 12917,  # Kiss cut sticker sheet (white / 5.83″×8.27″)
+                    "product_id": "68c19df2d2efb3"
+                }
+            }
             
             items = []
             for item in order_data["items"]:
