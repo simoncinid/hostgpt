@@ -99,13 +99,6 @@ function StampeContent() {
   }
 
   const getTotalPrice = () => {
-    const subtotal = products.reduce((total, product) => {
-      return total + (product.price * quantities[product.id])
-    }, 0)
-    return subtotal + 4.99 // Aggiungi costo spedizione fisso
-  }
-
-  const getSubtotal = () => {
     return products.reduce((total, product) => {
       return total + (product.price * quantities[product.id])
     }, 0)
@@ -313,6 +306,32 @@ function StampeContent() {
                 </div>
               </div>
             )}
+
+            {/* Guardian Service */}
+            <div className="bg-white rounded-2xl shadow-lg p-6">
+              {/* Desktop layout */}
+              <div className="hidden md:flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center">
+                    <Shield className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-dark">Guardian</h3>
+                    <p className="text-sm text-gray-600">€9/mese</p>
+                  </div>
+                </div>
+                <button className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-semibold transition-colors">
+                  Activate Guardian
+                </button>
+              </div>
+              
+              {/* Mobile layout */}
+              <div className="md:hidden text-center">
+                <button className="w-full bg-green-500 hover:bg-green-600 text-white py-3 rounded-lg font-semibold transition-colors">
+                  Activate Guardian
+                </button>
+              </div>
+            </div>
           </div>
 
           {/* Prodotti */}
@@ -389,14 +408,6 @@ function StampeContent() {
                     )
                   })}
                   <div className="border-t pt-3">
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-gray-600">Subtotale</span>
-                      <span>€{getSubtotal().toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-gray-600">Spedizione</span>
-                      <span>€4.99</span>
-                    </div>
                     <div className="flex justify-between items-center">
                       <span className="text-lg font-bold text-dark">{t.stampe.total}</span>
                       <span className="text-xl font-bold text-primary">€{getTotalPrice().toFixed(2)}</span>

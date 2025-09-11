@@ -45,7 +45,8 @@ from email_templates_simple import (
     create_guardian_subscription_cancellation_email_simple,
     create_subscription_reactivation_email_simple,
     create_guardian_subscription_reactivation_email_simple,
-    create_monthly_report_email_simple
+    create_monthly_report_email_simple,
+    create_print_order_confirmation_email_simple
 )
 
 # Configurazione logging
@@ -5495,6 +5496,32 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
             # Invia l'ordine a Printful per la produzione
             from printful_service import send_order_to_printful
             await send_order_to_printful(order, db)
+            
+            # Invia email di conferma ordine
+            try:
+                # Prepara i dati per l'email
+                order_items = []
+                for item in order.items:
+                    product_name = "Adesivo QR-Code" if item.product_type == "sticker" else "Placca da Scrivania"
+                    order_items.append({
+                        'product_name': product_name,
+                        'quantity': item.quantity,
+                        'price': item.quantity * (2.50 if item.product_type == "sticker" else 8.90)
+                    })
+                
+                email_body = create_print_order_confirmation_email_simple(
+                    user_name=order.user.full_name or order.user.email,
+                    order_number=order.order_number,
+                    order_items=order_items,
+                    total_amount=order.total_amount,
+                    language=order.user.language or "it"
+                )
+                
+                subject = "🎉 Ordine confermato!" if (order.user.language or "it") == "it" else "🎉 Order confirmed!"
+                await send_email(order.user.email, subject, email_body)
+                logger.info(f"Print order confirmation email sent to {order.user.email}")
+            except Exception as e:
+                logger.error(f"Failed to send print order confirmation email: {e}")
     
     elif event['type'] == 'payment_intent.succeeded':
         payment_intent = event['data']['object']
@@ -5511,6 +5538,32 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
             # Invia l'ordine a Printful per la produzione
             from printful_service import send_order_to_printful
             await send_order_to_printful(order, db)
+            
+            # Invia email di conferma ordine
+            try:
+                # Prepara i dati per l'email
+                order_items = []
+                for item in order.items:
+                    product_name = "Adesivo QR-Code" if item.product_type == "sticker" else "Placca da Scrivania"
+                    order_items.append({
+                        'product_name': product_name,
+                        'quantity': item.quantity,
+                        'price': item.quantity * (2.50 if item.product_type == "sticker" else 8.90)
+                    })
+                
+                email_body = create_print_order_confirmation_email_simple(
+                    user_name=order.user.full_name or order.user.email,
+                    order_number=order.order_number,
+                    order_items=order_items,
+                    total_amount=order.total_amount,
+                    language=order.user.language or "it"
+                )
+                
+                subject = "🎉 Ordine confermato!" if (order.user.language or "it") == "it" else "🎉 Order confirmed!"
+                await send_email(order.user.email, subject, email_body)
+                logger.info(f"Print order confirmation email sent to {order.user.email}")
+            except Exception as e:
+                logger.error(f"Failed to send print order confirmation email: {e}")
     
     return {"status": "success"}
 

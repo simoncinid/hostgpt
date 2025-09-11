@@ -892,3 +892,50 @@ def create_purchase_confirmation_email_simple(user_name: str, subscription_type:
     """
     
     return get_simple_email_template(content, language)
+
+def create_print_order_confirmation_email_simple(user_name: str, order_number: str, order_items: list, total_amount: float, language: str = "it") -> str:
+    """Template email per confermare l'ordine di stampa adesivi semplificato"""
+    
+    if language == "en":
+        greeting = "Order confirmed! 📦"
+        message = f"Hi <strong>{user_name}</strong>, your sticker order has been confirmed and is being processed!"
+        order_info = f"<strong>Order Number:</strong> {order_number}<br><strong>Total Amount:</strong> €{total_amount:.2f}"
+        delivery_info = "Your order will be delivered in approximately 7 business days."
+        
+        # Crea la lista degli item
+        items_text = "<strong>Order Summary:</strong><br>"
+        for item in order_items:
+            items_text += f"• {item['quantity']}x {item['product_name']} - €{item['price']:.2f}<br>"
+        
+    else:  # it
+        greeting = "Ordine confermato! 📦"
+        message = f"Ciao <strong>{user_name}</strong>, il tuo ordine di adesivi è stato confermato ed è in elaborazione!"
+        order_info = f"<strong>Numero Ordine:</strong> {order_number}<br><strong>Importo Totale:</strong> €{total_amount:.2f}"
+        delivery_info = "Il tuo ordine dovrebbe arrivare in circa 7 giorni lavorativi."
+        
+        # Crea la lista degli item
+        items_text = "<strong>Riepilogo Ordine:</strong><br>"
+        for item in order_items:
+            items_text += f"• {item['quantity']}x {item['product_name']} - €{item['price']:.2f}<br>"
+    
+    content = f"""
+        <div class="greeting">{greeting}</div>
+        
+        <div class="message">
+            {message}
+        </div>
+        
+        <div style="background-color: {HOSTGPT_SIMPLE_COLORS['light_gray']}; padding: 15px; border-radius: 8px; margin: 15px 0;">
+            {order_info}
+        </div>
+        
+        <div style="background-color: {HOSTGPT_SIMPLE_COLORS['secondary']}; padding: 15px; border-radius: 8px; margin: 15px 0;">
+            {items_text}
+        </div>
+        
+        <div class="message">
+            {delivery_info}
+        </div>
+    """
+    
+    return get_simple_email_template(content, language)

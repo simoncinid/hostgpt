@@ -58,7 +58,7 @@ export default function Sidebar({ currentPath, onLogout, isSidebarCollapsed: ext
           )}
         </div>
 
-        <nav className="mt-8">
+        <nav className="mt-4">
           <Link 
             href="/dashboard" 
             className={`flex items-center ${isSidebarCollapsed ? 'justify-center px-2 py-3' : 'px-6 py-3'} ${currentPath === '/dashboard' ? 'bg-primary/10 text-primary border-r-3 border-primary' : 'text-gray-600 hover:bg-gray-50'}`}
