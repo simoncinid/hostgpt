@@ -13,10 +13,12 @@ logger = logging.getLogger(__name__)
 class PrintfulService:
     def __init__(self):
         self.api_key = settings.PRINTFUL_API_KEY
+        self.store_id = settings.PRINTFUL_STORE_ID
         self.base_url = "https://api.printful.com"
         self.headers = {
             "Authorization": f"Bearer {self.api_key}",
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            "X-PF-Store-Id": str(self.store_id)
         }
     
     async def get_products(self) -> List[Dict]:

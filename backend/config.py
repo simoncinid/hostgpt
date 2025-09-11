@@ -37,6 +37,7 @@ class Settings(BaseSettings):
     
     # Printful - Servizio di stampa on-demand
     PRINTFUL_API_KEY: str = os.getenv("PRINTFUL_API_KEY", "your-printful-api-key")
+    PRINTFUL_STORE_ID: str = os.getenv("PRINTFUL_STORE_ID", "your-store-id")
     
     # Email
     SMTP_HOST: str = os.getenv("SMTP_HOST", "smtp.gmail.com")
