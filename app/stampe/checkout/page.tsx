@@ -26,6 +26,7 @@ interface ShippingAddress {
   lastName: string
   company: string
   address: string
+  streetNumber: string
   city: string
   postalCode: string
   country: string
@@ -50,6 +51,7 @@ function CheckoutContent() {
     lastName: '',
     company: '',
     address: '',
+    streetNumber: '',
     city: '',
     postalCode: '',
     country: 'IT',
@@ -110,6 +112,9 @@ function CheckoutContent() {
     if (!shippingAddress.address.trim()) {
       newErrors.address = `${t.stampe.checkout.form.address} ${t.stampe.checkout.form.required}`
     }
+    if (!shippingAddress.streetNumber.trim()) {
+      newErrors.streetNumber = `${t.stampe.checkout.form.streetNumber} ${t.stampe.checkout.form.required}`
+    }
     if (!shippingAddress.city.trim()) {
       newErrors.city = `${t.stampe.checkout.form.city} ${t.stampe.checkout.form.required}`
     }
@@ -135,6 +140,14 @@ function CheckoutContent() {
       setErrors(prev => ({
         ...prev,
         [field]: ''
+      }))
+    }
+    
+    // Se l'utente modifica l'indirizzo, resetta il numero civico
+    if (field === 'address') {
+      setShippingAddress(prev => ({
+        ...prev,
+        streetNumber: ''
       }))
     }
     
@@ -189,7 +202,8 @@ function CheckoutContent() {
       if (suggestion.place_id === 'test_roma_1') {
         setShippingAddress(prev => ({
           ...prev,
-          address: 'Via del Corso 123',
+          address: 'Via del Corso',
+          streetNumber: '123',
           city: 'Roma',
           postalCode: '00186',
           country: 'IT',
@@ -207,7 +221,8 @@ function CheckoutContent() {
       if (response.data.address) {
         setShippingAddress(prev => ({
           ...prev,
-          address: response.data.address,
+          address: response.data.route || response.data.address,
+          streetNumber: response.data.street_number || '',
           city: response.data.city || '',
           postalCode: response.data.postal_code || '',
           country: response.data.country || 'IT',
@@ -247,7 +262,7 @@ function CheckoutContent() {
         chatbot_id: orderData.chatbot.id,
         products: orderData.products,
         shipping_address: shippingAddress,
-        total_amount: orderData.totalPrice
+        total_amount: orderData.totalPrice // Questo già include la spedizione
       })
 
       const order = orderResponse.data
@@ -429,6 +444,24 @@ function CheckoutContent() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
+                    {t.stampe.checkout.form.streetNumber} {t.stampe.checkout.form.required}
+                  </label>
+                  <input
+                    type="text"
+                    value={shippingAddress.streetNumber}
+                    onChange={(e) => handleInputChange('streetNumber', e.target.value)}
+                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent ${
+                      errors.streetNumber ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                    placeholder="123"
+                  />
+                  {errors.streetNumber && (
+                    <p className="text-red-500 text-sm mt-1">{errors.streetNumber}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     {t.stampe.checkout.form.city} {t.stampe.checkout.form.required}
                   </label>
                   <input
@@ -556,7 +589,7 @@ function CheckoutContent() {
               ) : (
                 <Elements stripe={stripePromise}>
                   <PaymentForm
-                    amount={orderData.totalPrice}
+                    amount={orderData.totalPrice} // Questo già include la spedizione
                     orderId={createdOrder.id}
                     onSuccess={handlePaymentSuccess}
                     onError={handlePaymentError}
@@ -610,11 +643,11 @@ function CheckoutContent() {
                 </div>
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-gray-600">{t.stampe.checkout.shipping}</span>
-                  <span className="text-green-600">{t.stampe.checkout.free}</span>
+                  <span>€4.99</span>
                 </div>
                 <div className="flex justify-between items-center text-lg font-bold">
                   <span>{t.stampe.checkout.total}</span>
-                  <span className="text-primary">€{orderData.totalPrice.toFixed(2)}</span>
+                  <span className="text-primary">€{(orderData.totalPrice + 4.99).toFixed(2)}</span>
                 </div>
               </div>
 
@@ -636,8 +669,8 @@ function CheckoutContent() {
                 <div className="flex items-start space-x-2">
                   <AlertCircle className="w-4 h-4 text-blue-600 mt-0.5" />
                   <div className="text-xs text-blue-800">
-                    <p className="font-semibold mb-1">Tempi di Consegna</p>
-                    <p>3-4 settimane per la produzione e spedizione</p>
+                    <p className="font-semibold mb-1">{t.stampe.checkout.deliveryTimes}</p>
+                    <p>Circa 7 giorni per la produzione e spedizione worldwide</p>
                   </div>
                 </div>
               </div>

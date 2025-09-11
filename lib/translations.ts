@@ -290,6 +290,7 @@ export interface Translations {
         company: string
         companyOptional: string
         address: string
+        streetNumber: string
         city: string
         state: string
         postalCode: string
@@ -304,6 +305,7 @@ export interface Translations {
       // Payment
       payment: {
         cardPayment: string
+        cardData: string
         stripeSecure: string
         howItWorks: string
         step1: string
@@ -312,6 +314,7 @@ export interface Translations {
         step4: string
         createOrder: string
         creatingOrder: string
+        processingPayment: string
         sslProtected: string
       }
     }
@@ -2186,7 +2189,7 @@ export const translations: Record<Language, Translations> = {
             "Resistenti all'acqua",
             "Adesivi ai raggi UV",
             "Dimensioni 5.83″×8.27″",
-            "Spedizione gratuita"
+            "Spedizione worldwide €4.99"
           ]
         }
       },
@@ -2222,8 +2225,8 @@ export const translations: Record<Language, Translations> = {
         total: "Totale",
         orderCreated: "Ordine Creato",
         orderNumber: "Numero ordine:",
-        deliveryTimes: "Tempi di consegna:",
-        deliveryTimesItaly: "3-5 giorni lavorativi in Italia",
+        deliveryTimes: "Tempi di Consegna",
+        deliveryTimesItaly: "Circa 7 giorni per la produzione e spedizione worldwide",
         deliveryTimesEurope: "5-7 giorni lavorativi in Europa",
         
         // Form fields
@@ -2233,6 +2236,7 @@ export const translations: Record<Language, Translations> = {
           company: "Azienda",
           companyOptional: "Azienda (opzionale)",
           address: "Indirizzo",
+          streetNumber: "Numero civico",
           city: "Città",
           state: "Provincia/Stato",
           postalCode: "CAP",
@@ -2247,6 +2251,7 @@ export const translations: Record<Language, Translations> = {
         // Payment
         payment: {
           cardPayment: "Pagamento con Carta",
+          cardData: "Dati della Carta",
           stripeSecure: "Gestito in modo sicuro da Stripe",
           howItWorks: "Come funziona:",
           step1: "1. Compila l'indirizzo di spedizione",
@@ -2255,6 +2260,7 @@ export const translations: Record<Language, Translations> = {
           step4: "4. Completa il pagamento in modo sicuro",
           createOrder: "Crea Ordine",
           creatingOrder: "Creazione Ordine...",
+          processingPayment: "Elaborazione Pagamento...",
           sslProtected: "Il pagamento è protetto con crittografia SSL e gestito da Stripe"
         }
       },
@@ -3381,7 +3387,7 @@ export const translations: Record<Language, Translations> = {
             "Water resistant",
             "UV resistant",
             "Size 5.83″×8.27″",
-            "Free shipping"
+            "Worldwide shipping €4.99"
           ]
         }
       },
@@ -3417,8 +3423,8 @@ export const translations: Record<Language, Translations> = {
         total: "Total",
         orderCreated: "Order Created",
         orderNumber: "Order number:",
-        deliveryTimes: "Delivery times:",
-        deliveryTimesItaly: "3-5 business days in Italy",
+        deliveryTimes: "Delivery Times",
+        deliveryTimesItaly: "About 7 days for production and worldwide shipping",
         deliveryTimesEurope: "5-7 business days in Europe",
         
         // Form fields
@@ -3428,6 +3434,7 @@ export const translations: Record<Language, Translations> = {
           company: "Company",
           companyOptional: "Company (optional)",
           address: "Address",
+          streetNumber: "House number",
           city: "City",
           state: "State/Province",
           postalCode: "Postal Code",
@@ -3442,6 +3449,7 @@ export const translations: Record<Language, Translations> = {
         // Payment
         payment: {
           cardPayment: "Card Payment",
+          cardData: "Card Details",
           stripeSecure: "Securely handled by Stripe",
           howItWorks: "How it works:",
           step1: "1. Fill in the shipping address",
@@ -3450,6 +3458,7 @@ export const translations: Record<Language, Translations> = {
           step4: "4. Complete the payment securely",
           createOrder: "Create Order",
           creatingOrder: "Creating Order...",
+          processingPayment: "Processing Payment...",
           sslProtected: "Payment is protected with SSL encryption and handled by Stripe"
         }
       },

@@ -45,7 +45,7 @@ const products: Product[] = [
       'Resistenti all\'acqua',
       'Adesivi ai raggi UV',
       'Dimensioni 5.83″×8.27″',
-      'Spedizione gratuita'
+      'Spedizione worldwide €4.99'
     ], // This will be replaced by t.stampe.products.sticker.features in the component
     type: 'sticker'
   }
@@ -99,6 +99,13 @@ function StampeContent() {
   }
 
   const getTotalPrice = () => {
+    const subtotal = products.reduce((total, product) => {
+      return total + (product.price * quantities[product.id])
+    }, 0)
+    return subtotal + 4.99 // Aggiungi costo spedizione fisso
+  }
+
+  const getSubtotal = () => {
     return products.reduce((total, product) => {
       return total + (product.price * quantities[product.id])
     }, 0)
@@ -382,6 +389,14 @@ function StampeContent() {
                     )
                   })}
                   <div className="border-t pt-3">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-gray-600">Subtotale</span>
+                      <span>€{getSubtotal().toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-gray-600">Spedizione</span>
+                      <span>€4.99</span>
+                    </div>
                     <div className="flex justify-between items-center">
                       <span className="text-lg font-bold text-dark">{t.stampe.total}</span>
                       <span className="text-xl font-bold text-primary">€{getTotalPrice().toFixed(2)}</span>

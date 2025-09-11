@@ -115,6 +115,16 @@ function SuccessContent() {
               </div>
               
               <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                <span className="text-gray-600">Subtotale</span>
+                <span>€{(orderData.totalPrice - 4.99).toFixed(2)}</span>
+              </div>
+              
+              <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                <span className="text-gray-600">Spedizione</span>
+                <span>€4.99</span>
+              </div>
+              
+              <div className="flex justify-between items-center py-2 border-b border-gray-100">
                 <span className="text-gray-600">{t.stampe.success.total}</span>
                 <span className="font-bold text-lg text-primary">€{orderData.totalPrice.toFixed(2)}</span>
               </div>

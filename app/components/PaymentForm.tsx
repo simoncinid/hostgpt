@@ -6,6 +6,7 @@ import { motion } from 'framer-motion'
 import { CreditCard, Loader2, Check, AlertCircle, Shield } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { printOrders } from '@/lib/api'
+import { useLanguage } from '@/lib/languageContext'
 
 interface PaymentFormProps {
   amount: number
@@ -33,6 +34,7 @@ const CARD_ELEMENT_OPTIONS = {
 export default function PaymentForm({ amount, orderId, onSuccess, onError }: PaymentFormProps) {
   const stripe = useStripe()
   const elements = useElements()
+  const { t } = useLanguage()
   const [isProcessing, setIsProcessing] = useState(false)
   const [isComplete, setIsComplete] = useState(false)
 
@@ -106,7 +108,7 @@ export default function PaymentForm({ amount, orderId, onSuccess, onError }: Pay
       <div className="bg-white border border-gray-200 rounded-lg p-4">
         <div className="flex items-center space-x-3 mb-4">
           <CreditCard className="w-5 h-5 text-gray-600" />
-          <h3 className="font-semibold text-gray-900">Dati della Carta</h3>
+          <h3 className="font-semibold text-gray-900">{t.stampe.checkout.payment.cardData}</h3>
         </div>
         
         <div className="border border-gray-300 rounded-lg p-3 bg-white min-h-[50px]">
@@ -118,7 +120,7 @@ export default function PaymentForm({ amount, orderId, onSuccess, onError }: Pay
         
         <div className="mt-3 flex items-center space-x-2 text-sm text-gray-600">
           <Shield className="w-4 h-4" />
-          <span>Pagamento sicuro protetto da Stripe</span>
+          <span>{t.stampe.checkout.payment.stripeSecure}</span>
         </div>
       </div>
 
@@ -132,12 +134,12 @@ export default function PaymentForm({ amount, orderId, onSuccess, onError }: Pay
         {isProcessing ? (
           <>
             <Loader2 className="w-5 h-5 animate-spin" />
-            <span>Elaborazione Pagamento...</span>
+            <span>{t.stampe.checkout.payment.processingPayment}</span>
           </>
         ) : (
           <>
             <CreditCard className="w-5 h-5" />
-            <span>Paga €{amount.toFixed(2)}</span>
+            <span>{t.stampe.checkout.payment.cardPayment} €{amount.toFixed(2)}</span>
           </>
         )}
       </motion.button>

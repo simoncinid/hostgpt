@@ -34,9 +34,15 @@ class PrintfulService:
                     "quantity": item.get("quantity")
                 })
             
+            # Combina indirizzo e numero civico
+            full_address = shipping_address.get("address", "")
+            street_number = shipping_address.get("streetNumber", "")
+            if street_number:
+                full_address = f"{full_address} {street_number}".strip()
+            
             rate_request = {
                 "recipient": {
-                    "address1": shipping_address.get("address", ""),
+                    "address1": full_address,
                     "city": shipping_address.get("city", ""),
                     "country_code": shipping_address.get("country", "IT"),
                     "state_code": shipping_address.get("state", ""),
@@ -163,9 +169,15 @@ class PrintfulService:
             shipping_id = selected_shipping.get("id")
             
             # Prepara l'indirizzo del destinatario con il metodo di spedizione
+            # Combina indirizzo e numero civico
+            full_address = order_data["shipping_address"].get("address", "")
+            street_number = order_data["shipping_address"].get("streetNumber", "")
+            if street_number:
+                full_address = f"{full_address} {street_number}".strip()
+            
             recipient = {
                 "name": f"{order_data['shipping_address'].get('firstName', '')} {order_data['shipping_address'].get('lastName', '')}".strip(),
-                "address1": order_data["shipping_address"].get("address", ""),
+                "address1": full_address,
                 "city": order_data["shipping_address"].get("city", ""),
                 "country_code": order_data["shipping_address"].get("country", "IT"),
                 "state_code": order_data["shipping_address"].get("state", ""),

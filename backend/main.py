@@ -5692,6 +5692,8 @@ async def get_address_details(place_id: str):
                 
                 return {
                     "address": full_address,
+                    "street_number": address_data["street_number"],
+                    "route": address_data["route"],
                     "city": address_data["locality"],
                     "state": address_data["administrative_area_level_1"],
                     "postal_code": address_data["postal_code"],
