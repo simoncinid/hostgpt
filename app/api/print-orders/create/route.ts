@@ -44,8 +44,10 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('[ERROR] Proxy API - Errore nel proxy API:', error)
+    console.error('[ERROR] Proxy API - Tipo errore:', typeof error)
+    console.error('[ERROR] Proxy API - Messaggio:', error instanceof Error ? error.message : 'Unknown error')
     return NextResponse.json(
-      { error: 'Errore interno del server' },
+      { error: `Errore interno del server: ${error instanceof Error ? error.message : 'Unknown error'}` },
       { status: 500 }
     )
   }
