@@ -99,9 +99,14 @@ class PrintfulService:
                 return None
             
             # Crea l'ordine
+            # L'oggetto shipping deve contenere sia l'indirizzo che il metodo di spedizione
+            shipping_data = order_data["shipping_address"].copy()
+            # Aggiungi il metodo di spedizione standard per l'Italia
+            shipping_data["method"] = "STANDARD"
+            
             order_payload = {
                 "external_id": order_data["order_number"],
-                "shipping": order_data["shipping_address"],
+                "shipping": shipping_data,
                 "items": items
             }
             
