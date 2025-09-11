@@ -39,6 +39,11 @@ class Settings(BaseSettings):
     PRINTFUL_API_KEY: str = os.getenv("PRINTFUL_API_KEY", "your-printful-api-key")
     PRINTFUL_STORE_ID: str = os.getenv("PRINTFUL_STORE_ID", "your-store-id")
     
+    # Gofile - Servizio di hosting file
+    GOFILE_FOLDER_ID: str = os.getenv("GOFILE_FOLDER_ID", "d63dd9a9-70b1-4cf0-a25f-3e69b13aaa37")
+    GOFILE_ACCOUNT_ID: str = os.getenv("GOFILE_ACCOUNT_ID", "e50405d7-23a2-46cb-99e6-30882d9c2c71")
+    GOFILE_TOKEN: str = os.getenv("GOFILE_TOKEN", "2qfGnU1Mo0VQdWuYpPAUvEw6noiSPfoX")
+    
     # Email
     SMTP_HOST: str = os.getenv("SMTP_HOST", "smtp.gmail.com")
     SMTP_PORT: int = int(os.getenv("SMTP_PORT", "587"))

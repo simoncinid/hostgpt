@@ -62,15 +62,51 @@ class PrintfulService:
             logger.error(f"Error fetching shipping rates: {e}")
             return None
 
-    async def create_design(self, qr_code_data: str, product_type: str) -> Optional[str]:
-        """Crea un design su Printful con il QR code"""
+    def upload_to_gofile(self, qr_code_data: str, order_number: str) -> Optional[str]:
+        """Carica l'immagine su Gofile nella cartella specificata e restituisce l'URL pubblico"""
         try:
-            # Per Printful, non creiamo un design separato ma usiamo direttamente il file nell'ordine
-            # Questo metodo ora restituisce semplicemente un identificatore per il file
-            return f"qr_design_{product_type}_{hash(qr_code_data) % 10000}"
+            import base64
+            import io
             
+            # Decodifica i dati base64
+            file_data = base64.b64decode(qr_code_data)
+            
+            # Crea un nome file unico
+            filename = f"qr_code_{order_number}_{hash(qr_code_data) % 10000}.png"
+            
+            # Gofile API endpoint per upload
+            gofile_url = "https://api.gofile.io/uploadFile"
+            
+            # Prepara i dati per l'upload
+            files = {
+                'file': (filename, io.BytesIO(file_data), 'image/png')
+            }
+            
+            data = {
+                'folderId': settings.GOFILE_FOLDER_ID,
+                'accountId': settings.GOFILE_ACCOUNT_ID,
+                'token': settings.GOFILE_TOKEN
+            }
+            
+            # Upload su Gofile
+            response = requests.post(gofile_url, files=files, data=data)
+            
+            if response.status_code == 200:
+                result = response.json()
+                if result.get("status") == "ok":
+                    file_info = result.get("data", {})
+                    file_url = file_info.get("downloadPage")
+                    logger.info(f"Image uploaded to Gofile: {file_url}")
+                    return file_url
+                else:
+                    logger.error(f"Gofile upload failed: {result}")
+                    return None
+            else:
+                logger.error(f"Gofile API error: {response.status_code} - {response.text}")
+                return None
+                
         except Exception as e:
-            logger.error(f"Error creating design: {e}")
+            logger.error(f"Error uploading to Gofile: {e}")
             return None
     
 
@@ -91,20 +127,20 @@ class PrintfulService:
                 if product_type in product_mapping:
                     mapping = product_mapping[product_type]
                     
-                    # Crea il design per questo item
-                    design_id = await self.create_design(
+                    # Carica l'immagine su Gofile
+                    file_url = self.upload_to_gofile(
                         item["qr_code_data"], 
-                        product_type
+                        order_data["order_number"]
                     )
                     
-                    if design_id:
+                    if file_url:
                         items.append({
                             "variant_id": mapping["variant_id"],
                             "quantity": item["quantity"],
                             "files": [
                                 {
                                     "type": "default",
-                                    "url": f"data:image/png;base64,{item['qr_code_data']}"
+                                    "url": file_url
                                 }
                             ]
                         })
