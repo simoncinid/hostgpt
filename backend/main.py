@@ -5267,56 +5267,82 @@ async def create_print_order(
 ):
     """Crea un nuovo ordine di stampa"""
     
-    # Verifica che il chatbot appartenga all'utente
-    chatbot = db.query(Chatbot).filter(
-        Chatbot.id == order_data.chatbot_id,
-        Chatbot.user_id == current_user.id
-    ).first()
+    try:
+        print(f"[DEBUG] Ricevuto ordine da utente {current_user.id}")
+        print(f"[DEBUG] Dati ordine: {order_data}")
+        print(f"[DEBUG] Chatbot ID: {order_data.chatbot_id}")
+        print(f"[DEBUG] Prodotti: {order_data.products}")
+        print(f"[DEBUG] Indirizzo: {order_data.shipping_address}")
+        print(f"[DEBUG] Totale: {order_data.total_amount}")
+        
+        # Verifica che il chatbot appartenga all'utente
+        chatbot = db.query(Chatbot).filter(
+            Chatbot.id == order_data.chatbot_id,
+            Chatbot.user_id == current_user.id
+        ).first()
+        
+        if not chatbot:
+            print(f"[ERROR] Chatbot {order_data.chatbot_id} non trovato per utente {current_user.id}")
+            raise HTTPException(status_code=404, detail="Chatbot non trovato")
+        
+        print(f"[DEBUG] Chatbot trovato: {chatbot.id}")
     
-    if not chatbot:
-        raise HTTPException(status_code=404, detail="Chatbot non trovato")
-    
-    # Genera numero ordine unico
-    order_number = f"PRINT-{datetime.now().strftime('%Y%m%d')}-{secrets.token_hex(4).upper()}"
-    
-    # Crea l'ordine
-    print_order = PrintOrder(
-        user_id=current_user.id,
-        chatbot_id=order_data.chatbot_id,
-        order_number=order_number,
-        total_amount=order_data.total_amount,
-        shipping_address=order_data.shipping_address,
-        status="pending",
-        payment_status="pending"
-    )
-    
-    db.add(print_order)
-    db.commit()
-    db.refresh(print_order)
-    
-    # Aggiungi gli item dell'ordine
-    for product in order_data.products:
-        if product["quantity"] > 0:
-            order_item = PrintOrderItem(
-                order_id=print_order.id,
-                product_type=product["type"],
-                product_name=product["name"],
-                quantity=product["quantity"],
-                unit_price=product["price"],
-                total_price=product["price"] * product["quantity"],
-                qr_code_data=chatbot.qr_code if hasattr(chatbot, 'qr_code') else None
-            )
-            db.add(order_item)
-    
-    db.commit()
-    
-    return PrintOrderResponse(
-        id=print_order.id,
-        order_number=print_order.order_number,
-        status=print_order.status,
-        total_amount=print_order.total_amount,
-        created_at=print_order.created_at
-    )
+        # Genera numero ordine unico
+        order_number = f"PRINT-{datetime.now().strftime('%Y%m%d')}-{secrets.token_hex(4).upper()}"
+        print(f"[DEBUG] Numero ordine generato: {order_number}")
+        
+        # Crea l'ordine
+        print_order = PrintOrder(
+            user_id=current_user.id,
+            chatbot_id=order_data.chatbot_id,
+            order_number=order_number,
+            total_amount=order_data.total_amount,
+            shipping_address=order_data.shipping_address,
+            status="pending",
+            payment_status="pending"
+        )
+        
+        print(f"[DEBUG] Creando ordine nel database...")
+        db.add(print_order)
+        db.commit()
+        db.refresh(print_order)
+        print(f"[DEBUG] Ordine creato con ID: {print_order.id}")
+        
+        # Aggiungi gli item dell'ordine
+        print(f"[DEBUG] Aggiungendo {len(order_data.products)} prodotti...")
+        for i, product in enumerate(order_data.products):
+            print(f"[DEBUG] Prodotto {i}: {product}")
+            if product["quantity"] > 0:
+                order_item = PrintOrderItem(
+                    order_id=print_order.id,
+                    product_type=product["type"],
+                    product_name=product["name"],
+                    quantity=product["quantity"],
+                    unit_price=product["price"],
+                    total_price=product["price"] * product["quantity"],
+                    qr_code_data=chatbot.qr_code if hasattr(chatbot, 'qr_code') else None
+                )
+                print(f"[DEBUG] Aggiungendo item: {order_item.product_name}")
+                db.add(order_item)
+        
+        print(f"[DEBUG] Commit finale...")
+        db.commit()
+        print(f"[DEBUG] Ordine completato con successo!")
+        
+        return PrintOrderResponse(
+            id=print_order.id,
+            order_number=print_order.order_number,
+            status=print_order.status,
+            total_amount=print_order.total_amount,
+            created_at=print_order.created_at
+        )
+        
+    except Exception as e:
+        print(f"[ERROR] Errore nella creazione ordine: {str(e)}")
+        print(f"[ERROR] Tipo errore: {type(e)}")
+        import traceback
+        print(f"[ERROR] Traceback: {traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=f"Errore interno del server: {str(e)}")
 
 @app.post("/api/print-orders/create-payment")
 async def create_payment_session(

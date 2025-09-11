@@ -237,6 +237,9 @@ export const printOrders = {
   create: (data: any) => {
     // Usa l'endpoint del frontend che fa proxy al backend
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
+    console.log('[DEBUG] Token trovato:', token ? 'Sì' : 'No')
+    console.log('[DEBUG] Dati da inviare:', data)
+    
     return fetch('/api/print-orders/create', {
       method: 'POST',
       headers: {
@@ -245,13 +248,18 @@ export const printOrders = {
       },
       body: JSON.stringify(data),
     }).then(response => {
+      console.log('[DEBUG] Risposta ricevuta:', response.status, response.statusText)
       if (!response.ok) {
         return response.json().then(errorData => {
+          console.log('[DEBUG] Errore ricevuto:', errorData)
           throw { response: { status: response.status, data: errorData } }
         })
       }
       return response.json()
-    }).then(data => ({ data }))
+    }).then(data => {
+      console.log('[DEBUG] Dati ricevuti:', data)
+      return { data }
+    })
   },
   
   createPayment: (orderId: number, amount: number, currency: string = 'eur') =>
