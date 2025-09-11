@@ -124,6 +124,12 @@ class PrintfulService:
                 "items": items
             }
             
+            # Aggiungi l'email del cliente se disponibile
+            if "customer_email" in order_data:
+                order_payload["recipient"] = {
+                    "email": order_data["customer_email"]
+                }
+            
             response = requests.post(
                 f"{self.base_url}/orders",
                 headers=self.headers,
@@ -184,6 +190,9 @@ async def send_order_to_printful(order, db) -> bool:
                 "quantity": item.quantity,
                 "qr_code_data": item.qr_code_data
             })
+        
+        # Aggiungi l'email dell'utente per le notifiche
+        order_data["customer_email"] = order.user.email
         
         # Invia l'ordine a Printful
         printful_order_id = await printful_service.create_order(order_data)

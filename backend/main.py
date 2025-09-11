@@ -5405,11 +5405,14 @@ async def create_payment_session(
         logger.error(f"Stripe error: {e}")
         raise HTTPException(status_code=400, detail=f"Errore nel pagamento: {str(e)}")
 
+class PaymentIntentRequest(BaseModel):
+    order_id: int
+    amount: int
+    currency: str = "eur"
+
 @app.post("/api/print-orders/create-payment-intent")
 async def create_payment_intent(
-    order_id: int,
-    amount: int,
-    currency: str = "eur",
+    request: PaymentIntentRequest,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -5417,7 +5420,7 @@ async def create_payment_intent(
     
     # Verifica che l'ordine appartenga all'utente
     order = db.query(PrintOrder).filter(
-        PrintOrder.id == order_id,
+        PrintOrder.id == request.order_id,
         PrintOrder.user_id == current_user.id
     ).first()
     
@@ -5427,10 +5430,10 @@ async def create_payment_intent(
     try:
         # Crea il Payment Intent
         intent = stripe.PaymentIntent.create(
-            amount=amount,
-            currency=currency,
+            amount=request.amount,
+            currency=request.currency,
             metadata={
-                'order_id': str(order_id),
+                'order_id': str(request.order_id),
                 'order_number': order.order_number,
                 'user_id': str(current_user.id)
             },
