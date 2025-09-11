@@ -51,6 +51,14 @@ class PrintfulService:
         """Ottieni i metodi di spedizione disponibili per un ordine"""
         try:
             # Prepara i dati per la richiesta delle tariffe di spedizione
+            # Gli items devono contenere solo variant_id e quantity per le tariffe
+            rate_items = []
+            for item in items:
+                rate_items.append({
+                    "variant_id": item.get("variant_id"),
+                    "quantity": item.get("quantity")
+                })
+            
             rate_request = {
                 "recipient": {
                     "address1": shipping_address.get("address", ""),
@@ -59,7 +67,7 @@ class PrintfulService:
                     "state_code": shipping_address.get("state", ""),
                     "zip": shipping_address.get("postalCode", "")
                 },
-                "items": items
+                "items": rate_items
             }
             
             response = requests.post(
@@ -90,17 +98,43 @@ class PrintfulService:
             logger.error(f"Error creating design: {e}")
             return None
     
+    async def get_available_products(self) -> Dict[str, Dict]:
+        """Ottieni i prodotti disponibili da Printful e crea un mapping"""
+        try:
+            products = await self.get_products()
+            product_mapping = {}
+            
+            for product in products:
+                variants = await self.get_product_variants(product.get("id"))
+                for variant in variants:
+                    # Cerca varianti per sticker e desk plate
+                    variant_name = variant.get("name", "").lower()
+                    if "sticker" in variant_name and "5" in variant_name:
+                        product_mapping["sticker"] = {
+                            "variant_id": variant.get("id"),
+                            "product_id": product.get("id")
+                        }
+                    elif "desk" in variant_name or "plate" in variant_name:
+                        product_mapping["desk_plate"] = {
+                            "variant_id": variant.get("id"),
+                            "product_id": product.get("id")
+                        }
+            
+            logger.info(f"Found product mapping: {product_mapping}")
+            return product_mapping
+            
+        except Exception as e:
+            logger.error(f"Error getting available products: {e}")
+            return {}
+
     async def create_order(self, order_data: Dict) -> Optional[str]:
         """Crea un ordine su Printful"""
         try:
-            # Mappa i prodotti ai variant ID di Printful
-            # Questi ID devono essere configurati in base ai prodotti effettivi su Printful
-            product_mapping = {
-                "sticker": {
-                    "variant_id": "68c19df2d2efb3",  # Sticker 5.83″×8.27″
-                    "product_id": "68c19df2d2efb3"
-                }
-            }
+            # Ottieni i prodotti disponibili dinamicamente
+            product_mapping = await self.get_available_products()
+            if not product_mapping:
+                logger.error("No products available from Printful")
+                return None
             
             items = []
             for item in order_data["items"]:
