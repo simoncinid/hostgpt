@@ -333,6 +333,7 @@ class PrintOrderItem(Base):
     # Dettagli prodotto
     product_type = Column(String(50), nullable=False)  # sticker
     product_name = Column(String(255), nullable=False)
+    selected_size = Column(String(50), default='size_5x8')  # Dimensione selezionata
     quantity = Column(Integer, nullable=False)
     unit_price = Column(Float, nullable=False)
     total_price = Column(Float, nullable=False)

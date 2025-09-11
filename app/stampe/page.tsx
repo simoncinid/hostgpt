@@ -23,6 +23,16 @@ import { chatbots as chatbotsApi } from '@/lib/api'
 import toast from 'react-hot-toast'
 import Sidebar from '@/app/components/Sidebar'
 
+interface StickerSize {
+  id: string
+  name: string
+  dimensions: string
+  dimensionsCm: string
+  price: number
+  productId: string
+  variantId: string
+}
+
 interface Product {
   id: string
   name: string
@@ -31,7 +41,47 @@ interface Product {
   image: string
   features: string[]
   type: 'sticker'
+  sizes?: StickerSize[]
 }
+
+const stickerSizes: StickerSize[] = [
+  {
+    id: 'size_5x8',
+    name: '5.83″×8.27″',
+    dimensions: '5.83″×8.27″',
+    dimensionsCm: '(14.8×21 cm)',
+    price: 5.99,
+    productId: '68c2e22b28db94',
+    variantId: '10163'
+  },
+  {
+    id: 'size_3x3',
+    name: '3″×3″',
+    dimensions: '3″×3″',
+    dimensionsCm: '(7.6×7.6 cm)',
+    price: 3.99,
+    productId: '68c2e22b28dc08',
+    variantId: '10164'
+  },
+  {
+    id: 'size_4x4',
+    name: '4″×4″',
+    dimensions: '4″×4″',
+    dimensionsCm: '(10.2×10.2 cm)',
+    price: 4.99,
+    productId: '68c2e22b28dc67',
+    variantId: '10165'
+  },
+  {
+    id: 'size_5x5',
+    name: '5.5″×5.5″',
+    dimensions: '5.5″×5.5″',
+    dimensionsCm: '(14×14 cm)',
+    price: 6.99,
+    productId: '68c2e22b28dc67',
+    variantId: '10165'
+  }
+]
 
 const products: Product[] = [
   {
@@ -43,10 +93,10 @@ const products: Product[] = [
     features: [
       'Resistenti all\'acqua',
       'Adesivi ai raggi UV',
-      'Dimensioni 5.83″×8.27″',
       'Spedizione worldwide €4.99'
     ], // This will be replaced by t.stampe.products.sticker.features in the component
-    type: 'sticker'
+    type: 'sticker',
+    sizes: stickerSizes
   }
 ]
 
@@ -58,6 +108,7 @@ function StampeContent() {
   const { t } = useLanguage()
   
   const [selectedChatbot, setSelectedChatbot] = useState<any>(null)
+  const [selectedStickerSize, setSelectedStickerSize] = useState<StickerSize>(stickerSizes[0])
   const [quantities, setQuantities] = useState<{[key: string]: number}>({
     sticker: 0,
     desk_plate: 0
@@ -99,6 +150,9 @@ function StampeContent() {
 
   const getTotalPrice = () => {
     return products.reduce((total, product) => {
+      if (product.id === 'sticker') {
+        return total + (selectedStickerSize.price * quantities[product.id])
+      }
       return total + (product.price * quantities[product.id])
     }, 0)
   }
@@ -142,7 +196,8 @@ function StampeContent() {
       chatbot: selectedChatbot,
       products: products.map(product => ({
         ...product,
-        quantity: quantities[product.id]
+        quantity: quantities[product.id],
+        selectedSize: product.id === 'sticker' ? selectedStickerSize : null
       })).filter(item => item.quantity > 0),
       totalPrice: getTotalPrice(),
       totalItems: getTotalItems()
@@ -337,8 +392,29 @@ function StampeContent() {
                       ))}
                     </div>
 
+                    {/* Selezione Dimensione */}
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Dimensione
+                      </label>
+                      <select
+                        value={selectedStickerSize.id}
+                        onChange={(e) => {
+                          const size = stickerSizes.find(s => s.id === e.target.value)
+                          if (size) setSelectedStickerSize(size)
+                        }}
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                      >
+                        {stickerSizes.map((size) => (
+                          <option key={size.id} value={size.id}>
+                            {size.dimensions} {size.dimensionsCm} - €{size.price.toFixed(2)}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
                     <div className="flex items-center justify-between mb-4">
-                      <span className="text-2xl font-bold text-primary">€{product.price.toFixed(2)}</span>
+                      <span className="text-2xl font-bold text-primary">€{selectedStickerSize.price.toFixed(2)}</span>
                       <div className="flex items-center space-x-3">
                         <button
                           onClick={() => handleQuantityChange(product.id, -1)}
@@ -374,10 +450,10 @@ function StampeContent() {
                       return (
                         <div key={product.id} className="flex justify-between items-center">
                           <span className="text-gray-600">
-                            {product.name} x{quantities[product.id]}
+                            {product.name} ({selectedStickerSize.dimensions}) x{quantities[product.id]}
                           </span>
                           <span className="font-semibold">
-                            €{(product.price * quantities[product.id]).toFixed(2)}
+                            €{(selectedStickerSize.price * quantities[product.id]).toFixed(2)}
                           </span>
                         </div>
                       )
@@ -548,8 +624,29 @@ function StampeContent() {
                             ))}
                           </div>
 
+                          {/* Selezione Dimensione Desktop */}
+                          <div className="mb-3">
+                            <label className="block text-xs font-medium text-gray-700 mb-1">
+                              Dimensione
+                            </label>
+                            <select
+                              value={selectedStickerSize.id}
+                              onChange={(e) => {
+                                const size = stickerSizes.find(s => s.id === e.target.value)
+                                if (size) setSelectedStickerSize(size)
+                              }}
+                              className="w-full p-2 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-primary focus:border-transparent"
+                            >
+                              {stickerSizes.map((size) => (
+                                <option key={size.id} value={size.id}>
+                                  {size.dimensions} {size.dimensionsCm} - €{size.price.toFixed(2)}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+
                           <div className="flex items-center justify-between">
-                            <span className="text-lg font-bold text-primary">€{product.price.toFixed(2)}</span>
+                            <span className="text-lg font-bold text-primary">€{selectedStickerSize.price.toFixed(2)}</span>
                             <div className="flex items-center space-x-2">
                               <button
                                 onClick={() => handleQuantityChange(product.id, -1)}
@@ -590,10 +687,10 @@ function StampeContent() {
                             return (
                               <div key={product.id} className="flex justify-between items-center text-xs">
                                 <span className="text-gray-600">
-                                  {product.name} x{quantities[product.id]}
+                                  {product.name} ({selectedStickerSize.dimensions}) x{quantities[product.id]}
                                 </span>
                                 <span className="font-semibold">
-                                  €{(product.price * quantities[product.id]).toFixed(2)}
+                                  €{(selectedStickerSize.price * quantities[product.id]).toFixed(2)}
                                 </span>
                               </div>
                             )

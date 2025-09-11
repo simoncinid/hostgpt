@@ -122,11 +122,25 @@ class PrintfulService:
     async def create_order(self, order_data: Dict) -> Optional[str]:
         """Crea un ordine su Printful"""
         try:
-            # Mapping hardcoded per i prodotti
+            # Mapping per i prodotti con diverse dimensioni
             product_mapping = {
                 "sticker": {
-                    "variant_id": 12917,  # Kiss cut sticker sheet (white / 5.83″×8.27″)
-                    "product_id": "68c19df2d2efb3"
+                    "size_5x8": {
+                        "variant_id": 10163,  # 5.83″×8.27″
+                        "product_id": "68c2e22b28db94"
+                    },
+                    "size_3x3": {
+                        "variant_id": 10164,  # 3″×3″
+                        "product_id": "68c2e22b28dc08"
+                    },
+                    "size_4x4": {
+                        "variant_id": 10165,  # 4″×4″
+                        "product_id": "68c2e22b28dc67"
+                    },
+                    "size_5x5": {
+                        "variant_id": 10165,  # 5.5″×5.5″
+                        "product_id": "68c2e22b28dc67"
+                    }
                 }
             }
             
@@ -134,25 +148,29 @@ class PrintfulService:
             for item in order_data["items"]:
                 product_type = item["product_type"]
                 if product_type in product_mapping:
-                    mapping = product_mapping[product_type]
+                    # Ottieni la dimensione selezionata
+                    selected_size = item.get("selected_size", "size_5x8")  # Default alla dimensione originale
                     
-                    # Carica l'immagine su Gofile
-                    file_url = self.upload_to_gofile(
-                        item["qr_code_data"], 
-                        order_data["order_number"]
-                    )
-                    
-                    if file_url:
-                        items.append({
-                            "variant_id": mapping["variant_id"],
-                            "quantity": item["quantity"],
-                            "files": [
-                                {
-                                    "type": "default",
-                                    "url": file_url
-                                }
-                            ]
-                        })
+                    if selected_size in product_mapping[product_type]:
+                        mapping = product_mapping[product_type][selected_size]
+                        
+                        # Carica l'immagine su Gofile
+                        file_url = self.upload_to_gofile(
+                            item["qr_code_data"], 
+                            order_data["order_number"]
+                        )
+                        
+                        if file_url:
+                            items.append({
+                                "variant_id": mapping["variant_id"],
+                                "quantity": item["quantity"],
+                                "files": [
+                                    {
+                                        "type": "default",
+                                        "url": file_url
+                                    }
+                                ]
+                            })
             
             if not items:
                 logger.error("No valid items found for Printful order")
@@ -264,7 +282,8 @@ async def send_order_to_printful(order, db) -> bool:
             order_data["items"].append({
                 "product_type": item.product_type,
                 "quantity": item.quantity,
-                "qr_code_data": item.qr_code_data
+                "qr_code_data": item.qr_code_data,
+                "selected_size": getattr(item, 'selected_size', 'size_5x8')  # Default alla dimensione originale
             })
         
         # Aggiungi l'email dell'utente per le notifiche

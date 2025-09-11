@@ -5330,13 +5330,18 @@ async def create_print_order(
                 else:
                     print(f"[ERROR] QR code è None!")
                 
+                # Ottieni la dimensione selezionata e il prezzo corretto
+                selected_size = product.get("selectedSize", {}).get("id", "size_5x8")
+                unit_price = product.get("selectedSize", {}).get("price", product["price"])
+                
                 order_item = PrintOrderItem(
                     order_id=print_order.id,
                     product_type=product["type"],
                     product_name=product["name"],
+                    selected_size=selected_size,
                     quantity=product["quantity"],
-                    unit_price=product["price"],
-                    total_price=product["price"] * product["quantity"],
+                    unit_price=unit_price,
+                    total_price=unit_price * product["quantity"],
                     qr_code_data=qr_code_data
                 )
                 print(f"[DEBUG] Aggiungendo item: {order_item.product_name}")
@@ -5506,7 +5511,7 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
                     order_items.append({
                         'product_name': product_name,
                         'quantity': item.quantity,
-                        'price': item.quantity * (2.50 if item.product_type == "sticker" else 8.90)
+                        'price': item.total_price
                     })
                 
                 email_body = create_print_order_confirmation_email_simple(
@@ -5548,7 +5553,7 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
                     order_items.append({
                         'product_name': product_name,
                         'quantity': item.quantity,
-                        'price': item.quantity * (2.50 if item.product_type == "sticker" else 8.90)
+                        'price': item.total_price
                     })
                 
                 email_body = create_print_order_confirmation_email_simple(
