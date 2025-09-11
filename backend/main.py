@@ -125,7 +125,12 @@ scheduler.add_job(
 # CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[settings.FRONTEND_URL, "http://localhost:3000"],
+    allow_origins=[
+        settings.FRONTEND_URL, 
+        "http://localhost:3000",
+        "https://*.vercel.app",  # Permette richieste da Vercel
+        "https://hostgpt.vercel.app"  # Dominio specifico Vercel
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
