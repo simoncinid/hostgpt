@@ -13,7 +13,7 @@ import {
   Loader2
 } from 'lucide-react'
 import { useAuthStore } from '@/lib/store'
-import { printOrders } from '@/lib/api'
+import { printOrders, address } from '@/lib/api'
 import toast from 'react-hot-toast'
 import Sidebar from '@/app/components/Sidebar'
 import { Elements } from '@stripe/react-stripe-js'
@@ -148,15 +148,32 @@ function CheckoutContent() {
   const searchAddresses = async (query: string) => {
     try {
       setIsLoadingAddress(true)
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000'}/api/address/autocomplete?query=${encodeURIComponent(query)}&country=${shippingAddress.country}`)
-      const data = await response.json()
       
-      if (data.predictions) {
-        setAddressSuggestions(data.predictions)
+      const response = await address.autocomplete(query, shippingAddress.country)
+      console.log('Address search response:', response.data)
+      
+      if (response.data.predictions) {
+        setAddressSuggestions(response.data.predictions)
         setShowSuggestions(true)
       }
     } catch (error) {
       console.error('Error searching addresses:', error)
+      
+      // Fallback temporaneo per test
+      if (query.toLowerCase().includes('roma')) {
+        setAddressSuggestions([
+          {
+            description: "Via del Corso, Roma, RM, Italia",
+            place_id: "test_roma_1",
+            main_text: "Via del Corso",
+            secondary_text: "Roma, RM, Italia"
+          }
+        ])
+        setShowSuggestions(true)
+        toast('Modalità demo: seleziona un indirizzo di test', { icon: 'ℹ️' })
+      } else {
+        toast.error('Errore nella ricerca indirizzi. Verifica la connessione.')
+      }
     } finally {
       setIsLoadingAddress(false)
     }
@@ -165,17 +182,34 @@ function CheckoutContent() {
   const selectAddress = async (suggestion: any) => {
     try {
       setIsLoadingAddress(true)
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000'}/api/address/details/${suggestion.place_id}`)
-      const data = await response.json()
       
-      if (data.address) {
+      // Fallback per test
+      if (suggestion.place_id === 'test_roma_1') {
         setShippingAddress(prev => ({
           ...prev,
-          address: data.address,
-          city: data.city || '',
-          postalCode: data.postal_code || '',
-          country: data.country || 'IT',
-          state: data.state || ''
+          address: 'Via del Corso 123',
+          city: 'Roma',
+          postalCode: '00186',
+          country: 'IT',
+          state: 'RM'
+        }))
+        setShowSuggestions(false)
+        setAddressSuggestions([])
+        toast.success('Indirizzo di test compilato!')
+        return
+      }
+      
+      const response = await address.getDetails(suggestion.place_id)
+      console.log('Address details response:', response.data)
+      
+      if (response.data.address) {
+        setShippingAddress(prev => ({
+          ...prev,
+          address: response.data.address,
+          city: response.data.city || '',
+          postalCode: response.data.postal_code || '',
+          country: response.data.country || 'IT',
+          state: response.data.state || ''
         }))
         setShowSuggestions(false)
         setAddressSuggestions([])

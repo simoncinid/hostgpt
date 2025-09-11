@@ -249,3 +249,11 @@ export const printOrders = {
   getOrder: (orderId: number) =>
     api.get(`/print-orders/${orderId}`),
 }
+
+export const address = {
+  autocomplete: (query: string, country?: string) =>
+    api.get('/address/autocomplete', { params: { query, country } }),
+  
+  getDetails: (placeId: string) =>
+    api.get(`/address/details/${placeId}`),
+}
