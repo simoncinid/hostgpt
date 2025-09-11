@@ -32,6 +32,7 @@ class Settings(BaseSettings):
     STRIPE_SECRET_KEY: str = os.getenv("STRIPE_SECRET_KEY", "sk_test_your-stripe-secret-key")
     STRIPE_PUBLISHABLE_KEY: str = os.getenv("STRIPE_PUBLISHABLE_KEY", "pk_test_your-stripe-publishable-key")
     STRIPE_WEBHOOK_SECRET: str = os.getenv("STRIPE_WEBHOOK_SECRET", "whsec_your-webhook-secret")
+    STRIPE_PRINT_ORDERS_WEBHOOK_SECRET: str = os.getenv("STRIPE_PRINT_ORDERS_WEBHOOK_SECRET", "whsec_your-print-orders-webhook-secret")
     STRIPE_PRICE_ID: str = os.getenv("STRIPE_PRICE_ID", "price_your-monthly-29eur-price-id")  # IMPORTANTE: Deve essere 29€/mese
     
     # Printful - Servizio di stampa on-demand

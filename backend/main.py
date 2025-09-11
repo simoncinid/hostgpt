@@ -5462,7 +5462,7 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
     
     try:
         event = stripe.Webhook.construct_event(
-            payload, sig_header, settings.STRIPE_WEBHOOK_SECRET
+            payload, sig_header, settings.STRIPE_PRINT_ORDERS_WEBHOOK_SECRET
         )
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid payload")
