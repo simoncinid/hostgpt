@@ -251,7 +251,7 @@ export const printOrders = {
       console.log('[DEBUG] Risposta ricevuta:', response.status, response.statusText)
       if (!response.ok) {
         return response.json().then(errorData => {
-          console.log('[DEBUG] Errore ricevuto:', errorData)
+          console.log('[DEBUG] Errore ricevuto completo:', JSON.stringify(errorData, null, 2))
           throw { response: { status: response.status, data: errorData } }
         })
       }

@@ -17,7 +17,9 @@ export async function POST(request: NextRequest) {
     // Chiama il backend Python
     const backendUrl = process.env.BACKEND_URL || 'http://localhost:8000'
     console.log('[DEBUG] Proxy API - Backend URL:', backendUrl)
+    console.log('[DEBUG] Proxy API - URL completo:', `${backendUrl}/api/print-orders/create`)
     console.log('[DEBUG] Proxy API - Chiamando backend...')
+    
     
     const response = await fetch(`${backendUrl}/api/print-orders/create`, {
       method: 'POST',
