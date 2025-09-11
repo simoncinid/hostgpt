@@ -281,10 +281,15 @@ function GuardianContent() {
         <div className="bg-white shadow-sm">
           <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center">
-                <Shield className="w-5 h-5 text-white" />
+              {/* Nascondi scudo e titolo su mobile, mostra solo su desktop */}
+              <div className="hidden md:flex items-center space-x-3">
+                <div className="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center">
+                  <Shield className="w-5 h-5 text-white" />
+                </div>
+                <h1 className="text-xl font-semibold">{t.guardian.title}</h1>
               </div>
-              <h1 className="text-xl font-semibold">{t.guardian.title}</h1>
+              {/* Su mobile mostra solo il titolo senza scudo */}
+              <h1 className="text-xl font-semibold md:hidden">{t.guardian.title}</h1>
             </div>
           </div>
         </div>
@@ -297,15 +302,59 @@ function GuardianContent() {
               <div className="max-w-4xl mx-auto">
                 {/* Sezione Benefici Guardian */}
                 <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl shadow-lg p-8 mb-8">
-                  <div className="text-center mb-6">
+                  <div className="text-center mb-6 relative">
                     <h2 className="text-3xl font-bold text-gray-900 mb-2">{t.guardian.benefits.title}</h2>
                     <p className="text-lg text-gray-600">{t.guardian.benefits.subtitle}</p>
+                    
+                    {/* Bottone di acquisto per desktop - in alto a destra nel div verde */}
+                    <div className="hidden md:block absolute top-0 right-0">
+                      <button
+                        onClick={handleSubscribe}
+                        disabled={isCheckoutLoading}
+                        className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg text-sm transition-all duration-200 transform hover:scale-105 shadow-md flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {isCheckoutLoading ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            <span>Attivazione...</span>
+                          </>
+                        ) : (
+                          <span>Attiva Guardian</span>
+                        )}
+                      </button>
+                    </div>
                   </div>
 
                   {/* Main Statistic */}
                   <div className="bg-white rounded-xl p-6 mb-6 text-center shadow-sm">
                     <div className="text-4xl font-bold text-green-600 mb-2">{t.guardian.benefits.statistic.percentage}</div>
                     <p className="text-lg text-gray-800 font-semibold">{t.guardian.benefits.statistic.description}</p>
+                    
+                    {/* Bottone di acquisto per mobile - centrato nel div bianco */}
+                    <div className="mt-6 md:hidden">
+                      <button
+                        onClick={handleSubscribe}
+                        disabled={isCheckoutLoading}
+                        className="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-xl text-base transition-all duration-200 transform hover:scale-105 shadow-lg flex items-center space-x-2 mx-auto disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {isCheckoutLoading ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            <span>{t.guardian.redirecting}</span>
+                          </>
+                        ) : (
+                          <>
+                            <Shield className="w-4 h-4" />
+                            <span>
+                              {guardianStatus?.guardian_subscription_status === 'cancelling' 
+                                ? t.guardian.reactivate 
+                                : t.guardian.activateWithPrice
+                              }
+                            </span>
+                          </>
+                        )}
+                      </button>
+                    </div>
                   </div>
 
                   {/* Essential Benefits */}
@@ -337,31 +386,7 @@ function GuardianContent() {
                   </div>
                 </div>
 
-                {/* Button */}
-                <div className="text-center">
-                  <button
-                    onClick={handleSubscribe}
-                    disabled={isCheckoutLoading}
-                    className="bg-green-500 hover:bg-green-600 text-white font-bold py-4 px-8 rounded-xl text-lg transition-all duration-200 transform hover:scale-105 shadow-lg flex items-center space-x-2 mx-auto disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {isCheckoutLoading ? (
-                      <>
-                        <Loader2 className="w-5 h-5 animate-spin" />
-                        <span>{t.guardian.redirecting}</span>
-                      </>
-                    ) : (
-                      <>
-                        <Shield className="w-5 h-5" />
-                        <span>
-                          {guardianStatus?.guardian_subscription_status === 'cancelling' 
-                            ? t.guardian.reactivate 
-                            : t.guardian.activateWithPrice
-                          }
-                        </span>
-                      </>
-                    )}
-                  </button>
-                </div>
+                {/* Button rimosso - ora posizionato diversamente per mobile e desktop */}
               </div>
             ) : (
               /* Se abbonato, mostra dashboard */
