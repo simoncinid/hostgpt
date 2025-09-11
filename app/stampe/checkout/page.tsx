@@ -148,7 +148,7 @@ function CheckoutContent() {
   const searchAddresses = async (query: string) => {
     try {
       setIsLoadingAddress(true)
-      const response = await fetch(`/api/address/autocomplete?query=${encodeURIComponent(query)}&country=${shippingAddress.country}`)
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000'}/api/address/autocomplete?query=${encodeURIComponent(query)}&country=${shippingAddress.country}`)
       const data = await response.json()
       
       if (data.predictions) {
@@ -165,23 +165,29 @@ function CheckoutContent() {
   const selectAddress = async (suggestion: any) => {
     try {
       setIsLoadingAddress(true)
-      const response = await fetch(`/api/address/details/${suggestion.place_id}`)
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000'}/api/address/details/${suggestion.place_id}`)
       const data = await response.json()
       
       if (data.address) {
         setShippingAddress(prev => ({
           ...prev,
           address: data.address,
-          city: data.city,
-          postalCode: data.postal_code,
-          country: data.country,
-          state: data.state
+          city: data.city || '',
+          postalCode: data.postal_code || '',
+          country: data.country || 'IT',
+          state: data.state || ''
         }))
         setShowSuggestions(false)
         setAddressSuggestions([])
+        
+        // Mostra messaggio di successo
+        toast.success('Indirizzo compilato automaticamente!')
+      } else {
+        toast.error('Errore nel recuperare i dettagli dell\'indirizzo')
       }
     } catch (error) {
       console.error('Error getting address details:', error)
+      toast.error('Errore nel recuperare i dettagli dell\'indirizzo')
     } finally {
       setIsLoadingAddress(false)
     }
@@ -344,6 +350,9 @@ function CheckoutContent() {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Indirizzo *
                   </label>
+                  <p className="text-sm text-gray-500 mb-3">
+                    💡 Inizia a digitare l'indirizzo e seleziona dai suggerimenti per compilare automaticamente tutti i campi
+                  </p>
                   <div className="relative">
                     <input
                       type="text"
@@ -401,14 +410,28 @@ function CheckoutContent() {
                   <input
                     type="text"
                     value={shippingAddress.city}
-                    onChange={(e) => handleInputChange('city', e.target.value)}
-                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent ${
-                      errors.city ? 'border-red-500' : 'border-gray-300'
-                    }`}
-                    placeholder="Milano"
+                    readOnly
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg bg-gray-50 text-gray-600 cursor-not-allowed"
+                    placeholder="Seleziona un indirizzo per compilare automaticamente"
                   />
                   {errors.city && (
                     <p className="text-red-500 text-sm mt-1">{errors.city}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Provincia/Stato *
+                  </label>
+                  <input
+                    type="text"
+                    value={shippingAddress.state}
+                    readOnly
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg bg-gray-50 text-gray-600 cursor-not-allowed"
+                    placeholder="Seleziona un indirizzo per compilare automaticamente"
+                  />
+                  {errors.state && (
+                    <p className="text-red-500 text-sm mt-1">{errors.state}</p>
                   )}
                 </div>
 
@@ -419,11 +442,9 @@ function CheckoutContent() {
                   <input
                     type="text"
                     value={shippingAddress.postalCode}
-                    onChange={(e) => handleInputChange('postalCode', e.target.value)}
-                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent ${
-                      errors.postalCode ? 'border-red-500' : 'border-gray-300'
-                    }`}
-                    placeholder="20100"
+                    readOnly
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg bg-gray-50 text-gray-600 cursor-not-allowed"
+                    placeholder="Seleziona un indirizzo per compilare automaticamente"
                   />
                   {errors.postalCode && (
                     <p className="text-red-500 text-sm mt-1">{errors.postalCode}</p>
@@ -432,17 +453,18 @@ function CheckoutContent() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Paese
+                    Paese *
                   </label>
-                  <select
+                  <input
+                    type="text"
                     value={shippingAddress.country}
-                    onChange={(e) => handleInputChange('country', e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                  >
-                    <option value="IT">Italia</option>
-                    <option value="CH">Svizzera</option>
-                    <option value="AT">Austria</option>
-                  </select>
+                    readOnly
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg bg-gray-50 text-gray-600 cursor-not-allowed"
+                    placeholder="Seleziona un indirizzo per compilare automaticamente"
+                  />
+                  {errors.country && (
+                    <p className="text-red-500 text-sm mt-1">{errors.country}</p>
+                  )}
                 </div>
 
                 <div>
