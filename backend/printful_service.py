@@ -75,21 +75,24 @@ class PrintfulService:
             filename = f"qr_code_{order_number}_{hash(qr_code_data) % 10000}.png"
             
             # Gofile API endpoint per upload
-            gofile_url = "https://api.gofile.io/uploadFile"
+            gofile_url = "https://upload.gofile.io/uploadfile"
             
             # Prepara i dati per l'upload
             files = {
                 'file': (filename, io.BytesIO(file_data), 'image/png')
             }
             
+            # Headers per l'autenticazione
+            headers = {
+                'Authorization': f'Bearer {settings.GOFILE_TOKEN}'
+            }
+            
             data = {
-                'folderId': settings.GOFILE_FOLDER_ID,
-                'accountId': settings.GOFILE_ACCOUNT_ID,
-                'token': settings.GOFILE_TOKEN
+                'folderId': settings.GOFILE_FOLDER_ID
             }
             
             # Upload su Gofile
-            response = requests.post(gofile_url, files=files, data=data)
+            response = requests.post(gofile_url, files=files, data=data, headers=headers)
             
             if response.status_code == 200:
                 result = response.json()
