@@ -47,6 +47,38 @@ class PrintfulService:
             logger.error(f"Error fetching product variants: {e}")
             return []
     
+    async def get_shipping_rates(self, shipping_address: Dict, items: List[Dict]) -> Optional[List[Dict]]:
+        """Ottieni i metodi di spedizione disponibili per un ordine"""
+        try:
+            # Prepara i dati per la richiesta delle tariffe di spedizione
+            rate_request = {
+                "recipient": {
+                    "address1": shipping_address.get("address", ""),
+                    "city": shipping_address.get("city", ""),
+                    "country_code": shipping_address.get("country", "IT"),
+                    "state_code": shipping_address.get("state", ""),
+                    "zip": shipping_address.get("postalCode", "")
+                },
+                "items": items
+            }
+            
+            response = requests.post(
+                f"{self.base_url}/shipping/rates",
+                headers=self.headers,
+                json=rate_request
+            )
+            
+            if response.status_code == 200:
+                result = response.json()
+                return result.get("result", [])
+            else:
+                logger.error(f"Error fetching shipping rates: {response.status_code} - {response.text}")
+                return None
+                
+        except Exception as e:
+            logger.error(f"Error fetching shipping rates: {e}")
+            return None
+
     async def create_design(self, qr_code_data: str, product_type: str) -> Optional[str]:
         """Crea un design su Printful con il QR code"""
         try:
@@ -98,23 +130,37 @@ class PrintfulService:
                 logger.error("No valid items found for Printful order")
                 return None
             
-            # Crea l'ordine
-            # L'oggetto shipping deve contenere sia l'indirizzo che il metodo di spedizione
-            shipping_data = order_data["shipping_address"].copy()
-            # Aggiungi il metodo di spedizione standard per l'Italia
-            shipping_data["method"] = "STANDARD"
+            # Ottieni i metodi di spedizione disponibili
+            shipping_rates = await self.get_shipping_rates(order_data["shipping_address"], items)
+            if not shipping_rates:
+                logger.error("No shipping rates available")
+                return None
             
-            order_payload = {
-                "external_id": order_data["order_number"],
-                "shipping": shipping_data,
-                "items": items
+            # Seleziona il primo metodo di spedizione disponibile (di solito il più economico)
+            selected_shipping = shipping_rates[0]
+            shipping_id = selected_shipping.get("id")
+            
+            # Prepara l'indirizzo del destinatario con il metodo di spedizione
+            recipient = {
+                "name": f"{order_data['shipping_address'].get('firstName', '')} {order_data['shipping_address'].get('lastName', '')}".strip(),
+                "address1": order_data["shipping_address"].get("address", ""),
+                "city": order_data["shipping_address"].get("city", ""),
+                "country_code": order_data["shipping_address"].get("country", "IT"),
+                "state_code": order_data["shipping_address"].get("state", ""),
+                "zip": order_data["shipping_address"].get("postalCode", ""),
+                "shipping": shipping_id
             }
             
             # Aggiungi l'email del cliente se disponibile
             if "customer_email" in order_data:
-                order_payload["recipient"] = {
-                    "email": order_data["customer_email"]
-                }
+                recipient["email"] = order_data["customer_email"]
+            
+            # Crea l'ordine
+            order_payload = {
+                "external_id": order_data["order_number"],
+                "recipient": recipient,
+                "items": items
+            }
             
             logger.info(f"Creating Printful order with payload: {json.dumps(order_payload, indent=2)}")
             
