@@ -12,6 +12,7 @@ import {
   Truck
 } from 'lucide-react'
 import { useAuthStore } from '@/lib/store'
+import { useLanguage } from '@/lib/languageContext'
 import Sidebar from '@/app/components/Sidebar'
 
 // Componente di loading per il fallback di Suspense
@@ -30,6 +31,7 @@ function SuccessContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { user, isAuthenticated } = useAuthStore()
+  const { t } = useLanguage()
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
   const [orderData, setOrderData] = useState<any>(null)
 
@@ -60,7 +62,7 @@ function SuccessContent() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="loading-spinner w-8 h-8 mx-auto mb-4"></div>
-          <p className="text-gray-600">Caricamento...</p>
+          <p className="text-gray-600">{t.stampe.loading}</p>
         </div>
       </div>
     )
@@ -82,13 +84,13 @@ function SuccessContent() {
               <CheckCircle className="w-12 h-12 text-green-600" />
             </div>
             <h1 className="text-3xl font-bold text-gray-900 mb-4">
-              Ordine Confermato!
+              {t.stampe.success.title}
             </h1>
             <p className="text-lg text-gray-600 mb-2">
-              Il tuo pagamento è stato elaborato con successo.
+              {t.stampe.success.subtitle}
             </p>
             <p className="text-gray-500">
-              Riceverai una email di conferma a breve con tutti i dettagli dell'ordine.
+              {t.stampe.success.emailConfirmation}
             </p>
           </motion.div>
 
@@ -99,21 +101,21 @@ function SuccessContent() {
             transition={{ delay: 0.2 }}
             className="bg-white rounded-2xl shadow-lg p-6 mb-8"
           >
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Riepilogo Ordine</h2>
+            <h2 className="text-xl font-bold text-gray-900 mb-4">{t.stampe.success.orderSummary}</h2>
             
             <div className="space-y-4">
               <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                <span className="text-gray-600">Chatbot:</span>
+                <span className="text-gray-600">{t.stampe.success.chatbot}</span>
                 <span className="font-semibold">{orderData.chatbot.property_name}</span>
               </div>
               
               <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                <span className="text-gray-600">Prodotti:</span>
+                <span className="text-gray-600">{t.stampe.success.products}</span>
                 <span className="font-semibold">{orderData.totalItems} articoli</span>
               </div>
               
               <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                <span className="text-gray-600">Totale:</span>
+                <span className="text-gray-600">{t.stampe.success.total}</span>
                 <span className="font-bold text-lg text-primary">€{orderData.totalPrice.toFixed(2)}</span>
               </div>
             </div>
@@ -126,7 +128,7 @@ function SuccessContent() {
             transition={{ delay: 0.4 }}
             className="bg-white rounded-2xl shadow-lg p-6 mb-8"
           >
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Prossimi Passi</h2>
+            <h2 className="text-xl font-bold text-gray-900 mb-4">{t.stampe.success.nextSteps}</h2>
             
             <div className="space-y-4">
               <div className="flex items-start space-x-3">
@@ -134,9 +136,9 @@ function SuccessContent() {
                   <Package className="w-4 h-4 text-blue-600" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-900">Produzione</h3>
+                  <h3 className="font-semibold text-gray-900">{t.stampe.success.production}</h3>
                   <p className="text-sm text-gray-600">
-                    I tuoi QR-Code personalizzati saranno prodotti entro 1-2 giorni lavorativi.
+                    {t.stampe.success.productionDescription}
                   </p>
                 </div>
               </div>
@@ -146,9 +148,9 @@ function SuccessContent() {
                   <Truck className="w-4 h-4 text-green-600" />
                 </div>
                 <div>
-                                   <h3 className="font-semibold text-gray-900">Spedizione</h3>
+                                   <h3 className="font-semibold text-gray-900">{t.stampe.success.shipping}</h3>
                   <p className="text-sm text-gray-600">
-                    Riceverai un'email con il numero di tracking quando l'ordine sarà spedito.
+                    {t.stampe.success.shippingDescription}
                   </p>
                 </div>
               </div>
@@ -158,9 +160,9 @@ function SuccessContent() {
                   <CheckCircle className="w-4 h-4 text-purple-600" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-900">Consegna</h3>
+                  <h3 className="font-semibold text-gray-900">{t.stampe.success.delivery}</h3>
                   <p className="text-sm text-gray-600">
-                    Tempo di consegna stimato: 3-5 giorni lavorativi in Italia.
+                    {t.stampe.success.deliveryDescription}
                   </p>
                 </div>
               </div>
@@ -179,7 +181,7 @@ function SuccessContent() {
               className="flex-1 bg-primary hover:bg-primary/90 text-white py-3 px-6 rounded-xl font-semibold transition flex items-center justify-center space-x-2"
             >
               <Home className="w-5 h-5" />
-              <span>Torna alla Dashboard</span>
+              <span>{t.stampe.success.backToDashboard}</span>
             </Link>
             
             <Link
@@ -187,7 +189,7 @@ function SuccessContent() {
               className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 px-6 rounded-xl font-semibold transition flex items-center justify-center space-x-2"
             >
               <ArrowRight className="w-5 h-5" />
-              <span>Ordina Altro</span>
+              <span>{t.stampe.success.orderMore}</span>
             </Link>
           </motion.div>
 
@@ -199,13 +201,13 @@ function SuccessContent() {
             className="mt-8 text-center"
           >
             <p className="text-sm text-gray-500 mb-2">
-              Hai domande sul tuo ordine?
+              {t.stampe.success.supportQuestion}
             </p>
             <a
               href="mailto:support@hostgpt.it"
               className="text-primary hover:text-primary/80 font-medium"
             >
-              Contatta il Supporto
+              {t.stampe.success.contactSupport}
             </a>
           </motion.div>
         </div>

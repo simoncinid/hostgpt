@@ -267,35 +267,6 @@ function DashboardContent() {
           </motion.div>
         )}
 
-        {/* Banner QR-Code Stampa */}
-        {chatbots.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-gradient-to-r from-yellow-400 to-yellow-500 rounded-2xl p-4 md:p-6 mb-8 text-white shadow-lg"
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-yellow-300 rounded-full flex items-center justify-center">
-                  <QrCode className="w-6 h-6 text-yellow-800" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-yellow-900 text-lg">Non sai come stampare il QR-Code?</h3>
-                  <p className="text-yellow-800 text-sm">
-                    Facciamo noi! Adesivi e placche personalizzate spedite direttamente a casa tua.
-                  </p>
-                </div>
-              </div>
-              <Link
-                href="/stampe"
-                className="bg-white text-yellow-600 px-6 py-3 rounded-lg font-semibold hover:shadow-lg transition hover:bg-yellow-50"
-              >
-                Ordina Ora
-              </Link>
-            </div>
-          </motion.div>
-        )}
-
         {/* Chatbots List */}
         <div className="bg-white rounded-2xl shadow-lg p-4 md:p-6 mb-8">
           <div className="flex items-center justify-between mb-4 md:mb-6">
@@ -419,6 +390,35 @@ function DashboardContent() {
             </div>
           )}
         </div>
+
+        {/* Banner QR-Code Stampa */}
+        {chatbots.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-gradient-to-r from-yellow-400 to-yellow-500 rounded-2xl p-4 md:p-6 mb-8 text-white shadow-lg"
+          >
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+              <div className="flex items-center space-x-3 mb-4 md:mb-0">
+                <div className="w-10 h-10 bg-yellow-300 rounded-full flex items-center justify-center">
+                  <QrCode className="w-6 h-6 text-yellow-800" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-yellow-900 text-lg">Non sai come stampare il QR-Code?</h3>
+                  <p className="text-yellow-800 text-sm">
+                    Facciamo noi! Adesivi e placche personalizzate spedite direttamente a casa tua.
+                  </p>
+                </div>
+              </div>
+              <Link
+                href="/stampe"
+                className="bg-white text-yellow-600 px-4 py-2 md:px-6 md:py-3 rounded-lg font-semibold hover:shadow-lg transition hover:bg-yellow-50 text-sm md:text-base self-start md:self-auto"
+              >
+                Ordina Ora
+              </Link>
+            </div>
+          </motion.div>
+        )}
 
         {/* Box informativo: limite 1 chatbot + CTA WhatsApp */}
         <div className="bg-gradient-to-r from-primary to-accent rounded-2xl p-6 md:p-8 mb-8 text-white">

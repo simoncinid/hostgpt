@@ -222,6 +222,30 @@
       @apply w-6 h-6;
     }
   }
+
+  /* Stripe Card Element mobile improvements */
+  .stripe-card-element {
+    @apply w-full;
+  }
+
+  .stripe-card-element .StripeElement {
+    @apply w-full;
+  }
+
+  /* Mobile payment form improvements */
+  @media (max-width: 768px) {
+    .stripe-card-element {
+      @apply min-h-[60px] flex items-center;
+    }
+    
+    .stripe-card-element .StripeElement {
+      @apply w-full h-full;
+    }
+    
+    .stripe-card-element .StripeElement--focus {
+      @apply ring-2 ring-primary ring-opacity-20;
+    }
+  }
 }
 
 @layer utilities {

@@ -27,6 +27,7 @@ const CARD_ELEMENT_OPTIONS = {
       color: '#9e2146',
     },
   },
+  hidePostalCode: true,
 }
 
 export default function PaymentForm({ amount, orderId, onSuccess, onError }: PaymentFormProps) {
@@ -108,8 +109,11 @@ export default function PaymentForm({ amount, orderId, onSuccess, onError }: Pay
           <h3 className="font-semibold text-gray-900">Dati della Carta</h3>
         </div>
         
-        <div className="border border-gray-300 rounded-lg p-3 bg-white">
-          <CardElement options={CARD_ELEMENT_OPTIONS} />
+        <div className="border border-gray-300 rounded-lg p-3 bg-white min-h-[50px]">
+          <CardElement 
+            options={CARD_ELEMENT_OPTIONS}
+            className="stripe-card-element"
+          />
         </div>
         
         <div className="mt-3 flex items-center space-x-2 text-sm text-gray-600">
@@ -138,15 +142,6 @@ export default function PaymentForm({ amount, orderId, onSuccess, onError }: Pay
         )}
       </motion.button>
 
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <div className="flex items-start space-x-2">
-          <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5" />
-          <div className="text-sm text-blue-800">
-            <p className="font-semibold mb-1">Carte accettate:</p>
-            <p>Visa, Mastercard, American Express, Discover</p>
-          </div>
-        </div>
-      </div>
     </form>
   )
 }

@@ -12,7 +12,8 @@ import {
   Clock,
   XCircle,
   Eye,
-  ExternalLink
+  ExternalLink,
+  HelpCircle
 } from 'lucide-react'
 import { useAuthStore } from '@/lib/store'
 import { printOrders } from '@/lib/api'
@@ -78,9 +79,9 @@ function StampeDashboardContent() {
   const getStatusText = (status: string) => {
     switch (status) {
       case 'pending':
-        return 'In Attesa'
+        return 'Elaborazione'
       case 'processing':
-        return 'In Produzione'
+        return 'Elaborazione'
       case 'shipped':
         return 'Spedito'
       case 'delivered':
@@ -236,13 +237,15 @@ function StampeDashboardContent() {
                   </div>
                   
                   <div className="flex items-center space-x-2">
-                    <button
-                      onClick={() => router.push(`/dashboard/stampe/${order.id}`)}
+                    <a
+                      href={`https://wa.me/393391797616?text=INFO%20PRINT:%20${order.order_number}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition"
-                      title="Visualizza Dettagli"
+                      title="Contatta Supporto"
                     >
-                      <Eye className="w-4 h-4" />
-                    </button>
+                      <HelpCircle className="w-4 h-4" />
+                    </a>
                     
                     {order.tracking_number && (
                       <a

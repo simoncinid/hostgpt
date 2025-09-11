@@ -225,6 +225,151 @@ export interface Translations {
     emptyState: string
   }
   
+  // Stampe (Print) translations
+  stampe: {
+    // Main page
+    title: string
+    subtitle: string
+    backToDashboard: string
+    selectChatbot: string
+    qrPreview: string
+    noChatbots: string
+    noChatbotsMessage: string
+    createFirstChatbot: string
+    loading: string
+    loadingOrder: string
+    
+    // Products
+    products: {
+      sticker: {
+        name: string
+        description: string
+        features: string[]
+      }
+    }
+    
+    // Order summary
+    orderSummary: string
+    total: string
+    proceedToCheckout: string
+    
+    // Benefits
+    benefits: {
+      freeShipping: string
+      freeShippingSubtitle: string
+      securePayment: string
+      securePaymentSubtitle: string
+      fastDelivery: string
+      fastDeliverySubtitle: string
+    }
+    
+    // Checkout page
+    checkout: {
+      title: string
+      subtitle: string
+      backToProducts: string
+      shippingAddress: string
+      paymentMethod: string
+      orderSummary: string
+      selectedChatbot: string
+      products: string
+      subtotal: string
+      shipping: string
+      free: string
+      total: string
+      orderCreated: string
+      orderNumber: string
+      deliveryTimes: string
+      deliveryTimesItaly: string
+      deliveryTimesEurope: string
+      
+      // Form fields
+      form: {
+        firstName: string
+        lastName: string
+        company: string
+        companyOptional: string
+        address: string
+        city: string
+        state: string
+        postalCode: string
+        country: string
+        phone: string
+        addressHint: string
+        addressPlaceholder: string
+        autoFillHint: string
+        required: string
+      }
+      
+      // Payment
+      payment: {
+        cardPayment: string
+        stripeSecure: string
+        howItWorks: string
+        step1: string
+        step2: string
+        step3: string
+        step4: string
+        createOrder: string
+        creatingOrder: string
+        sslProtected: string
+      }
+    }
+    
+    // Success page
+    success: {
+      title: string
+      subtitle: string
+      emailConfirmation: string
+      orderSummary: string
+      chatbot: string
+      products: string
+      total: string
+      nextSteps: string
+      production: string
+      productionDescription: string
+      shipping: string
+      shippingDescription: string
+      delivery: string
+      deliveryDescription: string
+      backToDashboard: string
+      orderMore: string
+      supportQuestion: string
+      contactSupport: string
+    }
+    
+    // Cancel page
+    cancel: {
+      title: string
+      subtitle: string
+      noCharge: string
+      whatHappened: string
+      whatHappened1: string
+      whatHappened2: string
+      whatHappened3: string
+      whatHappened4: string
+      retryOrder: string
+      backToDashboard: string
+      needHelp: string
+      contactSupport: string
+    }
+    
+    // Toast messages
+    toasts: {
+      selectChatbot: string
+      selectProduct: string
+      errorLoadingChatbots: string
+      fillRequiredFields: string
+      orderCreated: string
+      orderCreatedError: string
+      paymentError: string
+      addressAutoFilled: string
+      addressError: string
+      addressDetailsError: string
+      demoMode: string
+    }
+  }
+  
   // Checkout translations
   checkout: {
     title: string
@@ -2016,6 +2161,156 @@ export const translations: Record<Language, Translations> = {
       cancelSubscriptionMessage: "Sei sicuro di voler annullare l'abbonamento? Il servizio verrà disattivato ma tutti i tuoi dati (chatbot, conversazioni, messaggi) rimarranno nel database.",
       confirmCancellation: "Conferma Annullamento",
       cancelling: "Annullamento..."
+    },
+    
+    // Stampe (Print) translations
+    stampe: {
+      // Main page
+      title: "Stampa QR-Code Personalizzati",
+      subtitle: "Ordina adesivi e placche con il QR-Code del tuo chatbot, spediti direttamente a casa tua.",
+      backToDashboard: "Torna alla Dashboard",
+      selectChatbot: "Seleziona Chatbot",
+      qrPreview: "Anteprima QR-Code",
+      noChatbots: "Nessun Chatbot Trovato",
+      noChatbotsMessage: "Devi creare almeno un chatbot prima di poter ordinare i QR-Code stampati.",
+      createFirstChatbot: "Crea il tuo primo Chatbot",
+      loading: "Caricamento...",
+      loadingOrder: "Caricamento ordine...",
+      
+      // Products
+      products: {
+        sticker: {
+          name: "Adesivi QR-Code",
+          description: "Adesivi resistenti all'acqua e ai raggi UV, perfetti per interni ed esterni",
+          features: [
+            "Resistenti all'acqua",
+            "Adesivi ai raggi UV",
+            "Dimensioni 5.83″×8.27″",
+            "Spedizione gratuita"
+          ]
+        }
+      },
+      
+      // Order summary
+      orderSummary: "Riepilogo Ordine",
+      total: "Totale",
+      proceedToCheckout: "Procedi al Checkout",
+      
+      // Benefits
+      benefits: {
+        freeShipping: "Spedizione Gratuita",
+        freeShippingSubtitle: "In tutta Italia",
+        securePayment: "Pagamento Sicuro",
+        securePaymentSubtitle: "Con Stripe",
+        fastDelivery: "Consegna Veloce",
+        fastDeliverySubtitle: "3-5 giorni lavorativi"
+      },
+      
+      // Checkout page
+      checkout: {
+        title: "Checkout",
+        subtitle: "Completa il tuo ordine di QR-Code personalizzati",
+        backToProducts: "Torna alla Selezione Prodotti",
+        shippingAddress: "Indirizzo di Spedizione",
+        paymentMethod: "Metodo di Pagamento",
+        orderSummary: "Riepilogo Ordine",
+        selectedChatbot: "Chatbot selezionato:",
+        products: "Prodotti:",
+        subtotal: "Subtotale",
+        shipping: "Spedizione",
+        free: "Gratuita",
+        total: "Totale",
+        orderCreated: "Ordine Creato",
+        orderNumber: "Numero ordine:",
+        deliveryTimes: "Tempi di consegna:",
+        deliveryTimesItaly: "3-5 giorni lavorativi in Italia",
+        deliveryTimesEurope: "5-7 giorni lavorativi in Europa",
+        
+        // Form fields
+        form: {
+          firstName: "Nome",
+          lastName: "Cognome",
+          company: "Azienda",
+          companyOptional: "Azienda (opzionale)",
+          address: "Indirizzo",
+          city: "Città",
+          state: "Provincia/Stato",
+          postalCode: "CAP",
+          country: "Paese",
+          phone: "Telefono",
+          addressHint: "💡 Inizia a digitare l'indirizzo e seleziona dai suggerimenti per compilare automaticamente tutti i campi",
+          addressPlaceholder: "Inizia a digitare l'indirizzo...",
+          autoFillHint: "Seleziona un indirizzo per compilare automaticamente",
+          required: "*"
+        },
+        
+        // Payment
+        payment: {
+          cardPayment: "Pagamento con Carta",
+          stripeSecure: "Gestito in modo sicuro da Stripe",
+          howItWorks: "Come funziona:",
+          step1: "1. Compila l'indirizzo di spedizione",
+          step2: "2. Clicca \"Crea Ordine\" per procedere",
+          step3: "3. Inserisci i dati della tua carta di credito",
+          step4: "4. Completa il pagamento in modo sicuro",
+          createOrder: "Crea Ordine",
+          creatingOrder: "Creazione Ordine...",
+          sslProtected: "Il pagamento è protetto con crittografia SSL e gestito da Stripe"
+        }
+      },
+      
+      // Success page
+      success: {
+        title: "Ordine Confermato!",
+        subtitle: "Il tuo pagamento è stato elaborato con successo.",
+        emailConfirmation: "Riceverai una email di conferma a breve con tutti i dettagli dell'ordine.",
+        orderSummary: "Riepilogo Ordine",
+        chatbot: "Chatbot:",
+        products: "Prodotti:",
+        total: "Totale:",
+        nextSteps: "Prossimi Passi",
+        production: "Produzione",
+        productionDescription: "I tuoi QR-Code personalizzati saranno prodotti entro 1-2 giorni lavorativi.",
+        shipping: "Spedizione",
+        shippingDescription: "Riceverai un'email con il numero di tracking quando l'ordine sarà spedito.",
+        delivery: "Consegna",
+        deliveryDescription: "Tempo di consegna stimato: 3-5 giorni lavorativi in Italia.",
+        backToDashboard: "Torna alla Dashboard",
+        orderMore: "Ordina Altro",
+        supportQuestion: "Hai domande sul tuo ordine?",
+        contactSupport: "Contatta il Supporto"
+      },
+      
+      // Cancel page
+      cancel: {
+        title: "Ordine Annullato",
+        subtitle: "Il pagamento è stato annullato.",
+        noCharge: "Non è stato addebitato alcun importo. Puoi riprovare quando vuoi.",
+        whatHappened: "Cosa è successo?",
+        whatHappened1: "• Hai annullato il processo di pagamento",
+        whatHappened2: "• Non è stato effettuato alcun addebito",
+        whatHappened3: "• I tuoi dati sono stati salvati e puoi riprovare",
+        whatHappened4: "• Il tuo carrello è ancora disponibile",
+        retryOrder: "Riprova l'Ordine",
+        backToDashboard: "Torna alla Dashboard",
+        needHelp: "Hai bisogno di aiuto?",
+        contactSupport: "Contatta il Supporto"
+      },
+      
+      // Toast messages
+      toasts: {
+        selectChatbot: "Seleziona un chatbot",
+        selectProduct: "Seleziona almeno un prodotto",
+        errorLoadingChatbots: "Errore nel caricamento dei chatbot",
+        fillRequiredFields: "Compila tutti i campi obbligatori",
+        orderCreated: "Ordine creato! Ora puoi procedere con il pagamento.",
+        orderCreatedError: "Errore durante la creazione dell'ordine",
+        paymentError: "Errore nel pagamento",
+        addressAutoFilled: "Indirizzo compilato automaticamente!",
+        addressError: "Errore nella ricerca indirizzi. Verifica la connessione.",
+        addressDetailsError: "Errore nel recuperare i dettagli dell'indirizzo",
+        demoMode: "Modalità demo: seleziona un indirizzo di test"
+      }
     }
   },
   
@@ -3061,6 +3356,156 @@ export const translations: Record<Language, Translations> = {
       cancelSubscriptionMessage: "Are you sure you want to cancel your subscription? The service will be deactivated but all your data (chatbots, conversations, messages) will remain in the database.",
       confirmCancellation: "Confirm Cancellation",
       cancelling: "Cancelling..."
+    },
+    
+    // Stampe (Print) translations
+    stampe: {
+      // Main page
+      title: "Print Custom QR-Codes",
+      subtitle: "Don't know how to print the QR-Code? We got you! Custom stickers and plates shipped directly to your home.",
+      backToDashboard: "Back to Dashboard",
+      selectChatbot: "Select Chatbot",
+      qrPreview: "QR-Code Preview",
+      noChatbots: "No Chatbot Found",
+      noChatbotsMessage: "You need to create at least one chatbot before you can order printed QR-Codes.",
+      createFirstChatbot: "Create your first Chatbot",
+      loading: "Loading...",
+      loadingOrder: "Loading order...",
+      
+      // Products
+      products: {
+        sticker: {
+          name: "QR-Code Stickers",
+          description: "Water and UV resistant stickers, perfect for indoor and outdoor use",
+          features: [
+            "Water resistant",
+            "UV resistant",
+            "Size 5.83″×8.27″",
+            "Free shipping"
+          ]
+        }
+      },
+      
+      // Order summary
+      orderSummary: "Order Summary",
+      total: "Total",
+      proceedToCheckout: "Proceed to Checkout",
+      
+      // Benefits
+      benefits: {
+        freeShipping: "Free Shipping",
+        freeShippingSubtitle: "Throughout Italy",
+        securePayment: "Secure Payment",
+        securePaymentSubtitle: "With Stripe",
+        fastDelivery: "Fast Delivery",
+        fastDeliverySubtitle: "3-5 business days"
+      },
+      
+      // Checkout page
+      checkout: {
+        title: "Checkout",
+        subtitle: "Complete your custom QR-Code order",
+        backToProducts: "Back to Product Selection",
+        shippingAddress: "Shipping Address",
+        paymentMethod: "Payment Method",
+        orderSummary: "Order Summary",
+        selectedChatbot: "Selected chatbot:",
+        products: "Products:",
+        subtotal: "Subtotal",
+        shipping: "Shipping",
+        free: "Free",
+        total: "Total",
+        orderCreated: "Order Created",
+        orderNumber: "Order number:",
+        deliveryTimes: "Delivery times:",
+        deliveryTimesItaly: "3-5 business days in Italy",
+        deliveryTimesEurope: "5-7 business days in Europe",
+        
+        // Form fields
+        form: {
+          firstName: "First Name",
+          lastName: "Last Name",
+          company: "Company",
+          companyOptional: "Company (optional)",
+          address: "Address",
+          city: "City",
+          state: "State/Province",
+          postalCode: "Postal Code",
+          country: "Country",
+          phone: "Phone",
+          addressHint: "💡 Start typing the address and select from suggestions to automatically fill all fields",
+          addressPlaceholder: "Start typing the address...",
+          autoFillHint: "Select an address to automatically fill",
+          required: "*"
+        },
+        
+        // Payment
+        payment: {
+          cardPayment: "Card Payment",
+          stripeSecure: "Securely handled by Stripe",
+          howItWorks: "How it works:",
+          step1: "1. Fill in the shipping address",
+          step2: "2. Click \"Create Order\" to proceed",
+          step3: "3. Enter your credit card details",
+          step4: "4. Complete the payment securely",
+          createOrder: "Create Order",
+          creatingOrder: "Creating Order...",
+          sslProtected: "Payment is protected with SSL encryption and handled by Stripe"
+        }
+      },
+      
+      // Success page
+      success: {
+        title: "Order Confirmed!",
+        subtitle: "Your payment has been processed successfully.",
+        emailConfirmation: "You will receive a confirmation email shortly with all order details.",
+        orderSummary: "Order Summary",
+        chatbot: "Chatbot:",
+        products: "Products:",
+        total: "Total:",
+        nextSteps: "Next Steps",
+        production: "Production",
+        productionDescription: "Your custom QR-Codes will be produced within 1-2 business days.",
+        shipping: "Shipping",
+        shippingDescription: "You will receive an email with tracking number when the order is shipped.",
+        delivery: "Delivery",
+        deliveryDescription: "Estimated delivery time: 3-5 business days in Italy.",
+        backToDashboard: "Back to Dashboard",
+        orderMore: "Order More",
+        supportQuestion: "Have questions about your order?",
+        contactSupport: "Contact Support"
+      },
+      
+      // Cancel page
+      cancel: {
+        title: "Order Cancelled",
+        subtitle: "The payment has been cancelled.",
+        noCharge: "No amount has been charged. You can try again anytime.",
+        whatHappened: "What happened?",
+        whatHappened1: "• You cancelled the payment process",
+        whatHappened2: "• No charge has been made",
+        whatHappened3: "• Your data has been saved and you can try again",
+        whatHappened4: "• Your cart is still available",
+        retryOrder: "Retry Order",
+        backToDashboard: "Back to Dashboard",
+        needHelp: "Need help?",
+        contactSupport: "Contact Support"
+      },
+      
+      // Toast messages
+      toasts: {
+        selectChatbot: "Select a chatbot",
+        selectProduct: "Select at least one product",
+        errorLoadingChatbots: "Error loading chatbots",
+        fillRequiredFields: "Fill all required fields",
+        orderCreated: "Order created! Now you can proceed with payment.",
+        orderCreatedError: "Error creating order",
+        paymentError: "Payment error",
+        addressAutoFilled: "Address automatically filled!",
+        addressError: "Error searching addresses. Check connection.",
+        addressDetailsError: "Error retrieving address details",
+        demoMode: "Demo mode: select a test address"
+      }
     }
   }
 }

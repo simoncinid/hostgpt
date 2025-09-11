@@ -14,7 +14,9 @@ import {
   Star,
   Truck,
   Shield,
-  Clock
+  Clock,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react'
 import { useAuthStore, useChatbotStore } from '@/lib/store'
 import { useLanguage } from '@/lib/languageContext'
@@ -35,8 +37,8 @@ interface Product {
 const products: Product[] = [
   {
     id: 'sticker',
-    name: 'Adesivi QR-Code',
-    description: 'Adesivi resistenti all\'acqua e ai raggi UV, perfetti per interni ed esterni',
+    name: 'Adesivi QR-Code', // This will be replaced by t.stampe.products.sticker.name in the component
+    description: 'Adesivi resistenti all\'acqua e ai raggi UV, perfetti per interni ed esterni', // This will be replaced by t.stampe.products.sticker.description in the component
     price: 5.99,
     image: '/icons/sticker-placeholder.png',
     features: [
@@ -44,7 +46,7 @@ const products: Product[] = [
       'Adesivi ai raggi UV',
       'Dimensioni 5.83″×8.27″',
       'Spedizione gratuita'
-    ],
+    ], // This will be replaced by t.stampe.products.sticker.features in the component
     type: 'sticker'
   }
 ]
@@ -63,6 +65,7 @@ function StampeContent() {
   })
   const [isLoading, setIsLoading] = useState(true)
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
+  const [currentChatbotPage, setCurrentChatbotPage] = useState(0)
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -83,7 +86,7 @@ function StampeContent() {
       const response = await chatbotsApi.list()
       setIsLoading(false)
     } catch (error) {
-      toast.error('Errore nel caricamento dei chatbot')
+      toast.error(t.stampe.toasts.errorLoadingChatbots)
       setIsLoading(false)
     }
   }
@@ -105,14 +108,33 @@ function StampeContent() {
     return Object.values(quantities).reduce((total, qty) => total + qty, 0)
   }
 
+  // Funzioni per la paginazione chatbot
+  const chatbotsPerPage = 1
+  const totalChatbotPages = Math.ceil(chatbots.length / chatbotsPerPage)
+  const currentChatbot = chatbots[currentChatbotPage]
+
+  const goToNextChatbot = () => {
+    if (currentChatbotPage < totalChatbotPages - 1) {
+      setCurrentChatbotPage(currentChatbotPage + 1)
+      setSelectedChatbot(null) // Reset selezione quando si cambia pagina
+    }
+  }
+
+  const goToPrevChatbot = () => {
+    if (currentChatbotPage > 0) {
+      setCurrentChatbotPage(currentChatbotPage - 1)
+      setSelectedChatbot(null) // Reset selezione quando si cambia pagina
+    }
+  }
+
   const handleProceedToCheckout = () => {
     if (!selectedChatbot) {
-      toast.error('Seleziona un chatbot')
+      toast.error(t.stampe.toasts.selectChatbot)
       return
     }
     
     if (getTotalItems() === 0) {
-      toast.error('Seleziona almeno un prodotto')
+      toast.error(t.stampe.toasts.selectProduct)
       return
     }
 
@@ -136,7 +158,7 @@ function StampeContent() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="loading-spinner w-8 h-8 mx-auto mb-4"></div>
-          <p className="text-gray-600">Caricamento...</p>
+          <p className="text-gray-600">{t.stampe.loading}</p>
         </div>
       </div>
     )
@@ -149,10 +171,10 @@ function StampeContent() {
         <div className={`transition-all duration-200 ${isSidebarCollapsed ? 'md:ml-16' : 'md:ml-64'} p-4 md:p-8`}>
           <div className="text-center py-12">
             <QrCode className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">Nessun Chatbot Trovato</h2>
-            <p className="text-gray-600 mb-6">Devi creare almeno un chatbot prima di poter ordinare i QR-Code stampati.</p>
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">{t.stampe.noChatbots}</h2>
+            <p className="text-gray-600 mb-6">{t.stampe.noChatbotsMessage}</p>
             <Link href="/dashboard/chatbots/create" className="btn-primary">
-              Crea il tuo primo Chatbot
+              {t.stampe.createFirstChatbot}
             </Link>
           </div>
         </div>
@@ -172,13 +194,13 @@ function StampeContent() {
             className="inline-flex items-center text-gray-600 hover:text-primary mb-4"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Torna alla Dashboard
+            {t.stampe.backToDashboard}
           </Link>
           <h1 className="text-3xl font-bold text-dark mb-2">
-            Stampa QR-Code Personalizzati
+            {t.stampe.title}
           </h1>
           <p className="text-gray-600">
-            Ordina adesivi e placche con il QR-Code del tuo chatbot, spediti direttamente a casa tua.
+            {t.stampe.subtitle}
           </p>
         </div>
 
@@ -186,44 +208,94 @@ function StampeContent() {
           {/* Selezione Chatbot */}
           <div className="lg:col-span-1">
             <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
-              <h2 className="text-xl font-bold text-dark mb-4">Seleziona Chatbot</h2>
-              <div className="space-y-3">
-                {chatbots.map((bot) => (
-                  <motion.div
-                    key={bot.id}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    className={`border rounded-lg p-4 cursor-pointer transition ${
-                      selectedChatbot?.id === bot.id 
-                        ? 'border-primary bg-primary/5' 
-                        : 'border-gray-200 hover:border-gray-300'
-                    }`}
-                    onClick={() => setSelectedChatbot(bot)}
-                  >
-                    <div className="flex items-center space-x-3">
-                      <div className={`w-4 h-4 rounded-full border-2 ${
-                        selectedChatbot?.id === bot.id 
-                          ? 'border-primary bg-primary' 
-                          : 'border-gray-300'
-                      }`}>
-                        {selectedChatbot?.id === bot.id && (
-                          <Check className="w-3 h-3 text-white" />
-                        )}
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="font-semibold">{bot.property_name}</h3>
-                        <p className="text-sm text-gray-500">{bot.property_city}</p>
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold text-dark">{t.stampe.selectChatbot}</h2>
+                {totalChatbotPages > 1 && (
+                  <div className="flex items-center space-x-2">
+                    <span className="text-sm text-gray-500">
+                      {currentChatbotPage + 1} / {totalChatbotPages}
+                    </span>
+                  </div>
+                )}
               </div>
+              
+              {currentChatbot && (
+                <motion.div
+                  key={currentChatbot.id}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className={`border rounded-lg p-4 cursor-pointer transition ${
+                    selectedChatbot?.id === currentChatbot.id 
+                      ? 'border-primary bg-primary/5' 
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                  onClick={() => setSelectedChatbot(currentChatbot)}
+                >
+                  <div className="flex items-center space-x-3">
+                    <div className={`w-4 h-4 rounded-full border-2 ${
+                      selectedChatbot?.id === currentChatbot.id 
+                        ? 'border-primary bg-primary' 
+                        : 'border-gray-300'
+                    }`}>
+                      {selectedChatbot?.id === currentChatbot.id && (
+                        <Check className="w-3 h-3 text-white" />
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-semibold">{currentChatbot.property_name}</h3>
+                      <p className="text-sm text-gray-500">{currentChatbot.property_city}</p>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+
+              {/* Navigazione paginazione */}
+              {totalChatbotPages > 1 && (
+                <div className="flex items-center justify-between mt-4">
+                  <button
+                    onClick={goToPrevChatbot}
+                    disabled={currentChatbotPage === 0}
+                    className="flex items-center space-x-2 px-3 py-2 text-sm text-gray-600 hover:text-primary disabled:text-gray-300 disabled:cursor-not-allowed transition"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                    <span>Precedente</span>
+                  </button>
+                  
+                  <div className="flex space-x-1">
+                    {Array.from({ length: totalChatbotPages }, (_, i) => (
+                      <button
+                        key={i}
+                        onClick={() => {
+                          setCurrentChatbotPage(i)
+                          setSelectedChatbot(null)
+                        }}
+                        className={`w-8 h-8 rounded-full text-sm font-medium transition ${
+                          i === currentChatbotPage
+                            ? 'bg-primary text-white'
+                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        }`}
+                      >
+                        {i + 1}
+                      </button>
+                    ))}
+                  </div>
+                  
+                  <button
+                    onClick={goToNextChatbot}
+                    disabled={currentChatbotPage === totalChatbotPages - 1}
+                    className="flex items-center space-x-2 px-3 py-2 text-sm text-gray-600 hover:text-primary disabled:text-gray-300 disabled:cursor-not-allowed transition"
+                  >
+                    <span>Successivo</span>
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Anteprima QR-Code */}
             {selectedChatbot && (
               <div className="bg-white rounded-2xl shadow-lg p-6">
-                <h3 className="text-lg font-bold text-dark mb-4">Anteprima QR-Code</h3>
+                <h3 className="text-lg font-bold text-dark mb-4">{t.stampe.qrPreview}</h3>
                 <div className="bg-gray-100 p-4 rounded-lg text-center">
                   <img
                     src={`data:image/png;base64,${selectedChatbot.qr_code}`}
@@ -251,12 +323,12 @@ function StampeContent() {
                     <div className="w-20 h-20 bg-gray-100 rounded-lg mx-auto mb-3 flex items-center justify-center">
                       <QrCode className="w-10 h-10 text-gray-400" />
                     </div>
-                    <h3 className="text-xl font-bold text-dark">{product.name}</h3>
-                    <p className="text-gray-600 text-sm mt-2">{product.description}</p>
+                    <h3 className="text-xl font-bold text-dark">{t.stampe.products.sticker.name}</h3>
+                    <p className="text-gray-600 text-sm mt-2">{t.stampe.products.sticker.description}</p>
                   </div>
 
                   <div className="space-y-3 mb-6">
-                    {product.features.map((feature, idx) => (
+                    {t.stampe.products.sticker.features.map((feature, idx) => (
                       <div key={idx} className="flex items-center space-x-2">
                         <Check className="w-4 h-4 text-green-500" />
                         <span className="text-sm text-gray-600">{feature}</span>
@@ -294,7 +366,7 @@ function StampeContent() {
                 animate={{ opacity: 1, y: 0 }}
                 className="bg-white rounded-2xl shadow-lg p-6 mb-6"
               >
-                <h3 className="text-lg font-bold text-dark mb-4">Riepilogo Ordine</h3>
+                <h3 className="text-lg font-bold text-dark mb-4">{t.stampe.orderSummary}</h3>
                 <div className="space-y-3">
                   {products.map(product => {
                     if (quantities[product.id] === 0) return null
@@ -311,7 +383,7 @@ function StampeContent() {
                   })}
                   <div className="border-t pt-3">
                     <div className="flex justify-between items-center">
-                      <span className="text-lg font-bold text-dark">Totale</span>
+                      <span className="text-lg font-bold text-dark">{t.stampe.total}</span>
                       <span className="text-xl font-bold text-primary">€{getTotalPrice().toFixed(2)}</span>
                     </div>
                   </div>
@@ -319,24 +391,6 @@ function StampeContent() {
               </motion.div>
             )}
 
-            {/* Vantaggi */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-              <div className="bg-white rounded-xl p-4 text-center">
-                <Truck className="w-8 h-8 text-primary mx-auto mb-2" />
-                <h4 className="font-semibold text-sm">Spedizione Gratuita</h4>
-                <p className="text-xs text-gray-600">In tutta Italia</p>
-              </div>
-              <div className="bg-white rounded-xl p-4 text-center">
-                <Shield className="w-8 h-8 text-primary mx-auto mb-2" />
-                <h4 className="font-semibold text-sm">Pagamento Sicuro</h4>
-                <p className="text-xs text-gray-600">Con Stripe</p>
-              </div>
-              <div className="bg-white rounded-xl p-4 text-center">
-                <Clock className="w-8 h-8 text-primary mx-auto mb-2" />
-                <h4 className="font-semibold text-sm">Consegna Veloce</h4>
-                <p className="text-xs text-gray-600">3-5 giorni lavorativi</p>
-              </div>
-            </div>
 
             {/* Bottone Checkout */}
             <motion.button
@@ -347,7 +401,7 @@ function StampeContent() {
               whileTap={{ scale: 0.98 }}
             >
               <ShoppingCart className="w-5 h-5" />
-              <span>Procedi al Checkout - €{getTotalPrice().toFixed(2)}</span>
+              <span>{t.stampe.proceedToCheckout} - €{getTotalPrice().toFixed(2)}</span>
             </motion.button>
           </div>
         </div>
@@ -361,7 +415,7 @@ function StampeFallback() {
     <div className="min-h-screen bg-gray-50 flex items-center justify-center">
       <div className="text-center">
         <div className="loading-spinner w-8 h-8 mx-auto mb-4"></div>
-        <p className="text-gray-600">Caricamento...</p>
+        <p className="text-gray-600">Loading...</p>
       </div>
     </div>
   )

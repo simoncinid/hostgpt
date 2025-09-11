@@ -13,6 +13,7 @@ import {
   Loader2
 } from 'lucide-react'
 import { useAuthStore } from '@/lib/store'
+import { useLanguage } from '@/lib/languageContext'
 import { printOrders, address } from '@/lib/api'
 import toast from 'react-hot-toast'
 import Sidebar from '@/app/components/Sidebar'
@@ -42,6 +43,7 @@ interface OrderData {
 function CheckoutContent() {
   const router = useRouter()
   const { user, isAuthenticated } = useAuthStore()
+  const { t } = useLanguage()
   const [orderData, setOrderData] = useState<OrderData | null>(null)
   const [shippingAddress, setShippingAddress] = useState<ShippingAddress>({
     firstName: '',
@@ -100,22 +102,22 @@ function CheckoutContent() {
     const newErrors: {[key: string]: string} = {}
 
     if (!shippingAddress.firstName.trim()) {
-      newErrors.firstName = 'Nome è obbligatorio'
+      newErrors.firstName = `${t.stampe.checkout.form.firstName} ${t.stampe.checkout.form.required}`
     }
     if (!shippingAddress.lastName.trim()) {
-      newErrors.lastName = 'Cognome è obbligatorio'
+      newErrors.lastName = `${t.stampe.checkout.form.lastName} ${t.stampe.checkout.form.required}`
     }
     if (!shippingAddress.address.trim()) {
-      newErrors.address = 'Indirizzo è obbligatorio'
+      newErrors.address = `${t.stampe.checkout.form.address} ${t.stampe.checkout.form.required}`
     }
     if (!shippingAddress.city.trim()) {
-      newErrors.city = 'Città è obbligatoria'
+      newErrors.city = `${t.stampe.checkout.form.city} ${t.stampe.checkout.form.required}`
     }
     if (!shippingAddress.postalCode.trim()) {
-      newErrors.postalCode = 'CAP è obbligatorio'
+      newErrors.postalCode = `${t.stampe.checkout.form.postalCode} ${t.stampe.checkout.form.required}`
     }
     if (!shippingAddress.phone.trim()) {
-      newErrors.phone = 'Telefono è obbligatorio'
+      newErrors.phone = `${t.stampe.checkout.form.phone} ${t.stampe.checkout.form.required}`
     }
 
     setErrors(newErrors)
@@ -170,9 +172,9 @@ function CheckoutContent() {
           }
         ])
         setShowSuggestions(true)
-        toast('Modalità demo: seleziona un indirizzo di test', { icon: 'ℹ️' })
+        toast(t.stampe.toasts.demoMode, { icon: 'ℹ️' })
       } else {
-        toast.error('Errore nella ricerca indirizzi. Verifica la connessione.')
+        toast.error(t.stampe.toasts.addressError)
       }
     } finally {
       setIsLoadingAddress(false)
@@ -195,7 +197,7 @@ function CheckoutContent() {
         }))
         setShowSuggestions(false)
         setAddressSuggestions([])
-        toast.success('Indirizzo di test compilato!')
+        toast.success(t.stampe.toasts.addressAutoFilled)
         return
       }
       
@@ -215,9 +217,9 @@ function CheckoutContent() {
         setAddressSuggestions([])
         
         // Mostra messaggio di successo
-        toast.success('Indirizzo compilato automaticamente!')
+        toast.success(t.stampe.toasts.addressAutoFilled)
       } else {
-        toast.error('Errore nel recuperare i dettagli dell\'indirizzo')
+        toast.error(t.stampe.toasts.addressDetailsError)
       }
     } catch (error) {
       console.error('Error getting address details:', error)
@@ -229,7 +231,7 @@ function CheckoutContent() {
 
   const handleCreateOrder = async () => {
     if (!validateForm() || !orderData) {
-      toast.error('Compila tutti i campi obbligatori')
+      toast.error(t.stampe.toasts.fillRequiredFields)
       return
     }
 
@@ -251,11 +253,11 @@ function CheckoutContent() {
       const order = orderResponse.data
       console.log('Ordine creato:', order)
       setCreatedOrder(order)
-      toast.success('Ordine creato! Ora puoi procedere con il pagamento.')
+      toast.success(t.stampe.toasts.orderCreated)
 
     } catch (error) {
       console.error('Errore creazione ordine:', error)
-      toast.error(`Errore durante la creazione dell'ordine: ${error instanceof Error ? error.message : 'Riprova.'}`)
+      toast.error(`${t.stampe.toasts.orderCreatedError}: ${error instanceof Error ? error.message : 'Riprova.'}`)
     } finally {
       setIsProcessing(false)
     }
@@ -265,27 +267,15 @@ function CheckoutContent() {
     console.log('Pagamento completato:', paymentIntentId)
     setPaymentCompleted(true)
     
-    // Salva i dati dell'ordine per la pagina di successo
-    const successData = {
-      chatbot: orderData?.chatbot,
-      products: orderData?.products,
-      totalPrice: orderData?.totalPrice,
-      totalItems: orderData?.totalItems,
-      order: createdOrder,
-      paymentIntentId
-    }
-    
-    localStorage.setItem('printOrderSuccess', JSON.stringify(successData))
-    
-    // Reindirizza alla pagina di successo
+    // Reindirizza direttamente alla dashboard stampe
     setTimeout(() => {
-      router.push('/stampe/success')
+      router.push('/dashboard/stampe')
     }, 2000)
   }
 
   const handlePaymentError = (error: string) => {
     console.error('Errore pagamento:', error)
-    toast.error(`Errore nel pagamento: ${error}`)
+    toast.error(`${t.stampe.toasts.paymentError}: ${error}`)
   }
 
   if (!orderData) {
@@ -293,7 +283,7 @@ function CheckoutContent() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="loading-spinner w-8 h-8 mx-auto mb-4"></div>
-          <p className="text-gray-600">Caricamento ordine...</p>
+          <p className="text-gray-600">{t.stampe.loadingOrder}</p>
         </div>
       </div>
     )
@@ -311,13 +301,13 @@ function CheckoutContent() {
             className="inline-flex items-center text-gray-600 hover:text-primary mb-4"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Torna alla Selezione Prodotti
+            {t.stampe.checkout.backToProducts}
           </Link>
           <h1 className="text-3xl font-bold text-dark mb-2">
-            Checkout
+            {t.stampe.checkout.title}
           </h1>
           <p className="text-gray-600">
-            Completa il tuo ordine di QR-Code personalizzati
+            {t.stampe.checkout.subtitle}
           </p>
         </div>
 
@@ -327,13 +317,13 @@ function CheckoutContent() {
             <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
               <div className="flex items-center space-x-3 mb-6">
                 <MapPin className="w-6 h-6 text-primary" />
-                <h2 className="text-xl font-bold text-dark">Indirizzo di Spedizione</h2>
+                <h2 className="text-xl font-bold text-dark">{t.stampe.checkout.shippingAddress}</h2>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Nome *
+                    {t.stampe.checkout.form.firstName} {t.stampe.checkout.form.required}
                   </label>
                   <input
                     type="text"
@@ -351,7 +341,7 @@ function CheckoutContent() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Cognome *
+                    {t.stampe.checkout.form.lastName} {t.stampe.checkout.form.required}
                   </label>
                   <input
                     type="text"
@@ -369,7 +359,7 @@ function CheckoutContent() {
 
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Azienda (opzionale)
+                    {t.stampe.checkout.form.companyOptional}
                   </label>
                   <input
                     type="text"
@@ -382,10 +372,10 @@ function CheckoutContent() {
 
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Indirizzo *
+                    {t.stampe.checkout.form.address} {t.stampe.checkout.form.required}
                   </label>
                   <p className="text-sm text-gray-500 mb-3">
-                    💡 Inizia a digitare l'indirizzo e seleziona dai suggerimenti per compilare automaticamente tutti i campi
+                    {t.stampe.checkout.form.addressHint}
                   </p>
                   <div className="relative">
                     <input
@@ -404,7 +394,7 @@ function CheckoutContent() {
                       className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent ${
                         errors.address ? 'border-red-500' : 'border-gray-300'
                       }`}
-                      placeholder="Inizia a digitare l'indirizzo..."
+                      placeholder={t.stampe.checkout.form.addressPlaceholder}
                     />
                     {isLoadingAddress && (
                       <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
@@ -439,14 +429,14 @@ function CheckoutContent() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Città *
+                    {t.stampe.checkout.form.city} {t.stampe.checkout.form.required}
                   </label>
                   <input
                     type="text"
                     value={shippingAddress.city}
                     readOnly
                     className="w-full px-4 py-3 border border-gray-200 rounded-lg bg-gray-50 text-gray-600 cursor-not-allowed"
-                    placeholder="Seleziona un indirizzo per compilare automaticamente"
+                    placeholder={t.stampe.checkout.form.autoFillHint}
                   />
                   {errors.city && (
                     <p className="text-red-500 text-sm mt-1">{errors.city}</p>
@@ -455,14 +445,14 @@ function CheckoutContent() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Provincia/Stato *
+                    {t.stampe.checkout.form.state} {t.stampe.checkout.form.required}
                   </label>
                   <input
                     type="text"
                     value={shippingAddress.state}
                     readOnly
                     className="w-full px-4 py-3 border border-gray-200 rounded-lg bg-gray-50 text-gray-600 cursor-not-allowed"
-                    placeholder="Seleziona un indirizzo per compilare automaticamente"
+                    placeholder={t.stampe.checkout.form.autoFillHint}
                   />
                   {errors.state && (
                     <p className="text-red-500 text-sm mt-1">{errors.state}</p>
@@ -471,14 +461,14 @@ function CheckoutContent() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    CAP *
+                    {t.stampe.checkout.form.postalCode} {t.stampe.checkout.form.required}
                   </label>
                   <input
                     type="text"
                     value={shippingAddress.postalCode}
                     readOnly
                     className="w-full px-4 py-3 border border-gray-200 rounded-lg bg-gray-50 text-gray-600 cursor-not-allowed"
-                    placeholder="Seleziona un indirizzo per compilare automaticamente"
+                    placeholder={t.stampe.checkout.form.autoFillHint}
                   />
                   {errors.postalCode && (
                     <p className="text-red-500 text-sm mt-1">{errors.postalCode}</p>
@@ -487,14 +477,14 @@ function CheckoutContent() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Paese *
+                    {t.stampe.checkout.form.country} {t.stampe.checkout.form.required}
                   </label>
                   <input
                     type="text"
                     value={shippingAddress.country}
                     readOnly
                     className="w-full px-4 py-3 border border-gray-200 rounded-lg bg-gray-50 text-gray-600 cursor-not-allowed"
-                    placeholder="Seleziona un indirizzo per compilare automaticamente"
+                    placeholder={t.stampe.checkout.form.autoFillHint}
                   />
                   {errors.country && (
                     <p className="text-red-500 text-sm mt-1">{errors.country}</p>
@@ -503,7 +493,7 @@ function CheckoutContent() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Telefono *
+                    {t.stampe.checkout.form.phone} {t.stampe.checkout.form.required}
                   </label>
                   <input
                     type="tel"
@@ -525,7 +515,7 @@ function CheckoutContent() {
             <div className="bg-white rounded-2xl shadow-lg p-6">
               <div className="flex items-center space-x-3 mb-6">
                 <CreditCard className="w-6 h-6 text-primary" />
-                <h2 className="text-xl font-bold text-dark">Metodo di Pagamento</h2>
+                <h2 className="text-xl font-bold text-dark">{t.stampe.checkout.paymentMethod}</h2>
               </div>
 
               {!createdOrder ? (
@@ -536,24 +526,12 @@ function CheckoutContent() {
                         <CreditCard className="w-4 h-4 text-white" />
                       </div>
                       <div>
-                        <p className="font-semibold">Pagamento con Carta</p>
-                        <p className="text-sm text-gray-600">Gestito in modo sicuro da Stripe</p>
+                        <p className="font-semibold">{t.stampe.checkout.payment.cardPayment}</p>
+                        <p className="text-sm text-gray-600">{t.stampe.checkout.payment.stripeSecure}</p>
                       </div>
                     </div>
                   </div>
 
-                  <div className="p-4 bg-blue-50 rounded-lg">
-                    <div className="flex items-start space-x-2">
-                      <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5" />
-                      <div className="text-sm text-blue-800">
-                        <p className="font-semibold mb-1">Come funziona:</p>
-                        <p>1. Compila l'indirizzo di spedizione</p>
-                        <p>2. Clicca "Crea Ordine" per procedere</p>
-                        <p>3. Inserisci i dati della tua carta di credito</p>
-                        <p>4. Completa il pagamento in modo sicuro</p>
-                      </div>
-                    </div>
-                  </div>
 
                   <motion.button
                     onClick={handleCreateOrder}
@@ -565,12 +543,12 @@ function CheckoutContent() {
                     {isProcessing ? (
                       <>
                         <Loader2 className="w-5 h-5 animate-spin" />
-                        <span>Creazione Ordine...</span>
+                        <span>{t.stampe.checkout.payment.creatingOrder}</span>
                       </>
                     ) : (
                       <>
                         <Check className="w-5 h-5" />
-                        <span>Crea Ordine</span>
+                        <span>{t.stampe.checkout.payment.createOrder}</span>
                       </>
                     )}
                   </motion.button>
@@ -590,7 +568,7 @@ function CheckoutContent() {
                 <div className="flex items-center space-x-2">
                   <Check className="w-5 h-5 text-green-600" />
                   <p className="text-sm text-green-800">
-                    Il pagamento è protetto con crittografia SSL e gestito da Stripe
+                    {t.stampe.checkout.payment.sslProtected}
                   </p>
                 </div>
               </div>
@@ -600,11 +578,11 @@ function CheckoutContent() {
           {/* Riepilogo Ordine */}
           <div className="lg:col-span-1">
             <div className="bg-white rounded-2xl shadow-lg p-6 sticky top-8">
-              <h3 className="text-lg font-bold text-dark mb-4">Riepilogo Ordine</h3>
+              <h3 className="text-lg font-bold text-dark mb-4">{t.stampe.checkout.orderSummary}</h3>
               
               {/* Chatbot */}
               <div className="mb-4">
-                <p className="text-sm text-gray-600 mb-2">Chatbot selezionato:</p>
+                <p className="text-sm text-gray-600 mb-2">{t.stampe.checkout.selectedChatbot}</p>
                 <div className="bg-gray-50 rounded-lg p-3">
                   <p className="font-semibold">{orderData.chatbot.property_name}</p>
                   <p className="text-sm text-gray-600">{orderData.chatbot.property_city}</p>
@@ -613,7 +591,7 @@ function CheckoutContent() {
 
               {/* Prodotti */}
               <div className="mb-4">
-                <p className="text-sm text-gray-600 mb-2">Prodotti:</p>
+                <p className="text-sm text-gray-600 mb-2">{t.stampe.checkout.products}</p>
                 <div className="space-y-2">
                   {orderData.products.map((product, index) => (
                     <div key={index} className="flex justify-between items-center">
@@ -627,15 +605,15 @@ function CheckoutContent() {
               {/* Totale */}
               <div className="border-t pt-4">
                 <div className="flex justify-between items-center mb-2">
-                  <span className="text-gray-600">Subtotale</span>
+                  <span className="text-gray-600">{t.stampe.checkout.subtotal}</span>
                   <span>€{orderData.totalPrice.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between items-center mb-2">
-                  <span className="text-gray-600">Spedizione</span>
-                  <span className="text-green-600">Gratuita</span>
+                  <span className="text-gray-600">{t.stampe.checkout.shipping}</span>
+                  <span className="text-green-600">{t.stampe.checkout.free}</span>
                 </div>
                 <div className="flex justify-between items-center text-lg font-bold">
-                  <span>Totale</span>
+                  <span>{t.stampe.checkout.total}</span>
                   <span className="text-primary">€{orderData.totalPrice.toFixed(2)}</span>
                 </div>
               </div>
@@ -645,10 +623,10 @@ function CheckoutContent() {
                 <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
                   <div className="flex items-center space-x-2">
                     <Check className="w-5 h-5 text-green-600" />
-                    <span className="text-green-800 font-semibold">Ordine Creato</span>
+                    <span className="text-green-800 font-semibold">{t.stampe.checkout.orderCreated}</span>
                   </div>
                   <p className="text-sm text-green-600 mt-1">
-                    Numero ordine: {createdOrder.order_number}
+                    {t.stampe.checkout.orderNumber} {createdOrder.order_number}
                   </p>
                 </div>
               )}
@@ -658,9 +636,8 @@ function CheckoutContent() {
                 <div className="flex items-start space-x-2">
                   <AlertCircle className="w-4 h-4 text-blue-600 mt-0.5" />
                   <div className="text-xs text-blue-800">
-                    <p className="font-semibold mb-1">Tempi di consegna:</p>
-                    <p>3-5 giorni lavorativi in Italia</p>
-                    <p>5-7 giorni lavorativi in Europa</p>
+                    <p className="font-semibold mb-1">Tempi di Consegna</p>
+                    <p>3-4 settimane per la produzione e spedizione</p>
                   </div>
                 </div>
               </div>

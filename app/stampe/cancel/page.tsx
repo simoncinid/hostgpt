@@ -11,11 +11,13 @@ import {
   Home
 } from 'lucide-react'
 import { useAuthStore } from '@/lib/store'
+import { useLanguage } from '@/lib/languageContext'
 import Sidebar from '@/app/components/Sidebar'
 
 function CancelContent() {
   const router = useRouter()
   const { isAuthenticated } = useAuthStore()
+  const { t } = useLanguage()
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -40,13 +42,13 @@ function CancelContent() {
               <XCircle className="w-12 h-12 text-red-600" />
             </div>
             <h1 className="text-3xl font-bold text-gray-900 mb-4">
-              Ordine Annullato
+              {t.stampe.cancel.title}
             </h1>
             <p className="text-lg text-gray-600 mb-2">
-              Il pagamento è stato annullato.
+              {t.stampe.cancel.subtitle}
             </p>
             <p className="text-gray-500">
-              Non è stato addebitato alcun importo. Puoi riprovare quando vuoi.
+              {t.stampe.cancel.noCharge}
             </p>
           </motion.div>
 
@@ -57,13 +59,13 @@ function CancelContent() {
             transition={{ delay: 0.2 }}
             className="bg-white rounded-2xl shadow-lg p-6 mb-8"
           >
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Cosa è successo?</h2>
+            <h2 className="text-xl font-bold text-gray-900 mb-4">{t.stampe.cancel.whatHappened}</h2>
             
             <div className="space-y-3 text-gray-600">
-              <p>• Hai annullato il processo di pagamento</p>
-              <p>• Non è stato effettuato alcun addebito</p>
-              <p>• I tuoi dati sono stati salvati e puoi riprovare</p>
-              <p>• Il tuo carrello è ancora disponibile</p>
+              <p>{t.stampe.cancel.whatHappened1}</p>
+              <p>{t.stampe.cancel.whatHappened2}</p>
+              <p>{t.stampe.cancel.whatHappened3}</p>
+              <p>{t.stampe.cancel.whatHappened4}</p>
             </div>
           </motion.div>
 
@@ -79,7 +81,7 @@ function CancelContent() {
               className="flex-1 bg-primary hover:bg-primary/90 text-white py-3 px-6 rounded-xl font-semibold transition flex items-center justify-center space-x-2"
             >
               <ShoppingCart className="w-5 h-5" />
-              <span>Riprova l'Ordine</span>
+              <span>{t.stampe.cancel.retryOrder}</span>
             </Link>
             
             <Link
@@ -87,7 +89,7 @@ function CancelContent() {
               className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 px-6 rounded-xl font-semibold transition flex items-center justify-center space-x-2"
             >
               <Home className="w-5 h-5" />
-              <span>Torna alla Dashboard</span>
+              <span>{t.stampe.cancel.backToDashboard}</span>
             </Link>
           </motion.div>
 
@@ -99,13 +101,13 @@ function CancelContent() {
             className="mt-8 text-center"
           >
             <p className="text-sm text-gray-500 mb-2">
-              Hai bisogno di aiuto?
+              {t.stampe.cancel.needHelp}
             </p>
             <a
               href="mailto:support@hostgpt.it"
               className="text-primary hover:text-primary/80 font-medium"
             >
-              Contatta il Supporto
+              {t.stampe.cancel.contactSupport}
             </a>
           </motion.div>
         </div>
