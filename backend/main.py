@@ -5318,6 +5318,16 @@ async def create_print_order(
         for i, product in enumerate(order_data.products):
             print(f"[DEBUG] Prodotto {i}: {product}")
             if product["quantity"] > 0:
+                # Genera il QR code dinamicamente come nella dashboard
+                chat_url = f"{settings.FRONTEND_URL}/chat/{chatbot.uuid}"
+                print(f"[DEBUG] Generando QR code per URL: {chat_url}")
+                qr_code_data = generate_qr_code(chat_url, None)  # Non serve l'icona del chatbot
+                print(f"[DEBUG] QR code generato: {qr_code_data is not None}")
+                if qr_code_data:
+                    print(f"[DEBUG] QR code length: {len(qr_code_data)}")
+                else:
+                    print(f"[ERROR] QR code è None!")
+                
                 order_item = PrintOrderItem(
                     order_id=print_order.id,
                     product_type=product["type"],
@@ -5325,7 +5335,7 @@ async def create_print_order(
                     quantity=product["quantity"],
                     unit_price=product["price"],
                     total_price=product["price"] * product["quantity"],
-                    qr_code_data=chatbot.qr_code if hasattr(chatbot, 'qr_code') else None
+                    qr_code_data=qr_code_data
                 )
                 print(f"[DEBUG] Aggiungendo item: {order_item.product_name}")
                 db.add(order_item)
