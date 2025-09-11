@@ -29,7 +29,19 @@ class PrintfulService:
                 headers=self.headers
             )
             response.raise_for_status()
-            return response.json().get("result", {}).get("products", [])
+            result = response.json()
+            logger.info(f"Products API response: {json.dumps(result, indent=2)}")
+            
+            # La risposta può avere diverse strutture
+            if "result" in result:
+                if isinstance(result["result"], list):
+                    return result["result"]
+                elif isinstance(result["result"], dict) and "products" in result["result"]:
+                    return result["result"]["products"]
+                else:
+                    return [result["result"]] if result["result"] else []
+            else:
+                return []
         except Exception as e:
             logger.error(f"Error fetching products: {e}")
             return []
@@ -104,23 +116,45 @@ class PrintfulService:
             products = await self.get_products()
             product_mapping = {}
             
+            logger.info(f"Processing {len(products)} products")
+            
             for product in products:
-                variants = await self.get_product_variants(product.get("id"))
+                if not isinstance(product, dict):
+                    logger.warning(f"Product is not a dict: {product}")
+                    continue
+                    
+                product_id = product.get("id")
+                if not product_id:
+                    logger.warning(f"Product missing ID: {product}")
+                    continue
+                
+                logger.info(f"Getting variants for product {product_id}: {product.get('name', 'Unknown')}")
+                variants = await self.get_product_variants(product_id)
+                
                 for variant in variants:
+                    if not isinstance(variant, dict):
+                        continue
+                        
                     # Cerca varianti per sticker e desk plate
                     variant_name = variant.get("name", "").lower()
-                    if "sticker" in variant_name and "5" in variant_name:
+                    variant_id = variant.get("id")
+                    
+                    logger.info(f"Checking variant: {variant_name} (ID: {variant_id})")
+                    
+                    if "sticker" in variant_name:
                         product_mapping["sticker"] = {
-                            "variant_id": variant.get("id"),
-                            "product_id": product.get("id")
+                            "variant_id": variant_id,
+                            "product_id": product_id
                         }
+                        logger.info(f"Found sticker variant: {variant_id}")
                     elif "desk" in variant_name or "plate" in variant_name:
                         product_mapping["desk_plate"] = {
-                            "variant_id": variant.get("id"),
-                            "product_id": product.get("id")
+                            "variant_id": variant_id,
+                            "product_id": product_id
                         }
+                        logger.info(f"Found desk plate variant: {variant_id}")
             
-            logger.info(f"Found product mapping: {product_mapping}")
+            logger.info(f"Final product mapping: {product_mapping}")
             return product_mapping
             
         except Exception as e:
