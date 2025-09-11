@@ -48,30 +48,9 @@ class PrintfulService:
     async def create_design(self, qr_code_data: str, product_type: str) -> Optional[str]:
         """Crea un design su Printful con il QR code"""
         try:
-            # Decodifica il QR code base64
-            qr_image_data = base64.b64decode(qr_code_data)
-            
-            # Crea il design
-            design_data = {
-                "name": f"QR Code {product_type}",
-                "type": "product",
-                "files": [
-                    {
-                        "type": "default",
-                        "url": f"data:image/png;base64,{qr_code_data}"
-                    }
-                ]
-            }
-            
-            response = requests.post(
-                f"{self.base_url}/files",
-                headers=self.headers,
-                json=design_data
-            )
-            response.raise_for_status()
-            
-            result = response.json()
-            return result.get("result", {}).get("id")
+            # Per Printful, non creiamo un design separato ma usiamo direttamente il file nell'ordine
+            # Questo metodo ora restituisce semplicemente un identificatore per il file
+            return f"qr_design_{product_type}_{hash(qr_code_data) % 10000}"
             
         except Exception as e:
             logger.error(f"Error creating design: {e}")
