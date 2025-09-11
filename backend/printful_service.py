@@ -147,12 +147,15 @@ class PrintfulService:
             items = []
             for item in order_data["items"]:
                 product_type = item["product_type"]
+                logger.info(f"Processing item: {item.get('product_name', 'Unknown')} - Type: {product_type} - Size: {item.get('selected_size', 'Unknown')} - Qty: {item['quantity']}")
+                
                 if product_type in product_mapping:
                     # Ottieni la dimensione selezionata
                     selected_size = item.get("selected_size", "size_5x8")  # Default alla dimensione originale
                     
                     if selected_size in product_mapping[product_type]:
                         mapping = product_mapping[product_type][selected_size]
+                        logger.info(f"Found mapping for {selected_size}: variant_id={mapping['variant_id']}, product_id={mapping['product_id']}")
                         
                         # Carica l'immagine su Gofile
                         file_url = self.upload_to_gofile(
@@ -171,6 +174,11 @@ class PrintfulService:
                                     }
                                 ]
                             })
+                            logger.info(f"Added item to Printful order: variant_id={mapping['variant_id']}, quantity={item['quantity']}")
+                    else:
+                        logger.error(f"Size {selected_size} not found in mapping for product type {product_type}")
+                else:
+                    logger.error(f"Product type {product_type} not found in mapping")
             
             if not items:
                 logger.error("No valid items found for Printful order")
@@ -283,7 +291,8 @@ async def send_order_to_printful(order, db) -> bool:
                 "product_type": item.product_type,
                 "quantity": item.quantity,
                 "qr_code_data": item.qr_code_data,
-                "selected_size": getattr(item, 'selected_size', 'size_5x8')  # Default alla dimensione originale
+                "selected_size": getattr(item, 'selected_size', 'size_5x8'),  # Default alla dimensione originale
+                "product_name": item.product_name  # Aggiungi il nome del prodotto per debug
             })
         
         # Aggiungi l'email dell'utente per le notifiche

@@ -44,13 +44,22 @@ interface Product {
   sizes?: StickerSize[]
 }
 
+interface OrderProduct {
+  id: string
+  name: string
+  type: string
+  quantity: number
+  price: number
+  selectedSize?: StickerSize
+}
+
 const stickerSizes: StickerSize[] = [
   {
     id: 'size_5x8',
     name: '5.83″×8.27″',
     dimensions: '5.83″×8.27″',
     dimensionsCm: '(14.8×21 cm)',
-    price: 5.99,
+    price: 2.99,
     productId: '68c2e22b28db94',
     variantId: '10163'
   },
@@ -68,7 +77,7 @@ const stickerSizes: StickerSize[] = [
     name: '4″×4″',
     dimensions: '4″×4″',
     dimensionsCm: '(10.2×10.2 cm)',
-    price: 4.99,
+    price: 4.49,
     productId: '68c2e22b28dc67',
     variantId: '10165'
   },
@@ -77,7 +86,7 @@ const stickerSizes: StickerSize[] = [
     name: '5.5″×5.5″',
     dimensions: '5.5″×5.5″',
     dimensionsCm: '(14×14 cm)',
-    price: 6.99,
+    price: 4.49,
     productId: '68c2e22b28dc67',
     variantId: '10165'
   }
@@ -108,7 +117,12 @@ function StampeContent() {
   const { t } = useLanguage()
   
   const [selectedChatbot, setSelectedChatbot] = useState<any>(null)
-  const [selectedStickerSize, setSelectedStickerSize] = useState<StickerSize>(stickerSizes[0])
+  const [stickerQuantities, setStickerQuantities] = useState<{[key: string]: number}>({
+    size_5x8: 0,
+    size_3x3: 0,
+    size_4x4: 0,
+    size_5x5: 0
+  })
   const [quantities, setQuantities] = useState<{[key: string]: number}>({
     sticker: 0,
     desk_plate: 0
@@ -148,17 +162,41 @@ function StampeContent() {
     }))
   }
 
+  const handleStickerQuantityChange = (sizeId: string, change: number) => {
+    setStickerQuantities(prev => ({
+      ...prev,
+      [sizeId]: Math.max(0, prev[sizeId] + change)
+    }))
+  }
+
   const getTotalPrice = () => {
-    return products.reduce((total, product) => {
-      if (product.id === 'sticker') {
-        return total + (selectedStickerSize.price * quantities[product.id])
+    let total = 0
+    
+    // Calcola il totale per gli adesivi
+    stickerSizes.forEach(size => {
+      total += size.price * stickerQuantities[size.id]
+    })
+    
+    // Aggiungi altri prodotti se presenti
+    products.forEach(product => {
+      if (product.id !== 'sticker') {
+        total += product.price * quantities[product.id]
       }
-      return total + (product.price * quantities[product.id])
-    }, 0)
+    })
+    
+    return total
   }
 
   const getTotalItems = () => {
-    return Object.values(quantities).reduce((total, qty) => total + qty, 0)
+    let total = 0
+    
+    // Conta gli adesivi
+    Object.values(stickerQuantities).forEach(qty => total += qty)
+    
+    // Conta altri prodotti
+    Object.values(quantities).forEach(qty => total += qty)
+    
+    return total
   }
 
   // Funzioni per la paginazione chatbot
@@ -191,14 +229,37 @@ function StampeContent() {
       return
     }
 
+    // Prepara i prodotti per l'ordine
+    const orderProducts: OrderProduct[] = []
+    
+    // Aggiungi gli adesivi con quantità > 0
+    stickerSizes.forEach(size => {
+      if (stickerQuantities[size.id] > 0) {
+        orderProducts.push({
+          id: 'sticker',
+          name: 'Adesivi QR-Code',
+          type: 'sticker',
+          quantity: stickerQuantities[size.id],
+          price: size.price,
+          selectedSize: size
+        })
+      }
+    })
+    
+    // Aggiungi altri prodotti se presenti
+    products.forEach(product => {
+      if (product.id !== 'sticker' && quantities[product.id] > 0) {
+        orderProducts.push({
+          ...product,
+          quantity: quantities[product.id]
+        })
+      }
+    })
+
     // Salva i dati dell'ordine nel localStorage per il checkout
     const orderData = {
       chatbot: selectedChatbot,
-      products: products.map(product => ({
-        ...product,
-        quantity: quantities[product.id],
-        selectedSize: product.id === 'sticker' ? selectedStickerSize : null
-      })).filter(item => item.quantity > 0),
+      products: orderProducts,
       totalPrice: getTotalPrice(),
       totalItems: getTotalItems()
     }
@@ -366,16 +427,8 @@ function StampeContent() {
 
             {/* Prodotti */}
             <div>
-              <div className="grid grid-cols-1 gap-6 mb-8 max-w-md mx-auto">
-                {products.map((product, index) => (
-                  <motion.div
-                    key={product.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                    className="bg-white rounded-2xl shadow-lg p-6"
-                  >
-                    <div className="text-center mb-4">
+              <div className="bg-white rounded-2xl shadow-lg p-6 mb-8 max-w-md mx-auto">
+                <div className="text-center mb-6">
                       <div className="w-20 h-20 bg-gray-100 rounded-lg mx-auto mb-3 flex items-center justify-center">
                         <QrCode className="w-10 h-10 text-gray-400" />
                       </div>
@@ -383,57 +436,40 @@ function StampeContent() {
                       <p className="text-gray-600 text-sm mt-2">{t.stampe.products.sticker.description}</p>
                     </div>
 
-                    <div className="space-y-3 mb-6">
-                      {t.stampe.products.sticker.features.map((feature, idx) => (
-                        <div key={idx} className="flex items-center space-x-2">
-                          <Check className="w-4 h-4 text-green-500" />
-                          <span className="text-sm text-gray-600">{feature}</span>
-                        </div>
-                      ))}
+                {/* Righe per ogni dimensione */}
+                <div className="space-y-4">
+                  {stickerSizes.map((size, index) => (
+                    <motion.div
+                      key={size.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                      className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:border-gray-300 transition"
+                    >
+                      <div className="flex-1">
+                        <div className="font-semibold text-dark">{size.dimensions}</div>
+                        <div className="text-sm text-gray-600">{size.dimensionsCm}</div>
+                        <div className="text-lg font-bold text-primary">€{size.price.toFixed(2)}</div>
                     </div>
-
-                    {/* Selezione Dimensione */}
-                    <div className="mb-4">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Dimensione
-                      </label>
-                      <select
-                        value={selectedStickerSize.id}
-                        onChange={(e) => {
-                          const size = stickerSizes.find(s => s.id === e.target.value)
-                          if (size) setSelectedStickerSize(size)
-                        }}
-                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                      >
-                        {stickerSizes.map((size) => (
-                          <option key={size.id} value={size.id}>
-                            {size.dimensions} {size.dimensionsCm} - €{size.price.toFixed(2)}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div className="flex items-center justify-between mb-4">
-                      <span className="text-2xl font-bold text-primary">€{selectedStickerSize.price.toFixed(2)}</span>
                       <div className="flex items-center space-x-3">
                         <button
-                          onClick={() => handleQuantityChange(product.id, -1)}
+                          onClick={() => handleStickerQuantityChange(size.id, -1)}
                           className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center"
-                          disabled={quantities[product.id] === 0}
+                          disabled={stickerQuantities[size.id] === 0}
                         >
                           <Minus className="w-4 h-4" />
                         </button>
-                        <span className="w-8 text-center font-semibold">{quantities[product.id]}</span>
+                        <span className="w-8 text-center font-semibold">{stickerQuantities[size.id]}</span>
                         <button
-                          onClick={() => handleQuantityChange(product.id, 1)}
+                          onClick={() => handleStickerQuantityChange(size.id, 1)}
                           className="w-8 h-8 rounded-full bg-primary text-white hover:bg-primary/90 flex items-center justify-center"
                         >
                           <Plus className="w-4 h-4" />
                         </button>
-                      </div>
                     </div>
                   </motion.div>
                 ))}
+                </div>
               </div>
 
               {/* Riepilogo Ordine */}
@@ -445,15 +481,28 @@ function StampeContent() {
                 >
                   <h3 className="text-lg font-bold text-dark mb-4">{t.stampe.orderSummary}</h3>
                   <div className="space-y-3">
+                    {stickerSizes.map(size => {
+                      if (stickerQuantities[size.id] === 0) return null
+                      return (
+                        <div key={size.id} className="flex justify-between items-center">
+                          <span className="text-gray-600">
+                            Adesivi QR-Code ({size.dimensions}) x{stickerQuantities[size.id]}
+                          </span>
+                          <span className="font-semibold">
+                            €{(size.price * stickerQuantities[size.id]).toFixed(2)}
+                          </span>
+                        </div>
+                      )
+                    })}
                     {products.map(product => {
-                      if (quantities[product.id] === 0) return null
+                      if (product.id === 'sticker' || quantities[product.id] === 0) return null
                       return (
                         <div key={product.id} className="flex justify-between items-center">
                           <span className="text-gray-600">
-                            {product.name} ({selectedStickerSize.dimensions}) x{quantities[product.id]}
+                            {product.name} x{quantities[product.id]}
                           </span>
                           <span className="font-semibold">
-                            €{(selectedStickerSize.price * quantities[product.id]).toFixed(2)}
+                            €{(product.price * quantities[product.id]).toFixed(2)}
                           </span>
                         </div>
                       )
@@ -598,15 +647,7 @@ function StampeContent() {
                 {/* Colonna 2: Prodotti */}
                 <div className="flex flex-col">
                   <div className="flex-1 overflow-y-auto">
-                    <div className="space-y-3">
-                      {products.map((product, index) => (
-                        <motion.div
-                          key={product.id}
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: index * 0.1 }}
-                          className="bg-gray-50 rounded-lg p-3"
-                        >
+                    <div className="bg-gray-50 rounded-lg p-3">
                           <div className="text-center mb-3">
                             <div className="w-12 h-12 bg-gray-100 rounded-lg mx-auto mb-2 flex items-center justify-center">
                               <QrCode className="w-6 h-6 text-gray-400" />
@@ -615,57 +656,40 @@ function StampeContent() {
                             <p className="text-gray-600 text-xs mt-1">{t.stampe.products.sticker.description}</p>
                           </div>
 
-                          <div className="space-y-2 mb-3">
-                            {t.stampe.products.sticker.features.map((feature, idx) => (
-                              <div key={idx} className="flex items-center space-x-2">
-                                <Check className="w-3 h-3 text-green-500" />
-                                <span className="text-xs text-gray-600">{feature}</span>
-                              </div>
-                            ))}
+                      {/* Righe per ogni dimensione - Desktop */}
+                      <div className="space-y-2">
+                        {stickerSizes.map((size, index) => (
+                          <motion.div
+                            key={size.id}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: index * 0.05 }}
+                            className="flex items-center justify-between p-2 border border-gray-200 rounded hover:border-gray-300 transition"
+                          >
+                            <div className="flex-1">
+                              <div className="text-xs font-semibold text-dark">{size.dimensions}</div>
+                              <div className="text-xs text-gray-600">{size.dimensionsCm}</div>
+                              <div className="text-sm font-bold text-primary">€{size.price.toFixed(2)}</div>
                           </div>
-
-                          {/* Selezione Dimensione Desktop */}
-                          <div className="mb-3">
-                            <label className="block text-xs font-medium text-gray-700 mb-1">
-                              Dimensione
-                            </label>
-                            <select
-                              value={selectedStickerSize.id}
-                              onChange={(e) => {
-                                const size = stickerSizes.find(s => s.id === e.target.value)
-                                if (size) setSelectedStickerSize(size)
-                              }}
-                              className="w-full p-2 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-primary focus:border-transparent"
-                            >
-                              {stickerSizes.map((size) => (
-                                <option key={size.id} value={size.id}>
-                                  {size.dimensions} {size.dimensionsCm} - €{size.price.toFixed(2)}
-                                </option>
-                              ))}
-                            </select>
-                          </div>
-
-                          <div className="flex items-center justify-between">
-                            <span className="text-lg font-bold text-primary">€{selectedStickerSize.price.toFixed(2)}</span>
                             <div className="flex items-center space-x-2">
                               <button
-                                onClick={() => handleQuantityChange(product.id, -1)}
-                                className="w-6 h-6 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center"
-                                disabled={quantities[product.id] === 0}
+                                onClick={() => handleStickerQuantityChange(size.id, -1)}
+                                className="w-5 h-5 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center"
+                                disabled={stickerQuantities[size.id] === 0}
                               >
                                 <Minus className="w-3 h-3" />
                               </button>
-                              <span className="w-6 text-center font-semibold text-sm">{quantities[product.id]}</span>
+                              <span className="w-5 text-center font-semibold text-xs">{stickerQuantities[size.id]}</span>
                               <button
-                                onClick={() => handleQuantityChange(product.id, 1)}
-                                className="w-6 h-6 rounded-full bg-primary text-white hover:bg-primary/90 flex items-center justify-center"
+                                onClick={() => handleStickerQuantityChange(size.id, 1)}
+                                className="w-5 h-5 rounded-full bg-primary text-white hover:bg-primary/90 flex items-center justify-center"
                               >
                                 <Plus className="w-3 h-3" />
                               </button>
-                            </div>
                           </div>
                         </motion.div>
                       ))}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -682,15 +706,28 @@ function StampeContent() {
                       >
                         <h3 className="text-sm font-bold text-dark mb-3">{t.stampe.orderSummary}</h3>
                         <div className="space-y-2">
+                          {stickerSizes.map(size => {
+                            if (stickerQuantities[size.id] === 0) return null
+                            return (
+                              <div key={size.id} className="flex justify-between items-center text-xs">
+                                <span className="text-gray-600">
+                                  Adesivi ({size.dimensions}) x{stickerQuantities[size.id]}
+                                </span>
+                                <span className="font-semibold">
+                                  €{(size.price * stickerQuantities[size.id]).toFixed(2)}
+                                </span>
+                              </div>
+                            )
+                          })}
                           {products.map(product => {
-                            if (quantities[product.id] === 0) return null
+                            if (product.id === 'sticker' || quantities[product.id] === 0) return null
                             return (
                               <div key={product.id} className="flex justify-between items-center text-xs">
                                 <span className="text-gray-600">
-                                  {product.name} ({selectedStickerSize.dimensions}) x{quantities[product.id]}
+                                  {product.name} x{quantities[product.id]}
                                 </span>
                                 <span className="font-semibold">
-                                  €{(selectedStickerSize.price * quantities[product.id]).toFixed(2)}
+                                  €{(product.price * quantities[product.id]).toFixed(2)}
                                 </span>
                               </div>
                             )

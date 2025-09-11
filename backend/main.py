@@ -5334,17 +5334,23 @@ async def create_print_order(
                 selected_size = product.get("selectedSize", {}).get("id", "size_5x8")
                 unit_price = product.get("selectedSize", {}).get("price", product["price"])
                 
+                # Crea un nome prodotto più descrittivo con la dimensione
+                product_name = product["name"]
+                if product["type"] == "sticker" and "selectedSize" in product:
+                    size_info = product["selectedSize"]
+                    product_name = f"{product['name']} ({size_info.get('dimensions', '')})"
+                
                 order_item = PrintOrderItem(
                     order_id=print_order.id,
                     product_type=product["type"],
-                    product_name=product["name"],
+                    product_name=product_name,
                     selected_size=selected_size,
                     quantity=product["quantity"],
                     unit_price=unit_price,
                     total_price=unit_price * product["quantity"],
                     qr_code_data=qr_code_data
                 )
-                print(f"[DEBUG] Aggiungendo item: {order_item.product_name}")
+                print(f"[DEBUG] Aggiungendo item: {order_item.product_name} - Dimensione: {selected_size} - Quantità: {product['quantity']}")
                 db.add(order_item)
         
         print(f"[DEBUG] Commit finale...")
