@@ -109,15 +109,24 @@ class PrintfulService:
                     "email": order_data["customer_email"]
                 }
             
+            logger.info(f"Creating Printful order with payload: {json.dumps(order_payload, indent=2)}")
+            
             response = requests.post(
                 f"{self.base_url}/orders",
                 headers=self.headers,
                 json=order_payload
             )
+            
+            if response.status_code != 200:
+                logger.error(f"Printful API error: {response.status_code} - {response.text}")
+                return None
+                
             response.raise_for_status()
             
             result = response.json()
-            return result.get("result", {}).get("id")
+            order_id = result.get("result", {}).get("id")
+            logger.info(f"Successfully created Printful order with ID: {order_id}")
+            return order_id
             
         except Exception as e:
             logger.error(f"Error creating Printful order: {e}")
