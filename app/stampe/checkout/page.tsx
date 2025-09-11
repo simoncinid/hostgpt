@@ -28,6 +28,7 @@ interface ShippingAddress {
   city: string
   postalCode: string
   country: string
+  state: string
   phone: string
 }
 
@@ -50,6 +51,7 @@ function CheckoutContent() {
     city: '',
     postalCode: '',
     country: 'IT',
+    state: '',
     phone: ''
   })
   const [isProcessing, setIsProcessing] = useState(false)
@@ -57,6 +59,11 @@ function CheckoutContent() {
   const [errors, setErrors] = useState<{[key: string]: string}>({})
   const [createdOrder, setCreatedOrder] = useState<any>(null)
   const [paymentCompleted, setPaymentCompleted] = useState(false)
+  
+  // Stati per autocompletamento indirizzo
+  const [addressSuggestions, setAddressSuggestions] = useState<any[]>([])
+  const [showSuggestions, setShowSuggestions] = useState(false)
+  const [isLoadingAddress, setIsLoadingAddress] = useState(false)
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -127,6 +134,56 @@ function CheckoutContent() {
         ...prev,
         [field]: ''
       }))
+    }
+    
+    // Autocompletamento per il campo indirizzo
+    if (field === 'address' && value.length >= 3) {
+      searchAddresses(value)
+    } else if (field === 'address' && value.length < 3) {
+      setAddressSuggestions([])
+      setShowSuggestions(false)
+    }
+  }
+
+  const searchAddresses = async (query: string) => {
+    try {
+      setIsLoadingAddress(true)
+      const response = await fetch(`/api/address/autocomplete?query=${encodeURIComponent(query)}&country=${shippingAddress.country}`)
+      const data = await response.json()
+      
+      if (data.predictions) {
+        setAddressSuggestions(data.predictions)
+        setShowSuggestions(true)
+      }
+    } catch (error) {
+      console.error('Error searching addresses:', error)
+    } finally {
+      setIsLoadingAddress(false)
+    }
+  }
+
+  const selectAddress = async (suggestion: any) => {
+    try {
+      setIsLoadingAddress(true)
+      const response = await fetch(`/api/address/details/${suggestion.place_id}`)
+      const data = await response.json()
+      
+      if (data.address) {
+        setShippingAddress(prev => ({
+          ...prev,
+          address: data.address,
+          city: data.city,
+          postalCode: data.postal_code,
+          country: data.country,
+          state: data.state
+        }))
+        setShowSuggestions(false)
+        setAddressSuggestions([])
+      }
+    } catch (error) {
+      console.error('Error getting address details:', error)
+    } finally {
+      setIsLoadingAddress(false)
     }
   }
 
@@ -287,15 +344,51 @@ function CheckoutContent() {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Indirizzo *
                   </label>
-                  <input
-                    type="text"
-                    value={shippingAddress.address}
-                    onChange={(e) => handleInputChange('address', e.target.value)}
-                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent ${
-                      errors.address ? 'border-red-500' : 'border-gray-300'
-                    }`}
-                    placeholder="Via Roma 123"
-                  />
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={shippingAddress.address}
+                      onChange={(e) => handleInputChange('address', e.target.value)}
+                      onFocus={() => {
+                        if (addressSuggestions.length > 0) {
+                          setShowSuggestions(true)
+                        }
+                      }}
+                      onBlur={() => {
+                        // Delay per permettere il click sui suggerimenti
+                        setTimeout(() => setShowSuggestions(false), 200)
+                      }}
+                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent ${
+                        errors.address ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                      placeholder="Inizia a digitare l'indirizzo..."
+                    />
+                    {isLoadingAddress && (
+                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                        <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+                      </div>
+                    )}
+                    
+                    {/* Dropdown suggerimenti */}
+                    {showSuggestions && addressSuggestions.length > 0 && (
+                      <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                        {addressSuggestions.map((suggestion, index) => (
+                          <div
+                            key={index}
+                            className="px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                            onClick={() => selectAddress(suggestion)}
+                          >
+                            <div className="font-medium text-gray-900">
+                              {suggestion.main_text}
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              {suggestion.secondary_text}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                   {errors.address && (
                     <p className="text-red-500 text-sm mt-1">{errors.address}</p>
                   )}

@@ -22,6 +22,7 @@ from email.mime.image import MIMEImage
 import secrets
 import logging
 import asyncio
+import requests
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 
@@ -5588,6 +5589,125 @@ async def get_print_order(
             for item in items
         ]
     }
+
+# Endpoint per autocompletamento indirizzi
+@app.get("/api/address/autocomplete")
+async def autocomplete_address(
+    query: str,
+    country: Optional[str] = None
+):
+    """Autocompletamento indirizzi usando Google Places API"""
+    try:
+        if not query or len(query) < 3:
+            return {"predictions": []}
+        
+        # Google Places Autocomplete API
+        url = "https://maps.googleapis.com/maps/api/place/autocomplete/json"
+        
+        params = {
+            "input": query,
+            "key": settings.GOOGLE_PLACES_API_KEY,
+            "types": "address",
+            "language": "it"  # Italiano di default
+        }
+        
+        # Aggiungi filtro per paese se specificato
+        if country:
+            params["components"] = f"country:{country}"
+        
+        response = requests.get(url, params=params)
+        
+        if response.status_code == 200:
+            data = response.json()
+            if data.get("status") == "OK":
+                predictions = []
+                for prediction in data.get("predictions", []):
+                    predictions.append({
+                        "description": prediction.get("description"),
+                        "place_id": prediction.get("place_id"),
+                        "main_text": prediction.get("structured_formatting", {}).get("main_text"),
+                        "secondary_text": prediction.get("structured_formatting", {}).get("secondary_text")
+                    })
+                return {"predictions": predictions}
+            else:
+                logger.error(f"Google Places API error: {data.get('status')}")
+                return {"predictions": []}
+        else:
+            logger.error(f"Google Places API HTTP error: {response.status_code}")
+            return {"predictions": []}
+            
+    except Exception as e:
+        logger.error(f"Error in address autocomplete: {e}")
+        return {"predictions": []}
+
+@app.get("/api/address/details/{place_id}")
+async def get_address_details(place_id: str):
+    """Ottieni dettagli completi di un indirizzo usando place_id"""
+    try:
+        # Google Places Details API
+        url = "https://maps.googleapis.com/maps/api/place/details/json"
+        
+        params = {
+            "place_id": place_id,
+            "key": settings.GOOGLE_PLACES_API_KEY,
+            "fields": "address_components,formatted_address,geometry"
+        }
+        
+        response = requests.get(url, params=params)
+        
+        if response.status_code == 200:
+            data = response.json()
+            if data.get("status") == "OK":
+                result = data.get("result", {})
+                address_components = result.get("address_components", [])
+                
+                # Estrai componenti dell'indirizzo
+                address_data = {
+                    "formatted_address": result.get("formatted_address"),
+                    "street_number": "",
+                    "route": "",
+                    "locality": "",
+                    "administrative_area_level_1": "",
+                    "postal_code": "",
+                    "country": ""
+                }
+                
+                for component in address_components:
+                    types = component.get("types", [])
+                    if "street_number" in types:
+                        address_data["street_number"] = component.get("long_name")
+                    elif "route" in types:
+                        address_data["route"] = component.get("long_name")
+                    elif "locality" in types:
+                        address_data["locality"] = component.get("long_name")
+                    elif "administrative_area_level_1" in types:
+                        address_data["administrative_area_level_1"] = component.get("short_name")
+                    elif "postal_code" in types:
+                        address_data["postal_code"] = component.get("long_name")
+                    elif "country" in types:
+                        address_data["country"] = component.get("short_name")
+                
+                # Costruisci indirizzo completo
+                full_address = f"{address_data['street_number']} {address_data['route']}".strip()
+                
+                return {
+                    "address": full_address,
+                    "city": address_data["locality"],
+                    "state": address_data["administrative_area_level_1"],
+                    "postal_code": address_data["postal_code"],
+                    "country": address_data["country"],
+                    "formatted_address": address_data["formatted_address"]
+                }
+            else:
+                logger.error(f"Google Places Details API error: {data.get('status')}")
+                return {"error": "Address not found"}
+        else:
+            logger.error(f"Google Places Details API HTTP error: {response.status_code}")
+            return {"error": "API error"}
+            
+    except Exception as e:
+        logger.error(f"Error getting address details: {e}")
+        return {"error": "Internal error"}
 
 if __name__ == "__main__":
     import uvicorn

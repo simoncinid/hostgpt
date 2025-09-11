@@ -44,6 +44,9 @@ class Settings(BaseSettings):
     GOFILE_ACCOUNT_ID: str = os.getenv("GOFILE_ACCOUNT_ID", "e50405d7-23a2-46cb-99e6-30882d9c2c71")
     GOFILE_TOKEN: str = os.getenv("GOFILE_TOKEN", "2qfGnU1Mo0VQdWuYpPAUvEw6noiSPfoX")
     
+    # Google Places API - Per autocompletamento indirizzi globali
+    GOOGLE_PLACES_API_KEY: str = os.getenv("GOOGLE_PLACES_API_KEY", "your-google-places-api-key")
+    
     # Email
     SMTP_HOST: str = os.getenv("SMTP_HOST", "smtp.gmail.com")
     SMTP_PORT: int = int(os.getenv("SMTP_PORT", "587"))
