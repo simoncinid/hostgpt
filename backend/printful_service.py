@@ -201,11 +201,44 @@ class PrintfulService:
             result = response.json()
             order_id = result.get("result", {}).get("id")
             logger.info(f"Successfully created Printful order with ID: {order_id}")
+            
+            # Conferma l'ordine per la produzione
+            if order_id:
+                confirm_success = await self.confirm_order(order_id)
+                if confirm_success:
+                    logger.info(f"Order {order_id} confirmed for production")
+                else:
+                    logger.warning(f"Failed to confirm order {order_id}")
+            
             return order_id
             
         except Exception as e:
             logger.error(f"Error creating Printful order: {e}")
             return None
+    
+    async def confirm_order(self, order_id: str) -> bool:
+        """Conferma un ordine su Printful per la produzione"""
+        try:
+            response = requests.post(
+                f"{self.base_url}/orders/{order_id}/confirm",
+                headers=self.headers
+            )
+            
+            if response.status_code == 200:
+                result = response.json()
+                if result.get("code") == 200:
+                    logger.info(f"Order {order_id} confirmed successfully")
+                    return True
+                else:
+                    logger.error(f"Failed to confirm order {order_id}: {result}")
+                    return False
+            else:
+                logger.error(f"Error confirming order {order_id}: {response.status_code} - {response.text}")
+                return False
+                
+        except Exception as e:
+            logger.error(f"Error confirming order {order_id}: {e}")
+            return False
     
     async def get_order_status(self, printful_order_id: str) -> Optional[Dict]:
         """Ottieni lo stato di un ordine"""
