@@ -26,6 +26,8 @@ apscheduler==3.10.4
 twilio==8.10.0
 beautifulsoup4==4.12.2
 lxml==5.3.0
+selenium==4.15.2
+webdriver-manager==4.0.1
 
 # Aggiornamenti compatibilità Python 3.13
 Pillow==10.4.0
