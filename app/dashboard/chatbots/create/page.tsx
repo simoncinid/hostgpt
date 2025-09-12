@@ -227,6 +227,22 @@ export default function CreateChatbotPage() {
       return
     }
 
+    // Valida che sia un URL valido
+    try {
+      new URL(propertyUrl)
+    } catch {
+      console.log('❌ FRONTEND: URL non valido')
+      toast.error(language === 'IT' ? 'URL non valido. Inserisci un URL completo (es. https://www.airbnb.it/rooms/12345678)' : 'Invalid URL. Please enter a complete URL (e.g. https://www.airbnb.it/rooms/12345678)')
+      return
+    }
+
+    // Suggerisce di usare URL di Airbnb se non è presente
+    if (!propertyUrl.includes('airbnb')) {
+      console.log('⚠️ FRONTEND: URL non sembra essere di Airbnb')
+      toast.error(language === 'IT' ? 'Per i migliori risultati, usa un URL di Airbnb (es. https://www.airbnb.it/rooms/12345678)' : 'For best results, use an Airbnb URL (e.g. https://www.airbnb.it/rooms/12345678)')
+      return
+    }
+
     console.log('🚀 FRONTEND: Iniziando auto-fill per URL:', propertyUrl)
     setIsAutoFilling(true)
     
@@ -246,9 +262,19 @@ export default function CreateChatbotPage() {
 
       if (!response.ok) {
         console.log('❌ FRONTEND: Response non ok, status:', response.status)
-        const errorText = await response.text()
-        console.log('❌ FRONTEND: Error response body:', errorText)
-        throw new Error('Failed to analyze property')
+        let errorMessage = language === 'IT' ? 'Errore nell\'analisi della proprietà' : 'Error analyzing property'
+        
+        try {
+          const errorData = await response.json()
+          if (errorData.error) {
+            errorMessage = errorData.error
+          }
+        } catch {
+          // Se non riesce a parsare il JSON, usa il messaggio di default
+        }
+        
+        console.log('❌ FRONTEND: Error message:', errorMessage)
+        throw new Error(errorMessage)
       }
 
       console.log('🚀 FRONTEND: Parsing JSON response')
@@ -386,7 +412,12 @@ export default function CreateChatbotPage() {
       }
 
       console.log('✅ FRONTEND: Auto-fill completato con successo!')
-      toast.success(t.chatbots.create.form.autoFillSuccess)
+      const filledFields = Object.keys(data).filter(key => data[key] && data[key] !== '').length
+      toast.success(
+        language === 'IT' 
+          ? `Analisi completata! ${filledFields} campi compilati automaticamente. Puoi modificare le informazioni se necessario.`
+          : `Analysis completed! ${filledFields} fields filled automatically. You can modify the information if needed.`
+      )
     } catch (error) {
       console.error('❌ FRONTEND: Auto-fill error completo:', error)
       console.error('❌ FRONTEND: Error type:', typeof error)
@@ -747,16 +778,28 @@ export default function CreateChatbotPage() {
                   type="url"
                 />
                 <p className="text-sm text-gray-600">
-                  {t.chatbots.create.form.propertyUrlHelp}
+                  {language === 'IT' 
+                    ? 'Incolla l\'URL della pagina della proprietà su Airbnb. L\'AI analizzerà automaticamente la pagina e compilerà i campi del form.'
+                    : 'Paste the URL of the property page on Airbnb. The AI will automatically analyze the page and fill in the form fields.'
+                  }
                 </p>
                 <button
                   type="button"
                   onClick={handleAutoFill}
-                  disabled={true}
-                  className="btn-primary flex items-center justify-center opacity-50 cursor-not-allowed"
+                  disabled={isAutoFilling}
+                  className={`btn-primary flex items-center justify-center ${isAutoFilling ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
-                  <Plus className="w-4 h-4 mr-2" />
-                  {language === 'IT' ? 'Auto-fill (Temporaneamente disabilitato)' : 'Auto-fill (Temporarily disabled)'}
+                  {isAutoFilling ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      {language === 'IT' ? 'Analizzando...' : 'Analyzing...'}
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="w-4 h-4 mr-2" />
+                      {language === 'IT' ? 'Auto-fill con AI' : 'AI Auto-fill'}
+                    </>
+                  )}
                 </button>
               </div>
             </div>

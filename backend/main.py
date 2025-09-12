@@ -5075,7 +5075,7 @@ IMPORTANTE:
             if not response_text:
                 raise HTTPException(
                     status_code=500, 
-                    detail="Nessuna risposta da gpt-5"
+                    detail="Nessuna risposta da gpt-4o"
                 )
             
             # Prova a parsare il JSON
@@ -5091,7 +5091,7 @@ IMPORTANTE:
                     except json.JSONDecodeError:
                         raise HTTPException(
                             status_code=500, 
-                            detail="Impossibile parsare la risposta JSON da gpt-5"
+                            detail="Impossibile parsare la risposta JSON da gpt-4o"
                         )
                 else:
                     raise HTTPException(
@@ -5115,7 +5115,7 @@ IMPORTANTE:
             logger.error(f"OpenAI API error for user {current_user.id}: {e}")
             raise HTTPException(
                 status_code=500, 
-                detail=f"Errore nell'analisi con gpt-5: {str(e)}"
+                detail=f"Errore nell'analisi con gpt-4o: {str(e)}"
             )
         
     except HTTPException:
@@ -5152,8 +5152,75 @@ async def analyze_property(request: PropertyAnalysisRequest):
         except Exception:
             raise HTTPException(status_code=400, detail="URL non valido")
         
-        # Non scarichiamo più la pagina, diamo direttamente l'URL a GPT-5
-        logger.info(f"🔍 Invio URL direttamente a GPT-5: {request.url}")
+        # Scraping diretto della pagina
+        logger.info(f"🔍 Iniziando scraping della pagina: {request.url}")
+        
+        try:
+            import httpx
+            from bs4 import BeautifulSoup
+            
+            # Headers per simulare un browser reale
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                'Accept-Language': 'it-IT,it;q=0.8,en-US;q=0.5,en;q=0.3',
+                'Accept-Encoding': 'gzip, deflate',
+                'Connection': 'keep-alive',
+                'Upgrade-Insecure-Requests': '1',
+            }
+            
+            # Timeout per evitare blocchi
+            timeout = httpx.Timeout(30.0)
+            
+            with httpx.Client(headers=headers, timeout=timeout) as client:
+                logger.info(f"🔍 Richiesta HTTP in corso...")
+                response = client.get(request.url)
+                logger.info(f"🔍 Status code: {response.status_code}")
+                
+                if response.status_code != 200:
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"Impossibile accedere alla pagina. Status code: {response.status_code}"
+                    )
+                
+                # Parse HTML
+                soup = BeautifulSoup(response.text, 'html.parser')
+                
+                # Rimuovi script e style per pulire il contenuto
+                for script in soup(["script", "style", "nav", "footer", "header"]):
+                    script.decompose()
+                
+                # Estrai il testo principale
+                page_text = soup.get_text()
+                
+                # Pulisci il testo
+                lines = (line.strip() for line in page_text.splitlines())
+                chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
+                clean_text = ' '.join(chunk for chunk in chunks if chunk)
+                
+                # Limita la lunghezza per evitare token limit
+                if len(clean_text) > 50000:
+                    clean_text = clean_text[:50000] + "..."
+                
+                logger.info(f"✅ Scraping completato. Testo estratto: {len(clean_text)} caratteri")
+                logger.info(f"🔍 Anteprima testo: {clean_text[:500]}...")
+                
+        except httpx.TimeoutException:
+            raise HTTPException(
+                status_code=408,
+                detail="Timeout durante il caricamento della pagina. Riprova più tardi."
+            )
+        except httpx.RequestError as e:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Errore durante il caricamento della pagina: {str(e)}"
+            )
+        except Exception as e:
+            logger.error(f"❌ Errore durante lo scraping: {e}")
+            raise HTTPException(
+                status_code=500,
+                detail=f"Errore durante l'estrazione del contenuto: {str(e)}"
+            )
         
         # Usa OpenAI per analizzare il contenuto
         try:
@@ -5196,11 +5263,12 @@ async def analyze_property(request: PropertyAnalysisRequest):
             )
         
         prompt = f"""
-Analizza questa pagina di una proprietà di affitto vacanze e estrai tutte le informazioni disponibili.
+Analizza il contenuto di questa pagina di una proprietà di affitto vacanze e estrai tutte le informazioni disponibili.
 
-URL da analizzare: {request.url}
+Contenuto della pagina:
+{clean_text}
 
-Visita questa pagina e analizza tutto il contenuto disponibile, incluse:
+Estrai le informazioni dal testo sopra e includi:
 - Nome della proprietà
 - Tipo di proprietà  
 - Indirizzo completo
@@ -5282,26 +5350,30 @@ IMPORTANTE:
 """
         
         try:
-            logger.info(f"🔍 Invio prompt a gpt-5...")
+            logger.info(f"🔍 Invio prompt a gpt-4o...")
             logger.info(f"🔍 Prompt: {prompt[:2000]}...")
-            logger.info(f"🔍 Model: gpt-5")
-            logger.info(f"🔍 Con web search abilitato")
+            logger.info(f"🔍 Model: gpt-4o")
+            logger.info(f"🔍 Analizzando testo estratto")
             
-            completion = client.responses.create(
-                model="gpt-5",
-                tools=[{"type": "web_search"}],
-                input=prompt
+            completion = client.chat.completions.create(
+                model="gpt-4o",
+                messages=[
+                    {"role": "system", "content": "Sei un assistente esperto nell'analisi di pagine web di proprietà di affitto vacanze. Estrai tutte le informazioni disponibili e restituisci solo un JSON valido."},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.1,
+                max_tokens=4000
             )
             
-            logger.info(f"✅ Risposta ricevuta da gpt-5")
-            response_text = completion.output_text.strip()
+            logger.info(f"✅ Risposta ricevuta da gpt-4o")
+            response_text = completion.choices[0].message.content.strip()
             logger.info(f"🔍 Risposta completa: {response_text[:500]}...")
             logger.info(f"🔍 Lunghezza risposta: {len(response_text)} caratteri")
             
             if not response_text:
                 raise HTTPException(
                     status_code=500, 
-                    detail="Nessuna risposta da gpt-5"
+                    detail="Nessuna risposta da gpt-4o"
                 )
             
             # Prova a parsare il JSON
@@ -5317,7 +5389,7 @@ IMPORTANTE:
                     except json.JSONDecodeError:
                         raise HTTPException(
                             status_code=500, 
-                            detail="Impossibile parsare la risposta JSON da gpt-5"
+                            detail="Impossibile parsare la risposta JSON da gpt-4o"
                         )
                 else:
                     raise HTTPException(
@@ -5349,7 +5421,7 @@ IMPORTANTE:
                 logger.error(f"Body: {e.body}")
             raise HTTPException(
                 status_code=500, 
-                detail=f"Errore nell'analisi con gpt-5: {str(e)}"
+                detail=f"Errore nell'analisi con gpt-4o: {str(e)}"
             )
         
     except HTTPException:
