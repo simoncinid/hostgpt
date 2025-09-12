@@ -77,8 +77,8 @@ class PrintfulService:
             # Decodifica i dati base64
             file_data = base64.b64decode(qr_code_data)
             
-            # Crea un nome file unico
-            filename = f"qr_code_{order_number}_{hash(qr_code_data) % 10000}.png"
+            # Crea un nome file consistente
+            filename = f"qr_code_{order_number}.png"
             
             # Gofile API endpoint per upload
             gofile_url = "https://upload.gofile.io/uploadfile"
@@ -104,7 +104,11 @@ class PrintfulService:
                 result = response.json()
                 if result.get("status") == "ok":
                     file_info = result.get("data", {})
-                    file_url = file_info.get("downloadPage")
+                    # Ottieni l'URL della cartella
+                    folder_url = file_info.get("downloadPage")
+                    # Costruisci l'URL diretto del file
+                    # Il file si chiama sempre qr_code_PRINT-CODICE.png
+                    file_url = f"{folder_url}/qr_code_{order_number}.png"
                     logger.info(f"Image uploaded to Gofile: {file_url}")
                     return file_url
                 else:
