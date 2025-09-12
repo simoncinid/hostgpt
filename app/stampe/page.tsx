@@ -429,8 +429,12 @@ function StampeContent() {
             <div>
               <div className="bg-white rounded-2xl shadow-lg p-6 mb-8 max-w-md mx-auto">
                 <div className="text-center mb-6">
-                      <div className="w-20 h-20 bg-gray-100 rounded-lg mx-auto mb-3 flex items-center justify-center">
-                        <QrCode className="w-10 h-10 text-gray-400" />
+                      <div className="w-20 h-20 bg-gray-100 rounded-lg mx-auto mb-3 flex items-center justify-center overflow-hidden">
+                        <img 
+                          src="/icons/sticker.webp" 
+                          alt="QR-Code Stickers" 
+                          className="w-full h-full object-cover"
+                        />
                       </div>
                       <h3 className="text-xl font-bold text-dark">{t.stampe.products.sticker.name}</h3>
                       <p className="text-gray-600 text-sm mt-2">{t.stampe.products.sticker.description}</p>
@@ -649,11 +653,15 @@ function StampeContent() {
                   <div className="flex-1 overflow-y-auto">
                     <div className="bg-gray-50 rounded-lg p-3">
                           <div className="text-center mb-3">
-                            <div className="w-12 h-12 bg-gray-100 rounded-lg mx-auto mb-2 flex items-center justify-center">
-                              <QrCode className="w-6 h-6 text-gray-400" />
+                            <div className="w-12 h-12 bg-gray-100 rounded-lg mx-auto mb-2 flex items-center justify-center overflow-hidden">
+                              <img 
+                                src="/icons/sticker.webp" 
+                                alt="QR-Code Stickers" 
+                                className="w-full h-full object-cover"
+                              />
                             </div>
                             <h3 className="text-sm font-bold text-dark">{t.stampe.products.sticker.name}</h3>
-                            <p className="text-gray-600 text-xs mt-1">{t.stampe.products.sticker.description}</p>
+                            <p className="text-gray-600 text-xs mt-1 lg:hidden">{t.stampe.products.sticker.description}</p>
                           </div>
 
                       {/* Righe per ogni dimensione - Desktop */}

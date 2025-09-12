@@ -681,353 +681,354 @@ function CheckoutContent() {
           </div>
         </div>
 
-        {/* Layout Desktop - Originale */}
+        {/* Layout Desktop - Compattato per 75vh */}
         <div className="hidden lg:block">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Form Indirizzo e Pagamento */}
-            <div className="space-y-8">
-              {/* Form Indirizzo */}
-              <div className="bg-white rounded-2xl shadow-lg p-6">
-                <div className="flex items-center space-x-3 mb-6">
-                  <MapPin className="w-6 h-6 text-primary" />
-                  <h2 className="text-xl font-bold text-dark">{t.stampe.checkout.shippingAddress}</h2>
+          <div className="bg-white rounded-2xl shadow-lg p-6" style={{ height: '75vh', overflow: 'hidden' }}>
+            <div className="h-full flex flex-col">
+              {/* Header con titoli */}
+              <div className="flex items-center justify-between mb-4 pb-4 border-b">
+                <div className="flex items-center space-x-3">
+                  <MapPin className="w-5 h-5 text-primary" />
+                  <h2 className="text-lg font-bold text-dark">{t.stampe.checkout.shippingAddress}</h2>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <CreditCard className="w-5 h-5 text-primary" />
+                  <h2 className="text-lg font-bold text-dark">{t.stampe.checkout.paymentMethod}</h2>
+                </div>
+              </div>
+
+              {/* Contenuto principale in 2 colonne */}
+              <div className="flex-1 grid grid-cols-2 gap-6 overflow-hidden">
+                {/* Colonna 1: Form Indirizzo */}
+                <div className="flex flex-col">
+                  <div className="flex-1 overflow-y-auto">
+                    <div className="space-y-3">
+                      {/* Nome e Cognome */}
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 mb-1">
+                            {t.stampe.checkout.form.firstName} {t.stampe.checkout.form.required}
+                          </label>
+                          <input
+                            type="text"
+                            value={shippingAddress.firstName}
+                            onChange={(e) => handleInputChange('firstName', e.target.value)}
+                            className={`w-full px-2 py-2 text-sm border rounded focus:ring-1 focus:ring-primary focus:border-transparent ${
+                              errors.firstName ? 'border-red-500' : 'border-gray-300'
+                            }`}
+                            placeholder="Mario"
+                          />
+                          {errors.firstName && (
+                            <p className="text-red-500 text-xs mt-1">{errors.firstName}</p>
+                          )}
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 mb-1">
+                            {t.stampe.checkout.form.lastName} {t.stampe.checkout.form.required}
+                          </label>
+                          <input
+                            type="text"
+                            value={shippingAddress.lastName}
+                            onChange={(e) => handleInputChange('lastName', e.target.value)}
+                            className={`w-full px-2 py-2 text-sm border rounded focus:ring-1 focus:ring-primary focus:border-transparent ${
+                              errors.lastName ? 'border-red-500' : 'border-gray-300'
+                            }`}
+                            placeholder="Rossi"
+                          />
+                          {errors.lastName && (
+                            <p className="text-red-500 text-xs mt-1">{errors.lastName}</p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Azienda */}
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-1">
+                          {t.stampe.checkout.form.companyOptional}
+                        </label>
+                        <input
+                          type="text"
+                          value={shippingAddress.company}
+                          onChange={(e) => handleInputChange('company', e.target.value)}
+                          className="w-full px-2 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-primary focus:border-transparent"
+                          placeholder="Nome Azienda"
+                        />
+                      </div>
+
+                      {/* Indirizzo */}
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-1">
+                          {t.stampe.checkout.form.address} {t.stampe.checkout.form.required}
+                        </label>
+                        <div className="relative">
+                          <input
+                            type="text"
+                            value={shippingAddress.address}
+                            onChange={(e) => handleInputChange('address', e.target.value)}
+                            onFocus={() => {
+                              if (addressSuggestions.length > 0) {
+                                setShowSuggestions(true)
+                              }
+                            }}
+                            onBlur={() => {
+                              setTimeout(() => setShowSuggestions(false), 200)
+                            }}
+                            className={`w-full px-2 py-2 text-sm border rounded focus:ring-1 focus:ring-primary focus:border-transparent ${
+                              errors.address ? 'border-red-500' : 'border-gray-300'
+                            }`}
+                            placeholder={t.stampe.checkout.form.addressPlaceholder}
+                          />
+                          {isLoadingAddress && (
+                            <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                              <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+                            </div>
+                          )}
+                          
+                          {/* Dropdown suggerimenti */}
+                          {showSuggestions && addressSuggestions.length > 0 && (
+                            <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded shadow-lg max-h-40 overflow-y-auto">
+                              {addressSuggestions.map((suggestion, index) => (
+                                <div
+                                  key={index}
+                                  className="px-3 py-2 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0 text-sm"
+                                  onClick={() => selectAddress(suggestion)}
+                                >
+                                  <div className="font-medium text-gray-900">
+                                    {suggestion.main_text}
+                                  </div>
+                                  <div className="text-xs text-gray-500">
+                                    {suggestion.secondary_text}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        {errors.address && (
+                          <p className="text-red-500 text-xs mt-1">{errors.address}</p>
+                        )}
+                      </div>
+
+                      {/* Numero civico e Città */}
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 mb-1">
+                            {t.stampe.checkout.form.streetNumber} {t.stampe.checkout.form.required}
+                          </label>
+                          <input
+                            type="text"
+                            value={shippingAddress.streetNumber}
+                            onChange={(e) => handleInputChange('streetNumber', e.target.value)}
+                            className={`w-full px-2 py-2 text-sm border rounded focus:ring-1 focus:ring-primary focus:border-transparent ${
+                              errors.streetNumber ? 'border-red-500' : 'border-gray-300'
+                            }`}
+                            placeholder="123"
+                          />
+                          {errors.streetNumber && (
+                            <p className="text-red-500 text-xs mt-1">{errors.streetNumber}</p>
+                          )}
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 mb-1">
+                            {t.stampe.checkout.form.city} {t.stampe.checkout.form.required}
+                          </label>
+                          <input
+                            type="text"
+                            value={shippingAddress.city}
+                            readOnly
+                            className="w-full px-2 py-2 text-sm border border-gray-200 rounded bg-gray-50 text-gray-600 cursor-not-allowed"
+                            placeholder={t.stampe.checkout.form.autoFillHint}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Provincia, CAP e Paese */}
+                      <div className="grid grid-cols-3 gap-2">
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 mb-1">
+                            {t.stampe.checkout.form.state}
+                          </label>
+                          <input
+                            type="text"
+                            value={shippingAddress.state}
+                            readOnly
+                            className="w-full px-2 py-2 text-sm border border-gray-200 rounded bg-gray-50 text-gray-600 cursor-not-allowed"
+                            placeholder={t.stampe.checkout.form.autoFillHint}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 mb-1">
+                            {t.stampe.checkout.form.postalCode}
+                          </label>
+                          <input
+                            type="text"
+                            value={shippingAddress.postalCode}
+                            readOnly
+                            className="w-full px-2 py-2 text-sm border border-gray-200 rounded bg-gray-50 text-gray-600 cursor-not-allowed"
+                            placeholder={t.stampe.checkout.form.autoFillHint}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 mb-1">
+                            {t.stampe.checkout.form.country}
+                          </label>
+                          <input
+                            type="text"
+                            value={shippingAddress.country}
+                            readOnly
+                            className="w-full px-2 py-2 text-sm border border-gray-200 rounded bg-gray-50 text-gray-600 cursor-not-allowed"
+                            placeholder={t.stampe.checkout.form.autoFillHint}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Telefono */}
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-1">
+                          {t.stampe.checkout.form.phone} {t.stampe.checkout.form.required}
+                        </label>
+                        <input
+                          type="tel"
+                          value={shippingAddress.phone}
+                          onChange={(e) => handleInputChange('phone', e.target.value)}
+                          className={`w-full px-2 py-2 text-sm border rounded focus:ring-1 focus:ring-primary focus:border-transparent ${
+                            errors.phone ? 'border-red-500' : 'border-gray-300'
+                          }`}
+                          placeholder="+39 123 456 7890"
+                        />
+                        {errors.phone && (
+                          <p className="text-red-500 text-xs mt-1">{errors.phone}</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      {t.stampe.checkout.form.firstName} {t.stampe.checkout.form.required}
-                    </label>
-                    <input
-                      type="text"
-                      value={shippingAddress.firstName}
-                      onChange={(e) => handleInputChange('firstName', e.target.value)}
-                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent ${
-                        errors.firstName ? 'border-red-500' : 'border-gray-300'
-                      }`}
-                      placeholder="Mario"
-                    />
-                    {errors.firstName && (
-                      <p className="text-red-500 text-sm mt-1">{errors.firstName}</p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      {t.stampe.checkout.form.lastName} {t.stampe.checkout.form.required}
-                    </label>
-                    <input
-                      type="text"
-                      value={shippingAddress.lastName}
-                      onChange={(e) => handleInputChange('lastName', e.target.value)}
-                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent ${
-                        errors.lastName ? 'border-red-500' : 'border-gray-300'
-                      }`}
-                      placeholder="Rossi"
-                    />
-                    {errors.lastName && (
-                      <p className="text-red-500 text-sm mt-1">{errors.lastName}</p>
-                    )}
-                  </div>
-
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      {t.stampe.checkout.form.companyOptional}
-                    </label>
-                    <input
-                      type="text"
-                      value={shippingAddress.company}
-                      onChange={(e) => handleInputChange('company', e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                      placeholder="Nome Azienda"
-                    />
-                  </div>
-
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      {t.stampe.checkout.form.address} {t.stampe.checkout.form.required}
-                    </label>
-                    <p className="text-sm text-gray-500 mb-3">
-                      {t.stampe.checkout.form.addressHint}
-                    </p>
-                    <div className="relative">
-                      <input
-                        type="text"
-                        value={shippingAddress.address}
-                        onChange={(e) => handleInputChange('address', e.target.value)}
-                        onFocus={() => {
-                          if (addressSuggestions.length > 0) {
-                            setShowSuggestions(true)
-                          }
-                        }}
-                        onBlur={() => {
-                          // Delay per permettere il click sui suggerimenti
-                          setTimeout(() => setShowSuggestions(false), 200)
-                        }}
-                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent ${
-                          errors.address ? 'border-red-500' : 'border-gray-300'
-                        }`}
-                        placeholder={t.stampe.checkout.form.addressPlaceholder}
-                      />
-                      {isLoadingAddress && (
-                        <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                          <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
-                        </div>
-                      )}
+                {/* Colonna 2: Riepilogo e Pagamento */}
+                <div className="flex flex-col">
+                  <div className="flex-1 overflow-y-auto">
+                    {/* Riepilogo Ordine */}
+                    <div className="bg-gray-50 rounded-lg p-3 mb-4">
+                      <h3 className="text-sm font-bold text-dark mb-3">{t.stampe.checkout.orderSummary}</h3>
                       
-                      {/* Dropdown suggerimenti */}
-                      {showSuggestions && addressSuggestions.length > 0 && (
-                        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                          {addressSuggestions.map((suggestion, index) => (
-                            <div
-                              key={index}
-                              className="px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
-                              onClick={() => selectAddress(suggestion)}
-                            >
-                              <div className="font-medium text-gray-900">
-                                {suggestion.main_text}
-                              </div>
-                              <div className="text-sm text-gray-500">
-                                {suggestion.secondary_text}
-                              </div>
+                      {/* Chatbot */}
+                      <div className="mb-3">
+                        <p className="text-xs text-gray-600 mb-1">{t.stampe.checkout.selectedChatbot}</p>
+                        <div className="bg-white rounded p-2">
+                          <p className="text-sm font-semibold">{orderData.chatbot.property_name}</p>
+                          <p className="text-xs text-gray-600">{orderData.chatbot.property_city}</p>
+                        </div>
+                      </div>
+
+                      {/* Prodotti */}
+                      <div className="mb-3">
+                        <p className="text-xs text-gray-600 mb-1">{t.stampe.checkout.products}</p>
+                        <div className="space-y-1">
+                          {orderData.products.map((product, index) => (
+                            <div key={index} className="flex justify-between items-center text-xs">
+                              <span className="text-gray-600">{product.name} x{product.quantity}</span>
+                              <span className="font-semibold">€{(product.price * product.quantity).toFixed(2)}</span>
                             </div>
                           ))}
                         </div>
-                      )}
-                    </div>
-                    {errors.address && (
-                      <p className="text-red-500 text-sm mt-1">{errors.address}</p>
-                    )}
-                  </div>
+                      </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      {t.stampe.checkout.form.streetNumber} {t.stampe.checkout.form.required}
-                    </label>
-                    <input
-                      type="text"
-                      value={shippingAddress.streetNumber}
-                      onChange={(e) => handleInputChange('streetNumber', e.target.value)}
-                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent ${
-                        errors.streetNumber ? 'border-red-500' : 'border-gray-300'
-                      }`}
-                      placeholder="123"
-                    />
-                    {errors.streetNumber && (
-                      <p className="text-red-500 text-sm mt-1">{errors.streetNumber}</p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      {t.stampe.checkout.form.city} {t.stampe.checkout.form.required}
-                    </label>
-                    <input
-                      type="text"
-                      value={shippingAddress.city}
-                      readOnly
-                      className="w-full px-4 py-3 border border-gray-200 rounded-lg bg-gray-50 text-gray-600 cursor-not-allowed"
-                      placeholder={t.stampe.checkout.form.autoFillHint}
-                    />
-                    {errors.city && (
-                      <p className="text-red-500 text-sm mt-1">{errors.city}</p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      {t.stampe.checkout.form.state} {t.stampe.checkout.form.required}
-                    </label>
-                    <input
-                      type="text"
-                      value={shippingAddress.state}
-                      readOnly
-                      className="w-full px-4 py-3 border border-gray-200 rounded-lg bg-gray-50 text-gray-600 cursor-not-allowed"
-                      placeholder={t.stampe.checkout.form.autoFillHint}
-                    />
-                    {errors.state && (
-                      <p className="text-red-500 text-sm mt-1">{errors.state}</p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      {t.stampe.checkout.form.postalCode} {t.stampe.checkout.form.required}
-                    </label>
-                    <input
-                      type="text"
-                      value={shippingAddress.postalCode}
-                      readOnly
-                      className="w-full px-4 py-3 border border-gray-200 rounded-lg bg-gray-50 text-gray-600 cursor-not-allowed"
-                      placeholder={t.stampe.checkout.form.autoFillHint}
-                    />
-                    {errors.postalCode && (
-                      <p className="text-red-500 text-sm mt-1">{errors.postalCode}</p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      {t.stampe.checkout.form.country} {t.stampe.checkout.form.required}
-                    </label>
-                    <input
-                      type="text"
-                      value={shippingAddress.country}
-                      readOnly
-                      className="w-full px-4 py-3 border border-gray-200 rounded-lg bg-gray-50 text-gray-600 cursor-not-allowed"
-                      placeholder={t.stampe.checkout.form.autoFillHint}
-                    />
-                    {errors.country && (
-                      <p className="text-red-500 text-sm mt-1">{errors.country}</p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      {t.stampe.checkout.form.phone} {t.stampe.checkout.form.required}
-                    </label>
-                    <input
-                      type="tel"
-                      value={shippingAddress.phone}
-                      onChange={(e) => handleInputChange('phone', e.target.value)}
-                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent ${
-                        errors.phone ? 'border-red-500' : 'border-gray-300'
-                      }`}
-                      placeholder="+39 123 456 7890"
-                    />
-                    {errors.phone && (
-                      <p className="text-red-500 text-sm mt-1">{errors.phone}</p>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Metodo di Pagamento */}
-              <div className="bg-white rounded-2xl shadow-lg p-6">
-                <div className="flex items-center space-x-3 mb-6">
-                  <CreditCard className="w-6 h-6 text-primary" />
-                  <h2 className="text-xl font-bold text-dark">{t.stampe.checkout.paymentMethod}</h2>
-                </div>
-
-                {!createdOrder ? (
-                  <div className="space-y-4">
-                    <div className="bg-gray-50 rounded-lg p-4">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-8 h-8 bg-blue-600 rounded flex items-center justify-center">
-                          <CreditCard className="w-4 h-4 text-white" />
+                      {/* Totale */}
+                      <div className="border-t pt-2">
+                        <div className="flex justify-between items-center mb-1 text-xs">
+                          <span className="text-gray-600">{t.stampe.checkout.subtotal}</span>
+                          <span>€{orderData.totalPrice.toFixed(2)}</span>
                         </div>
-                        <div>
-                          <p className="font-semibold">{t.stampe.checkout.payment.cardPayment}</p>
-                          <p className="text-sm text-gray-600">{t.stampe.checkout.payment.stripeSecure}</p>
+                        <div className="flex justify-between items-center mb-1 text-xs">
+                          <span className="text-gray-600">{t.stampe.checkout.shipping}</span>
+                          <span>€4.99</span>
+                        </div>
+                        <div className="flex justify-between items-center text-sm font-bold">
+                          <span>{t.stampe.checkout.total}</span>
+                          <span className="text-primary">€{(orderData.totalPrice + 4.99).toFixed(2)}</span>
                         </div>
                       </div>
+
+                      {/* Stato Ordine */}
+                      {createdOrder && (
+                        <div className="mt-3 p-2 bg-green-50 border border-green-200 rounded">
+                          <div className="flex items-center space-x-1">
+                            <Check className="w-3 h-3 text-green-600" />
+                            <span className="text-green-800 font-semibold text-xs">{t.stampe.checkout.orderCreated}</span>
+                          </div>
+                          <p className="text-xs text-green-600 mt-1">
+                            {t.stampe.checkout.orderNumber} {createdOrder.order_number}
+                          </p>
+                        </div>
+                      )}
                     </div>
 
-                    <motion.button
-                      onClick={handleCreateOrder}
-                      disabled={isProcessing}
-                      className="w-full bg-primary hover:bg-primary/90 disabled:bg-gray-300 disabled:cursor-not-allowed text-white py-4 rounded-xl font-semibold text-lg transition flex items-center justify-center space-x-2"
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                    >
-                      {isProcessing ? (
-                        <>
-                          <Loader2 className="w-5 h-5 animate-spin" />
-                          <span>{t.stampe.checkout.payment.creatingOrder}</span>
-                        </>
+                    {/* Metodo di Pagamento */}
+                    <div className="bg-gray-50 rounded-lg p-3">
+                      {!createdOrder ? (
+                        <div className="space-y-3">
+                          <div className="bg-white rounded p-2">
+                            <div className="flex items-center space-x-2">
+                              <div className="w-6 h-6 bg-blue-600 rounded flex items-center justify-center">
+                                <CreditCard className="w-3 h-3 text-white" />
+                              </div>
+                              <div>
+                                <p className="text-sm font-semibold">{t.stampe.checkout.payment.cardPayment}</p>
+                                <p className="text-xs text-gray-600">{t.stampe.checkout.payment.stripeSecure}</p>
+                              </div>
+                            </div>
+                          </div>
+
+                          <motion.button
+                            onClick={handleCreateOrder}
+                            disabled={isProcessing}
+                            className="w-full bg-primary hover:bg-primary/90 disabled:bg-gray-300 disabled:cursor-not-allowed text-white py-2 rounded font-semibold text-sm transition flex items-center justify-center space-x-2"
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                          >
+                            {isProcessing ? (
+                              <>
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                                <span>{t.stampe.checkout.payment.creatingOrder}</span>
+                              </>
+                            ) : (
+                              <>
+                                <Check className="w-4 h-4" />
+                                <span>{t.stampe.checkout.payment.createOrder}</span>
+                              </>
+                            )}
+                          </motion.button>
+                        </div>
                       ) : (
-                        <>
-                          <Check className="w-5 h-5" />
-                          <span>{t.stampe.checkout.payment.createOrder}</span>
-                        </>
+                        <Elements stripe={stripePromise}>
+                          <PaymentForm
+                            amount={orderData.totalPrice + 4.99}
+                            orderId={createdOrder.id}
+                            onSuccess={handlePaymentSuccess}
+                            onError={handlePaymentError}
+                          />
+                        </Elements>
                       )}
-                    </motion.button>
-                  </div>
-                ) : (
-                  <Elements stripe={stripePromise}>
-                    <PaymentForm
-                      amount={orderData.totalPrice + 4.99} // Aggiungi spedizione al totale
-                      orderId={createdOrder.id}
-                      onSuccess={handlePaymentSuccess}
-                      onError={handlePaymentError}
-                    />
-                  </Elements>
-                )}
 
-                <div className="mt-4 p-4 bg-green-50 rounded-lg">
-                  <div className="flex items-center space-x-2">
-                    <Check className="w-5 h-5 text-green-600" />
-                    <p className="text-sm text-green-800">
-                      {t.stampe.checkout.payment.sslProtected}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Riepilogo Ordine Desktop */}
-            <div>
-              <div className="bg-white rounded-2xl shadow-lg p-6 sticky top-8">
-                <h3 className="text-lg font-bold text-dark mb-4">{t.stampe.checkout.orderSummary}</h3>
-                
-                {/* Chatbot */}
-                <div className="mb-4">
-                  <p className="text-sm text-gray-600 mb-2">{t.stampe.checkout.selectedChatbot}</p>
-                  <div className="bg-gray-50 rounded-lg p-3">
-                    <p className="font-semibold">{orderData.chatbot.property_name}</p>
-                    <p className="text-sm text-gray-600">{orderData.chatbot.property_city}</p>
-                  </div>
-                </div>
-
-                {/* Prodotti */}
-                <div className="mb-4">
-                  <p className="text-sm text-gray-600 mb-2">{t.stampe.checkout.products}</p>
-                  <div className="space-y-2">
-                    {orderData.products.map((product, index) => (
-                      <div key={index} className="flex justify-between items-center">
-                        <span className="text-sm">{product.name} x{product.quantity}</span>
-                        <span className="text-sm font-semibold">€{(product.price * product.quantity).toFixed(2)}</span>
+                      <div className="mt-3 p-2 bg-green-50 rounded">
+                        <div className="flex items-center space-x-1">
+                          <Check className="w-3 h-3 text-green-600" />
+                          <p className="text-xs text-green-800">
+                            {t.stampe.checkout.payment.sslProtected}
+                          </p>
+                        </div>
                       </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Totale */}
-                <div className="border-t pt-4">
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-gray-600">{t.stampe.checkout.subtotal}</span>
-                    <span>€{orderData.totalPrice.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-gray-600">{t.stampe.checkout.shipping}</span>
-                    <span>€4.99</span>
-                  </div>
-                  <div className="flex justify-between items-center text-lg font-bold">
-                    <span>{t.stampe.checkout.total}</span>
-                    <span className="text-primary">€{(orderData.totalPrice + 4.99).toFixed(2)}</span>
-                  </div>
-                </div>
-
-                {/* Stato Ordine */}
-                {createdOrder && (
-                  <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
-                    <div className="flex items-center space-x-2">
-                      <Check className="w-5 h-5 text-green-600" />
-                      <span className="text-green-800 font-semibold">{t.stampe.checkout.orderCreated}</span>
                     </div>
-                    <p className="text-sm text-green-600 mt-1">
-                      {t.stampe.checkout.orderNumber} {createdOrder.order_number}
-                    </p>
-                  </div>
-                )}
 
-                {/* Note */}
-                <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-                  <div className="flex items-start space-x-2">
-                    <AlertCircle className="w-4 h-4 text-blue-600 mt-0.5" />
-                    <div className="text-xs text-blue-800">
-                      <p className="font-semibold mb-1">{t.stampe.checkout.deliveryTimes}</p>
-                      <p>Circa 7 giorni per la produzione e spedizione worldwide</p>
+                    {/* Note */}
+                    <div className="mt-3 p-2 bg-blue-50 rounded">
+                      <div className="flex items-start space-x-1">
+                        <AlertCircle className="w-3 h-3 text-blue-600 mt-0.5" />
+                        <div className="text-xs text-blue-800">
+                          <p className="font-semibold mb-1">{t.stampe.checkout.deliveryTimes}</p>
+                          <p>Circa 7 giorni per la produzione e spedizione worldwide</p>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
