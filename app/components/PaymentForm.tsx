@@ -19,14 +19,13 @@ const CARD_ELEMENT_OPTIONS = {
   style: {
     base: {
       fontSize: '16px',
-      color: '#374151',
-      backgroundColor: 'transparent',
+      color: '#424770',
       '::placeholder': {
-        color: '#9ca3af',
+        color: '#aab7c4',
       },
     },
     invalid: {
-      color: '#dc2626',
+      color: '#9e2146',
     },
   },
   hidePostalCode: true,
@@ -113,10 +112,7 @@ export default function PaymentForm({ amount, orderId, onSuccess, onError }: Pay
         </div>
         
         <div className="border border-gray-200 rounded-lg p-4 bg-white">
-          <CardElement 
-            options={CARD_ELEMENT_OPTIONS}
-            className="stripe-card-element"
-          />
+          <CardElement options={CARD_ELEMENT_OPTIONS} />
         </div>
         
         <div className="mt-3 flex items-center space-x-2 text-sm text-gray-600">
