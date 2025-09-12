@@ -3410,7 +3410,7 @@ export const translations: Record<Language, Translations> = {
       // Checkout page
       checkout: {
         title: "Checkout",
-        subtitle: "Complete your custom QR-Code order",
+        subtitle: "",
         backToProducts: "Back to Product Selection",
         shippingAddress: "Shipping Address",
         paymentMethod: "Payment Method",

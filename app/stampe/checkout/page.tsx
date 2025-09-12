@@ -63,6 +63,7 @@ function CheckoutContent() {
   const [errors, setErrors] = useState<{[key: string]: string}>({})
   const [createdOrder, setCreatedOrder] = useState<any>(null)
   const [paymentCompleted, setPaymentCompleted] = useState(false)
+  const [showPaymentForm, setShowPaymentForm] = useState(false)
   
   // Stati per autocompletamento indirizzo
   const [addressSuggestions, setAddressSuggestions] = useState<any[]>([])
@@ -268,6 +269,7 @@ function CheckoutContent() {
       const order = orderResponse.data
       console.log('Ordine creato:', order)
       setCreatedOrder(order)
+      setShowPaymentForm(true)
       toast.success(t.stampe.toasts.orderCreated)
 
     } catch (error) {
@@ -553,41 +555,26 @@ function CheckoutContent() {
                 <h2 className="text-xl font-bold text-dark">{t.stampe.checkout.paymentMethod}</h2>
               </div>
 
-              {!createdOrder ? (
-                <div className="space-y-4">
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 bg-blue-600 rounded flex items-center justify-center">
-                        <CreditCard className="w-4 h-4 text-white" />
-                      </div>
-                      <div>
-                        <p className="font-semibold">{t.stampe.checkout.payment.cardPayment}</p>
-                        <p className="text-sm text-gray-600">{t.stampe.checkout.payment.stripeSecure}</p>
-                      </div>
-                    </div>
-                  </div>
-
-
-                  <motion.button
-                    onClick={handleCreateOrder}
-                    disabled={isProcessing}
-                    className="w-full bg-primary hover:bg-primary/90 disabled:bg-gray-300 disabled:cursor-not-allowed text-white py-4 rounded-xl font-semibold text-lg transition flex items-center justify-center space-x-2"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    {isProcessing ? (
-                      <>
-                        <Loader2 className="w-5 h-5 animate-spin" />
-                        <span>{t.stampe.checkout.payment.creatingOrder}</span>
-                      </>
-                    ) : (
-                      <>
-                        <Check className="w-5 h-5" />
-                        <span>{t.stampe.checkout.payment.createOrder}</span>
-                      </>
-                    )}
-                  </motion.button>
-                </div>
+              {!showPaymentForm ? (
+                <motion.button
+                  onClick={handleCreateOrder}
+                  disabled={isProcessing}
+                  className="w-full bg-primary hover:bg-primary/90 disabled:bg-gray-300 disabled:cursor-not-allowed text-white py-4 rounded-xl font-semibold text-lg transition flex items-center justify-center space-x-2"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  {isProcessing ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      <span>{t.stampe.checkout.payment.creatingOrder}</span>
+                    </>
+                  ) : (
+                    <>
+                      <Check className="w-5 h-5" />
+                      <span>{t.stampe.checkout.payment.createOrder}</span>
+                    </>
+                  )}
+                </motion.button>
               ) : (
                 <Elements stripe={stripePromise}>
                   <PaymentForm
@@ -598,19 +585,11 @@ function CheckoutContent() {
                   />
                 </Elements>
               )}
-
-              <div className="mt-4 p-4 bg-green-50 rounded-lg">
-                <div className="flex items-center space-x-2">
-                  <Check className="w-5 h-5 text-green-600" />
-                  <p className="text-sm text-green-800">
-                    {t.stampe.checkout.payment.sslProtected}
-                  </p>
-                </div>
-              </div>
             </div>
           </div>
 
             {/* Riepilogo Ordine Mobile */}
+            {!showPaymentForm && (
             <div>
             <div className="bg-white rounded-2xl shadow-lg p-6 sticky top-8">
               <h3 className="text-lg font-bold text-dark mb-4">{t.stampe.checkout.orderSummary}</h3>
@@ -678,6 +657,7 @@ function CheckoutContent() {
               </div>
             </div>
           </div>
+          )}
           </div>
         </div>
 
@@ -908,6 +888,7 @@ function CheckoutContent() {
                 <div className="flex flex-col">
                   <div className="flex-1 overflow-y-auto">
                     {/* Riepilogo Ordine */}
+                    {!showPaymentForm && (
                     <div className="bg-gray-50 rounded-lg p-3 mb-4">
                       <h3 className="text-sm font-bold text-dark mb-3">{t.stampe.checkout.orderSummary}</h3>
                       
@@ -962,43 +943,30 @@ function CheckoutContent() {
                         </div>
                       )}
                     </div>
+                    )}
 
                     {/* Metodo di Pagamento */}
                     <div className="bg-gray-50 rounded-lg p-3">
-                      {!createdOrder ? (
-                        <div className="space-y-3">
-                          <div className="bg-white rounded p-2">
-                            <div className="flex items-center space-x-2">
-                              <div className="w-6 h-6 bg-blue-600 rounded flex items-center justify-center">
-                                <CreditCard className="w-3 h-3 text-white" />
-                              </div>
-                              <div>
-                                <p className="text-sm font-semibold">{t.stampe.checkout.payment.cardPayment}</p>
-                                <p className="text-xs text-gray-600">{t.stampe.checkout.payment.stripeSecure}</p>
-                              </div>
-                            </div>
-                          </div>
-
-                          <motion.button
-                            onClick={handleCreateOrder}
-                            disabled={isProcessing}
-                            className="w-full bg-primary hover:bg-primary/90 disabled:bg-gray-300 disabled:cursor-not-allowed text-white py-2 rounded font-semibold text-sm transition flex items-center justify-center space-x-2"
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
-                          >
-                            {isProcessing ? (
-                              <>
-                                <Loader2 className="w-4 h-4 animate-spin" />
-                                <span>{t.stampe.checkout.payment.creatingOrder}</span>
-                              </>
-                            ) : (
-                              <>
-                                <Check className="w-4 h-4" />
-                                <span>{t.stampe.checkout.payment.createOrder}</span>
-                              </>
-                            )}
-                          </motion.button>
-                        </div>
+                      {!showPaymentForm ? (
+                        <motion.button
+                          onClick={handleCreateOrder}
+                          disabled={isProcessing}
+                          className="w-full bg-primary hover:bg-primary/90 disabled:bg-gray-300 disabled:cursor-not-allowed text-white py-2 rounded font-semibold text-sm transition flex items-center justify-center space-x-2"
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                        >
+                          {isProcessing ? (
+                            <>
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                              <span>{t.stampe.checkout.payment.creatingOrder}</span>
+                            </>
+                          ) : (
+                            <>
+                              <Check className="w-4 h-4" />
+                              <span>{t.stampe.checkout.payment.createOrder}</span>
+                            </>
+                          )}
+                        </motion.button>
                       ) : (
                         <Elements stripe={stripePromise}>
                           <PaymentForm
@@ -1009,15 +977,6 @@ function CheckoutContent() {
                           />
                         </Elements>
                       )}
-
-                      <div className="mt-3 p-2 bg-green-50 rounded">
-                        <div className="flex items-center space-x-1">
-                          <Check className="w-3 h-3 text-green-600" />
-                          <p className="text-xs text-green-800">
-                            {t.stampe.checkout.payment.sslProtected}
-                          </p>
-                        </div>
-                      </div>
                     </div>
 
                     {/* Note */}
