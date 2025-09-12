@@ -23,6 +23,7 @@ cryptography==41.0.7
 colorama==0.4.6
 pydantic-settings==2.1.0
 apscheduler==3.10.4
+twilio==8.10.0
 
 # Aggiornamenti compatibilità Python 3.13
 Pillow==10.4.0

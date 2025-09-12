@@ -11,10 +11,16 @@ class User(Base):
     email = Column(String(255), unique=True, index=True, nullable=False)
     hashed_password = Column(String(255), nullable=False)
     full_name = Column(String(255), nullable=False)
-    phone = Column(String(50))
+    phone = Column(String(50), nullable=False)  # Now required
     is_active = Column(Boolean, default=True)
     is_verified = Column(Boolean, default=False)
     verification_token = Column(String(255), unique=True)
+    
+    # OTP system for password reset
+    otp_code = Column(String(6))  # 6-digit OTP code
+    otp_expires_at = Column(DateTime)  # When OTP expires
+    otp_attempts = Column(Integer, default=0)  # Number of failed OTP attempts
+    phone_verified = Column(Boolean, default=False)  # If phone number is verified
     stripe_customer_id = Column(String(255))
     stripe_subscription_id = Column(String(255))
     subscription_status = Column(String(50), default="inactive")  # inactive, active, cancelled, past_due, free_trial

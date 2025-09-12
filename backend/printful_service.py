@@ -141,10 +141,8 @@ class PrintfulService:
                 'Content-Type': 'application/json'
             }
             
-            # Payload per il direct link - tutti i domini allowed, no auth
-            payload = {
-                "domainsAllowed": ["*"]  # Permetti tutti i domini
-            }
+            # Payload vuoto - tutti i parametri sono opzionali
+            payload = {}
             
             # Crea il direct link
             response = requests.post(direct_link_url, json=payload, headers=headers)

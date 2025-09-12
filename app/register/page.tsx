@@ -18,7 +18,7 @@ interface RegisterForm {
   password: string
   confirmPassword: string
   full_name: string
-  phone?: string
+  phone: string  // Now required
   language: string
   terms: boolean
 }
@@ -81,6 +81,13 @@ function RegisterForm() {
     
     if (!formData.email || !/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(formData.email)) {
       errors.email = t.errors.emailInvalid
+    }
+    
+    // Phone validation - must include country code
+    if (!formData.phone) {
+      errors.phone = 'Il numero di telefono è obbligatorio'
+    } else if (!/^\+[1-9]\d{1,14}$/.test(formData.phone.replace(/\s/g, ''))) {
+      errors.phone = 'Inserisci un numero di telefono valido con prefisso internazionale (es. +39 123 456 7890)'
     }
     
     if (!formData.password || formData.password.length < 8) {
@@ -192,7 +199,7 @@ function RegisterForm() {
 
                   {/* Telefono - ROW 2 */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">{t.phoneOptional}</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Numero di telefono *</label>
                     <div className="relative">
                       <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                       <input
@@ -203,6 +210,9 @@ function RegisterForm() {
                         placeholder="+39 123 456 7890"
                       />
                     </div>
+                    {formErrors.phone && (
+                      <p className="text-red-500 text-xs mt-1">{formErrors.phone}</p>
+                    )}
                   </div>
 
                   {/* Lingua - ROW 3 */}
@@ -397,7 +407,7 @@ function RegisterForm() {
 
                   {/* Telefono */}
                   <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-0.5">{t.phoneOptional}</label>
+                    <label className="block text-xs font-medium text-gray-700 mb-0.5">Numero di telefono *</label>
                     <div className="relative">
                       <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-3 h-3 text-gray-400" />
                       <input
@@ -408,6 +418,9 @@ function RegisterForm() {
                         placeholder="+39 123 456 7890"
                       />
                     </div>
+                    {formErrors.phone && (
+                      <p className="text-red-500 text-xs mt-0.5">{formErrors.phone}</p>
+                    )}
                   </div>
 
                   {/* Lingua */}

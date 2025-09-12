@@ -29,6 +29,7 @@ from apscheduler.triggers.cron import CronTrigger
 from database import get_db, engine
 from models import Base, User, Chatbot, Conversation, Message, KnowledgeBase, Analytics, GuardianAlert, GuardianAnalysis, ReferralCode, PrintOrder, PrintOrderItem
 from config import settings
+from sms_service import sms_service
 from email_templates_simple import (
     create_welcome_email_simple,
     create_subscription_activation_email_simple,
@@ -193,7 +194,7 @@ class UserRegister(BaseModel):
     email: EmailStr
     password: str
     full_name: str
-    phone: Optional[str] = None
+    phone: str  # Now required
     wants_free_trial: Optional[bool] = False
     language: Optional[str] = "it"  # 'it' or 'en'
 
@@ -310,6 +311,19 @@ class ReferralCodeResponse(BaseModel):
     valid: bool
     bonus_messages: int
     message: str
+
+# OTP System Models
+class ForgotPasswordRequest(BaseModel):
+    phone: str
+
+class VerifyOTPRequest(BaseModel):
+    phone: str
+    otp_code: str
+
+class ResetPasswordRequest(BaseModel):
+    phone: str
+    otp_code: str
+    new_password: str
 
 # ============= Utility Functions =============
 
@@ -1134,6 +1148,16 @@ async def register(user: UserRegister, background_tasks: BackgroundTasks, db: Se
     if db_user:
         raise HTTPException(status_code=400, detail="Email già registrata")
     
+    # Verifica se il numero di telefono esiste già
+    phone_user = db.query(User).filter(User.phone == user.phone).first()
+    if phone_user:
+        raise HTTPException(status_code=400, detail="Numero di telefono già registrato")
+    
+    # Valida il numero di telefono
+    import re
+    if not re.match(r'^\+[1-9]\d{1,14}$', user.phone.replace(' ', '').replace('-', '')):
+        raise HTTPException(status_code=400, detail="Numero di telefono non valido. Inserisci un numero con prefisso internazionale (es. +39 123 456 7890)")
+    
     # Crea nuovo utente
     hashed_password = get_password_hash(user.password)
     verification_token = secrets.token_urlsafe(32)
@@ -1248,6 +1272,100 @@ async def login(user: UserLogin, db: Session = Depends(get_db)):
     
     access_token = create_access_token(data={"sub": db_user.email})
     return {"access_token": access_token, "token_type": "bearer"}
+
+@app.post("/api/auth/forgot-password")
+async def forgot_password(request: ForgotPasswordRequest, db: Session = Depends(get_db)):
+    """Invia OTP per il reset della password"""
+    # Cerca l'utente per numero di telefono
+    db_user = db.query(User).filter(User.phone == request.phone).first()
+    
+    if not db_user:
+        # Per sicurezza, non rivelare se il numero esiste o meno
+        return {"message": "Se il numero di telefono è registrato, riceverai un SMS con il codice di verifica."}
+    
+    # Genera OTP
+    otp_code = sms_service.generate_otp()
+    otp_expires = datetime.utcnow() + timedelta(minutes=10)
+    
+    # Salva OTP nel database
+    db_user.otp_code = otp_code
+    db_user.otp_expires_at = otp_expires
+    db_user.otp_attempts = 0
+    db.commit()
+    
+    # Invia SMS
+    success = sms_service.send_otp_sms(
+        phone_number=request.phone,
+        otp_code=otp_code,
+        language=db_user.language or 'it'
+    )
+    
+    if not success:
+        raise HTTPException(
+            status_code=500,
+            detail="Errore nell'invio del SMS. Riprova più tardi."
+        )
+    
+    return {"message": "SMS inviato con successo. Controlla il tuo telefono."}
+
+@app.post("/api/auth/verify-otp")
+async def verify_otp(request: VerifyOTPRequest, db: Session = Depends(get_db)):
+    """Verifica il codice OTP"""
+    db_user = db.query(User).filter(User.phone == request.phone).first()
+    
+    if not db_user:
+        raise HTTPException(status_code=404, detail="Utente non trovato")
+    
+    # Controlla se l'OTP è scaduto
+    if not db_user.otp_expires_at or datetime.utcnow() > db_user.otp_expires_at:
+        raise HTTPException(status_code=400, detail="Codice OTP scaduto")
+    
+    # Controlla tentativi massimi
+    if db_user.otp_attempts >= 3:
+        raise HTTPException(status_code=400, detail="Troppi tentativi falliti. Richiedi un nuovo codice.")
+    
+    # Verifica il codice
+    if db_user.otp_code != request.otp_code:
+        db_user.otp_attempts += 1
+        db.commit()
+        raise HTTPException(status_code=400, detail="Codice OTP non valido")
+    
+    return {"message": "Codice OTP verificato con successo"}
+
+@app.post("/api/auth/reset-password")
+async def reset_password(request: ResetPasswordRequest, db: Session = Depends(get_db)):
+    """Reset della password con OTP"""
+    db_user = db.query(User).filter(User.phone == request.phone).first()
+    
+    if not db_user:
+        raise HTTPException(status_code=404, detail="Utente non trovato")
+    
+    # Controlla se l'OTP è scaduto
+    if not db_user.otp_expires_at or datetime.utcnow() > db_user.otp_expires_at:
+        raise HTTPException(status_code=400, detail="Codice OTP scaduto")
+    
+    # Controlla tentativi massimi
+    if db_user.otp_attempts >= 3:
+        raise HTTPException(status_code=400, detail="Troppi tentativi falliti. Richiedi un nuovo codice.")
+    
+    # Verifica il codice
+    if db_user.otp_code != request.otp_code:
+        db_user.otp_attempts += 1
+        db.commit()
+        raise HTTPException(status_code=400, detail="Codice OTP non valido")
+    
+    # Valida la nuova password
+    if len(request.new_password) < 8:
+        raise HTTPException(status_code=400, detail="La password deve essere almeno 8 caratteri")
+    
+    # Aggiorna la password
+    db_user.hashed_password = get_password_hash(request.new_password)
+    db_user.otp_code = None
+    db_user.otp_expires_at = None
+    db_user.otp_attempts = 0
+    db.commit()
+    
+    return {"message": "Password aggiornata con successo"}
 
 @app.get("/api/auth/me")
 async def get_me(current_user: User = Depends(get_current_user)):
