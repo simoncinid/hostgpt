@@ -59,7 +59,7 @@ const stickerSizes: StickerSize[] = [
     name: '5.83″×8.27″',
     dimensions: '5.83″×8.27″',
     dimensionsCm: '(14.8×21 cm)',
-    price: 2.99,
+    price: 5.99,
     productId: '68c2e22b28db94',
     variantId: '10163'
   },
@@ -314,7 +314,7 @@ function StampeContent() {
           <h1 className="text-3xl font-bold text-dark mb-2">
             {t.stampe.title}
           </h1>
-          <p className="text-gray-600">
+          <p className="text-gray-600 lg:hidden">
             {t.stampe.subtitle}
           </p>
         </div>
@@ -532,9 +532,9 @@ function StampeContent() {
           </div>
         </div>
 
-        {/* Layout Desktop - Compattato per 70vh */}
+        {/* Layout Desktop - Compattato per 75vh */}
         <div className="hidden lg:block">
-          <div className="bg-white rounded-2xl shadow-lg p-6" style={{ height: '70vh', overflow: 'hidden' }}>
+          <div className="bg-white rounded-2xl shadow-lg p-6" style={{ height: '75vh', overflow: 'hidden' }}>
             <div className="h-full flex flex-col">
               {/* Header con titoli */}
               <div className="flex items-center justify-between mb-4 pb-4 border-b">
