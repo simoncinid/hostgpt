@@ -400,13 +400,13 @@ function DashboardContent() {
           >
             <div className="flex flex-col md:flex-row md:items-center md:justify-between">
               <div className="flex items-center space-x-3 mb-4 md:mb-0">
-                <div className="w-10 h-10 bg-yellow-300 rounded-full flex items-center justify-center">
+                <div className="hidden md:block w-10 h-10 bg-yellow-300 rounded-full flex items-center justify-center">
                   <QrCode className="w-6 h-6 text-yellow-800" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-semibold text-yellow-900 text-lg">Non sai come stampare il QR-Code?</h3>
+                  <h3 className="font-semibold text-yellow-900 text-lg">{t.dashboard.qrBanner.title}</h3>
                   <p className="text-yellow-800 text-sm">
-                    Facciamo noi! Adesivi e placche personalizzate spedite direttamente a casa tua.
+                    {t.dashboard.qrBanner.description}
                   </p>
                 </div>
               </div>
@@ -414,7 +414,7 @@ function DashboardContent() {
                 href="/stampe"
                 className="bg-white text-yellow-600 px-4 py-2 md:px-6 md:py-3 rounded-lg font-semibold hover:shadow-lg transition hover:bg-yellow-50 text-sm md:text-base self-start md:self-auto"
               >
-                Ordina Ora
+                {t.dashboard.qrBanner.button}
               </Link>
             </div>
           </motion.div>

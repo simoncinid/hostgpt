@@ -904,11 +904,11 @@ function CheckoutContent() {
                       {/* Prodotti */}
                       <div className="mb-3">
                         <p className="text-xs text-gray-600 mb-1">{t.stampe.checkout.products}</p>
-                        <div className="space-y-1">
+                        <div className="grid grid-cols-2 gap-1">
                           {orderData.products.map((product, index) => (
                             <div key={index} className="flex justify-between items-center text-xs">
-                              <span className="text-gray-600">{product.name} x{product.quantity}</span>
-                              <span className="font-semibold">€{(product.price * product.quantity).toFixed(2)}</span>
+                              <span className="text-gray-600 truncate">{product.name} x{product.quantity}</span>
+                              <span className="font-semibold ml-1">€{(product.price * product.quantity).toFixed(2)}</span>
                             </div>
                           ))}
                         </div>

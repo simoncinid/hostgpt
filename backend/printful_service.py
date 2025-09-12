@@ -69,7 +69,7 @@ class PrintfulService:
             return None
 
     def upload_to_gofile(self, qr_code_data: str, order_number: str) -> Optional[str]:
-        """Carica l'immagine su Gofile nella cartella specificata e restituisce l'URL pubblico"""
+        """Carica l'immagine su Gofile nella cartella specificata e crea un direct link"""
         try:
             import base64
             import io
@@ -104,13 +104,20 @@ class PrintfulService:
                 result = response.json()
                 if result.get("status") == "ok":
                     file_info = result.get("data", {})
-                    # Ottieni l'URL della cartella
-                    folder_url = file_info.get("downloadPage")
-                    # Costruisci l'URL diretto del file
-                    # Il file si chiama sempre qr_code_PRINT-CODICE.png
-                    file_url = f"{folder_url}/qr_code_{order_number}.png"
-                    logger.info(f"Image uploaded to Gofile: {file_url}")
-                    return file_url
+                    content_id = file_info.get("id")
+                    
+                    if content_id:
+                        # Crea un direct link per il file
+                        direct_link = self.create_gofile_direct_link(content_id)
+                        if direct_link:
+                            logger.info(f"Image uploaded to Gofile with direct link: {direct_link}")
+                            return direct_link
+                        else:
+                            logger.error("Failed to create direct link")
+                            return None
+                    else:
+                        logger.error("No content ID returned from Gofile upload")
+                        return None
                 else:
                     logger.error(f"Gofile upload failed: {result}")
                     return None
@@ -120,6 +127,44 @@ class PrintfulService:
                 
         except Exception as e:
             logger.error(f"Error uploading to Gofile: {e}")
+            return None
+    
+    def create_gofile_direct_link(self, content_id: str) -> Optional[str]:
+        """Crea un direct link per il contenuto su Gofile"""
+        try:
+            # API endpoint per creare direct link
+            direct_link_url = f"https://api.gofile.io/contents/{content_id}/directlinks"
+            
+            # Headers per l'autenticazione
+            headers = {
+                'Authorization': f'Bearer {settings.GOFILE_TOKEN}',
+                'Content-Type': 'application/json'
+            }
+            
+            # Payload per il direct link - tutti i domini allowed, no auth
+            payload = {
+                "domainsAllowed": ["*"]  # Permetti tutti i domini
+            }
+            
+            # Crea il direct link
+            response = requests.post(direct_link_url, json=payload, headers=headers)
+            
+            if response.status_code == 200:
+                result = response.json()
+                if result.get("status") == "ok":
+                    direct_link_data = result.get("data", {})
+                    direct_link = direct_link_data.get("directLink")
+                    logger.info(f"Created Gofile direct link: {direct_link}")
+                    return direct_link
+                else:
+                    logger.error(f"Failed to create direct link: {result}")
+                    return None
+            else:
+                logger.error(f"Gofile direct link API error: {response.status_code} - {response.text}")
+                return None
+                
+        except Exception as e:
+            logger.error(f"Error creating Gofile direct link: {e}")
             return None
     
 

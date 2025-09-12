@@ -573,6 +573,11 @@ export interface Translations {
         description: string
         activateButton: string
       }
+      qrBanner: {
+        title: string
+        description: string
+        button: string
+      }
       chatbots: {
         title: string
         seeAll: string
@@ -1600,6 +1605,11 @@ export const translations: Record<Language, Translations> = {
         title: "Periodo di prova gratuito attivo",
         description: "Hai {messages} messaggi rimanenti su {limit} • Scade il {date}",
         activateButton: "Attiva Abbonamento"
+      },
+      qrBanner: {
+        title: "Il QR-Code te lo stampiamo noi!",
+        description: "Adesivi personalizzati spediti a casa tua.",
+        button: "Ordina Ora"
       },
       chatbots: {
         title: "I Tuoi Chatbot",
@@ -2798,6 +2808,11 @@ export const translations: Record<Language, Translations> = {
         title: "Free trial period active",
         description: "You have {messages} messages remaining out of {limit} • Expires on {date}",
         activateButton: "Activate Subscription"
+      },
+      qrBanner: {
+        title: "We print the QR-Code for you!",
+        description: "Custom stickers shipped to your home.",
+        button: "Order Now"
       },
       chatbots: {
         title: "Your Chatbots",
