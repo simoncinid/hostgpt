@@ -752,20 +752,11 @@ export default function CreateChatbotPage() {
                 <button
                   type="button"
                   onClick={handleAutoFill}
-                  disabled={isAutoFilling}
-                  className="btn-primary flex items-center justify-center"
+                  disabled={true}
+                  className="btn-primary flex items-center justify-center opacity-50 cursor-not-allowed"
                 >
-                  {isAutoFilling ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      {t.chatbots.create.form.autoFilling}
-                    </>
-                  ) : (
-                    <>
-                      <Plus className="w-4 h-4 mr-2" />
-                      {t.chatbots.create.form.autoFill}
-                    </>
-                  )}
+                  <Plus className="w-4 h-4 mr-2" />
+                  {language === 'IT' ? 'Auto-fill (Temporaneamente disabilitato)' : 'Auto-fill (Temporarily disabled)'}
                 </button>
               </div>
             </div>

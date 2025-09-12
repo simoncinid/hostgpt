@@ -291,7 +291,7 @@ def create_guardian_alert_email_simple(user_name: str, alert, conversation_summa
     
     return get_simple_email_template(content, language)
 
-def create_free_trial_welcome_email_simple(user_name: str, language: str = "it") -> str:
+def create_free_trial_welcome_email_simple(user_name: str, verification_link: str, language: str = "it") -> str:
     """Template email di benvenuto per il free trial semplificato"""
     
     if language == "en":
@@ -319,7 +319,7 @@ def create_free_trial_welcome_email_simple(user_name: str, language: str = "it")
         </div>
         
         <div style="text-align: center;">
-            <a href="https://www.hostgpt.it/dashboard" class="cta-button">
+            <a href="{verification_link}" class="cta-button">
                 {cta_text}
             </a>
         </div>

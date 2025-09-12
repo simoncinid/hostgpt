@@ -1183,7 +1183,7 @@ async def register(user: UserRegister, background_tasks: BackgroundTasks, db: Se
     # Scegli il template in base al tipo di registrazione e lingua
     user_language = user.language or "it"
     if user.wants_free_trial:
-        email_body = create_free_trial_welcome_email_simple(user.full_name, user_language)
+        email_body = create_free_trial_welcome_email_simple(user.full_name, verification_link, user_language)
         email_subject = "Welcome to your free trial - HostGPT" if user_language == "en" else "Benvenuto nel tuo periodo di prova gratuito - HostGPT"
     else:
         email_body = create_welcome_email_simple(user.full_name, verification_link, user_language)
@@ -1229,19 +1229,9 @@ async def verify_email(token: str, db: Session = Depends(get_db)):
         
         db.commit()
         
-        # Invia email di benvenuto free trial
-        email_body = create_free_trial_welcome_email_simple(user.full_name or user.email, user.language or "it")
-        background_tasks = BackgroundTasks()
-        background_tasks.add_task(
-            send_email, 
-            user.email, 
-"🎉 Welcome to your HostGPT free trial!" if (user.language or "it") == "en" else "🎉 Benvenuto nel tuo periodo di prova gratuito HostGPT!", 
-            email_body
-        )
-        
-        # Reindirizza alla dashboard
-        dashboard_url = f"{settings.FRONTEND_URL}/login?token={access_token}&free_trial_started=true"
-        return RedirectResponse(url=dashboard_url)
+        # Reindirizza al login (l'email di benvenuto è già stata inviata durante la registrazione)
+        login_url = f"{settings.FRONTEND_URL}/login?verified=true&free_trial_started=true"
+        return RedirectResponse(url=login_url)
     else:
         # Marca come se il free trial fosse finito (utente vuole pagare subito)
         user.subscription_status = 'inactive'
@@ -4592,11 +4582,13 @@ async def start_free_trial(
         db.commit()
         
         # Invia email di benvenuto free trial
-        email_body = create_free_trial_welcome_email_simple(current_user.full_name or current_user.email, current_user.language or "it")
+        # Per utenti che avviano il free trial manualmente, usiamo un link diretto alla dashboard
+        dashboard_link = f"{settings.FRONTEND_URL}/dashboard"
+        email_body = create_free_trial_welcome_email_simple(current_user.full_name or current_user.email, dashboard_link, current_user.language or "it")
         background_tasks.add_task(
             send_email, 
             current_user.email, 
-"🎉 Welcome to your HostGPT free trial!" if (user.language or "it") == "en" else "🎉 Benvenuto nel tuo periodo di prova gratuito HostGPT!", 
+"🎉 Welcome to your HostGPT free trial!" if (current_user.language or "it") == "en" else "🎉 Benvenuto nel tuo periodo di prova gratuito HostGPT!", 
             email_body
         )
         
