@@ -667,10 +667,9 @@ function StampeContent() {
                             className="flex items-center justify-between p-2 border border-gray-200 rounded hover:border-gray-300 transition"
                           >
                             <div className="flex-1">
-                              <div className="text-xs font-semibold text-dark">{size.dimensions}</div>
-                              <div className="text-xs text-gray-600">{size.dimensionsCm}</div>
+                              <div className="text-xs font-semibold text-dark">{size.dimensions} {size.dimensionsCm}</div>
                               <div className="text-sm font-bold text-primary">€{size.price.toFixed(2)}</div>
-                          </div>
+                            </div>
                             <div className="flex items-center space-x-2">
                               <button
                                 onClick={() => handleStickerQuantityChange(size.id, -1)}
@@ -696,7 +695,7 @@ function StampeContent() {
 
                 {/* Colonna 3: Riepilogo e Checkout */}
                 <div className="flex flex-col">
-                  <div className="flex-1 flex flex-col justify-between">
+                  <div className="flex-1 overflow-y-auto">
                     {/* Riepilogo Ordine */}
                     {getTotalItems() > 0 && (
                       <motion.div
@@ -747,6 +746,7 @@ function StampeContent() {
                       onClick={handleProceedToCheckout}
                       disabled={!selectedChatbot || getTotalItems() === 0}
                       className="w-full bg-primary hover:bg-primary/90 disabled:bg-gray-300 disabled:cursor-not-allowed text-white py-3 rounded-lg font-semibold text-sm transition flex items-center justify-center space-x-2"
+                      style={{ marginTop: '2vh' }}
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                     >
