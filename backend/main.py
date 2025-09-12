@@ -5152,160 +5152,157 @@ async def analyze_property(request: PropertyAnalysisRequest):
         except Exception:
             raise HTTPException(status_code=400, detail="URL non valido")
         
-        # Scraping avanzato con Selenium per contenuto JavaScript
-        logger.info(f"🔍 Iniziando scraping avanzato della pagina: {request.url}")
+        # Scraping migliorato con httpx e parsing intelligente
+        logger.info(f"🔍 Iniziando scraping migliorato della pagina: {request.url}")
         
         try:
-            from selenium import webdriver
-            from selenium.webdriver.chrome.options import Options
-            from selenium.webdriver.common.by import By
-            from selenium.webdriver.support.ui import WebDriverWait
-            from selenium.webdriver.support import expected_conditions as EC
-            from webdriver_manager.chrome import ChromeDriverManager
-            from selenium.webdriver.chrome.service import Service
+            import httpx
             from bs4 import BeautifulSoup
-            import time
+            import re
+            import json
             
-            # Configurazione Chrome per ambiente headless
-            chrome_options = Options()
-            chrome_options.add_argument("--headless")
-            chrome_options.add_argument("--no-sandbox")
-            chrome_options.add_argument("--disable-dev-shm-usage")
-            chrome_options.add_argument("--disable-gpu")
-            chrome_options.add_argument("--window-size=1920,1080")
-            chrome_options.add_argument("--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
-            chrome_options.add_argument("--accept-lang=it-IT,it;q=0.8,en-US;q=0.5,en;q=0.3")
+            # Headers per simulare un browser reale
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+                'Accept-Language': 'it-IT,it;q=0.9,en-US;q=0.8,en;q=0.7',
+                'Accept-Encoding': 'gzip, deflate, br',
+                'Connection': 'keep-alive',
+                'Upgrade-Insecure-Requests': '1',
+                'Sec-Fetch-Dest': 'document',
+                'Sec-Fetch-Mode': 'navigate',
+                'Sec-Fetch-Site': 'none',
+                'Cache-Control': 'max-age=0'
+            }
             
-            # Installa automaticamente ChromeDriver
-            service = Service(ChromeDriverManager().install())
-            driver = webdriver.Chrome(service=service, options=chrome_options)
-            
-            try:
-                logger.info(f"🔍 Caricamento pagina con Selenium...")
-                driver.get(request.url)
+            with httpx.Client(headers=headers, timeout=30.0, follow_redirects=True) as client:
+                logger.info(f"🔍 Richiesta HTTP in corso...")
+                response = client.get(request.url)
+                logger.info(f"🔍 Status code: {response.status_code}")
                 
-                # Aspetta che la pagina si carichi completamente
-                WebDriverWait(driver, 20).until(
-                    EC.presence_of_element_located((By.TAG_NAME, "body"))
-                )
+                if response.status_code != 200:
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"Impossibile accedere alla pagina. Status code: {response.status_code}"
+                    )
                 
-                # Scroll per caricare contenuto lazy-loaded
-                logger.info(f"🔍 Scrolling per caricare contenuto dinamico...")
-                driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-                time.sleep(2)
-                driver.execute_script("window.scrollTo(0, 0);")
-                time.sleep(1)
+                # Parse HTML
+                soup = BeautifulSoup(response.text, 'html.parser')
+                logger.info(f"🔍 HTML ricevuto: {len(response.text)} caratteri")
                 
-                # Aspetta un po' per il caricamento completo
-                time.sleep(3)
-                
-                # Estrai il contenuto HTML completo
-                page_source = driver.page_source
-                logger.info(f"🔍 HTML estratto: {len(page_source)} caratteri")
-                
-                # Parse con BeautifulSoup
-                soup = BeautifulSoup(page_source, 'html.parser')
-                
-                # Rimuovi elementi non necessari ma mantieni il contenuto importante
-                for element in soup(["script", "style", "nav", "footer", "header", "noscript"]):
-                    element.decompose()
-                
-                # Estrai contenuto specifico per Airbnb
+                # Estrai contenuto strutturato
                 content_parts = []
                 
-                # Titolo della proprietà
-                title_elements = soup.find_all(['h1', 'h2'], string=lambda text: text and len(text.strip()) > 5)
-                for elem in title_elements:
-                    if elem.get_text().strip():
-                        content_parts.append(f"TITOLO: {elem.get_text().strip()}")
+                # 1. Cerca dati JSON embedded (Airbnb spesso li usa)
+                json_scripts = soup.find_all('script', type='application/json')
+                for script in json_scripts:
+                    try:
+                        data = json.loads(script.string)
+                        if isinstance(data, dict):
+                            # Cerca informazioni sulla proprietà nei dati JSON
+                            if 'listing' in data or 'property' in data or 'room' in data:
+                                content_parts.append(f"JSON_DATA: {json.dumps(data, indent=2)}")
+                    except:
+                        pass
                 
-                # Descrizioni e testi principali
-                desc_elements = soup.find_all(['p', 'div', 'span'], class_=lambda x: x and any(keyword in x.lower() for keyword in ['description', 'summary', 'about', 'details', 'info', 'content']))
-                for elem in desc_elements:
+                # 2. Estrai meta tags importanti
+                meta_tags = soup.find_all('meta')
+                for meta in meta_tags:
+                    if meta.get('name') in ['description', 'keywords'] or meta.get('property'):
+                        content = meta.get('content', '')
+                        if content and len(content) > 10:
+                            content_parts.append(f"META_{meta.get('name', meta.get('property', 'unknown'))}: {content}")
+                
+                # 3. Estrai titoli e headings
+                for tag in ['h1', 'h2', 'h3', 'h4', 'h5', 'h6']:
+                    elements = soup.find_all(tag)
+                    for elem in elements:
+                        text = elem.get_text().strip()
+                        if text and len(text) > 3:
+                            content_parts.append(f"HEADING_{tag.upper()}: {text}")
+                
+                # 4. Estrai paragrafi e div con contenuto significativo
+                text_elements = soup.find_all(['p', 'div', 'span', 'section', 'article'])
+                for elem in text_elements:
                     text = elem.get_text().strip()
-                    if len(text) > 20:  # Solo testi significativi
-                        content_parts.append(f"DESCRIZIONE: {text}")
+                    # Filtra per lunghezza e contenuto significativo
+                    if (len(text) > 20 and len(text) < 1000 and 
+                        not any(skip in text.lower() for skip in ['cookie', 'privacy', 'terms', 'copyright', '©', 'javascript'])):
+                        # Controlla se contiene parole chiave rilevanti
+                        keywords = ['property', 'room', 'apartment', 'house', 'villa', 'amenity', 'feature', 
+                                  'check-in', 'check-out', 'rule', 'policy', 'description', 'about', 'host']
+                        if any(keyword in text.lower() for keyword in keywords):
+                            content_parts.append(f"CONTENT: {text}")
                 
-                # Amenities e servizi
-                amenity_elements = soup.find_all(['div', 'span'], class_=lambda x: x and any(keyword in x.lower() for keyword in ['amenity', 'feature', 'service', 'facility']))
-                for elem in amenity_elements:
-                    text = elem.get_text().strip()
-                    if text and len(text) < 100:  # Amenities sono solitamente brevi
-                        content_parts.append(f"AMENITY: {text}")
+                # 5. Estrai liste (amenities, features, etc.)
+                list_elements = soup.find_all(['ul', 'ol'])
+                for ul in list_elements:
+                    items = ul.find_all('li')
+                    if items and len(items) > 2:  # Solo liste con più di 2 elementi
+                        list_text = ' | '.join([li.get_text().strip() for li in items if li.get_text().strip()])
+                        if len(list_text) > 10:
+                            content_parts.append(f"LIST: {list_text}")
                 
-                # Regole e politiche
-                rule_elements = soup.find_all(['div', 'p'], class_=lambda x: x and any(keyword in x.lower() for keyword in ['rule', 'policy', 'term', 'condition']))
-                for elem in rule_elements:
-                    text = elem.get_text().strip()
-                    if len(text) > 10:
-                        content_parts.append(f"REGOLA: {text}")
+                # 6. Estrai link con testo descrittivo
+                links = soup.find_all('a')
+                for link in links:
+                    text = link.get_text().strip()
+                    href = link.get('href', '')
+                    if text and len(text) > 5 and len(text) < 200 and href:
+                        content_parts.append(f"LINK: {text} -> {href}")
                 
-                # Informazioni di contatto e check-in/out
-                contact_elements = soup.find_all(['div', 'span'], class_=lambda x: x and any(keyword in x.lower() for keyword in ['check', 'contact', 'host', 'arrival', 'departure']))
-                for elem in contact_elements:
-                    text = elem.get_text().strip()
-                    if len(text) > 5:
-                        content_parts.append(f"CONTATTO: {text}")
-                
-                # Se non abbiamo estratto abbastanza contenuto, usa il testo generale
-                if len(content_parts) < 10:
-                    logger.info(f"🔍 Contenuto specifico limitato, estraendo testo generale...")
+                # 7. Se abbiamo poco contenuto strutturato, usa il testo generale
+                if len(content_parts) < 15:
+                    logger.info(f"🔍 Contenuto strutturato limitato, estraendo testo generale...")
+                    
+                    # Rimuovi elementi non necessari
+                    for element in soup(["script", "style", "nav", "footer", "header", "noscript", "iframe"]):
+                        element.decompose()
+                    
+                    # Estrai tutto il testo
                     general_text = soup.get_text()
-                    lines = (line.strip() for line in general_text.splitlines())
-                    chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
-                    general_clean = ' '.join(chunk for chunk in chunks if chunk and len(chunk) > 3)
-                    content_parts.append(f"TESTO_GENERALE: {general_clean}")
+                    
+                    # Pulisci e filtra il testo
+                    lines = []
+                    for line in general_text.splitlines():
+                        line = line.strip()
+                        if (line and len(line) > 10 and 
+                            not any(skip in line.lower() for skip in ['cookie', 'privacy', 'terms', 'javascript', '©', 'copyright']) and
+                            not re.match(r'^[\s\d\-_]+$', line)):  # Evita righe solo con numeri, spazi, trattini
+                            lines.append(line)
+                    
+                    # Combina le righe significative
+                    general_clean = ' '.join(lines)
+                    if general_clean:
+                        content_parts.append(f"GENERAL_TEXT: {general_clean}")
                 
                 # Combina tutto il contenuto
                 clean_text = '\n'.join(content_parts)
                 
                 # Limita la lunghezza per evitare token limit
-                if len(clean_text) > 80000:  # Aumentato il limite
-                    clean_text = clean_text[:80000] + "..."
+                if len(clean_text) > 100000:  # Aumentato ulteriormente
+                    clean_text = clean_text[:100000] + "..."
                 
-                logger.info(f"✅ Scraping avanzato completato. Testo estratto: {len(clean_text)} caratteri")
-                logger.info(f"🔍 Anteprima testo: {clean_text[:1000]}...")
+                logger.info(f"✅ Scraping migliorato completato. Testo estratto: {len(clean_text)} caratteri")
+                logger.info(f"🔍 Contenuto estratto: {len(content_parts)} sezioni")
+                logger.info(f"🔍 Anteprima testo: {clean_text[:1500]}...")
                 
-            finally:
-                driver.quit()
-                
+        except httpx.TimeoutException:
+            raise HTTPException(
+                status_code=408,
+                detail="Timeout durante il caricamento della pagina. Riprova più tardi."
+            )
+        except httpx.RequestError as e:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Errore durante il caricamento della pagina: {str(e)}"
+            )
         except Exception as e:
-            logger.error(f"❌ Errore durante lo scraping avanzato: {e}")
-            # Fallback a scraping semplice con httpx
-            logger.info(f"🔍 Fallback a scraping semplice...")
-            try:
-                import httpx
-                
-                headers = {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-                    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-                    'Accept-Language': 'it-IT,it;q=0.8,en-US;q=0.5,en;q=0.3',
-                }
-                
-                with httpx.Client(headers=headers, timeout=30.0) as client:
-                    response = client.get(request.url)
-                    if response.status_code == 200:
-                        soup = BeautifulSoup(response.text, 'html.parser')
-                        for script in soup(["script", "style", "nav", "footer", "header"]):
-                            script.decompose()
-                        clean_text = soup.get_text()
-                        lines = (line.strip() for line in clean_text.splitlines())
-                        chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
-                        clean_text = ' '.join(chunk for chunk in chunks if chunk)
-                        if len(clean_text) > 50000:
-                            clean_text = clean_text[:50000] + "..."
-                        logger.info(f"✅ Fallback completato. Testo estratto: {len(clean_text)} caratteri")
-                    else:
-                        raise HTTPException(
-                            status_code=400,
-                            detail=f"Impossibile accedere alla pagina. Status code: {response.status_code}"
-                        )
-            except Exception as fallback_error:
-                logger.error(f"❌ Anche il fallback è fallito: {fallback_error}")
-                raise HTTPException(
-                    status_code=500,
-                    detail=f"Errore durante l'estrazione del contenuto: {str(e)}"
-                )
+            logger.error(f"❌ Errore durante lo scraping: {e}")
+            raise HTTPException(
+                status_code=500,
+                detail=f"Errore durante l'estrazione del contenuto: {str(e)}"
+            )
         
         # Usa OpenAI per analizzare il contenuto
         try:
