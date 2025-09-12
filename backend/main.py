@@ -5152,157 +5152,141 @@ async def analyze_property(request: PropertyAnalysisRequest):
         except Exception:
             raise HTTPException(status_code=400, detail="URL non valido")
         
-        # Scraping migliorato con httpx e parsing intelligente
-        logger.info(f"🔍 Iniziando scraping migliorato della pagina: {request.url}")
+        # Scraping con Playwright per contenuto JavaScript
+        logger.info(f"🔍 Iniziando scraping con Playwright della pagina: {request.url}")
         
         try:
-            import httpx
+            from playwright.sync_api import sync_playwright
             from bs4 import BeautifulSoup
+            import time
             import re
-            import json
             
-            # Headers per simulare un browser reale
-            headers = {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
-                'Accept-Language': 'it-IT,it;q=0.9,en-US;q=0.8,en;q=0.7',
-                'Accept-Encoding': 'gzip, deflate, br',
-                'Connection': 'keep-alive',
-                'Upgrade-Insecure-Requests': '1',
-                'Sec-Fetch-Dest': 'document',
-                'Sec-Fetch-Mode': 'navigate',
-                'Sec-Fetch-Site': 'none',
-                'Cache-Control': 'max-age=0'
-            }
-            
-            with httpx.Client(headers=headers, timeout=30.0, follow_redirects=True) as client:
-                logger.info(f"🔍 Richiesta HTTP in corso...")
-                response = client.get(request.url)
-                logger.info(f"🔍 Status code: {response.status_code}")
+            with sync_playwright() as p:
+                # Avvia browser Chromium
+                browser = p.chromium.launch(
+                    headless=True,
+                    args=[
+                        '--no-sandbox',
+                        '--disable-dev-shm-usage',
+                        '--disable-gpu',
+                        '--disable-web-security',
+                        '--disable-features=VizDisplayCompositor'
+                    ]
+                )
                 
-                if response.status_code != 200:
-                    raise HTTPException(
-                        status_code=400,
-                        detail=f"Impossibile accedere alla pagina. Status code: {response.status_code}"
+                try:
+                    # Crea nuovo contesto e pagina
+                    context = browser.new_context(
+                        user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                        viewport={'width': 1920, 'height': 1080},
+                        locale='it-IT'
                     )
-                
-                # Parse HTML
-                soup = BeautifulSoup(response.text, 'html.parser')
-                logger.info(f"🔍 HTML ricevuto: {len(response.text)} caratteri")
-                
-                # Estrai contenuto strutturato
-                content_parts = []
-                
-                # 1. Cerca dati JSON embedded (Airbnb spesso li usa)
-                json_scripts = soup.find_all('script', type='application/json')
-                for script in json_scripts:
-                    try:
-                        data = json.loads(script.string)
-                        if isinstance(data, dict):
-                            # Cerca informazioni sulla proprietà nei dati JSON
-                            if 'listing' in data or 'property' in data or 'room' in data:
-                                content_parts.append(f"JSON_DATA: {json.dumps(data, indent=2)}")
-                    except:
-                        pass
-                
-                # 2. Estrai meta tags importanti
-                meta_tags = soup.find_all('meta')
-                for meta in meta_tags:
-                    if meta.get('name') in ['description', 'keywords'] or meta.get('property'):
-                        content = meta.get('content', '')
-                        if content and len(content) > 10:
-                            content_parts.append(f"META_{meta.get('name', meta.get('property', 'unknown'))}: {content}")
-                
-                # 3. Estrai titoli e headings
-                for tag in ['h1', 'h2', 'h3', 'h4', 'h5', 'h6']:
-                    elements = soup.find_all(tag)
-                    for elem in elements:
-                        text = elem.get_text().strip()
-                        if text and len(text) > 3:
-                            content_parts.append(f"HEADING_{tag.upper()}: {text}")
-                
-                # 4. Estrai paragrafi e div con contenuto significativo
-                text_elements = soup.find_all(['p', 'div', 'span', 'section', 'article'])
-                for elem in text_elements:
-                    text = elem.get_text().strip()
-                    # Filtra per lunghezza e contenuto significativo
-                    if (len(text) > 20 and len(text) < 1000 and 
-                        not any(skip in text.lower() for skip in ['cookie', 'privacy', 'terms', 'copyright', '©', 'javascript'])):
-                        # Controlla se contiene parole chiave rilevanti
-                        keywords = ['property', 'room', 'apartment', 'house', 'villa', 'amenity', 'feature', 
-                                  'check-in', 'check-out', 'rule', 'policy', 'description', 'about', 'host']
-                        if any(keyword in text.lower() for keyword in keywords):
-                            content_parts.append(f"CONTENT: {text}")
-                
-                # 5. Estrai liste (amenities, features, etc.)
-                list_elements = soup.find_all(['ul', 'ol'])
-                for ul in list_elements:
-                    items = ul.find_all('li')
-                    if items and len(items) > 2:  # Solo liste con più di 2 elementi
-                        list_text = ' | '.join([li.get_text().strip() for li in items if li.get_text().strip()])
-                        if len(list_text) > 10:
-                            content_parts.append(f"LIST: {list_text}")
-                
-                # 6. Estrai link con testo descrittivo
-                links = soup.find_all('a')
-                for link in links:
-                    text = link.get_text().strip()
-                    href = link.get('href', '')
-                    if text and len(text) > 5 and len(text) < 200 and href:
-                        content_parts.append(f"LINK: {text} -> {href}")
-                
-                # 7. Se abbiamo poco contenuto strutturato, usa il testo generale
-                if len(content_parts) < 15:
-                    logger.info(f"🔍 Contenuto strutturato limitato, estraendo testo generale...")
+                    
+                    page = context.new_page()
+                    
+                    # Vai alla pagina
+                    logger.info(f"🔍 Caricamento pagina con Playwright...")
+                    page.goto(request.url, wait_until='networkidle', timeout=30000)
+                    
+                    # Aspetta che il contenuto si carichi
+                    logger.info(f"🔍 Aspetto caricamento contenuto...")
+                    time.sleep(5)
+                    
+                    # Scroll per caricare contenuto lazy-loaded
+                    logger.info(f"🔍 Scrolling per caricare contenuto dinamico...")
+                    page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
+                    time.sleep(2)
+                    page.evaluate("window.scrollTo(0, 0)")
+                    time.sleep(2)
+                    
+                    # Aspetta ancora per il caricamento completo
+                    time.sleep(3)
+                    
+                    # Estrai HTML completo
+                    html_content = page.content()
+                    logger.info(f"🔍 HTML estratto: {len(html_content)} caratteri")
+                    
+                    # Parse con BeautifulSoup
+                    soup = BeautifulSoup(html_content, 'html.parser')
                     
                     # Rimuovi elementi non necessari
                     for element in soup(["script", "style", "nav", "footer", "header", "noscript", "iframe"]):
                         element.decompose()
                     
-                    # Estrai tutto il testo
-                    general_text = soup.get_text()
+                    # Estrai tutto il testo visibile
+                    all_text = soup.get_text()
+                    logger.info(f"🔍 Testo grezzo estratto: {len(all_text)} caratteri")
                     
-                    # Pulisci e filtra il testo
+                    # Pulisci il testo
                     lines = []
-                    for line in general_text.splitlines():
+                    for line in all_text.splitlines():
                         line = line.strip()
-                        if (line and len(line) > 10 and 
-                            not any(skip in line.lower() for skip in ['cookie', 'privacy', 'terms', 'javascript', '©', 'copyright']) and
-                            not re.match(r'^[\s\d\-_]+$', line)):  # Evita righe solo con numeri, spazi, trattini
+                        if (line and len(line) > 5 and 
+                            not any(skip in line.lower() for skip in ['cookie', 'privacy', 'terms', 'javascript', '©', 'copyright', 'accept', 'decline']) and
+                            not re.match(r'^[\s\d\-_\.]+$', line) and  # Evita righe solo con numeri, spazi, trattini, punti
+                            not line.startswith('http') and  # Evita URL
+                            not line.startswith('www.') and  # Evita URL
+                            len(line) < 500):  # Evita testi troppo lunghi (probabilmente concatenati)
                             lines.append(line)
                     
                     # Combina le righe significative
-                    general_clean = ' '.join(lines)
-                    if general_clean:
-                        content_parts.append(f"GENERAL_TEXT: {general_clean}")
+                    clean_text = '\n'.join(lines)
+                    
+                    # Se il testo è troppo lungo, prendi le parti più significative
+                    if len(clean_text) > 150000:
+                        # Dividi in paragrafi e prendi quelli più lunghi (probabilmente più informativi)
+                        paragraphs = clean_text.split('\n\n')
+                        paragraphs = [p for p in paragraphs if len(p) > 50]  # Solo paragrafi significativi
+                        paragraphs.sort(key=len, reverse=True)  # Ordina per lunghezza
+                        clean_text = '\n\n'.join(paragraphs[:50])  # Prendi i primi 50 paragrafi più lunghi
+                    
+                    # Limita la lunghezza finale
+                    if len(clean_text) > 150000:
+                        clean_text = clean_text[:150000] + "..."
+                    
+                    logger.info(f"✅ Scraping Playwright completato. Testo estratto: {len(clean_text)} caratteri")
+                    logger.info(f"🔍 Righe significative: {len(lines)}")
+                    logger.info(f"🔍 Anteprima testo: {clean_text[:2000]}...")
+                    
+                finally:
+                    browser.close()
                 
-                # Combina tutto il contenuto
-                clean_text = '\n'.join(content_parts)
-                
-                # Limita la lunghezza per evitare token limit
-                if len(clean_text) > 100000:  # Aumentato ulteriormente
-                    clean_text = clean_text[:100000] + "..."
-                
-                logger.info(f"✅ Scraping migliorato completato. Testo estratto: {len(clean_text)} caratteri")
-                logger.info(f"🔍 Contenuto estratto: {len(content_parts)} sezioni")
-                logger.info(f"🔍 Anteprima testo: {clean_text[:1500]}...")
-                
-        except httpx.TimeoutException:
-            raise HTTPException(
-                status_code=408,
-                detail="Timeout durante il caricamento della pagina. Riprova più tardi."
-            )
-        except httpx.RequestError as e:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Errore durante il caricamento della pagina: {str(e)}"
-            )
         except Exception as e:
-            logger.error(f"❌ Errore durante lo scraping: {e}")
-            raise HTTPException(
-                status_code=500,
-                detail=f"Errore durante l'estrazione del contenuto: {str(e)}"
-            )
+            logger.error(f"❌ Errore durante lo scraping con Playwright: {e}")
+            # Fallback a scraping semplice con httpx
+            logger.info(f"🔍 Fallback a scraping semplice con httpx...")
+            try:
+                import httpx
+                
+                headers = {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                    'Accept-Language': 'it-IT,it;q=0.9,en-US;q=0.8,en;q=0.7',
+                }
+                
+                with httpx.Client(headers=headers, timeout=30.0) as client:
+                    response = client.get(request.url)
+                    if response.status_code == 200:
+                        soup = BeautifulSoup(response.text, 'html.parser')
+                        for element in soup(["script", "style", "nav", "footer", "header", "noscript"]):
+                            element.decompose()
+                        clean_text = soup.get_text()
+                        lines = [line.strip() for line in clean_text.splitlines() if line.strip() and len(line.strip()) > 10]
+                        clean_text = '\n'.join(lines)
+                        if len(clean_text) > 100000:
+                            clean_text = clean_text[:100000] + "..."
+                        logger.info(f"✅ Fallback completato. Testo estratto: {len(clean_text)} caratteri")
+                    else:
+                        raise HTTPException(
+                            status_code=400,
+                            detail=f"Impossibile accedere alla pagina. Status code: {response.status_code}"
+                        )
+            except Exception as fallback_error:
+                logger.error(f"❌ Anche il fallback è fallito: {fallback_error}")
+                raise HTTPException(
+                    status_code=500,
+                    detail=f"Errore durante l'estrazione del contenuto: {str(e)}"
+                )
         
         # Usa OpenAI per analizzare il contenuto
         try:
