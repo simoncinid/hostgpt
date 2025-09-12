@@ -5141,12 +5141,12 @@ async def analyze_property(request: PropertyAnalysisRequest):
                 raise ValueError("URL non valido")
             
             # Controlla che sia una pagina di proprietà specifica
-            if "airbnb.it" in parsed_url.netloc:
-                if "ghost" not in request.url:
-                    raise HTTPException(
-                        status_code=400, 
-                        detail="URL non valido: deve essere una pagina specifica di una proprietà Airbnb (deve contenere /rooms/)"
-                    )
+            #if "airbnb.it" in parsed_url.netloc:
+                #if "ghost" not in request.url:
+                    #raise HTTPException(
+                        #status_code=400, 
+                        #detail="URL non valido: deve essere una pagina specifica di una proprietà Airbnb (deve contenere /rooms/)"
+                    #)
         except HTTPException:
             raise
         except Exception:
