@@ -5152,107 +5152,95 @@ async def analyze_property(request: PropertyAnalysisRequest):
         except Exception:
             raise HTTPException(status_code=400, detail="URL non valido")
         
-        # Scraping con Playwright per contenuto JavaScript
-        logger.info(f"🔍 Iniziando scraping con Playwright della pagina: {request.url}")
+        # Scraping con requests-html per contenuto JavaScript
+        logger.info(f"🔍 Iniziando scraping con requests-html della pagina: {request.url}")
         
         try:
-            from playwright.sync_api import sync_playwright
+            from requests_html import HTMLSession
             from bs4 import BeautifulSoup
             import time
             import re
             
-            with sync_playwright() as p:
-                # Avvia browser Chromium
-                browser = p.chromium.launch(
-                    headless=True,
-                    args=[
-                        '--no-sandbox',
-                        '--disable-dev-shm-usage',
-                        '--disable-gpu',
-                        '--disable-web-security',
-                        '--disable-features=VizDisplayCompositor'
-                    ]
+            # Crea sessione con requests-html
+            session = HTMLSession()
+            
+            # Headers per simulare un browser reale
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+                'Accept-Language': 'it-IT,it;q=0.9,en-US;q=0.8,en;q=0.7',
+                'Accept-Encoding': 'gzip, deflate, br',
+                'Connection': 'keep-alive',
+                'Upgrade-Insecure-Requests': '1',
+            }
+            
+            # Vai alla pagina
+            logger.info(f"🔍 Caricamento pagina con requests-html...")
+            r = session.get(request.url, headers=headers, timeout=30)
+            
+            if r.status_code != 200:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Impossibile accedere alla pagina. Status code: {r.status_code}"
                 )
-                
-                try:
-                    # Crea nuovo contesto e pagina
-                    context = browser.new_context(
-                        user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                        viewport={'width': 1920, 'height': 1080},
-                        locale='it-IT'
-                    )
-                    
-                    page = context.new_page()
-                    
-                    # Vai alla pagina
-                    logger.info(f"🔍 Caricamento pagina con Playwright...")
-                    page.goto(request.url, wait_until='networkidle', timeout=30000)
-                    
-                    # Aspetta che il contenuto si carichi
-                    logger.info(f"🔍 Aspetto caricamento contenuto...")
-                    time.sleep(5)
-                    
-                    # Scroll per caricare contenuto lazy-loaded
-                    logger.info(f"🔍 Scrolling per caricare contenuto dinamico...")
-                    page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
-                    time.sleep(2)
-                    page.evaluate("window.scrollTo(0, 0)")
-                    time.sleep(2)
-                    
-                    # Aspetta ancora per il caricamento completo
-                    time.sleep(3)
-                    
-                    # Estrai HTML completo
-                    html_content = page.content()
-                    logger.info(f"🔍 HTML estratto: {len(html_content)} caratteri")
-                    
-                    # Parse con BeautifulSoup
-                    soup = BeautifulSoup(html_content, 'html.parser')
-                    
-                    # Rimuovi elementi non necessari
-                    for element in soup(["script", "style", "nav", "footer", "header", "noscript", "iframe"]):
-                        element.decompose()
-                    
-                    # Estrai tutto il testo visibile
-                    all_text = soup.get_text()
-                    logger.info(f"🔍 Testo grezzo estratto: {len(all_text)} caratteri")
-                    
-                    # Pulisci il testo
-                    lines = []
-                    for line in all_text.splitlines():
-                        line = line.strip()
-                        if (line and len(line) > 5 and 
-                            not any(skip in line.lower() for skip in ['cookie', 'privacy', 'terms', 'javascript', '©', 'copyright', 'accept', 'decline']) and
-                            not re.match(r'^[\s\d\-_\.]+$', line) and  # Evita righe solo con numeri, spazi, trattini, punti
-                            not line.startswith('http') and  # Evita URL
-                            not line.startswith('www.') and  # Evita URL
-                            len(line) < 500):  # Evita testi troppo lunghi (probabilmente concatenati)
-                            lines.append(line)
-                    
-                    # Combina le righe significative
-                    clean_text = '\n'.join(lines)
-                    
-                    # Se il testo è troppo lungo, prendi le parti più significative
-                    if len(clean_text) > 150000:
-                        # Dividi in paragrafi e prendi quelli più lunghi (probabilmente più informativi)
-                        paragraphs = clean_text.split('\n\n')
-                        paragraphs = [p for p in paragraphs if len(p) > 50]  # Solo paragrafi significativi
-                        paragraphs.sort(key=len, reverse=True)  # Ordina per lunghezza
-                        clean_text = '\n\n'.join(paragraphs[:50])  # Prendi i primi 50 paragrafi più lunghi
-                    
-                    # Limita la lunghezza finale
-                    if len(clean_text) > 150000:
-                        clean_text = clean_text[:150000] + "..."
-                    
-                    logger.info(f"✅ Scraping Playwright completato. Testo estratto: {len(clean_text)} caratteri")
-                    logger.info(f"🔍 Righe significative: {len(lines)}")
-                    logger.info(f"🔍 Anteprima testo: {clean_text[:2000]}...")
-                    
-                finally:
-                    browser.close()
-                
+            
+            # Esegui JavaScript per caricare contenuto dinamico
+            logger.info(f"🔍 Esecuzione JavaScript per caricare contenuto dinamico...")
+            r.html.render(timeout=30, wait=3)
+            
+            # Aspetta un po' per il caricamento completo
+            time.sleep(2)
+            
+            # Estrai HTML completo dopo il rendering JavaScript
+            html_content = r.html.html
+            logger.info(f"🔍 HTML estratto dopo JavaScript: {len(html_content)} caratteri")
+            
+            # Parse con BeautifulSoup
+            soup = BeautifulSoup(html_content, 'html.parser')
+            
+            # Rimuovi elementi non necessari
+            for element in soup(["script", "style", "nav", "footer", "header", "noscript", "iframe"]):
+                element.decompose()
+            
+            # Estrai tutto il testo visibile
+            all_text = soup.get_text()
+            logger.info(f"🔍 Testo grezzo estratto: {len(all_text)} caratteri")
+            
+            # Pulisci il testo in modo più intelligente
+            lines = []
+            for line in all_text.splitlines():
+                line = line.strip()
+                if (line and len(line) > 5 and 
+                    not any(skip in line.lower() for skip in ['cookie', 'privacy', 'terms', 'javascript', '©', 'copyright', 'accept', 'decline', 'alloggi', 'esperienze', 'servizi']) and
+                    not re.match(r'^[\s\d\-_\.]+$', line) and  # Evita righe solo con numeri, spazi, trattini, punti
+                    not line.startswith('http') and  # Evita URL
+                    not line.startswith('www.') and  # Evita URL
+                    not line.startswith('+') and  # Evita numeri di telefono
+                    len(line) < 500 and  # Evita testi troppo lunghi
+                    not re.match(r'^[A-Z\s]+$', line)):  # Evita righe solo maiuscole (spesso navigazione)
+                    lines.append(line)
+            
+            # Combina le righe significative
+            clean_text = '\n'.join(lines)
+            
+            # Se il testo è troppo lungo, prendi le parti più significative
+            if len(clean_text) > 150000:
+                # Dividi in paragrafi e prendi quelli più lunghi (probabilmente più informativi)
+                paragraphs = clean_text.split('\n\n')
+                paragraphs = [p for p in paragraphs if len(p) > 50]  # Solo paragrafi significativi
+                paragraphs.sort(key=len, reverse=True)  # Ordina per lunghezza
+                clean_text = '\n\n'.join(paragraphs[:50])  # Prendi i primi 50 paragrafi più lunghi
+            
+            # Limita la lunghezza finale
+            if len(clean_text) > 150000:
+                clean_text = clean_text[:150000] + "..."
+            
+            logger.info(f"✅ Scraping requests-html completato. Testo estratto: {len(clean_text)} caratteri")
+            logger.info(f"🔍 Righe significative: {len(lines)}")
+            logger.info(f"🔍 Anteprima testo: {clean_text[:2000]}...")
+            
         except Exception as e:
-            logger.error(f"❌ Errore durante lo scraping con Playwright: {e}")
+            logger.error(f"❌ Errore durante lo scraping con requests-html: {e}")
             # Fallback a scraping semplice con httpx
             logger.info(f"🔍 Fallback a scraping semplice con httpx...")
             try:
