@@ -50,57 +50,57 @@ from email_templates_simple import (
     create_print_order_confirmation_email_simple
 )
 
-def extract_property_content(url: str) -> str:
+async def extract_property_content(url: str) -> str:
     """
-    Estrae il contenuto di una pagina di proprietà usando Playwright con fallback a requests.
+    Estrae il contenuto di una pagina di proprietà usando Playwright async con fallback a requests.
     Ottimizzato per velocità e compatibilità con Render.
     """
     logger.info(f"🔍 Estrazione contenuto da: {url}")
     
-    # Prima prova con Playwright (se disponibile)
+    # Prima prova con Playwright async (se disponibile)
     try:
-        logger.info("🔄 Tentativo con Playwright...")
-        from playwright.sync_api import sync_playwright
+        logger.info("🔄 Tentativo con Playwright async...")
+        from playwright.async_api import async_playwright
         
-        with sync_playwright() as p:
-            browser = p.chromium.launch(headless=True)
-            context = browser.new_context(
+        async with async_playwright() as p:
+            browser = await p.chromium.launch(headless=True)
+            context = await browser.new_context(
                 user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
                 viewport={'width': 1920, 'height': 1080}
             )
-            page = context.new_page()
+            page = await context.new_page()
             
             try:
                 # Carica la pagina con timeout ridotto
-                page.goto(url, wait_until='domcontentloaded', timeout=15000)
-                page.wait_for_timeout(3000)
+                await page.goto(url, wait_until='domcontentloaded', timeout=15000)
+                await page.wait_for_timeout(3000)
                 
                 # Scroll veloce per caricare contenuto lazy-loaded
                 try:
-                    page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
-                    page.wait_for_timeout(1000)
-                    page.evaluate("window.scrollTo(0, 0)")
-                    page.wait_for_timeout(1000)
+                    await page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
+                    await page.wait_for_timeout(1000)
+                    await page.evaluate("window.scrollTo(0, 0)")
+                    await page.wait_for_timeout(1000)
                 except:
                     pass
                 
                 # Cerca e clicca su "Mostra di più" (veloce)
                 try:
-                    show_more_buttons = page.query_selector_all("button")[:10]  # Solo primi 10 per velocità
-                    for button in show_more_buttons:
+                    show_more_buttons = await page.query_selector_all("button")
+                    for button in show_more_buttons[:10]:  # Solo primi 10 per velocità
                         try:
-                            text = button.inner_text().lower()
+                            text = (await button.inner_text()).lower()
                             if 'mostra' in text or 'show' in text or 'più' in text or 'more' in text:
-                                if button.is_visible():
-                                    button.click()
-                                    page.wait_for_timeout(300)  # Attesa ridotta
+                                if await button.is_visible():
+                                    await button.click()
+                                    await page.wait_for_timeout(300)  # Attesa ridotta
                         except:
                             continue
                 except:
                     pass
                 
                 # Estrai tutto il testo visibile
-                all_text = page.evaluate("""
+                all_text = await page.evaluate("""
                     () => {
                         const scripts = document.querySelectorAll('script, style, noscript');
                         scripts.forEach(el => el.remove());
@@ -108,18 +108,18 @@ def extract_property_content(url: str) -> str:
                     }
                 """)
                 
-                browser.close()
+                await browser.close()
                 logger.info(f"✅ Playwright estratto: {len(all_text)} caratteri")
                 return all_text
                 
             except Exception as e:
-                browser.close()
+                await browser.close()
                 raise e
                 
     except Exception as e:
         logger.warning(f"⚠️ Playwright fallito: {e}, provo con requests...")
         
-        # Fallback a requests
+        # Fallback a requests (sincrono)
         try:
             from bs4 import BeautifulSoup
             import gzip
@@ -5040,48 +5040,10 @@ async def analyze_property_logic(request: PropertyAnalysisRequest, current_user,
         except Exception:
             raise HTTPException(status_code=400, detail="URL non valido")
         
-        # Scarica il contenuto della pagina
-        import aiohttp
-        import re
+        # Estrazione contenuto con Playwright (fallback a requests)
+        logger.info(f"🔍 Iniziando estrazione contenuto della pagina: {request.url}")
         
-        async with aiohttp.ClientSession() as session:
-            headers = {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-                'Accept-Language': 'en-US,en;q=0.5',
-                'Accept-Encoding': 'gzip, deflate',
-                'Connection': 'keep-alive',
-            }
-            
-            try:
-                async with session.get(request.url, headers=headers, timeout=30) as response:
-                    if response.status != 200:
-                        raise HTTPException(
-                            status_code=400, 
-                            detail=f"Errore nel caricamento della pagina: {response.status}"
-                        )
-                    
-                    html_content = await response.text()
-            except aiohttp.ClientError as e:
-                raise HTTPException(
-                    status_code=400, 
-                    detail=f"Errore nel caricamento della pagina: {str(e)}"
-                )
-        
-        # Estrae il testo dalla pagina HTML
-        def extract_text_from_html(html: str) -> str:
-            # Rimuove script, style, e altri tag non necessari
-            clean_html = re.sub(r'<script[^>]*>[\s\S]*?</script>', '', html, flags=re.IGNORECASE)
-            clean_html = re.sub(r'<style[^>]*>[\s\S]*?</style>', '', clean_html, flags=re.IGNORECASE)
-            clean_html = re.sub(r'<noscript[^>]*>[\s\S]*?</noscript>', '', clean_html, flags=re.IGNORECASE)
-            clean_html = re.sub(r'<[^>]+>', ' ', clean_html)
-            clean_html = re.sub(r'\s+', ' ', clean_html)
-            clean_html = clean_html.strip()
-            
-            # Limita la lunghezza per evitare token eccessivi
-            return clean_html[:8000]
-        
-        page_content = extract_text_from_html(html_content)
+        page_content = await extract_property_content(request.url)
         
         if not page_content:
             raise HTTPException(
@@ -5269,7 +5231,7 @@ async def analyze_property(request: PropertyAnalysisRequest):
         # Estrazione contenuto con Playwright (fallback a requests)
         logger.info(f"🔍 Iniziando estrazione contenuto della pagina: {request.url}")
         
-        page_content = extract_property_content(request.url)
+        page_content = await extract_property_content(request.url)
         
         if not page_content:
             raise HTTPException(
