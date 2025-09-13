@@ -1,55 +1,11 @@
-# Configurazione Render per HostGPT
-# Questo file definisce i servizi per il deployment su Render
-
 services:
-  # Servizio principale - API FastAPI
   - type: web
-    name: hostgpt-api
+    name: host-gpt-backend
     env: python
-    buildCommand: pip install -r requirements.txt
-    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    buildCommand: "./build.sh"
+    startCommand: "uvicorn main:app --host 0.0.0.0 --port $PORT"
     envVars:
-      - key: DATABASE_URL
-        sync: false
-      - key: STRIPE_SECRET_KEY
-        sync: false
-      - key: STRIPE_WEBHOOK_SECRET
-        sync: false
-      - key: OPENAI_API_KEY
-        sync: false
-      - key: SMTP_HOST
-        sync: false
-      - key: SMTP_USERNAME
-        sync: false
-      - key: SMTP_PASSWORD
-        sync: false
-      - key: FROM_EMAIL
-        sync: false
-      - key: FRONTEND_URL
-        sync: false
-      - key: BACKEND_URL
-        sync: false
-    healthCheckPath: /
-    plan: starter  # o free per iniziare
-
-  # Servizio Cron Job per report mensili (OPZIONALE)
-  - type: cron
-    name: hostgpt-monthly-reports
-    env: python
-    buildCommand: pip install -r requirements.txt
-    startCommand: python monthly_reports_cron.py
-    schedule: "0 9 1 * *"  # Ogni primo del mese alle 9:00
-    envVars:
-      - key: DATABASE_URL
-        sync: false
-      - key: SMTP_HOST
-        sync: false
-      - key: SMTP_USERNAME
-        sync: false
-      - key: SMTP_PASSWORD
-        sync: false
-      - key: FROM_EMAIL
-        sync: false
-      - key: BACKEND_URL
-        sync: false
-    plan: starter
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: PLAYWRIGHT_BROWSERS_PATH
+        value: /opt/render/project/playwright
