@@ -50,6 +50,113 @@ from email_templates_simple import (
     create_print_order_confirmation_email_simple
 )
 
+def extract_property_content(url: str) -> str:
+    """
+    Estrae il contenuto di una pagina di proprietà usando Playwright con fallback a requests.
+    Ottimizzato per velocità e compatibilità con Render.
+    """
+    logger.info(f"🔍 Estrazione contenuto da: {url}")
+    
+    # Prima prova con Playwright (se disponibile)
+    try:
+        logger.info("🔄 Tentativo con Playwright...")
+        from playwright.sync_api import sync_playwright
+        
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=True)
+            context = browser.new_context(
+                user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                viewport={'width': 1920, 'height': 1080}
+            )
+            page = context.new_page()
+            
+            try:
+                # Carica la pagina con timeout ridotto
+                page.goto(url, wait_until='domcontentloaded', timeout=15000)
+                page.wait_for_timeout(3000)
+                
+                # Scroll veloce per caricare contenuto lazy-loaded
+                try:
+                    page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
+                    page.wait_for_timeout(1000)
+                    page.evaluate("window.scrollTo(0, 0)")
+                    page.wait_for_timeout(1000)
+                except:
+                    pass
+                
+                # Cerca e clicca su "Mostra di più" (veloce)
+                try:
+                    show_more_buttons = page.query_selector_all("button")[:10]  # Solo primi 10 per velocità
+                    for button in show_more_buttons:
+                        try:
+                            text = button.inner_text().lower()
+                            if 'mostra' in text or 'show' in text or 'più' in text or 'more' in text:
+                                if button.is_visible():
+                                    button.click()
+                                    page.wait_for_timeout(300)  # Attesa ridotta
+                        except:
+                            continue
+                except:
+                    pass
+                
+                # Estrai tutto il testo visibile
+                all_text = page.evaluate("""
+                    () => {
+                        const scripts = document.querySelectorAll('script, style, noscript');
+                        scripts.forEach(el => el.remove());
+                        return document.body.innerText || document.body.textContent || '';
+                    }
+                """)
+                
+                browser.close()
+                logger.info(f"✅ Playwright estratto: {len(all_text)} caratteri")
+                return all_text
+                
+            except Exception as e:
+                browser.close()
+                raise e
+                
+    except Exception as e:
+        logger.warning(f"⚠️ Playwright fallito: {e}, provo con requests...")
+        
+        # Fallback a requests
+        try:
+            from bs4 import BeautifulSoup
+            import gzip
+            
+            session = requests.Session()
+            session.headers.update({
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                'Accept-Language': 'it-IT,it;q=0.9,en;q=0.8',
+                'Accept-Encoding': 'gzip, deflate, br',
+                'DNT': '1',
+                'Connection': 'keep-alive',
+                'Upgrade-Insecure-Requests': '1',
+            })
+            
+            response = session.get(url, timeout=30)
+            
+            # Gestisci compressione
+            if response.headers.get('content-encoding') == 'gzip':
+                try:
+                    html_content = gzip.decompress(response.content).decode('utf-8')
+                except:
+                    html_content = response.text
+            else:
+                html_content = response.text
+            
+            # Parsing con BeautifulSoup
+            soup = BeautifulSoup(html_content, 'html.parser')
+            all_text = soup.get_text()
+            
+            logger.info(f"✅ Requests estratto: {len(all_text)} caratteri")
+            return all_text
+            
+        except Exception as e:
+            logger.error(f"❌ Entrambi i metodi falliti: {e}")
+            raise HTTPException(status_code=500, detail=f"Impossibile estrarre contenuto: {str(e)}")
+
 # Configurazione logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -4993,6 +5100,13 @@ URL: {request.url}
 Contenuto della pagina:
 {page_content}
 
+⚠️ IMPORTANTE - ISTRUZIONI CRITICHE:
+- IGNORA COMPLETAMENTE qualsiasi recensione negativa, commento negativo o feedback negativo
+- NON includere nelle informazioni estratti contenuti che potrebbero danneggiare la reputazione della proprietà
+- Se trovi recensioni negative, commenti negativi o feedback negativi, NON usarli per generare il JSON
+- Concentrati SOLO sulle informazioni positive e neutre della proprietà
+- Estrai solo informazioni utili per ospiti futuri (descrizioni, servizi, regole, etc.)
+
 Estrai le informazioni e restituisci SOLO un JSON valido con questa struttura esatta:
 
 {{
@@ -5152,167 +5266,19 @@ async def analyze_property(request: PropertyAnalysisRequest):
         except Exception:
             raise HTTPException(status_code=400, detail="URL non valido")
         
-        # Scraping con Playwright per contenuto JavaScript
-        logger.info(f"🔍 Iniziando scraping con Playwright della pagina: {request.url}")
+        # Estrazione contenuto con Playwright (fallback a requests)
+        logger.info(f"🔍 Iniziando estrazione contenuto della pagina: {request.url}")
         
-        try:
-            from playwright.sync_api import sync_playwright
-            from bs4 import BeautifulSoup
-            import time
-            import re
-            
-            with sync_playwright() as p:
-                # Avvia browser Chromium
-                browser = p.chromium.launch(
-                    headless=True,
-                    args=[
-                        '--no-sandbox',
-                        '--disable-dev-shm-usage',
-                        '--disable-gpu',
-                        '--disable-web-security',
-                        '--disable-features=VizDisplayCompositor',
-                        '--disable-blink-features=AutomationControlled',
-                        '--disable-extensions',
-                        '--no-first-run',
-                        '--disable-default-apps'
-                    ]
-                )
-                
-                try:
-                    # Crea nuovo contesto e pagina
-                    context = browser.new_context(
-                        user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                        viewport={'width': 1920, 'height': 1080},
-                        locale='it-IT',
-                        timezone_id='Europe/Rome'
-                    )
-                    
-                    page = context.new_page()
-                    
-                    # Vai alla pagina
-                    logger.info(f"🔍 Caricamento pagina con Playwright...")
-                    page.goto(request.url, wait_until='networkidle', timeout=30000)
-                    
-                    # Aspetta che il contenuto si carichi
-                    logger.info(f"🔍 Aspetto caricamento contenuto...")
-                    time.sleep(5)
-                    
-                    # Scroll per caricare contenuto lazy-loaded
-                    logger.info(f"🔍 Scrolling per caricare contenuto dinamico...")
-                    page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
-                    time.sleep(2)
-                    page.evaluate("window.scrollTo(0, 0)")
-                    time.sleep(2)
-                    
-                    # Aspetta ancora per il caricamento completo
-                    time.sleep(3)
-                    
-                    # Estrai HTML completo
-                    html_content = page.content()
-                    logger.info(f"🔍 HTML estratto: {len(html_content)} caratteri")
-                    
-                    # Parse con BeautifulSoup
-                    soup = BeautifulSoup(html_content, 'html.parser')
-                    
-                    # Rimuovi elementi non necessari
-                    for element in soup(["script", "style", "nav", "footer", "header", "noscript", "iframe"]):
-                        element.decompose()
-                    
-                    # Estrai tutto il testo visibile
-                    all_text = soup.get_text()
-                    logger.info(f"🔍 Testo grezzo estratto: {len(all_text)} caratteri")
-                    
-                    # Pulisci il testo in modo più intelligente
-                    lines = []
-                    for line in all_text.splitlines():
-                        line = line.strip()
-                        if (line and len(line) > 5 and 
-                            not any(skip in line.lower() for skip in ['cookie', 'privacy', 'terms', 'javascript', '©', 'copyright', 'accept', 'decline', 'alloggi', 'esperienze', 'servizi']) and
-                            not re.match(r'^[\s\d\-_\.]+$', line) and  # Evita righe solo con numeri, spazi, trattini, punti
-                            not line.startswith('http') and  # Evita URL
-                            not line.startswith('www.') and  # Evita URL
-                            not line.startswith('+') and  # Evita numeri di telefono
-                            len(line) < 500 and  # Evita testi troppo lunghi
-                            not re.match(r'^[A-Z\s]+$', line)):  # Evita righe solo maiuscole (spesso navigazione)
-                            lines.append(line)
-                    
-                    # Combina le righe significative
-                    clean_text = '\n'.join(lines)
-                    
-                    # Se il testo è troppo lungo, prendi le parti più significative
-                    if len(clean_text) > 150000:
-                        # Dividi in paragrafi e prendi quelli più lunghi (probabilmente più informativi)
-                        paragraphs = clean_text.split('\n\n')
-                        paragraphs = [p for p in paragraphs if len(p) > 50]  # Solo paragrafi significativi
-                        paragraphs.sort(key=len, reverse=True)  # Ordina per lunghezza
-                        clean_text = '\n\n'.join(paragraphs[:50])  # Prendi i primi 50 paragrafi più lunghi
-                    
-                    # Limita la lunghezza finale
-                    if len(clean_text) > 150000:
-                        clean_text = clean_text[:150000] + "..."
-                    
-                    logger.info(f"✅ Scraping Playwright completato. Testo estratto: {len(clean_text)} caratteri")
-                    logger.info(f"🔍 Righe significative: {len(lines)}")
-                    logger.info(f"🔍 Anteprima testo: {clean_text[:2000]}...")
-                    
-                finally:
-                    browser.close()
-                
-        except Exception as e:
-            logger.error(f"❌ Errore durante lo scraping con Playwright: {e}")
-            # Fallback a scraping semplice con httpx
-            logger.info(f"🔍 Fallback a scraping semplice con httpx...")
-            try:
-                import httpx
-                
-                headers = {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-                    'Accept-Language': 'it-IT,it;q=0.9,en-US;q=0.8,en;q=0.7',
-                }
-                
-                with httpx.Client(headers=headers, timeout=30.0) as client:
-                    response = client.get(request.url)
-                    if response.status_code == 200:
-                        soup = BeautifulSoup(response.text, 'html.parser')
-                        for element in soup(["script", "style", "nav", "footer", "header", "noscript"]):
-                            element.decompose()
-                        clean_text = soup.get_text()
-                        lines = [line.strip() for line in clean_text.splitlines() if line.strip() and len(line.strip()) > 10]
-                        clean_text = '\n'.join(lines)
-                        if len(clean_text) > 100000:
-                            clean_text = clean_text[:100000] + "..."
-                        logger.info(f"✅ Fallback completato. Testo estratto: {len(clean_text)} caratteri")
-                    else:
-                        raise HTTPException(
-                            status_code=400,
-                            detail=f"Impossibile accedere alla pagina. Status code: {response.status_code}"
-                        )
-            except Exception as fallback_error:
-                logger.error(f"❌ Anche il fallback è fallito: {fallback_error}")
-                raise HTTPException(
-                    status_code=500,
-                    detail=f"Errore durante l'estrazione del contenuto: {str(e)}"
-                )
+        page_content = extract_property_content(request.url)
+        
+        if not page_content:
+            raise HTTPException(
+                status_code=400, 
+                detail="Impossibile estrarre contenuto dalla pagina"
+            )
         
         # Usa OpenAI per analizzare il contenuto
-        try:
-            client = get_openai_client()
-            logger.info(f"✅ OpenAI client creato")
-        except Exception as e:
-            logger.error(f"❌ Errore nella creazione del client OpenAI: {e}")
-            raise HTTPException(
-                status_code=500, 
-                detail=f"Errore nella creazione del client OpenAI: {str(e)}"
-            )
-        
-        # Verifica che l'API key sia configurata
-        if not client.api_key:
-            logger.error("❌ OpenAI API key non configurata!")
-            raise HTTPException(
-                status_code=500, 
-                detail="OpenAI API key non configurata"
-            )
+        client = get_openai_client()
         
         logger.info(f"✅ OpenAI client configurato correttamente")
         logger.info(f"🔍 API Key presente: {client.api_key[:10]}...")
@@ -5339,7 +5305,14 @@ async def analyze_property(request: PropertyAnalysisRequest):
 Analizza il contenuto di questa pagina di una proprietà di affitto vacanze e estrai tutte le informazioni disponibili.
 
 Contenuto della pagina:
-{clean_text}
+{page_content}
+
+⚠️ IMPORTANTE - ISTRUZIONI CRITICHE:
+- IGNORA COMPLETAMENTE qualsiasi recensione negativa, commento negativo o feedback negativo
+- NON includere nelle informazioni estratti contenuti che potrebbero danneggiare la reputazione della proprietà
+- Se trovi recensioni negative, commenti negativi o feedback negativi, NON usarli per generare il JSON
+- Concentrati SOLO sulle informazioni positive e neutre della proprietà
+- Estrai solo informazioni utili per ospiti futuri (descrizioni, servizi, regole, etc.)
 
 Estrai le informazioni dal testo sopra e includi:
 - Nome della proprietà
