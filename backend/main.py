@@ -2146,9 +2146,9 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
                     guardian_subscription = None
                     
                     for sub in subscriptions.data:
-                        if sub.items.data[0].price.id == settings.STRIPE_PRICE_ID:
+                        if sub.items.data[0].price.id == settings.STRIPE_PRICE_ID or sub.items.data[0].price.id == settings.STRIPE_ANNUAL_PRICE_ID:
                             hostgpt_subscription = sub
-                        elif sub.items.data[0].price.id == "price_1RzYheClR9LCJ8qE7OMhCmlH":
+                        elif sub.items.data[0].price.id == "price_1S7fDjCez9NYe6irthMTRaXg":
                             guardian_subscription = sub
                     
                     # Aggiorna HostGPT subscription
@@ -3736,7 +3736,7 @@ async def create_guardian_checkout_session(current_user: User = Depends(get_curr
         logger.info(f"Creating Guardian payment intent for user {current_user.id}")
         
         # Price ID per Guardian - 9€/mese
-        guardian_price_id = "price_1RzYheClR9LCJ8qE7OMhCmlH"
+        guardian_price_id = "price_1S7fDjCez9NYe6irthMTRaXg"
         
         payment_intent = stripe.PaymentIntent.create(
             amount=900,  # 9€ in centesimi
@@ -3778,7 +3778,7 @@ async def create_combined_checkout_session(current_user: User, db: Session):
         
         # Price IDs per HostGPT e Guardian
         hostgpt_price_id = settings.STRIPE_PRICE_ID  # 29€/mese
-        guardian_price_id = "price_1RzYheClR9LCJ8qE7OMhCmlH"  # 9€/mese
+        guardian_price_id = "price_1S7fDjCez9NYe6irthMTRaXg"  # 9€/mese
         
         # Crea sessione checkout con entrambi i prodotti
         checkout_session = stripe.checkout.Session.create(
@@ -3877,9 +3877,9 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
                 guardian_subscription = None
                 
                 for sub in subscriptions.data:
-                    if sub.items.data[0].price.id == settings.STRIPE_PRICE_ID:
+                    if sub.items.data[0].price.id == settings.STRIPE_PRICE_ID or sub.items.data[0].price.id == settings.STRIPE_ANNUAL_PRICE_ID:
                         hostgpt_subscription = sub
-                    elif sub.items.data[0].price.id == "price_1RzYheClR9LCJ8qE7OMhCmlH":
+                    elif sub.items.data[0].price.id == "price_1S7fDjCez9NYe6irthMTRaXg":
                         guardian_subscription = sub
                 
                 # Aggiorna HostGPT subscription

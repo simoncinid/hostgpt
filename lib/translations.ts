@@ -1274,7 +1274,7 @@ export const translations: Record<Language, Translations> = {
           ],
           freeTrialButton: "🎉 14 Giorni Gratis",
           ctaButton: "Inizia Ora",
-          priceId: "price_1S3dNUClR9LCJ8qEX2DEK4SE"
+          priceId: "price_1S7fOOCez9NYe6irYMiakvrf"
         }
       ]
     },
@@ -2477,7 +2477,7 @@ export const translations: Record<Language, Translations> = {
           ],
           freeTrialButton: "🎉 14 Days Free",
           ctaButton: "Start Now",
-          priceId: "price_1S3dNUClR9LCJ8qEX2DEK4SE"
+          priceId: "price_1S7fOOCez9NYe6irYMiakvrf"
         }
       ]
     },
