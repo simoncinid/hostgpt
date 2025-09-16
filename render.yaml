@@ -2,7 +2,7 @@ services:
   - type: web
     name: host-gpt-backend
     env: docker
-    dockerfilePath: ./backend/Dockerfile
+    dockerfilePath: ./backend/Dockerfile.render
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.0
