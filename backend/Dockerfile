@@ -1,27 +1,23 @@
-# Usa l'immagine ufficiale di Playwright con Python
+# Dockerfile specifico per Render
 FROM mcr.microsoft.com/playwright/python:v1.48.0-jammy
 
-# Imposta la directory di lavoro
 WORKDIR /app
 
-# Copia i file di requirements
-COPY backend/requirements.txt .
-
-# Installa le dipendenze Python
+# Copia requirements e installa dipendenze
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# I browser di Playwright sono già installati nell'immagine base
-# Ma assicuriamoci che siano aggiornati
+# Installa browser Playwright
 RUN playwright install --with-deps chromium
 
-# Copia il resto del codice
-COPY backend/ .
+# Copia il codice
+COPY . .
 
-# Test che Playwright funzioni
+# Test Playwright
 RUN python test_docker.py
 
-# Espone la porta
+# Espone porta
 EXPOSE 8000
 
-# Comando di avvio (usa la porta di Render)
+# Comando di avvio
 CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}"]
