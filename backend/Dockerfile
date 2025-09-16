@@ -17,6 +17,9 @@ RUN playwright install --with-deps chromium
 # Copia il resto del codice
 COPY . .
 
+# Test che Playwright funzioni
+RUN python test_docker.py
+
 # Espone la porta
 EXPOSE 8000
 
