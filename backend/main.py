@@ -1184,7 +1184,7 @@ async def create_openai_assistant(chatbot_data: dict) -> str:
         
         IMPORTANTE: Rispondi sempre nella stessa lingua in cui l'utente ti scrive. Se l'utente scrive in italiano, rispondi in italiano. Se scrive in inglese, rispondi in inglese. Se scrive in spagnolo, rispondi in spagnolo, e così via per qualsiasi lingua.
         Sii cordiale, utile e fornisci informazioni accurate basate sui dati forniti.
-        Se non hai informazioni su qualcosa, suggerisci di contattare direttamente l'host.
+        Se non hai informazioni su qualcosa o non sei sicuro della risposta, devi dire di contattare l'host. Se nei contatti di emergenza c'è un numero dell'host, includilo nel messaggio.
         """
         
         # Crea l'assistant (Assistants v2)
@@ -1248,7 +1248,7 @@ def build_assistant_instructions_from_model(chatbot: Chatbot) -> str:
 
         IMPORTANTE: Rispondi sempre nella stessa lingua in cui l'utente ti scrive. Se l'utente scrive in italiano, rispondi in italiano. Se scrive in inglese, rispondi in inglese. Se scrive in spagnolo, rispondi in spagnolo, e così via per qualsiasi lingua.
         Sii cordiale, utile e fornisci informazioni accurate basate sui dati forniti.
-        Se non hai informazioni su qualcosa, suggerisci di contattare direttamente l'host.
+        Se non hai informazioni su qualcosa o non sei sicuro della risposta, devi dire di contattare l'host. Se nei contatti di emergenza c'è un numero dell'host, includilo nel messaggio.
         """
     except Exception as e:
         logger.error(f"Error building instructions: {e}")
