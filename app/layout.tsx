@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import '@/styles/globals.css'
 import { Toaster } from 'react-hot-toast'
 import { LanguageProvider } from '../lib/languageContext'
+import { Analytics } from '@vercel/analytics/next'
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://hostgpt.it'),
@@ -145,6 +146,7 @@ export default function RootLayout({
             },
           }}
         />
+        <Analytics />
         {/* Start cookieyes banner */}
         <script id="cookieyes" type="text/javascript" src="https://cdn-cookieyes.com/client_data/65fd15cbd6f7bed8d5de4f08/script.js"></script>
         {/* End cookieyes banner */}
