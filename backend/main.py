@@ -126,7 +126,13 @@ async def extract_property_content(url: str) -> str:
                 raise e
                 
     except Exception as e:
-        logger.warning(f"⚠️ Playwright fallito: {e}, provo con requests...")
+        error_msg = str(e)
+        if "Executable doesn't exist" in error_msg or "BrowserType.launch" in error_msg:
+            logger.warning(f"⚠️ Browser Playwright non trovato: {error_msg}")
+            logger.info("💡 Suggerimento: Esegui 'playwright install' per installare i browser")
+        else:
+            logger.warning(f"⚠️ Playwright fallito: {error_msg}")
+        logger.info("🔄 Passo al fallback con requests...")
         
         # Fallback a requests (sincrono)
         try:
