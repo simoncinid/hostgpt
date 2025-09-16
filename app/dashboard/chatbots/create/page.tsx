@@ -232,16 +232,12 @@ export default function CreateChatbotPage() {
       new URL(propertyUrl)
     } catch {
       console.log('❌ FRONTEND: URL non valido')
-      toast.error(language === 'IT' ? 'URL non valido. Inserisci un URL completo (es. https://www.airbnb.it/rooms/12345678)' : 'Invalid URL. Please enter a complete URL (e.g. https://www.airbnb.it/rooms/12345678)')
+      toast.error(language === 'IT' ? 'URL non valido. Inserisci un URL completo (es. https://esempio.com)' : 'Invalid URL. Please enter a complete URL (e.g. https://example.com)')
       return
     }
 
-    // Suggerisce di usare URL di Airbnb se non è presente
-    if (!propertyUrl.includes('airbnb')) {
-      console.log('⚠️ FRONTEND: URL non sembra essere di Airbnb')
-      toast.error(language === 'IT' ? 'Per i migliori risultati, usa un URL di Airbnb (es. https://www.airbnb.it/rooms/12345678)' : 'For best results, use an Airbnb URL (e.g. https://www.airbnb.it/rooms/12345678)')
-      return
-    }
+    // Accetta qualsiasi URL valido
+    console.log('✅ FRONTEND: URL valido accettato:', propertyUrl)
 
     console.log('🚀 FRONTEND: Iniziando auto-fill per URL:', propertyUrl)
     setIsAutoFilling(true)
