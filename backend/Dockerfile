@@ -20,5 +20,5 @@ COPY . .
 # Espone la porta
 EXPOSE 8000
 
-# Comando di avvio
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Comando di avvio (usa la porta di Render)
+CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}"]
