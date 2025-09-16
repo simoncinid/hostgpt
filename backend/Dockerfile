@@ -5,7 +5,7 @@ FROM mcr.microsoft.com/playwright/python:v1.48.0-jammy
 WORKDIR /app
 
 # Copia i file di requirements
-COPY requirements.txt .
+COPY backend/requirements.txt .
 
 # Installa le dipendenze Python
 RUN pip install --no-cache-dir -r requirements.txt
@@ -15,7 +15,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 RUN playwright install --with-deps chromium
 
 # Copia il resto del codice
-COPY . .
+COPY backend/ .
 
 # Test che Playwright funzioni
 RUN python test_docker.py
