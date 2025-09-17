@@ -66,7 +66,7 @@ export default function LandingPage() {
   const [demoRunId, setDemoRunId] = useState(0)
   const demoScrollRef = useRef<HTMLDivElement | null>(null)
   const [demoHasIcon, setDemoHasIcon] = useState(false)
-  const [demoChatInfo, setDemoChatInfo] = useState<{name: string, property_name: string} | null>(null)
+  const [demoChatInfo, setDemoChatInfo] = useState<{name: string, property_name: string, welcome_message: string} | null>(null)
   
   // UUID del chatbot demo reale
   const DEMO_CHATBOT_UUID = "e413257a-f165-41f2-9f9d-2f244d11d3b4"
@@ -98,7 +98,8 @@ export default function LandingPage() {
         setDemoHasIcon(response.data.has_icon)
         setDemoChatInfo({
           name: response.data.name,
-          property_name: response.data.property_name
+          property_name: response.data.property_name,
+          welcome_message: response.data.welcome_message
         })
       })
       .catch(() => {
@@ -348,6 +349,16 @@ export default function LandingPage() {
 
   const handleDemoStartChat = () => {
     setDemoShowWelcome(false)
+    
+    // Aggiungi messaggio di benvenuto dell'host se disponibile
+    if (demoChatInfo?.welcome_message) {
+      setDemoMessages([{
+        id: 'welcome',
+        role: 'assistant',
+        content: demoChatInfo.welcome_message,
+        timestamp: new Date()
+      }])
+    }
   }
 
   const handleDemoNewConversation = () => {
@@ -355,6 +366,16 @@ export default function LandingPage() {
     setDemoThreadId(null)
     setDemoInput('')
     setDemoShowWelcome(true)
+    
+    // Ricarica il messaggio di benvenuto
+    if (demoChatInfo?.welcome_message) {
+      setDemoMessages([{
+        id: 'welcome',
+        role: 'assistant',
+        content: demoChatInfo.welcome_message,
+        timestamp: new Date()
+      }])
+    }
   }
 
 
