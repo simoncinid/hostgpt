@@ -254,6 +254,7 @@ app.add_middleware(
         settings.FRONTEND_URL, 
         "http://localhost:3000",
         "https://*.vercel.app",  # Permette richieste da Vercel
+        "https://hostgpt-docker.onrender.com",  # Dominio specifico Render
         "https://hostgpt.vercel.app"  # Dominio specifico Vercel
     ],
     allow_credentials=True,

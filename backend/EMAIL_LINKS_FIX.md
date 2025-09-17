@@ -17,53 +17,53 @@ Tutti i link nelle email puntavano a `hostgpt.com` invece del dominio corretto `
 
 | Email | Link Corretto |
 |-------|---------------|
-| **Dashboard** | `https://www.hostgpt.it/dashboard` |
-| **Dashboard Guardian** | `https://www.hostgpt.it/dashboard/guardian` |
-| **Settings** | `https://www.hostgpt.it/dashboard/settings` |
-| **Checkout** | `https://www.hostgpt.it/checkout` |
+| **Dashboard** | `https://hostgpt-docker.onrender.com/dashboard` |
+| **Dashboard Guardian** | `https://hostgpt-docker.onrender.com/dashboard/guardian` |
+| **Settings** | `https://hostgpt-docker.onrender.com/dashboard/settings` |
+| **Checkout** | `https://hostgpt-docker.onrender.com/checkout` |
 | **Support** | `support@hostgpt.it` |
 | **From Email** | `noreply@hostgpt.it` |
 
 ## 📧 Email con Link Corretti
 
 ### **1. Email Conferma Account**
-- ✅ Link: `https://www.hostgpt.it/dashboard`
+- ✅ Link: `https://hostgpt-docker.onrender.com/dashboard`
 
 ### **2. Email Acquisto Avvenuto**
-- ✅ Link: `https://www.hostgpt.it/dashboard`
+- ✅ Link: `https://hostgpt-docker.onrender.com/dashboard`
 
 ### **3. Email Creazione Chatbot**
-- ✅ Link: `https://www.hostgpt.it/dashboard`
+- ✅ Link: `https://hostgpt-docker.onrender.com/dashboard`
 
 ### **4. Email Annullamento HostGPT**
-- ✅ Link: `https://www.hostgpt.it/dashboard/settings`
+- ✅ Link: `https://hostgpt-docker.onrender.com/dashboard/settings`
 
 ### **5. Email Annullamento Guardian**
-- ✅ Link: `https://www.hostgpt.it/dashboard/guardian`
+- ✅ Link: `https://hostgpt-docker.onrender.com/dashboard/guardian`
 
 ### **6. Email Riattivazione HostGPT**
-- ✅ Link: `https://www.hostgpt.it/dashboard`
+- ✅ Link: `https://hostgpt-docker.onrender.com/dashboard`
 
 ### **7. Email Riattivazione Guardian**
-- ✅ Link: `https://www.hostgpt.it/dashboard/guardian`
+- ✅ Link: `https://hostgpt-docker.onrender.com/dashboard/guardian`
 
 ### **8. Email Guardian Alert**
-- ✅ Link: `https://www.hostgpt.it/dashboard/guardian`
+- ✅ Link: `https://hostgpt-docker.onrender.com/dashboard/guardian`
 
 ### **9. Email Free Trial**
-- ✅ Link: `https://www.hostgpt.it/dashboard`
-- ✅ Link: `https://www.hostgpt.it/checkout`
+- ✅ Link: `https://hostgpt-docker.onrender.com/dashboard`
+- ✅ Link: `https://hostgpt-docker.onrender.com/checkout`
 
 ### **10. Email Report Mensile**
-- ✅ Link: `https://www.hostgpt.it/dashboard`
+- ✅ Link: `https://hostgpt-docker.onrender.com/dashboard`
 
 ## 🎯 Risultato
 
 Ora **tutti i link** nelle email puntano correttamente a:
-- ✅ `https://www.hostgpt.it/dashboard`
-- ✅ `https://www.hostgpt.it/dashboard/guardian`
-- ✅ `https://www.hostgpt.it/dashboard/settings`
-- ✅ `https://www.hostgpt.it/checkout`
+- ✅ `https://hostgpt-docker.onrender.com/dashboard`
+- ✅ `https://hostgpt-docker.onrender.com/dashboard/guardian`
+- ✅ `https://hostgpt-docker.onrender.com/dashboard/settings`
+- ✅ `https://hostgpt-docker.onrender.com/checkout`
 
 ## 🧪 Test
 
