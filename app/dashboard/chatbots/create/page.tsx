@@ -23,7 +23,7 @@ import {
 } from 'lucide-react'
 import { useForm, useFieldArray } from 'react-hook-form'
 import toast from 'react-hot-toast'
-import { chatbots } from '@/lib/api'
+import { chatbots, address } from '@/lib/api'
 import { useChatbotStore } from '@/lib/store'
 import { useLanguage } from '@/lib/languageContext'
 
@@ -32,16 +32,20 @@ interface ChatbotFormData {
   property_name: string
   property_type: string
   property_address: string
+  property_street_number: string
   property_city: string
+  property_state: string
+  property_postal_code: string
+  property_country: string
   property_description: string
   check_in_time: string
   check_out_time: string
   house_rules: string
   amenities: string[]
   neighborhood_description: string
-  nearby_attractions: { name: string; distance: string; description: string }[]
+  nearby_attractions: { name: string; note: string }[]
   transportation_info: string
-  restaurants_bars: { name: string; type: string; distance: string }[]
+  restaurants_bars: { name: string; note: string }[]
   shopping_info: string
   emergency_contacts: { name: string; number: string; type: string }[]
   wifi_info: { network: string; password: string }
@@ -100,6 +104,9 @@ export default function CreateChatbotPage() {
   const [iconError, setIconError] = useState<string | null>(null)
   const [isAutoFilling, setIsAutoFilling] = useState(false)
   const [formErrors, setFormErrors] = useState<Record<string, string>>({})
+  const [addressSuggestions, setAddressSuggestions] = useState<any[]>([])
+  const [showSuggestions, setShowSuggestions] = useState(false)
+  const [isLoadingAddress, setIsLoadingAddress] = useState(false)
   const { addChatbot } = useChatbotStore()
   
   // Controlla il limite di chatbot
@@ -131,8 +138,8 @@ export default function CreateChatbotPage() {
   const { register, control, handleSubmit, watch, formState: { errors }, setValue } = useForm<ChatbotFormData>({
     defaultValues: {
       amenities: [],
-      nearby_attractions: [{ name: '', distance: '', description: '' }],
-      restaurants_bars: [{ name: '', type: '', distance: '' }],
+      nearby_attractions: [{ name: '', note: '' }],
+      restaurants_bars: [{ name: '', note: '' }],
       emergency_contacts: [{ name: '', number: '', type: '' }],
       faq: [{ question: '', answer: '' }],
       wifi_info: { network: '', password: '' }
@@ -178,6 +185,61 @@ export default function CreateChatbotPage() {
         delete newErrors[fieldName]
         return newErrors
       })
+    }
+  }
+
+  // Funzioni per autocompletamento indirizzo
+  const searchAddresses = async (query: string) => {
+    if (!query || query.length < 3) {
+      setAddressSuggestions([])
+      setShowSuggestions(false)
+      return
+    }
+
+    try {
+      setIsLoadingAddress(true)
+      const response = await address.autocomplete(query, 'IT') // Default Italia
+      if (response.data?.predictions) {
+        setAddressSuggestions(response.data.predictions)
+        setShowSuggestions(true)
+      }
+    } catch (error) {
+      console.error('Error searching addresses:', error)
+    } finally {
+      setIsLoadingAddress(false)
+    }
+  }
+
+  const selectAddress = async (suggestion: any) => {
+    try {
+      setIsLoadingAddress(true)
+      const response = await address.getDetails(suggestion.place_id)
+      
+      if (response.data.address) {
+        // Aggiorna tutti i campi indirizzo
+        setValue('property_address', response.data.route || response.data.address)
+        setValue('property_street_number', response.data.street_number || '')
+        setValue('property_city', response.data.city || '')
+        setValue('property_state', response.data.state || '')
+        setValue('property_postal_code', response.data.postal_code || '')
+        setValue('property_country', response.data.country || 'IT')
+        
+        setShowSuggestions(false)
+        setAddressSuggestions([])
+        
+        // Pulisci errori relativi all'indirizzo
+        clearFieldError('property_address')
+        clearFieldError('property_city')
+        
+        toast.success(language === 'IT' ? 'Indirizzo compilato automaticamente' : 'Address filled automatically')
+      } else {
+        toast.error(language === 'IT' ? 'Errore nel recuperare i dettagli dell\'indirizzo' : 'Error retrieving address details')
+      }
+    } catch (error) {
+      console.error('Error getting address details:', error)
+      toast.error(language === 'IT' ? 'Errore nel recuperare i dettagli dell\'indirizzo' : 'Error retrieving address details')
+    } finally {
+      setIsLoadingAddress(false)
     }
   }
 
@@ -306,7 +368,11 @@ export default function CreateChatbotPage() {
         setValue('property_type', mappedType)
       }
       if (data.property_address) setValue('property_address', data.property_address)
+      if (data.property_street_number) setValue('property_street_number', data.property_street_number)
       if (data.property_city) setValue('property_city', data.property_city)
+      if (data.property_state) setValue('property_state', data.property_state)
+      if (data.property_postal_code) setValue('property_postal_code', data.property_postal_code)
+      if (data.property_country) setValue('property_country', data.property_country)
       if (data.property_description) setValue('property_description', data.property_description)
       if (data.check_in_time) setValue('check_in_time', data.check_in_time)
       if (data.check_out_time) setValue('check_out_time', data.check_out_time)
@@ -352,13 +418,11 @@ export default function CreateChatbotPage() {
         data.nearby_attractions.forEach((attraction: any, index: number) => {
           if (index === 0) {
             setValue('nearby_attractions.0.name', attraction.name || '')
-            setValue('nearby_attractions.0.distance', attraction.distance || '')
-            setValue('nearby_attractions.0.description', attraction.description || '')
+            setValue('nearby_attractions.0.note', attraction.description || attraction.note || '')
           } else {
             appendAttraction({
               name: attraction.name || '',
-              distance: attraction.distance || '',
-              description: attraction.description || ''
+              note: attraction.description || attraction.note || ''
             })
           }
         })
@@ -369,13 +433,11 @@ export default function CreateChatbotPage() {
         data.restaurants_bars.forEach((restaurant: any, index: number) => {
           if (index === 0) {
             setValue('restaurants_bars.0.name', restaurant.name || '')
-            setValue('restaurants_bars.0.type', restaurant.type || '')
-            setValue('restaurants_bars.0.distance', restaurant.distance || '')
+            setValue('restaurants_bars.0.note', restaurant.type || restaurant.note || '')
           } else {
             appendRestaurant({
               name: restaurant.name || '',
-              type: restaurant.type || '',
-              distance: restaurant.distance || ''
+              note: restaurant.type || restaurant.note || ''
             })
           }
         })
@@ -551,11 +613,19 @@ export default function CreateChatbotPage() {
           hasErrors = true
         }
         if (!currentData.property_address?.trim()) {
-          newErrors.property_address = language === 'IT' ? 'Indirizzo richiesto' : 'Address required'
+          newErrors.property_address = language === 'IT' ? 'Via richiesta' : 'Street required'
           hasErrors = true
         }
         if (!currentData.property_city?.trim()) {
           newErrors.property_city = language === 'IT' ? 'Città richiesta' : 'City required'
+          hasErrors = true
+        }
+        if (!currentData.property_postal_code?.trim()) {
+          newErrors.property_postal_code = language === 'IT' ? 'CAP richiesto' : 'Postal code required'
+          hasErrors = true
+        }
+        if (!currentData.property_country?.trim()) {
+          newErrors.property_country = language === 'IT' ? 'Paese richiesto' : 'Country required'
           hasErrors = true
         }
         break
@@ -588,10 +658,7 @@ export default function CreateChatbotPage() {
           newErrors.neighborhood_description = language === 'IT' ? 'Descrizione quartiere richiesta' : 'Neighborhood description required'
           hasErrors = true
         }
-        if (!currentData.transportation_info?.trim()) {
-          newErrors.transportation_info = language === 'IT' ? 'Info trasporti richieste' : 'Transportation info required'
-          hasErrors = true
-        }
+        // Le informazioni sui trasporti sono ora opzionali
         break
 
       case 5: // Step 5 - Servizi Locali (tutti opzionali)
@@ -601,6 +668,18 @@ export default function CreateChatbotPage() {
       case 6: // Step 6 - Finalizzazione
         if (!currentData.welcome_message?.trim()) {
           newErrors.welcome_message = language === 'IT' ? 'Messaggio di benvenuto richiesto' : 'Welcome message required'
+          hasErrors = true
+        }
+        
+        // Verifica che ci sia almeno un contatto di emergenza con nome e numero
+        const validContacts = currentData.emergency_contacts?.filter(contact => 
+          contact.name?.trim() && contact.number?.trim()
+        ) || []
+        
+        if (validContacts.length === 0) {
+          newErrors.emergency_contacts = language === 'IT' 
+            ? 'È richiesto almeno un contatto di emergenza (nome e numero)'
+            : 'At least one emergency contact is required (name and number)'
           hasErrors = true
         }
         break
@@ -745,34 +824,135 @@ export default function CreateChatbotPage() {
             </div>
 
             <div>
-              <label className="label">{t.chatbots.create.form.propertyAddress}</label>
-              <input
-                {...register('property_address', { required: language === 'IT' ? 'Indirizzo richiesto' : 'Address required' })}
-                className={`input-field ${formErrors.property_address ? 'border-red-500' : ''}`}
-                placeholder={language === 'IT' ? "Es. Via Roma 123" : "E.g. 123 Main Street"}
-                onChange={(e) => {
-                  register('property_address').onChange(e)
-                  clearFieldError('property_address')
-                }}
-              />
-              {(errors.property_address || formErrors.property_address) && (
-                <p className="error-text">{errors.property_address?.message || formErrors.property_address}</p>
-              )}
+              <label className="label">{language === 'IT' ? 'Indirizzo Proprietà' : 'Property Address'}</label>
+              <p className="text-sm text-gray-600 mb-2">
+                {language === 'IT' 
+                  ? '💡 Inizia a digitare l\'indirizzo e seleziona dai suggerimenti per compilare automaticamente tutti i campi'
+                  : '💡 Start typing the address and select from suggestions to automatically fill all fields'
+                }
+              </p>
+              <div className="relative">
+                <input
+                  type="text"
+                  className="input-field"
+                  placeholder={language === 'IT' ? "Inizia a digitare l'indirizzo..." : "Start typing the address..."}
+                  onChange={(e) => searchAddresses(e.target.value)}
+                  disabled={isLoadingAddress}
+                />
+                {isLoadingAddress && (
+                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                    <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+                  </div>
+                )}
+                
+                {showSuggestions && addressSuggestions.length > 0 && (
+                  <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                    {addressSuggestions.map((suggestion, index) => (
+                      <button
+                        key={index}
+                        type="button"
+                        className="w-full px-4 py-2 text-left hover:bg-gray-50 border-b border-gray-100 last:border-b-0"
+                        onClick={() => selectAddress(suggestion)}
+                      >
+                        <div className="font-medium text-sm">{suggestion.main_text}</div>
+                        <div className="text-xs text-gray-500">{suggestion.secondary_text}</div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <label className="label">{language === 'IT' ? 'Via' : 'Street'} <span className="text-red-500">*</span></label>
+                <input
+                  {...register('property_address', { required: language === 'IT' ? 'Via richiesta' : 'Street required' })}
+                  className={`input-field ${formErrors.property_address ? 'border-red-500' : ''}`}
+                  placeholder={language === 'IT' ? "Es. Via Roma" : "E.g. Main Street"}
+                  onChange={(e) => {
+                    register('property_address').onChange(e)
+                    clearFieldError('property_address')
+                  }}
+                />
+                {(errors.property_address || formErrors.property_address) && (
+                  <p className="error-text">{errors.property_address?.message || formErrors.property_address}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="label">{language === 'IT' ? 'Numero Civico' : 'Street Number'}</label>
+                <input
+                  {...register('property_street_number')}
+                  className="input-field"
+                  placeholder={language === 'IT' ? "Es. 123" : "E.g. 123"}
+                />
+              </div>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-4">
+              <div>
+                <label className="label">{language === 'IT' ? 'Città' : 'City'} <span className="text-red-500">*</span></label>
+                <input
+                  {...register('property_city', { required: language === 'IT' ? 'Città richiesta' : 'City required' })}
+                  className={`input-field ${formErrors.property_city ? 'border-red-500' : ''}`}
+                  placeholder={language === 'IT' ? "Es. Roma" : "E.g. Rome"}
+                  onChange={(e) => {
+                    register('property_city').onChange(e)
+                    clearFieldError('property_city')
+                  }}
+                />
+                {(errors.property_city || formErrors.property_city) && (
+                  <p className="error-text">{errors.property_city?.message || formErrors.property_city}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="label">{language === 'IT' ? 'Provincia/Stato' : 'State/Province'}</label>
+                <input
+                  {...register('property_state')}
+                  className="input-field"
+                  placeholder={language === 'IT' ? "Es. RM" : "E.g. CA"}
+                />
+              </div>
+
+              <div>
+                <label className="label">{language === 'IT' ? 'CAP' : 'Postal Code'} <span className="text-red-500">*</span></label>
+                <input
+                  {...register('property_postal_code', { required: language === 'IT' ? 'CAP richiesto' : 'Postal code required' })}
+                  className={`input-field ${formErrors.property_postal_code ? 'border-red-500' : ''}`}
+                  placeholder={language === 'IT' ? "Es. 00100" : "E.g. 90210"}
+                  onChange={(e) => {
+                    register('property_postal_code').onChange(e)
+                    clearFieldError('property_postal_code')
+                  }}
+                />
+                {(errors.property_postal_code || formErrors.property_postal_code) && (
+                  <p className="error-text">{errors.property_postal_code?.message || formErrors.property_postal_code}</p>
+                )}
+              </div>
             </div>
 
             <div>
-              <label className="label">{t.chatbots.create.form.propertyCity}</label>
-              <input
-                {...register('property_city', { required: language === 'IT' ? 'Città richiesta' : 'City required' })}
-                className={`input-field ${formErrors.property_city ? 'border-red-500' : ''}`}
-                placeholder={language === 'IT' ? "Es. Roma" : "E.g. Rome"}
+              <label className="label">{language === 'IT' ? 'Paese' : 'Country'} <span className="text-red-500">*</span></label>
+              <select
+                {...register('property_country', { required: language === 'IT' ? 'Paese richiesto' : 'Country required' })}
+                className={`input-field ${formErrors.property_country ? 'border-red-500' : ''}`}
                 onChange={(e) => {
-                  register('property_city').onChange(e)
-                  clearFieldError('property_city')
+                  register('property_country').onChange(e)
+                  clearFieldError('property_country')
                 }}
-              />
-              {(errors.property_city || formErrors.property_city) && (
-                <p className="error-text">{errors.property_city?.message || formErrors.property_city}</p>
+              >
+                <option value="">{language === 'IT' ? 'Seleziona paese' : 'Select country'}</option>
+                <option value="IT">{language === 'IT' ? 'Italia' : 'Italy'}</option>
+                <option value="ES">{language === 'IT' ? 'Spagna' : 'Spain'}</option>
+                <option value="FR">{language === 'IT' ? 'Francia' : 'France'}</option>
+                <option value="DE">{language === 'IT' ? 'Germania' : 'Germany'}</option>
+                <option value="GB">{language === 'IT' ? 'Regno Unito' : 'United Kingdom'}</option>
+                <option value="US">{language === 'IT' ? 'Stati Uniti' : 'United States'}</option>
+              </select>
+              {(errors.property_country || formErrors.property_country) && (
+                <p className="error-text">{errors.property_country?.message || formErrors.property_country}</p>
               )}
             </div>
 
@@ -977,19 +1157,12 @@ export default function CreateChatbotPage() {
             </div>
 
             <div>
-              <label className="label">{t.chatbots.create.form.transportationInfo}</label>
+              <label className="label">{t.chatbots.create.form.transportationInfo} ({language === 'IT' ? 'opzionale' : 'optional'})</label>
               <textarea
-                {...register('transportation_info', { required: language === 'IT' ? 'Info trasporti richieste' : 'Transportation info required' })}
-                className={`input-field min-h-24 ${formErrors.transportation_info ? 'border-red-500' : ''}`}
+                {...register('transportation_info')}
+                className="input-field min-h-24"
                 placeholder={language === 'IT' ? "Come muoversi: metro, bus, taxi, noleggio auto..." : "How to get around: metro, bus, taxi, car rental..."}
-                onChange={(e) => {
-                  register('transportation_info').onChange(e)
-                  clearFieldError('transportation_info')
-                }}
               />
-              {(errors.transportation_info || formErrors.transportation_info) && (
-                <p className="error-text">{errors.transportation_info?.message || formErrors.transportation_info}</p>
-              )}
             </div>
 
             <div>
@@ -1012,21 +1185,16 @@ export default function CreateChatbotPage() {
               <label className="label">{t.chatbots.create.form.nearbyAttractions}</label>
               {attractionFields.map((field, index) => (
                 <div key={field.id} className="bg-gray-50 p-4 rounded-lg mb-3">
-                  <div className="grid md:grid-cols-3 gap-3">
+                  <div className="grid md:grid-cols-2 gap-3">
                     <input
                       {...register(`nearby_attractions.${index}.name`)}
                       className="input-field"
                       placeholder={language === 'IT' ? "Nome attrazione" : "Attraction name"}
                     />
                     <input
-                      {...register(`nearby_attractions.${index}.distance`)}
+                      {...register(`nearby_attractions.${index}.note`)}
                       className="input-field"
-                      placeholder={language === 'IT' ? "Distanza (es. 500m)" : "Distance (e.g. 500m)"}
-                    />
-                    <input
-                      {...register(`nearby_attractions.${index}.description`)}
-                      className="input-field"
-                      placeholder={language === 'IT' ? "Breve descrizione" : "Brief description"}
+                      placeholder={language === 'IT' ? "Note (opzionali)" : "Notes (optional)"}
                     />
                   </div>
                   {attractionFields.length > 1 && (
@@ -1043,7 +1211,7 @@ export default function CreateChatbotPage() {
               ))}
               <button
                 type="button"
-                onClick={() => appendAttraction({ name: '', distance: '', description: '' })}
+                onClick={() => appendAttraction({ name: '', note: '' })}
                 className="text-primary hover:text-secondary"
               >
                 <Plus className="w-4 h-4 inline mr-1" />
@@ -1055,21 +1223,16 @@ export default function CreateChatbotPage() {
               <label className="label">{t.chatbots.create.form.restaurantsBars}</label>
               {restaurantFields.map((field, index) => (
                 <div key={field.id} className="bg-gray-50 p-4 rounded-lg mb-3">
-                  <div className="grid md:grid-cols-3 gap-3">
+                  <div className="grid md:grid-cols-2 gap-3">
                     <input
                       {...register(`restaurants_bars.${index}.name`)}
                       className="input-field"
                       placeholder={language === 'IT' ? "Nome locale" : "Venue name"}
                     />
                     <input
-                      {...register(`restaurants_bars.${index}.type`)}
+                      {...register(`restaurants_bars.${index}.note`)}
                       className="input-field"
-                      placeholder={language === 'IT' ? "Tipo (es. Pizzeria)" : "Type (e.g. Pizzeria)"}
-                    />
-                    <input
-                      {...register(`restaurants_bars.${index}.distance`)}
-                      className="input-field"
-                      placeholder={language === 'IT' ? "Distanza" : "Distance"}
+                      placeholder={language === 'IT' ? "Note (opzionali)" : "Notes (optional)"}
                     />
                   </div>
                   {restaurantFields.length > 1 && (
@@ -1086,7 +1249,7 @@ export default function CreateChatbotPage() {
               ))}
               <button
                 type="button"
-                onClick={() => appendRestaurant({ name: '', type: '', distance: '' })}
+                onClick={() => appendRestaurant({ name: '', note: '' })}
                 className="text-primary hover:text-secondary"
               >
                 <Plus className="w-4 h-4 inline mr-1" />
@@ -1102,7 +1265,16 @@ export default function CreateChatbotPage() {
             <h2 className="text-2xl font-bold mb-4">{t.chatbots.create.steps.final}</h2>
             
             <div>
-              <label className="label">{t.chatbots.create.form.emergencyContacts}</label>
+              <label className="label">{t.chatbots.create.form.emergencyContacts} <span className="text-red-500">*</span></label>
+              <p className="text-sm text-gray-600 mb-3">
+                {language === 'IT' 
+                  ? 'È richiesto almeno un contatto di emergenza (nome e numero). Aggiungi il tuo numero di telefono come host.'
+                  : 'At least one emergency contact is required (name and number). Add your phone number as the host.'
+                }
+              </p>
+              {formErrors.emergency_contacts && (
+                <p className="error-text mb-3">{formErrors.emergency_contacts}</p>
+              )}
               {contactFields.map((field, index) => (
                 <div key={field.id} className="bg-gray-50 p-4 rounded-lg mb-3">
                   <div className="grid md:grid-cols-3 gap-3">
@@ -1110,16 +1282,28 @@ export default function CreateChatbotPage() {
                       {...register(`emergency_contacts.${index}.name`)}
                       className="input-field"
                       placeholder={language === 'IT' ? "Nome/Servizio" : "Name/Service"}
+                      onChange={(e) => {
+                        register(`emergency_contacts.${index}.name`).onChange(e)
+                        clearFieldError('emergency_contacts')
+                      }}
                     />
                     <input
                       {...register(`emergency_contacts.${index}.number`)}
                       className="input-field"
                       placeholder={language === 'IT' ? "Numero" : "Number"}
+                      onChange={(e) => {
+                        register(`emergency_contacts.${index}.number`).onChange(e)
+                        clearFieldError('emergency_contacts')
+                      }}
                     />
                     <input
                       {...register(`emergency_contacts.${index}.type`)}
                       className="input-field"
-                      placeholder={language === 'IT' ? "Tipo (es. Polizia)" : "Type (e.g. Police)"}
+                      placeholder={language === 'IT' ? "Tipo (es. Host, Polizia)" : "Type (e.g. Host, Police)"}
+                      onChange={(e) => {
+                        register(`emergency_contacts.${index}.type`).onChange(e)
+                        clearFieldError('emergency_contacts')
+                      }}
                     />
                   </div>
                   {contactFields.length > 1 && (

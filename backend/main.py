@@ -334,7 +334,11 @@ class ChatbotCreate(BaseModel):
     property_name: str
     property_type: str
     property_address: str
+    property_street_number: Optional[str] = None
     property_city: str
+    property_state: Optional[str] = None
+    property_postal_code: str
+    property_country: str
     property_description: str
     check_in_time: str
     check_out_time: str
@@ -342,7 +346,7 @@ class ChatbotCreate(BaseModel):
     amenities: List[str]
     neighborhood_description: str
     nearby_attractions: List[dict]
-    transportation_info: str
+    transportation_info: Optional[str] = None
     restaurants_bars: List[dict]
     shopping_info: str
     emergency_contacts: List[dict]
@@ -357,7 +361,11 @@ class ChatbotUpdate(BaseModel):
     property_name: Optional[str] = None
     property_type: Optional[str] = None
     property_address: Optional[str] = None
+    property_street_number: Optional[str] = None
     property_city: Optional[str] = None
+    property_state: Optional[str] = None
+    property_postal_code: Optional[str] = None
+    property_country: Optional[str] = None
     property_description: Optional[str] = None
     check_in_time: Optional[str] = None
     check_out_time: Optional[str] = None
@@ -384,7 +392,11 @@ class ChatbotResponse(BaseModel):
     property_name: str
     property_type: Optional[str]
     property_address: Optional[str]
+    property_street_number: Optional[str]
     property_city: Optional[str]
+    property_state: Optional[str]
+    property_postal_code: Optional[str]
+    property_country: Optional[str]
     property_description: Optional[str]
     check_in_time: Optional[str]
     check_out_time: Optional[str]
@@ -2676,14 +2688,18 @@ async def create_chatbot(
     property_type: str = Form(...),
     property_address: str = Form(...),
     property_city: str = Form(...),
+    property_postal_code: str = Form(...),
+    property_country: str = Form(...),
     property_description: str = Form(...),
     check_in_time: str = Form(...),
     check_out_time: str = Form(...),
     house_rules: str = Form(...),
     neighborhood_description: str = Form(...),
-    transportation_info: str = Form(...),
     welcome_message: str = Form(...),
     # Form data - campi opzionali con valori di default
+    property_street_number: str = Form(default=""),
+    property_state: str = Form(default=""),
+    transportation_info: str = Form(default=""),
     amenities: str = Form(default="[]"),
     nearby_attractions: str = Form(default="[]"),
     restaurants_bars: str = Form(default="[]"),
@@ -2704,7 +2720,11 @@ async def create_chatbot(
     print(f"  property_name: {property_name}")
     print(f"  property_type: {property_type}")
     print(f"  property_address: {property_address}")
+    print(f"  property_street_number: {property_street_number}")
     print(f"  property_city: {property_city}")
+    print(f"  property_state: {property_state}")
+    print(f"  property_postal_code: {property_postal_code}")
+    print(f"  property_country: {property_country}")
     print(f"  property_description: {property_description}")
     print(f"  check_in_time: {check_in_time}")
     print(f"  check_out_time: {check_out_time}")
@@ -2786,7 +2806,11 @@ async def create_chatbot(
         "property_name": property_name,
         "property_type": property_type,
         "property_address": property_address,
+        "property_street_number": property_street_number,
         "property_city": property_city,
+        "property_state": property_state,
+        "property_postal_code": property_postal_code,
+        "property_country": property_country,
         "property_description": property_description,
         "check_in_time": check_in_time,
         "check_out_time": check_out_time,
@@ -2816,7 +2840,11 @@ async def create_chatbot(
         property_name=property_name,
         property_type=property_type,
         property_address=property_address,
+        property_street_number=property_street_number,
         property_city=property_city,
+        property_state=property_state,
+        property_postal_code=property_postal_code,
+        property_country=property_country,
         property_description=property_description,
         check_in_time=check_in_time,
         check_out_time=check_out_time,
@@ -5111,15 +5139,19 @@ Estrai le informazioni e restituisci SOLO un JSON valido con questa struttura es
 {{
   "property_name": "Nome della proprietà",
   "property_type": "appartamento|villa|casa|stanza|loft|monolocale|bed_breakfast",
-  "property_address": "Indirizzo completo",
+  "property_address": "Via/strada (es. Via Roma)",
+  "property_street_number": "Numero civico (es. 123)",
   "property_city": "Città",
+  "property_state": "Provincia o stato (es. RM, CA)",
+  "property_postal_code": "CAP o codice postale",
+  "property_country": "Paese (es. IT, US, ES)",
   "property_description": "Descrizione dettagliata della proprietà",
   "check_in_time": "Orario check-in (es. 15:00 - 20:00)",
   "check_out_time": "Orario check-out (es. 10:00)",
   "house_rules": "Regole della casa",
   "amenities": ["wifi", "aria_condizionata", "riscaldamento", "tv", "netflix", "cucina", "lavastoviglie", "lavatrice", "asciugatrice", "ferro", "parcheggio", "piscina", "palestra", "balcone", "giardino", "ascensore", "cassaforte", "allarme", "animali_ammessi", "fumatori_ammessi"],
   "neighborhood_description": "Descrizione del quartiere",
-  "transportation_info": "Informazioni sui trasporti",
+  "transportation_info": "Informazioni sui trasporti (campo opzionale)",
   "shopping_info": "Informazioni sui negozi e shopping",
   "parking_info": "Informazioni sul parcheggio",
   "special_instructions": "Istruzioni speciali",
@@ -5127,20 +5159,18 @@ Estrai le informazioni e restituisci SOLO un JSON valido con questa struttura es
   "nearby_attractions": [
     {{
       "name": "Nome attrazione",
-      "distance": "Distanza",
-      "description": "Descrizione"
+      "note": "Note o descrizione breve (opzionale)"
     }}
   ],
   "restaurants_bars": [
     {{
       "name": "Nome locale",
-      "type": "Tipo (es. Ristorante, Bar)",
-      "distance": "Distanza"
+      "note": "Note o tipo di locale (opzionale)"
     }}
   ],
   "emergency_contacts": [
     {{
-      "name": "Nome contatto",
+      "name": "Nome contatto (es. Host, Mario Rossi)",
       "number": "Numero di telefono",
       "type": "Tipo (es. Host, Emergenza, Polizia)"
     }}
@@ -5316,21 +5346,20 @@ Contenuto della pagina:
 Estrai le informazioni dal testo sopra e includi:
 - Nome della proprietà
 - Tipo di proprietà  
-- Indirizzo completo
-- Città
+- Indirizzo dettagliato (via, numero civico, città, provincia/stato, CAP, paese)
 - Descrizione dettagliata
 - Orari di check-in e check-out
 - Regole della casa
 - Tutti i servizi e amenità disponibili
 - Descrizione del quartiere
-- Informazioni sui trasporti
+- Informazioni sui trasporti (ora opzionali)
 - Informazioni sui negozi e shopping
 - Informazioni sul parcheggio
 - Istruzioni speciali
 - Messaggio di benvenuto
-- Attrazioni nelle vicinanze
-- Ristoranti e bar nelle vicinanze
-- Contatti di emergenza
+- Attrazioni nelle vicinanze (solo nome e note)
+- Ristoranti e bar nelle vicinanze (solo nome e note)
+- Contatti di emergenza (almeno uno dell'host)
 - FAQ
 - Informazioni WiFi (nome rete e password)
 
@@ -5339,15 +5368,19 @@ Estrai le informazioni e restituisci SOLO un JSON valido con questa struttura es
 {{
   "property_name": "Nome della proprietà",
   "property_type": "appartamento|villa|casa|stanza|loft|monolocale|bed_breakfast",
-  "property_address": "Indirizzo completo",
+  "property_address": "Via/strada (es. Via Roma)",
+  "property_street_number": "Numero civico (es. 123)",
   "property_city": "Città",
+  "property_state": "Provincia o stato (es. RM, CA)",
+  "property_postal_code": "CAP o codice postale",
+  "property_country": "Paese (es. IT, US, ES)",
   "property_description": "Descrizione dettagliata della proprietà",
   "check_in_time": "Orario check-in (es. 15:00 - 20:00)",
   "check_out_time": "Orario check-out (es. 10:00)",
   "house_rules": "Regole della casa",
   "amenities": ["wifi", "aria_condizionata", "riscaldamento", "tv", "netflix", "cucina", "lavastoviglie", "lavatrice", "asciugatrice", "ferro", "parcheggio", "piscina", "palestra", "balcone", "giardino", "ascensore", "cassaforte", "allarme", "animali_ammessi", "fumatori_ammessi"],
   "neighborhood_description": "Descrizione del quartiere",
-  "transportation_info": "Informazioni sui trasporti",
+  "transportation_info": "Informazioni sui trasporti (campo opzionale)",
   "shopping_info": "Informazioni sui negozi e shopping",
   "parking_info": "Informazioni sul parcheggio",
   "special_instructions": "Istruzioni speciali",
@@ -5355,20 +5388,18 @@ Estrai le informazioni e restituisci SOLO un JSON valido con questa struttura es
   "nearby_attractions": [
     {{
       "name": "Nome attrazione",
-      "distance": "Distanza",
-      "description": "Descrizione"
+      "note": "Note o descrizione breve (opzionale)"
     }}
   ],
   "restaurants_bars": [
     {{
       "name": "Nome locale",
-      "type": "Tipo (es. Ristorante, Bar)",
-      "distance": "Distanza"
+      "note": "Note o tipo di locale (opzionale)"
     }}
   ],
   "emergency_contacts": [
     {{
-      "name": "Nome contatto",
+      "name": "Nome contatto (es. Host, Mario Rossi)",
       "number": "Numero di telefono",
       "type": "Tipo (es. Host, Emergenza, Polizia)"
     }}
