@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { MessageSquare, Users, QrCode, ExternalLink, Edit, Trash2, Eye, ArrowLeft, Loader2 } from 'lucide-react'
 import { useAuthStore, useChatbotStore } from '@/lib/store'
+import { useAuthInit } from '@/lib/useAuthInit'
 import { useLanguage } from '@/lib/languageContext'
 import { chatbots as chatbotsApi, auth } from '@/lib/api'
 import toast from 'react-hot-toast'
@@ -21,10 +22,14 @@ export default function ChatbotsListPage() {
   const [showQRModal, setShowQRModal] = useState(false)
   const [currentQR, setCurrentQR] = useState<{ url: string; qr: string } | null>(null)
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
+  
+  // Inizializza automaticamente l'autenticazione
+  const { isHydrated } = useAuthInit()
 
   useEffect(() => {
     const bootstrap = async () => {
-      if (!isAuthenticated) return
+      // Aspetta che lo store sia pronto e l'utente sia autenticato
+      if (!isHydrated || !isAuthenticated) return
       try {
         const me = await auth.me()
         if (!['active', 'cancelling', 'free_trial'].includes(me.data?.subscription_status)) {
@@ -35,7 +40,7 @@ export default function ChatbotsListPage() {
       await loadChatbots()
     }
     bootstrap()
-  }, [isAuthenticated])
+  }, [isHydrated, isAuthenticated])
 
   const loadChatbots = async () => {
     try {

@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { persist, createJSONStorage } from 'zustand/middleware'
 
 interface User {
   id: number
@@ -25,34 +26,77 @@ interface AuthState {
   token: string | null
   user: User | null
   isAuthenticated: boolean
+  isHydrated: boolean
   setAuth: (token: string) => void
   setUser: (user: User) => void
   logout: () => void
+  initializeAuth: () => void
+  setHydrated: () => void
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
-  token: null,
-  user: null,
-  isAuthenticated: false,
-  
-  setAuth: (token: string) => set({ 
-    token, 
-    isAuthenticated: true 
-  }),
-  
-  setUser: (user: User) => set({ user }),
-  
-  logout: () => {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('token')
+export const useAuthStore = create<AuthState>()(
+  persist(
+    (set, get) => ({
+      token: null,
+      user: null,
+      isAuthenticated: false,
+      isHydrated: false,
+      
+      setAuth: (token: string) => {
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('token', token)
+        }
+        set({ 
+          token, 
+          isAuthenticated: true 
+        })
+      },
+      
+      setUser: (user: User) => set({ user }),
+      
+      logout: () => {
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('token')
+        }
+        set({ 
+          token: null, 
+          user: null, 
+          isAuthenticated: false 
+        })
+      },
+
+      initializeAuth: () => {
+        if (typeof window !== 'undefined') {
+          const storedToken = localStorage.getItem('token')
+          if (storedToken && !get().isAuthenticated) {
+            set({ 
+              token: storedToken, 
+              isAuthenticated: true 
+            })
+          }
+        }
+      },
+
+      setHydrated: () => set({ isHydrated: true }),
+    }),
+    {
+      name: 'hostgpt-auth-storage',
+      storage: createJSONStorage(() => localStorage),
+      partialize: (state) => ({ 
+        token: state.token,
+        user: state.user,
+        isAuthenticated: state.isAuthenticated 
+      }),
+      onRehydrateStorage: () => (state) => {
+        // Dopo il rehydrate, inizializza l'auth e marca come hydrated
+        if (state) {
+          state.initializeAuth()
+          state.setHydrated()
+        }
+      },
     }
-    set({ 
-      token: null, 
-      user: null, 
-      isAuthenticated: false 
-    })
-  },
-}))
+  )
+)
 
 interface Chatbot {
   id: number

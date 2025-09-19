@@ -19,6 +19,7 @@ import {
   Eye
 } from 'lucide-react'
 import { useAuthStore, useChatbotStore } from '@/lib/store'
+import { useAuthInit } from '@/lib/useAuthInit'
 import { useLanguage } from '@/lib/languageContext'
 import { chatbots as chatbotsApi, subscription, auth } from '@/lib/api'
 import toast from 'react-hot-toast'
@@ -35,18 +36,15 @@ function DashboardContent() {
   const [selectedBot, setSelectedBot] = useState<number | null>(null)
   const [showQRModal, setShowQRModal] = useState(false)
   const [currentQR, setCurrentQR] = useState<{ url: string; qr: string } | null>(null)
-  const [isInitializing, setIsInitializing] = useState(true)
   const [isStartingCheckout, setIsStartingCheckout] = useState(false)
-
-  // Solo inizializzazione semplice; il checkout avviene su /checkout
-  useEffect(() => {
-    setIsInitializing(false)
-  }, [])
+  
+  // Inizializza automaticamente l'autenticazione
+  const { isHydrated } = useAuthInit()
 
   useEffect(() => {
     const enforceSubscription = async () => {
-      if (isInitializing || isStartingCheckout) return
-      if (!isAuthenticated) return
+      // Aspetta che lo store sia pronto e l'utente sia autenticato
+      if (!isHydrated || !isAuthenticated || isStartingCheckout) return
       try {
         const me = await auth.me()
         const status = me.data?.subscription_status
@@ -87,7 +85,7 @@ function DashboardContent() {
       }
     }
     enforceSubscription()
-  }, [isInitializing, isStartingCheckout, isAuthenticated])
+  }, [isHydrated, isStartingCheckout, isAuthenticated])
 
   const loadChatbots = async () => {
     try {

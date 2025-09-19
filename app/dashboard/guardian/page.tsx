@@ -22,6 +22,7 @@ import {
   Loader2
 } from 'lucide-react'
 import { useAuthStore } from '@/lib/store'
+import { useAuthInit } from '@/lib/useAuthInit'
 import toast from 'react-hot-toast'
 import Sidebar from '@/app/components/Sidebar'
 import { guardian } from '@/lib/api'
@@ -60,6 +61,9 @@ function GuardianContent() {
   const router = useRouter()
   const { user, logout, setUser } = useAuthStore()
   const { t } = useLanguage()
+  
+  // Inizializza automaticamente l'autenticazione
+  const { isHydrated } = useAuthInit()
   const [guardianStatus, setGuardianStatus] = useState<GuardianStatus | null>(null)
   const [guardianStats, setGuardianStats] = useState<GuardianStats | null>(null)
   const [alerts, setAlerts] = useState<GuardianAlert[]>([])
@@ -89,10 +93,10 @@ function GuardianContent() {
   }, [])
 
   useEffect(() => {
-    if (user) {
+    if (isHydrated && user) {
       fetchGuardianStatus()
     }
-  }, [user])
+  }, [isHydrated, user])
 
   const fetchGuardianStatus = async () => {
     try {
