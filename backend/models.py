@@ -49,6 +49,9 @@ class User(Base):
     # Language preference for emails and notifications
     language = Column(String(10), default="it", nullable=False)  # 'it' or 'en'
     
+    # Chatbot limit management
+    max_chatbots = Column(Integer, default=1)  # Default: 1 chatbot per utente
+    
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, onupdate=func.now())
     

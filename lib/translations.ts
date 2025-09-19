@@ -620,6 +620,8 @@ export interface Translations {
     actions: string
     noChatbots: string
     createFirst: string
+    createNew: string
+    limitReached: string
     conversations: string
     active: string
     guest: string
@@ -1651,6 +1653,8 @@ export const translations: Record<Language, Translations> = {
       actions: "Azioni",
       noChatbots: "Non hai ancora creato nessun chatbot",
       createFirst: "Crea il tuo primo chatbot",
+      createNew: "Crea nuovo chatbot",
+      limitReached: "Limite raggiunto",
       conversations: "conversazioni",
       active: "Attivo",
       guest: "Ospite",
@@ -2854,6 +2858,8 @@ export const translations: Record<Language, Translations> = {
       actions: "Actions",
       noChatbots: "You haven't created any chatbots yet",
       createFirst: "Create your first chatbot",
+      createNew: "Create new chatbot",
+      limitReached: "Limit reached",
       conversations: "conversations",
       active: "Active",
       guest: "Guest",

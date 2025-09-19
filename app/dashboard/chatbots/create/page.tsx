@@ -102,18 +102,30 @@ export default function CreateChatbotPage() {
   const [formErrors, setFormErrors] = useState<Record<string, string>>({})
   const { addChatbot } = useChatbotStore()
   
-  // Se esiste già un chatbot, reindirizza ai dettagli (limite 1 per account)
+  // Controlla il limite di chatbot
   useEffect(() => {
-    const checkExisting = async () => {
+    const checkLimits = async () => {
       try {
         const res = await chatbots.list()
-        const bots = res.data || []
-        if (bots.length >= 1) {
-          router.replace(`/dashboard/chatbots/${bots[0].id}`)
+        const response = res.data
+        
+        if (response.chatbots && response.limits) {
+          // Nuovo formato con limiti
+          if (!response.limits.can_create_new) {
+            toast.error(`Hai raggiunto il limite massimo di ${response.limits.max_allowed} chatbot`)
+            router.replace('/dashboard/chatbots')
+            return
+          }
+        } else {
+          // Formato vecchio - controlla se esiste già un chatbot
+          const bots = response || []
+          if (bots.length >= 1) {
+            router.replace(`/dashboard/chatbots/${bots[0].id}`)
+          }
         }
       } catch {}
     }
-    checkExisting()
+    checkLimits()
   }, [])
   
   const { register, control, handleSubmit, watch, formState: { errors }, setValue } = useForm<ChatbotFormData>({

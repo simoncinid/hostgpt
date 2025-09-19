@@ -69,10 +69,18 @@ interface Chatbot {
   has_icon: boolean
 }
 
+interface ChatbotLimits {
+  current_count: number
+  max_allowed: number
+  can_create_new: boolean
+}
+
 interface ChatbotState {
   chatbots: Chatbot[]
+  limits: ChatbotLimits | null
   currentChatbot: Chatbot | null
   setChatbots: (chatbots: Chatbot[]) => void
+  setLimits: (limits: ChatbotLimits | null) => void
   setCurrentChatbot: (chatbot: Chatbot | null) => void
   addChatbot: (chatbot: Chatbot) => void
   updateChatbot: (id: number, updates: Partial<Chatbot>) => void
@@ -81,14 +89,22 @@ interface ChatbotState {
 
 export const useChatbotStore = create<ChatbotState>((set) => ({
   chatbots: [],
+  limits: null,
   currentChatbot: null,
   
   setChatbots: (chatbots) => set({ chatbots }),
   
+  setLimits: (limits) => set({ limits }),
+  
   setCurrentChatbot: (chatbot) => set({ currentChatbot: chatbot }),
   
   addChatbot: (chatbot) => set((state) => ({ 
-    chatbots: [...state.chatbots, chatbot] 
+    chatbots: [...state.chatbots, chatbot],
+    limits: state.limits ? {
+      ...state.limits,
+      current_count: state.limits.current_count + 1,
+      can_create_new: (state.limits.current_count + 1) < state.limits.max_allowed
+    } : null
   })),
   
   updateChatbot: (id, updates) => set((state) => ({
@@ -104,6 +120,11 @@ export const useChatbotStore = create<ChatbotState>((set) => ({
     chatbots: state.chatbots.filter(bot => bot.id !== id),
     currentChatbot: state.currentChatbot?.id === id 
       ? null 
-      : state.currentChatbot
+      : state.currentChatbot,
+    limits: state.limits ? {
+      ...state.limits,
+      current_count: Math.max(0, state.limits.current_count - 1),
+      can_create_new: (state.limits.current_count - 1) < state.limits.max_allowed
+    } : null
   })),
 }))

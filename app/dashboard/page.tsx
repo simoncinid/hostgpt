@@ -29,7 +29,7 @@ function DashboardContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { user, logout, setAuth, setUser, isAuthenticated } = useAuthStore()
-  const { chatbots, setChatbots, deleteChatbot } = useChatbotStore()
+  const { chatbots, limits, setChatbots, setLimits, deleteChatbot } = useChatbotStore()
   const { t } = useLanguage()
   const [isLoading, setIsLoading] = useState(true)
   const [selectedBot, setSelectedBot] = useState<number | null>(null)
@@ -92,7 +92,16 @@ function DashboardContent() {
   const loadChatbots = async () => {
     try {
       const response = await chatbotsApi.list()
-      setChatbots(response.data)
+      // Gestisce sia il formato vecchio che nuovo
+      if (response.data.chatbots) {
+        // Nuovo formato con limiti
+        setChatbots(response.data.chatbots)
+        setLimits(response.data.limits)
+      } else {
+        // Formato vecchio (array diretto)
+        setChatbots(response.data)
+        setLimits(null)
+      }
     } catch (error) {
       toast.error('Errore nel caricamento dei chatbot')
     } finally {

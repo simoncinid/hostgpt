@@ -15,7 +15,7 @@ import ChatbotIcon from '@/app/components/ChatbotIcon'
 export default function ChatbotsListPage() {
   const router = useRouter()
   const { user, isAuthenticated } = useAuthStore()
-  const { chatbots, setChatbots, deleteChatbot } = useChatbotStore()
+  const { chatbots, limits, setChatbots, setLimits, deleteChatbot } = useChatbotStore()
   const { t } = useLanguage()
   const [isLoading, setIsLoading] = useState(true)
   const [showQRModal, setShowQRModal] = useState(false)
@@ -40,7 +40,16 @@ export default function ChatbotsListPage() {
   const loadChatbots = async () => {
     try {
       const response = await chatbotsApi.list()
-      setChatbots(response.data)
+      // Gestisce sia il formato vecchio che nuovo
+      if (response.data.chatbots) {
+        // Nuovo formato con limiti
+        setChatbots(response.data.chatbots)
+        setLimits(response.data.limits)
+      } else {
+        // Formato vecchio (array diretto)
+        setChatbots(response.data)
+        setLimits(null)
+      }
     } catch {
       toast.error('Errore nel caricamento dei chatbot')
     } finally {
@@ -78,10 +87,20 @@ export default function ChatbotsListPage() {
         <div className="bg-white shadow-sm">
           <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
             <h1 className="text-xl font-semibold">{t.chatbots.title}</h1>
-            {/* Nasconde il pulsante Crea se esiste già un chatbot */}
+            {/* Mostra sempre il pulsante, ma lo disabilita se il limite è raggiunto */}
             {chatbots.length === 0 ? (
-              <Link href="/dashboard/chatbots/create" className="btn-primary">{t.chatbots.create.title}</Link>
-            ) : null}
+              <Link href="/dashboard/chatbots/create" className="btn-primary">{t.chatbots.createFirst}</Link>
+            ) : limits?.can_create_new ? (
+              <Link href="/dashboard/chatbots/create" className="btn-primary">{t.chatbots.createNew}</Link>
+            ) : (
+              <button 
+                disabled 
+                className="btn-primary opacity-50 cursor-not-allowed"
+                title={`${t.chatbots.limitReached} (${limits?.current_count}/${limits?.max_allowed})`}
+              >
+                {t.chatbots.createNew}
+              </button>
+            )}
           </div>
         </div>
 

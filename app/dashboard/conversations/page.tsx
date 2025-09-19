@@ -39,8 +39,10 @@ function ConversationsContent() {
       try {
         if (chatbots.length === 0) {
           const list = await chatbotsApi.list()
-          setChatbots(list.data)
-          if (!preselectedId && list.data.length) setSelectedBotId(list.data[0].id)
+          // Gestisce sia il formato vecchio che nuovo
+          const bots = list.data.chatbots || list.data
+          setChatbots(bots)
+          if (!preselectedId && bots.length) setSelectedBotId(bots[0].id)
         }
       } catch {
         toast.error('Errore nel caricamento dei chatbot')

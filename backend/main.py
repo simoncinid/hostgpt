@@ -2730,16 +2730,25 @@ async def create_chatbot(
             status_code=403, 
             detail="Devi attivare un abbonamento per creare un chatbot. Abbonamento mensile: 29€/mese"
         )
-    # Impone limite di 1 chatbot per utente
+    # Controlla il limite di chatbot per l'utente
     existing_count = db.query(Chatbot).filter(Chatbot.user_id == current_user.id).count()
-    if existing_count >= 1:
-        raise HTTPException(
-            status_code=400,
-            detail=(
-                "Ogni account può avere un solo chatbot. Se ti servono più chatbot perché gestisci più strutture, "
-                "contattami su WhatsApp al 3391797616."
+    max_allowed = current_user.max_chatbots or 1  # Default 1 se il campo è null
+    
+    if existing_count >= max_allowed:
+        if max_allowed == 1:
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "Hai raggiunto il limite massimo di chatbot per il tuo account. "
+                    "Se ti servono più chatbot perché gestisci più strutture, "
+                    "contattami su WhatsApp al 3391797616."
+                )
             )
-        )
+        else:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Hai raggiunto il limite massimo di {max_allowed} chatbot per il tuo account."
+            )
     
     # Valida e processa l'icona se fornita
     icon_data = None
@@ -2899,6 +2908,11 @@ async def get_chatbots(
         )
     chatbots = db.query(Chatbot).filter(Chatbot.user_id == current_user.id).all()
     
+    # Calcola informazioni sui limiti
+    current_count = len(chatbots)
+    max_allowed = current_user.max_chatbots or 1
+    can_create_new = current_count < max_allowed
+    
     result = []
     for bot in chatbots:
         chat_url = f"{settings.FRONTEND_URL}/chat/{bot.uuid}"
@@ -2927,7 +2941,14 @@ async def get_chatbots(
             "has_icon": bot.has_icon
         })
     
-    return result
+    return {
+        "chatbots": result,
+        "limits": {
+            "current_count": current_count,
+            "max_allowed": max_allowed,
+            "can_create_new": can_create_new
+        }
+    }
 
 @app.get("/api/chatbots/{chatbot_id}/icon")
 async def get_chatbot_icon(
