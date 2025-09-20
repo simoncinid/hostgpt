@@ -3359,7 +3359,8 @@ async def get_chat_info(uuid: str, db: Session = Depends(get_db)):
         "property_name": chatbot.property_name,
         "welcome_message": chatbot.welcome_message,
         "has_icon": chatbot.has_icon,
-        "id": chatbot.id
+        "id": chatbot.id,
+        "house_rules": chatbot.house_rules
     }
 
 @app.get("/api/demo/info")
