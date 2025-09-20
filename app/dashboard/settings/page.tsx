@@ -203,7 +203,7 @@ export default function SettingsPage() {
                       </p>
                     )}
                   </div>
-                  {!['active', 'cancelling'].includes(user?.subscription_status || '') && (
+                  {!['active', 'cancelling', 'free_trial'].includes(user?.subscription_status || '') && (
                     <button onClick={handleStartCheckout} disabled={isCheckoutLoading} className="btn-primary inline-flex items-center">
                       {isCheckoutLoading ? (
                         <>

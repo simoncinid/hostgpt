@@ -507,6 +507,22 @@ export default function CreateChatbotPage() {
       return
     }
     
+    // Validazione finale prima del submit
+    
+    // Verifica che ci sia almeno un contatto di emergenza
+    const validContacts = data.emergency_contacts?.filter(contact => 
+      contact.name?.trim() && contact.number?.trim()
+    ) || []
+    
+    if (validContacts.length === 0) {
+      toast.error(language === 'IT' 
+        ? 'È richiesto almeno un contatto di emergenza (nome e numero). Aggiungi il tuo numero di telefono come host.'
+        : 'At least one emergency contact is required (name and number). Add your phone number as the host.'
+      )
+      setCurrentStep(6) // Vai all'ultimo step
+      return
+    }
+    
     setIsSubmitting(true)
     try {
       // Pulisce e valida i dati prima dell'invio
@@ -516,7 +532,11 @@ export default function CreateChatbotPage() {
         property_name: data.property_name || '',
         property_type: data.property_type || '',
         property_address: data.property_address || '',
+        property_street_number: data.property_street_number || '',
         property_city: data.property_city || '',
+        property_state: data.property_state || '',
+        property_postal_code: data.property_postal_code || '',
+        property_country: data.property_country || '',
         property_description: data.property_description || '',
         check_in_time: data.check_in_time || '',
         check_out_time: data.check_out_time || '',
@@ -612,8 +632,12 @@ export default function CreateChatbotPage() {
           newErrors.property_type = language === 'IT' ? 'Tipo richiesto' : 'Type required'
           hasErrors = true
         }
+        
+        // Validazione rigorosa dell'indirizzo - TUTTI i campi obbligatori devono essere presenti
         if (!currentData.property_address?.trim()) {
-          newErrors.property_address = language === 'IT' ? 'Via richiesta' : 'Street required'
+          newErrors.property_address = language === 'IT' 
+            ? 'Seleziona un indirizzo dai suggerimenti per compilare automaticamente tutti i campi'
+            : 'Select an address from the suggestions to automatically fill all fields'
           hasErrors = true
         }
         if (!currentData.property_city?.trim()) {
@@ -626,6 +650,15 @@ export default function CreateChatbotPage() {
         }
         if (!currentData.property_country?.trim()) {
           newErrors.property_country = language === 'IT' ? 'Paese richiesto' : 'Country required'
+          hasErrors = true
+        }
+        
+        // Se mancano campi dell'indirizzo, mostra un messaggio più specifico
+        if (!currentData.property_address?.trim() || !currentData.property_city?.trim() || 
+            !currentData.property_postal_code?.trim() || !currentData.property_country?.trim()) {
+          newErrors.property_address = language === 'IT' 
+            ? 'Indirizzo incompleto. Seleziona un indirizzo dai suggerimenti Google per compilare automaticamente tutti i campi richiesti (via, città, CAP, paese).'
+            : 'Incomplete address. Select an address from Google suggestions to automatically fill all required fields (street, city, postal code, country).'
           hasErrors = true
         }
         break
@@ -834,9 +867,12 @@ export default function CreateChatbotPage() {
               <div className="relative">
                 <input
                   type="text"
-                  className="input-field"
+                  className={`input-field ${formErrors.property_address ? 'border-red-500' : ''}`}
                   placeholder={language === 'IT' ? "Inizia a digitare l'indirizzo..." : "Start typing the address..."}
-                  onChange={(e) => searchAddresses(e.target.value)}
+                  onChange={(e) => {
+                    searchAddresses(e.target.value)
+                    clearFieldError('property_address')
+                  }}
                   disabled={isLoadingAddress}
                 />
                 {isLoadingAddress && (
@@ -861,99 +897,84 @@ export default function CreateChatbotPage() {
                   </div>
                 )}
               </div>
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-4">
-              <div>
-                <label className="label">{language === 'IT' ? 'Via' : 'Street'} <span className="text-red-500">*</span></label>
-                <input
-                  {...register('property_address', { required: language === 'IT' ? 'Via richiesta' : 'Street required' })}
-                  className={`input-field ${formErrors.property_address ? 'border-red-500' : ''}`}
-                  placeholder={language === 'IT' ? "Es. Via Roma" : "E.g. Main Street"}
-                  onChange={(e) => {
-                    register('property_address').onChange(e)
-                    clearFieldError('property_address')
-                  }}
-                />
-                {(errors.property_address || formErrors.property_address) && (
-                  <p className="error-text">{errors.property_address?.message || formErrors.property_address}</p>
-                )}
-              </div>
-
-              <div>
-                <label className="label">{language === 'IT' ? 'Numero Civico' : 'Street Number'}</label>
-                <input
-                  {...register('property_street_number')}
-                  className="input-field"
-                  placeholder={language === 'IT' ? "Es. 123" : "E.g. 123"}
-                />
-              </div>
-            </div>
-
-            <div className="grid md:grid-cols-3 gap-4">
-              <div>
-                <label className="label">{language === 'IT' ? 'Città' : 'City'} <span className="text-red-500">*</span></label>
-                <input
-                  {...register('property_city', { required: language === 'IT' ? 'Città richiesta' : 'City required' })}
-                  className={`input-field ${formErrors.property_city ? 'border-red-500' : ''}`}
-                  placeholder={language === 'IT' ? "Es. Roma" : "E.g. Rome"}
-                  onChange={(e) => {
-                    register('property_city').onChange(e)
-                    clearFieldError('property_city')
-                  }}
-                />
-                {(errors.property_city || formErrors.property_city) && (
-                  <p className="error-text">{errors.property_city?.message || formErrors.property_city}</p>
-                )}
-              </div>
-
-              <div>
-                <label className="label">{language === 'IT' ? 'Provincia/Stato' : 'State/Province'}</label>
-                <input
-                  {...register('property_state')}
-                  className="input-field"
-                  placeholder={language === 'IT' ? "Es. RM" : "E.g. CA"}
-                />
-              </div>
-
-              <div>
-                <label className="label">{language === 'IT' ? 'CAP' : 'Postal Code'} <span className="text-red-500">*</span></label>
-                <input
-                  {...register('property_postal_code', { required: language === 'IT' ? 'CAP richiesto' : 'Postal code required' })}
-                  className={`input-field ${formErrors.property_postal_code ? 'border-red-500' : ''}`}
-                  placeholder={language === 'IT' ? "Es. 00100" : "E.g. 90210"}
-                  onChange={(e) => {
-                    register('property_postal_code').onChange(e)
-                    clearFieldError('property_postal_code')
-                  }}
-                />
-                {(errors.property_postal_code || formErrors.property_postal_code) && (
-                  <p className="error-text">{errors.property_postal_code?.message || formErrors.property_postal_code}</p>
-                )}
-              </div>
-            </div>
-
-            <div>
-              <label className="label">{language === 'IT' ? 'Paese' : 'Country'} <span className="text-red-500">*</span></label>
-              <select
-                {...register('property_country', { required: language === 'IT' ? 'Paese richiesto' : 'Country required' })}
-                className={`input-field ${formErrors.property_country ? 'border-red-500' : ''}`}
-                onChange={(e) => {
-                  register('property_country').onChange(e)
-                  clearFieldError('property_country')
-                }}
-              >
-                <option value="">{language === 'IT' ? 'Seleziona paese' : 'Select country'}</option>
-                <option value="IT">{language === 'IT' ? 'Italia' : 'Italy'}</option>
-                <option value="ES">{language === 'IT' ? 'Spagna' : 'Spain'}</option>
-                <option value="FR">{language === 'IT' ? 'Francia' : 'France'}</option>
-                <option value="DE">{language === 'IT' ? 'Germania' : 'Germany'}</option>
-                <option value="GB">{language === 'IT' ? 'Regno Unito' : 'United Kingdom'}</option>
-                <option value="US">{language === 'IT' ? 'Stati Uniti' : 'United States'}</option>
-              </select>
-              {(errors.property_country || formErrors.property_country) && (
-                <p className="error-text">{errors.property_country?.message || formErrors.property_country}</p>
+              {formErrors.property_address && (
+                <p className="error-text mt-2">{formErrors.property_address}</p>
               )}
+            </div>
+
+            <div className="bg-gray-50 p-4 rounded-lg border">
+              <h4 className="font-medium text-gray-900 mb-3">
+                {language === 'IT' ? 'Dettagli Indirizzo (compilati automaticamente)' : 'Address Details (filled automatically)'}
+              </h4>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <label className="label">{language === 'IT' ? 'Via' : 'Street'}</label>
+                  <input
+                    {...register('property_address')}
+                    className="input-field bg-gray-100 cursor-not-allowed"
+                    placeholder={language === 'IT' ? "Compilato automaticamente" : "Filled automatically"}
+                    readOnly
+                    tabIndex={-1}
+                  />
+                </div>
+
+                <div>
+                  <label className="label">{language === 'IT' ? 'Numero Civico' : 'Street Number'}</label>
+                  <input
+                    {...register('property_street_number')}
+                    className="input-field bg-gray-100 cursor-not-allowed"
+                    placeholder={language === 'IT' ? "Compilato automaticamente" : "Filled automatically"}
+                    readOnly
+                    tabIndex={-1}
+                  />
+                </div>
+              </div>
+
+              <div className="grid md:grid-cols-3 gap-4 mt-4">
+                <div>
+                  <label className="label">{language === 'IT' ? 'Città' : 'City'}</label>
+                  <input
+                    {...register('property_city')}
+                    className="input-field bg-gray-100 cursor-not-allowed"
+                    placeholder={language === 'IT' ? "Compilato automaticamente" : "Filled automatically"}
+                    readOnly
+                    tabIndex={-1}
+                  />
+                </div>
+
+                <div>
+                  <label className="label">{language === 'IT' ? 'Provincia/Stato' : 'State/Province'}</label>
+                  <input
+                    {...register('property_state')}
+                    className="input-field bg-gray-100 cursor-not-allowed"
+                    placeholder={language === 'IT' ? "Compilato automaticamente" : "Filled automatically"}
+                    readOnly
+                    tabIndex={-1}
+                  />
+                </div>
+
+                <div>
+                  <label className="label">{language === 'IT' ? 'CAP' : 'Postal Code'}</label>
+                  <input
+                    {...register('property_postal_code')}
+                    className="input-field bg-gray-100 cursor-not-allowed"
+                    placeholder={language === 'IT' ? "Compilato automaticamente" : "Filled automatically"}
+                    readOnly
+                    tabIndex={-1}
+                  />
+                </div>
+              </div>
+
+              <div className="mt-4">
+                <label className="label">{language === 'IT' ? 'Paese' : 'Country'}</label>
+                <input
+                  {...register('property_country')}
+                  className="input-field bg-gray-100 cursor-not-allowed"
+                  placeholder={language === 'IT' ? "Compilato automaticamente" : "Filled automatically"}
+                  readOnly
+                  tabIndex={-1}
+                />
+              </div>
             </div>
 
             <div>

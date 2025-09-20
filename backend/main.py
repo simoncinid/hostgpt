@@ -2750,25 +2750,33 @@ async def create_chatbot(
             status_code=403, 
             detail="Devi attivare un abbonamento per creare un chatbot. Abbonamento mensile: 29€/mese"
         )
+    
     # Controlla il limite di chatbot per l'utente
     existing_count = db.query(Chatbot).filter(Chatbot.user_id == current_user.id).count()
     max_allowed = current_user.max_chatbots or 1  # Default 1 se il campo è null
     
     if existing_count >= max_allowed:
-        if max_allowed == 1:
+        raise HTTPException(
+            status_code=403, 
+            detail=f"Limite chatbot raggiunto. Puoi creare massimo {max_allowed} chatbot con il tuo piano."
+        )
+    
+    # Validazione dati specifici
+    # Verifica che ci sia almeno un contatto di emergenza valido
+    try:
+        emergency_contacts_list = json.loads(emergency_contacts) if emergency_contacts else []
+        valid_contacts = [c for c in emergency_contacts_list if c.get('name', '').strip() and c.get('number', '').strip()]
+        if not valid_contacts:
             raise HTTPException(
-                status_code=400,
-                detail=(
-                    "Hai raggiunto il limite massimo di chatbot per il tuo account. "
-                    "Se ti servono più chatbot perché gestisci più strutture, "
-                    "contattami su WhatsApp al 3391797616."
-                )
+                status_code=400, 
+                detail="È richiesto almeno un contatto di emergenza (nome e numero). Aggiungi il tuo numero di telefono come host."
             )
-        else:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Hai raggiunto il limite massimo di {max_allowed} chatbot per il tuo account."
-            )
+    except json.JSONDecodeError:
+        raise HTTPException(
+            status_code=400, 
+            detail="Formato contatti di emergenza non valido"
+        )
+    
     
     # Valida e processa l'icona se fornita
     icon_data = None
