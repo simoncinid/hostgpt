@@ -74,7 +74,7 @@ class Chatbot(Base):
     property_name = Column(String(255), nullable=False)
     property_type = Column(String(100))  # appartamento, villa, stanza, etc.
     property_address = Column(String(500))
-    property_street_number = Column(String(50))
+    property_street_number = Column(String(50), nullable=False)
     property_city = Column(String(255))
     property_state = Column(String(100))
     property_postal_code = Column(String(20))

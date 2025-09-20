@@ -640,6 +640,10 @@ export default function CreateChatbotPage() {
             : 'Select an address from the suggestions to automatically fill all fields'
           hasErrors = true
         }
+        if (!currentData.property_street_number?.trim()) {
+          newErrors.property_street_number = language === 'IT' ? 'Numero civico richiesto' : 'Street number required'
+          hasErrors = true
+        }
         if (!currentData.property_city?.trim()) {
           newErrors.property_city = language === 'IT' ? 'Città richiesta' : 'City required'
           hasErrors = true
@@ -654,11 +658,12 @@ export default function CreateChatbotPage() {
         }
         
         // Se mancano campi dell'indirizzo, mostra un messaggio più specifico
-        if (!currentData.property_address?.trim() || !currentData.property_city?.trim() || 
-            !currentData.property_postal_code?.trim() || !currentData.property_country?.trim()) {
+        if (!currentData.property_address?.trim() || !currentData.property_street_number?.trim() || 
+            !currentData.property_city?.trim() || !currentData.property_postal_code?.trim() || 
+            !currentData.property_country?.trim()) {
           newErrors.property_address = language === 'IT' 
-            ? 'Indirizzo incompleto. Seleziona un indirizzo dai suggerimenti Google per compilare automaticamente tutti i campi richiesti (via, città, CAP, paese).'
-            : 'Incomplete address. Select an address from Google suggestions to automatically fill all required fields (street, city, postal code, country).'
+            ? 'Indirizzo incompleto. Seleziona un indirizzo dai suggerimenti Google per compilare automaticamente tutti i campi richiesti (via, numero civico, città, CAP, paese).'
+            : 'Incomplete address. Select an address from Google suggestions to automatically fill all required fields (street, street number, city, postal code, country).'
           hasErrors = true
         }
         break

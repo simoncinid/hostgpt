@@ -334,7 +334,7 @@ class ChatbotCreate(BaseModel):
     property_name: str
     property_type: str
     property_address: str
-    property_street_number: Optional[str] = None
+    property_street_number: str
     property_city: str
     property_state: Optional[str] = None
     property_postal_code: str
@@ -2687,6 +2687,7 @@ async def create_chatbot(
     property_name: str = Form(...),
     property_type: str = Form(...),
     property_address: str = Form(...),
+    property_street_number: str = Form(...),
     property_city: str = Form(...),
     property_postal_code: str = Form(...),
     property_country: str = Form(...),
@@ -2697,7 +2698,6 @@ async def create_chatbot(
     neighborhood_description: str = Form(...),
     welcome_message: str = Form(...),
     # Form data - campi opzionali con valori di default
-    property_street_number: str = Form(default=""),
     property_state: str = Form(default=""),
     transportation_info: str = Form(default=""),
     amenities: str = Form(default="[]"),
