@@ -36,3 +36,6 @@ fastapi==0.104.1
 PyPDF2==3.0.1
 python-docx==1.1.0
 odfpy==1.4.1
+
+# Libreria per generazione PDF
+reportlab==4.0.7
