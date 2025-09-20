@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
@@ -107,7 +107,9 @@ export default function CreateChatbotPage() {
   const [addressSuggestions, setAddressSuggestions] = useState<any[]>([])
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [isLoadingAddress, setIsLoadingAddress] = useState(false)
+  const [addressInputValue, setAddressInputValue] = useState('')
   const addressInputRef = useRef<HTMLInputElement>(null)
+  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const [rulesFile, setRulesFile] = useState<File | null>(null)
   const [isLoadingRules, setIsLoadingRules] = useState(false)
   const [rulesError, setRulesError] = useState<string | null>(null)
@@ -137,6 +139,15 @@ export default function CreateChatbotPage() {
       } catch {}
     }
     checkLimits()
+  }, [])
+
+  // Cleanup del timeout quando il componente viene unmountato
+  useEffect(() => {
+    return () => {
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current)
+      }
+    }
   }, [])
   
   const { register, control, handleSubmit, watch, formState: { errors }, setValue } = useForm<ChatbotFormData>({
@@ -214,6 +225,25 @@ export default function CreateChatbotPage() {
     }
   }
 
+  // Funzione debounced per evitare troppe chiamate API
+  const debouncedSearchAddresses = useCallback((query: string) => {
+    // Cancella il timeout precedente
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current)
+    }
+
+    // Imposta un nuovo timeout
+    debounceTimeoutRef.current = setTimeout(() => {
+      searchAddresses(query)
+    }, 300) // 300ms di delay
+  }, [])
+
+  // Gestione del cambio valore input
+  const handleAddressInputChange = (value: string) => {
+    setAddressInputValue(value)
+    debouncedSearchAddresses(value)
+  }
+
   const selectAddress = async (suggestion: any) => {
     try {
       setIsLoadingAddress(true)
@@ -227,6 +257,9 @@ export default function CreateChatbotPage() {
         setValue('property_state', response.data.state || '')
         setValue('property_postal_code', response.data.postal_code || '')
         setValue('property_country', response.data.country || 'IT')
+        
+        // Aggiorna anche il valore dell'input di ricerca
+        setAddressInputValue(suggestion.description || suggestion.main_text || '')
         
         setShowSuggestions(false)
         setAddressSuggestions([])
@@ -787,6 +820,11 @@ export default function CreateChatbotPage() {
         ) || []
         
         if (validContacts.length === 0) {
+          // Auto-compila "host" nel primo contatto se non è già impostato
+          if (currentData.emergency_contacts && currentData.emergency_contacts[0] && !currentData.emergency_contacts[0].type?.trim()) {
+            setValue('emergency_contacts.0.type', 'host')
+          }
+          
           newErrors.emergency_contacts = language === 'IT' 
             ? 'È richiesto almeno un contatto di emergenza (nome e numero)'
             : 'At least one emergency contact is required (name and number)'
@@ -799,26 +837,38 @@ export default function CreateChatbotPage() {
     if (hasErrors) {
       setFormErrors(newErrors)
       
-      // Focus sul campo indirizzo se ci sono errori di indirizzo, altrimenti sul primo campo con errore
+      // Focus automatico basato sul tipo di errore
       const hasAddressErrors = newErrors.property_address || newErrors.property_street_number || 
                               newErrors.property_city || newErrors.property_postal_code || 
                               newErrors.property_country
+      const hasEmergencyContactErrors = newErrors.emergency_contacts
       
       if (hasAddressErrors && addressInputRef.current) {
+        // Focus sul campo indirizzo se ci sono errori di indirizzo
         setTimeout(() => {
           addressInputRef.current?.focus()
           addressInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
         }, 100)
-      } else {
-      const firstErrorField = Object.keys(newErrors)[0]
-      if (firstErrorField) {
+      } else if (hasEmergencyContactErrors) {
+        // Focus sul campo nome del primo contatto se ci sono errori di contatti di emergenza
         setTimeout(() => {
-          const element = document.querySelector(`[name="${firstErrorField}"]`) as HTMLElement
-          if (element) {
-            element.focus()
-            element.scrollIntoView({ behavior: 'smooth', block: 'center' })
+          const firstContactNameField = document.querySelector('input[name="emergency_contacts.0.name"]') as HTMLElement
+          if (firstContactNameField) {
+            firstContactNameField.focus()
+            firstContactNameField.scrollIntoView({ behavior: 'smooth', block: 'center' })
           }
         }, 100)
+      } else {
+        // Focus sul primo campo con errore per altri casi
+        const firstErrorField = Object.keys(newErrors)[0]
+        if (firstErrorField) {
+          setTimeout(() => {
+            const element = document.querySelector(`[name="${firstErrorField}"]`) as HTMLElement
+            if (element) {
+              element.focus()
+              element.scrollIntoView({ behavior: 'smooth', block: 'center' })
+            }
+          }, 100)
         }
       }
       
@@ -953,13 +1003,14 @@ export default function CreateChatbotPage() {
                 }
               </p>
               <div className="relative">
-              <input
+                <input
                   ref={addressInputRef}
                   type="text"
+                  value={addressInputValue}
                   className="input-field"
                   placeholder={language === 'IT' ? "Inizia a digitare l'indirizzo..." : "Start typing the address..."}
-                onChange={(e) => {
-                    searchAddresses(e.target.value)
+                  onChange={(e) => {
+                    handleAddressInputChange(e.target.value)
                   }}
                   disabled={isLoadingAddress}
                 />
