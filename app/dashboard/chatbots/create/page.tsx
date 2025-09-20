@@ -235,7 +235,7 @@ export default function CreateChatbotPage() {
     // Imposta un nuovo timeout
     debounceTimeoutRef.current = setTimeout(() => {
       searchAddresses(query)
-    }, 300) // 300ms di delay
+    }, 800) // 800ms di delay per evitare perdita focus
   }, [])
 
   // Gestione del cambio valore input
@@ -820,11 +820,6 @@ export default function CreateChatbotPage() {
         ) || []
         
         if (validContacts.length === 0) {
-          // Auto-compila "host" nel primo contatto se non è già impostato
-          if (currentData.emergency_contacts && currentData.emergency_contacts[0] && !currentData.emergency_contacts[0].type?.trim()) {
-            setValue('emergency_contacts.0.type', 'host')
-          }
-          
           newErrors.emergency_contacts = language === 'IT' 
             ? 'È richiesto almeno un contatto di emergenza (nome e numero)'
             : 'At least one emergency contact is required (name and number)'
@@ -850,6 +845,12 @@ export default function CreateChatbotPage() {
           addressInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
         }, 100)
       } else if (hasEmergencyContactErrors) {
+        // Auto-compila "host" nel primo contatto se non è già impostato
+        const currentData = watch()
+        if (currentData.emergency_contacts && currentData.emergency_contacts[0] && !currentData.emergency_contacts[0].type?.trim()) {
+          setValue('emergency_contacts.0.type', 'host')
+        }
+        
         // Focus sul campo nome del primo contatto se ci sono errori di contatti di emergenza
         setTimeout(() => {
           const firstContactNameField = document.querySelector('input[name="emergency_contacts.0.name"]') as HTMLElement
@@ -857,7 +858,7 @@ export default function CreateChatbotPage() {
             firstContactNameField.focus()
             firstContactNameField.scrollIntoView({ behavior: 'smooth', block: 'center' })
           }
-        }, 100)
+        }, 200) // Aumentato timeout per permettere al setValue di fare effetto
       } else {
         // Focus sul primo campo con errore per altri casi
         const firstErrorField = Object.keys(newErrors)[0]
