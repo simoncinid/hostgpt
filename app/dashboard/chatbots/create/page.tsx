@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
@@ -107,6 +107,7 @@ export default function CreateChatbotPage() {
   const [addressSuggestions, setAddressSuggestions] = useState<any[]>([])
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [isLoadingAddress, setIsLoadingAddress] = useState(false)
+  const addressInputRef = useRef<HTMLInputElement>(null)
   const [rulesFile, setRulesFile] = useState<File | null>(null)
   const [isLoadingRules, setIsLoadingRules] = useState(false)
   const [rulesError, setRulesError] = useState<string | null>(null)
@@ -299,11 +300,6 @@ export default function CreateChatbotPage() {
         
         // Imposta il contenuto estratto nel campo regole
         setValue('house_rules', result.content)
-        
-        toast.success(language === 'IT' 
-          ? 'File elaborato con successo! Contenuto estratto e inserito nelle regole.'
-          : 'File processed successfully! Content extracted and inserted into rules.'
-        )
         
       } catch (error) {
         console.error('Error extracting document content:', error)
@@ -803,7 +799,17 @@ export default function CreateChatbotPage() {
     if (hasErrors) {
       setFormErrors(newErrors)
       
-      // Focus sul primo campo con errore
+      // Focus sul campo indirizzo se ci sono errori di indirizzo, altrimenti sul primo campo con errore
+      const hasAddressErrors = newErrors.property_address || newErrors.property_street_number || 
+                              newErrors.property_city || newErrors.property_postal_code || 
+                              newErrors.property_country
+      
+      if (hasAddressErrors && addressInputRef.current) {
+        setTimeout(() => {
+          addressInputRef.current?.focus()
+          addressInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        }, 100)
+      } else {
       const firstErrorField = Object.keys(newErrors)[0]
       if (firstErrorField) {
         setTimeout(() => {
@@ -813,6 +819,7 @@ export default function CreateChatbotPage() {
             element.scrollIntoView({ behavior: 'smooth', block: 'center' })
           }
         }, 100)
+        }
       }
       
       // Mostra toast di errore
@@ -946,13 +953,13 @@ export default function CreateChatbotPage() {
                 }
               </p>
               <div className="relative">
-                <input
+              <input
+                  ref={addressInputRef}
                   type="text"
-                  className={`input-field ${formErrors.property_address ? 'border-red-500' : ''}`}
+                  className="input-field"
                   placeholder={language === 'IT' ? "Inizia a digitare l'indirizzo..." : "Start typing the address..."}
-                  onChange={(e) => {
+                onChange={(e) => {
                     searchAddresses(e.target.value)
-                    clearFieldError('property_address')
                   }}
                   disabled={isLoadingAddress}
                 />
@@ -978,58 +985,26 @@ export default function CreateChatbotPage() {
                   </div>
                 )}
               </div>
-              {formErrors.property_address && (
-                <p className="error-text mt-2">{formErrors.property_address}</p>
-              )}
             </div>
 
-            <div className={`bg-gray-50 p-4 rounded-lg border ${
-              formErrors.property_address || formErrors.property_street_number || 
-              formErrors.property_city || formErrors.property_postal_code || 
-              formErrors.property_country ? 'border-red-300 bg-red-50' : ''
-            }`}>
+            <div className="bg-gray-50 p-4 rounded-lg border">
               <h4 className="font-medium text-gray-900 mb-3">
                 {language === 'IT' ? 'Dettagli Indirizzo (compilati automaticamente)' : 'Address Details (filled automatically)'}
               </h4>
-              
-              {/* Messaggio di errore generale per indirizzo incompleto */}
-              {(formErrors.property_address || formErrors.property_street_number || 
-                formErrors.property_city || formErrors.property_postal_code || 
-                formErrors.property_country) && (
-                <div className="mb-4 p-3 bg-red-100 border border-red-300 rounded-lg">
-                  <div className="flex items-center">
-                    <span className="text-red-600 text-lg mr-2">⚠️</span>
-                    <div>
-                      <p className="text-red-800 font-medium">
-                        {language === 'IT' ? 'Indirizzo incompleto!' : 'Incomplete address!'}
-                      </p>
-                      <p className="text-red-700 text-sm">
-                        {language === 'IT' 
-                          ? 'Seleziona un indirizzo completo dai suggerimenti Google sopra per compilare automaticamente tutti i campi obbligatori.'
-                          : 'Select a complete address from Google suggestions above to automatically fill all required fields.'
-                        }
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
               <div className="grid md:grid-cols-2 gap-4">
-                <div>
+            <div>
                   <label className="label">{language === 'IT' ? 'Via' : 'Street'}</label>
-                  <input
+              <input
                     {...register('property_address')}
                     className={`input-field bg-gray-100 cursor-not-allowed ${formErrors.property_address ? 'border-red-500' : ''}`}
                     placeholder={language === 'IT' ? "Compilato automaticamente" : "Filled automatically"}
                     readOnly
                     tabIndex={-1}
                   />
-                  {formErrors.property_address && (
-                    <p className="error-text">{formErrors.property_address}</p>
-                  )}
                 </div>
 
                 <div>
-                  <label className="label">{language === 'IT' ? 'Numero Civico' : 'Street Number'} <span className="text-red-500">*</span></label>
+                  <label className="label">{language === 'IT' ? 'Numero Civico' : 'Street Number'}</label>
                   <input
                     {...register('property_street_number')}
                     className={`input-field bg-gray-100 cursor-not-allowed ${formErrors.property_street_number ? 'border-red-500' : ''}`}
@@ -1037,15 +1012,12 @@ export default function CreateChatbotPage() {
                     readOnly
                     tabIndex={-1}
                   />
-                  {formErrors.property_street_number && (
-                    <p className="error-text">{formErrors.property_street_number}</p>
-                  )}
                 </div>
               </div>
 
               <div className="grid md:grid-cols-3 gap-4 mt-4">
                 <div>
-                  <label className="label">{language === 'IT' ? 'Città' : 'City'} <span className="text-red-500">*</span></label>
+                  <label className="label">{language === 'IT' ? 'Città' : 'City'}</label>
                   <input
                     {...register('property_city')}
                     className={`input-field bg-gray-100 cursor-not-allowed ${formErrors.property_city ? 'border-red-500' : ''}`}
@@ -1053,9 +1025,6 @@ export default function CreateChatbotPage() {
                     readOnly
                     tabIndex={-1}
                   />
-                  {formErrors.property_city && (
-                    <p className="error-text">{formErrors.property_city}</p>
-                  )}
                 </div>
 
                 <div>
@@ -1070,7 +1039,7 @@ export default function CreateChatbotPage() {
                 </div>
 
                 <div>
-                  <label className="label">{language === 'IT' ? 'CAP' : 'Postal Code'} <span className="text-red-500">*</span></label>
+                  <label className="label">{language === 'IT' ? 'CAP' : 'Postal Code'}</label>
                   <input
                     {...register('property_postal_code')}
                     className={`input-field bg-gray-100 cursor-not-allowed ${formErrors.property_postal_code ? 'border-red-500' : ''}`}
@@ -1078,14 +1047,11 @@ export default function CreateChatbotPage() {
                     readOnly
                     tabIndex={-1}
                   />
-                  {formErrors.property_postal_code && (
-                    <p className="error-text">{formErrors.property_postal_code}</p>
-                  )}
                 </div>
               </div>
 
               <div className="mt-4">
-                <label className="label">{language === 'IT' ? 'Paese' : 'Country'} <span className="text-red-500">*</span></label>
+                <label className="label">{language === 'IT' ? 'Paese' : 'Country'}</label>
                 <input
                   {...register('property_country')}
                   className={`input-field bg-gray-100 cursor-not-allowed ${formErrors.property_country ? 'border-red-500' : ''}`}
@@ -1093,9 +1059,6 @@ export default function CreateChatbotPage() {
                   readOnly
                   tabIndex={-1}
                 />
-                {formErrors.property_country && (
-                  <p className="error-text">{formErrors.property_country}</p>
-                )}
               </div>
             </div>
 
@@ -1232,11 +1195,6 @@ export default function CreateChatbotPage() {
                   </div>
                 )}
                 
-                {rulesFile && !isLoadingRules && (
-                  <div className="mt-2 text-sm text-green-600">
-                    ✅ {rulesFile.name} - {language === 'IT' ? 'Contenuto estratto' : 'Content extracted'}
-                  </div>
-                )}
                 
                 <p className="text-xs text-blue-600 mt-1">
                   {language === 'IT' 
