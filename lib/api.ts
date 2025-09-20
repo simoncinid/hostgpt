@@ -197,6 +197,9 @@ export const chat = {
   sendMessage: (uuid: string, data: any) =>
     api.post(`/chat/${uuid}/message`, data),
   
+  downloadHouseRulesPDF: (uuid: string, lang: string = 'IT') =>
+    api.get(`/chat/${uuid}/house-rules-pdf?lang=${lang}`, { responseType: 'blob' }),
+  
   getDemoInfo: () =>
     api.get('/demo/info'),
   

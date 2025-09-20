@@ -236,18 +236,17 @@ export default function ChatWidgetPage() {
     }
 
     try {
-      // Chiama l'endpoint backend per generare il PDF
-      const response = await fetch(`/api/chat/${uuid}/house-rules-pdf?lang=${language}`)
+      // Chiama l'endpoint backend per generare il PDF usando l'API centralizzata
+      console.log('📄 Calling PDF endpoint for UUID:', uuid, 'Language:', language)
+      const response = await chat.downloadHouseRulesPDF(uuid, language)
       
-      if (!response.ok) {
-        throw new Error('Errore nella generazione del PDF')
-      }
+      console.log('📄 PDF response received successfully')
 
-      // Ottieni il blob del PDF
-      const blob = await response.blob()
+      // Ottieni il blob del PDF dalla risposta
+      const blob = response.data
       
       // Nome del file dalla header della risposta o default
-      const contentDisposition = response.headers.get('content-disposition')
+      const contentDisposition = response.headers['content-disposition']
       let fileName = language === 'IT' 
         ? `REGOLE_${chatInfo.property_name.replace(/[^a-zA-Z0-9]/g, '_').toUpperCase()}.pdf`
         : `${chatInfo.property_name.replace(/[^a-zA-Z0-9]/g, '_').toUpperCase()}_RULES.pdf`
