@@ -31,3 +31,8 @@ playwright==1.48.0
 # Aggiornamenti compatibilità Python 3.13
 Pillow==10.4.0
 fastapi==0.104.1
+
+# Librerie per estrazione documenti
+PyPDF2==3.0.1
+python-docx==1.1.0
+odfpy==1.4.1
