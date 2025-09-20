@@ -107,6 +107,9 @@ export default function CreateChatbotPage() {
   const [addressSuggestions, setAddressSuggestions] = useState<any[]>([])
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [isLoadingAddress, setIsLoadingAddress] = useState(false)
+  const [rulesFile, setRulesFile] = useState<File | null>(null)
+  const [isLoadingRules, setIsLoadingRules] = useState(false)
+  const [rulesError, setRulesError] = useState<string | null>(null)
   const { addChatbot } = useChatbotStore()
   
   // Controlla il limite di chatbot
@@ -240,6 +243,79 @@ export default function CreateChatbotPage() {
       toast.error(language === 'IT' ? 'Errore nel recuperare i dettagli dell\'indirizzo' : 'Error retrieving address details')
     } finally {
       setIsLoadingAddress(false)
+    }
+  }
+
+  // Funzione per gestire upload file regole
+  const handleRulesFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    setRulesError(null)
+    
+    if (file) {
+      // Verifica tipo file
+      const allowedTypes = [
+        'application/pdf',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // DOCX
+        'application/vnd.oasis.opendocument.text', // ODT
+        'text/plain' // TXT
+      ]
+      
+      if (!allowedTypes.includes(file.type)) {
+        const errorMsg = language === 'IT' 
+          ? 'Formato file non supportato. Usa PDF, DOCX, ODT o TXT'
+          : 'File format not supported. Use PDF, DOCX, ODT or TXT'
+        setRulesError(errorMsg)
+        return
+      }
+      
+      // Verifica dimensione (max 10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        const errorMsg = language === 'IT' 
+          ? 'Il file non può superare i 10MB'
+          : 'File cannot exceed 10MB'
+        setRulesError(errorMsg)
+        return
+      }
+      
+      setRulesFile(file)
+      setIsLoadingRules(true)
+      
+      try {
+        // Crea FormData per l'upload
+        const formData = new FormData()
+        formData.append('file', file)
+        
+        // Chiama l'endpoint per estrarre il contenuto
+        const response = await fetch('/api/extract-document', {
+          method: 'POST',
+          body: formData
+        })
+        
+        if (!response.ok) {
+          throw new Error('Errore nell\'estrazione del contenuto')
+        }
+        
+        const result = await response.json()
+        
+        // Imposta il contenuto estratto nel campo regole
+        setValue('house_rules', result.content)
+        
+        toast.success(language === 'IT' 
+          ? 'File elaborato con successo! Contenuto estratto e inserito nelle regole.'
+          : 'File processed successfully! Content extracted and inserted into rules.'
+        )
+        
+      } catch (error) {
+        console.error('Error extracting document content:', error)
+        setRulesError(language === 'IT' 
+          ? 'Errore nell\'elaborazione del file. Riprova o inserisci il testo manualmente.'
+          : 'Error processing file. Please try again or enter text manually.'
+        )
+      } finally {
+        setIsLoadingRules(false)
+      }
+    } else {
+      setRulesFile(null)
     }
   }
 
@@ -907,44 +983,79 @@ export default function CreateChatbotPage() {
               )}
             </div>
 
-            <div className="bg-gray-50 p-4 rounded-lg border">
+            <div className={`bg-gray-50 p-4 rounded-lg border ${
+              formErrors.property_address || formErrors.property_street_number || 
+              formErrors.property_city || formErrors.property_postal_code || 
+              formErrors.property_country ? 'border-red-300 bg-red-50' : ''
+            }`}>
               <h4 className="font-medium text-gray-900 mb-3">
                 {language === 'IT' ? 'Dettagli Indirizzo (compilati automaticamente)' : 'Address Details (filled automatically)'}
               </h4>
+              
+              {/* Messaggio di errore generale per indirizzo incompleto */}
+              {(formErrors.property_address || formErrors.property_street_number || 
+                formErrors.property_city || formErrors.property_postal_code || 
+                formErrors.property_country) && (
+                <div className="mb-4 p-3 bg-red-100 border border-red-300 rounded-lg">
+                  <div className="flex items-center">
+                    <span className="text-red-600 text-lg mr-2">⚠️</span>
+                    <div>
+                      <p className="text-red-800 font-medium">
+                        {language === 'IT' ? 'Indirizzo incompleto!' : 'Incomplete address!'}
+                      </p>
+                      <p className="text-red-700 text-sm">
+                        {language === 'IT' 
+                          ? 'Seleziona un indirizzo completo dai suggerimenti Google sopra per compilare automaticamente tutti i campi obbligatori.'
+                          : 'Select a complete address from Google suggestions above to automatically fill all required fields.'
+                        }
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
                   <label className="label">{language === 'IT' ? 'Via' : 'Street'}</label>
                   <input
                     {...register('property_address')}
-                    className="input-field bg-gray-100 cursor-not-allowed"
+                    className={`input-field bg-gray-100 cursor-not-allowed ${formErrors.property_address ? 'border-red-500' : ''}`}
                     placeholder={language === 'IT' ? "Compilato automaticamente" : "Filled automatically"}
                     readOnly
                     tabIndex={-1}
                   />
+                  {formErrors.property_address && (
+                    <p className="error-text">{formErrors.property_address}</p>
+                  )}
                 </div>
 
                 <div>
-                  <label className="label">{language === 'IT' ? 'Numero Civico' : 'Street Number'}</label>
+                  <label className="label">{language === 'IT' ? 'Numero Civico' : 'Street Number'} <span className="text-red-500">*</span></label>
                   <input
                     {...register('property_street_number')}
-                    className="input-field bg-gray-100 cursor-not-allowed"
+                    className={`input-field bg-gray-100 cursor-not-allowed ${formErrors.property_street_number ? 'border-red-500' : ''}`}
                     placeholder={language === 'IT' ? "Compilato automaticamente" : "Filled automatically"}
                     readOnly
                     tabIndex={-1}
                   />
+                  {formErrors.property_street_number && (
+                    <p className="error-text">{formErrors.property_street_number}</p>
+                  )}
                 </div>
               </div>
 
               <div className="grid md:grid-cols-3 gap-4 mt-4">
                 <div>
-                  <label className="label">{language === 'IT' ? 'Città' : 'City'}</label>
+                  <label className="label">{language === 'IT' ? 'Città' : 'City'} <span className="text-red-500">*</span></label>
                   <input
                     {...register('property_city')}
-                    className="input-field bg-gray-100 cursor-not-allowed"
+                    className={`input-field bg-gray-100 cursor-not-allowed ${formErrors.property_city ? 'border-red-500' : ''}`}
                     placeholder={language === 'IT' ? "Compilato automaticamente" : "Filled automatically"}
                     readOnly
                     tabIndex={-1}
                   />
+                  {formErrors.property_city && (
+                    <p className="error-text">{formErrors.property_city}</p>
+                  )}
                 </div>
 
                 <div>
@@ -959,26 +1070,32 @@ export default function CreateChatbotPage() {
                 </div>
 
                 <div>
-                  <label className="label">{language === 'IT' ? 'CAP' : 'Postal Code'}</label>
+                  <label className="label">{language === 'IT' ? 'CAP' : 'Postal Code'} <span className="text-red-500">*</span></label>
                   <input
                     {...register('property_postal_code')}
-                    className="input-field bg-gray-100 cursor-not-allowed"
+                    className={`input-field bg-gray-100 cursor-not-allowed ${formErrors.property_postal_code ? 'border-red-500' : ''}`}
                     placeholder={language === 'IT' ? "Compilato automaticamente" : "Filled automatically"}
                     readOnly
                     tabIndex={-1}
                   />
+                  {formErrors.property_postal_code && (
+                    <p className="error-text">{formErrors.property_postal_code}</p>
+                  )}
                 </div>
               </div>
 
               <div className="mt-4">
-                <label className="label">{language === 'IT' ? 'Paese' : 'Country'}</label>
+                <label className="label">{language === 'IT' ? 'Paese' : 'Country'} <span className="text-red-500">*</span></label>
                 <input
                   {...register('property_country')}
-                  className="input-field bg-gray-100 cursor-not-allowed"
+                  className={`input-field bg-gray-100 cursor-not-allowed ${formErrors.property_country ? 'border-red-500' : ''}`}
                   placeholder={language === 'IT' ? "Compilato automaticamente" : "Filled automatically"}
                   readOnly
                   tabIndex={-1}
                 />
+                {formErrors.property_country && (
+                  <p className="error-text">{formErrors.property_country}</p>
+                )}
               </div>
             </div>
 
@@ -1077,10 +1194,68 @@ export default function CreateChatbotPage() {
 
             <div>
               <label className="label">{t.chatbots.create.form.houseRules}</label>
+              
+              {/* Upload file option */}
+              <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium text-blue-800">
+                    {language === 'IT' ? '📁 Carica documento regole' : '📁 Upload rules document'}
+                  </span>
+                  {rulesFile && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setRulesFile(null)
+                        setRulesError(null)
+                      }}
+                      className="text-red-600 hover:text-red-800 text-sm"
+                    >
+                      ✕ {language === 'IT' ? 'Rimuovi' : 'Remove'}
+                    </button>
+                  )}
+                </div>
+                
+                <input
+                  type="file"
+                  accept=".pdf,.docx,.odt,.txt,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.oasis.opendocument.text,text/plain"
+                  onChange={handleRulesFileChange}
+                  disabled={isLoadingRules}
+                  className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200 disabled:opacity-50"
+                />
+                
+                {isLoadingRules && (
+                  <div className="flex items-center mt-2 text-blue-600">
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    <span className="text-sm">
+                      {language === 'IT' ? 'Elaborazione documento...' : 'Processing document...'}
+                    </span>
+                  </div>
+                )}
+                
+                {rulesFile && !isLoadingRules && (
+                  <div className="mt-2 text-sm text-green-600">
+                    ✅ {rulesFile.name} - {language === 'IT' ? 'Contenuto estratto' : 'Content extracted'}
+                  </div>
+                )}
+                
+                <p className="text-xs text-blue-600 mt-1">
+                  {language === 'IT' 
+                    ? 'Formati supportati: PDF, DOCX, ODT, TXT (max 10MB). Il contenuto verrà estratto e inserito automaticamente nel campo sottostante.'
+                    : 'Supported formats: PDF, DOCX, ODT, TXT (max 10MB). Content will be extracted and automatically inserted in the field below.'
+                  }
+                </p>
+                
+                {rulesError && (
+                  <div className="text-red-600 text-sm mt-2 p-2 bg-red-50 rounded border border-red-200">
+                    {rulesError}
+                  </div>
+                )}
+              </div>
+
               <textarea
                 {...register('house_rules', { required: language === 'IT' ? 'Regole richieste' : 'Rules required' })}
-                className={`input-field min-h-24 ${formErrors.house_rules ? 'border-red-500' : ''}`}
-                placeholder={language === 'IT' ? "Es. Non fumatori, no party, rispettare il vicinato..." : "E.g. No smoking, no parties, respect neighbors..."}
+                className={`input-field min-h-32 ${formErrors.house_rules ? 'border-red-500' : ''}`}
+                placeholder={language === 'IT' ? "Es. Non fumatori, no party, rispettare il vicinato... (oppure carica un documento sopra)" : "E.g. No smoking, no parties, respect neighbors... (or upload a document above)"}
                 onChange={(e) => {
                   register('house_rules').onChange(e)
                   clearFieldError('house_rules')

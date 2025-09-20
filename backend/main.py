@@ -26,6 +26,10 @@ import requests
 import os
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
+import PyPDF2
+import docx
+from odf import text as odf_text, teletype
+from odf.opendocument import load as odf_load
 
 from database import get_db, engine
 from models import Base, User, Chatbot, Conversation, Message, KnowledgeBase, Analytics, GuardianAlert, GuardianAnalysis, ReferralCode, PrintOrder, PrintOrderItem
@@ -5270,12 +5274,167 @@ IMPORTANTE:
             )
         
     except HTTPException:
-        raise
+        raise        
     except Exception as e:
         logger.error(f"Error analyzing property for user {current_user.id}: {e}")
         raise HTTPException(
             status_code=500, 
             detail=f"Errore nell'analisi della proprietà: {str(e)}"
+        )
+
+# ============= Document Extraction Endpoint =============
+
+def extract_text_from_pdf(file_content: bytes) -> str:
+    """Estrae testo da file PDF"""
+    try:
+        pdf_file = io.BytesIO(file_content)
+        pdf_reader = PyPDF2.PdfReader(pdf_file)
+        text = ""
+        
+        for page in pdf_reader.pages:
+            text += page.extract_text() + "\n"
+        
+        return text.strip()
+    except Exception as e:
+        logger.error(f"Error extracting PDF text: {e}")
+        raise HTTPException(status_code=400, detail="Errore nell'estrazione del testo dal PDF")
+
+def extract_text_from_docx(file_content: bytes) -> str:
+    """Estrae testo da file DOCX"""
+    try:
+        docx_file = io.BytesIO(file_content)
+        doc = docx.Document(docx_file)
+        text = ""
+        
+        for paragraph in doc.paragraphs:
+            text += paragraph.text + "\n"
+        
+        return text.strip()
+    except Exception as e:
+        logger.error(f"Error extracting DOCX text: {e}")
+        raise HTTPException(status_code=400, detail="Errore nell'estrazione del testo dal DOCX")
+
+def extract_text_from_odt(file_content: bytes) -> str:
+    """Estrae testo da file ODT"""
+    try:
+        odt_file = io.BytesIO(file_content)
+        doc = odf_load(odt_file)
+        text = ""
+        
+        for paragraph in doc.text.getElementsByType(odf_text.P):
+            text += teletype.extractText(paragraph) + "\n"
+        
+        return text.strip()
+    except Exception as e:
+        logger.error(f"Error extracting ODT text: {e}")
+        raise HTTPException(status_code=400, detail="Errore nell'estrazione del testo dal ODT")
+
+def extract_text_from_txt(file_content: bytes) -> str:
+    """Estrae testo da file TXT"""
+    try:
+        # Prova diverse codifiche
+        encodings = ['utf-8', 'latin-1', 'cp1252', 'iso-8859-1']
+        
+        for encoding in encodings:
+            try:
+                text = file_content.decode(encoding)
+                return text.strip()
+            except UnicodeDecodeError:
+                continue
+        
+        # Se nessuna codifica funziona, usa utf-8 con errori ignorati
+        text = file_content.decode('utf-8', errors='ignore')
+        return text.strip()
+    except Exception as e:
+        logger.error(f"Error extracting TXT text: {e}")
+        raise HTTPException(status_code=400, detail="Errore nell'estrazione del testo dal TXT")
+
+def clean_and_format_text(text: str) -> str:
+    """Pulisce e formatta il testo estratto"""
+    if not text:
+        return ""
+    
+    # Rimuove righe vuote multiple
+    lines = text.split('\n')
+    cleaned_lines = []
+    
+    for line in lines:
+        line = line.strip()
+        if line:  # Se la riga non è vuota
+            cleaned_lines.append(line)
+    
+    # Unisce le righe con un singolo \n
+    cleaned_text = '\n'.join(cleaned_lines)
+    
+    # Limita la lunghezza (max 5000 caratteri per sicurezza DB)
+    if len(cleaned_text) > 5000:
+        cleaned_text = cleaned_text[:5000] + "..."
+        logger.warning("Text truncated to 5000 characters")
+    
+    return cleaned_text
+
+@app.post("/api/extract-document")
+async def extract_document(file: UploadFile = File(...)):
+    """Estrae il contenuto testuale da un documento"""
+    try:
+        logger.info(f"📄 Estrazione documento: {file.filename}")
+        logger.info(f"📄 Tipo file: {file.content_type}")
+        logger.info(f"📄 Dimensione: {file.size} bytes")
+        
+        # Verifica tipo file
+        allowed_types = {
+            'application/pdf': extract_text_from_pdf,
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document': extract_text_from_docx,
+            'application/vnd.oasis.opendocument.text': extract_text_from_odt,
+            'text/plain': extract_text_from_txt
+        }
+        
+        if file.content_type not in allowed_types:
+            raise HTTPException(
+                status_code=400, 
+                detail="Formato file non supportato. Usa PDF, DOCX, ODT o TXT"
+            )
+        
+        # Verifica dimensione (max 10MB)
+        if file.size > 10 * 1024 * 1024:
+            raise HTTPException(
+                status_code=400, 
+                detail="Il file non può superare i 10MB"
+            )
+        
+        # Legge il contenuto del file
+        file_content = await file.read()
+        
+        # Estrae il testo usando la funzione appropriata
+        extractor = allowed_types[file.content_type]
+        raw_text = extractor(file_content)
+        
+        # Pulisce e formatta il testo
+        cleaned_text = clean_and_format_text(raw_text)
+        
+        if not cleaned_text:
+            raise HTTPException(
+                status_code=400, 
+                detail="Nessun testo trovato nel documento"
+            )
+        
+        logger.info(f"✅ Testo estratto: {len(cleaned_text)} caratteri")
+        
+        return {
+            "status": "success",
+            "content": cleaned_text,
+            "original_filename": file.filename,
+            "content_type": file.content_type,
+            "characters_extracted": len(cleaned_text)
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error extracting document: {e}")
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Errore nell'elaborazione del documento: {str(e)}"
         )
 
 @app.post("/api/analyze-property")
