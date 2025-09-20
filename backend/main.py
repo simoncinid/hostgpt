@@ -5146,17 +5146,13 @@ Contenuto della pagina:
 - Concentrati SOLO sulle informazioni positive e neutre della proprietà
 - Estrai solo informazioni utili per ospiti futuri (descrizioni, servizi, regole, etc.)
 
+⚠️ IMPORTANTE: NON includere informazioni sull'indirizzo nel JSON. L'indirizzo sarà inserito separatamente dall'host tramite validazione Google API.
+
 Estrai le informazioni e restituisci SOLO un JSON valido con questa struttura esatta:
 
 {{
   "property_name": "Nome della proprietà",
   "property_type": "appartamento|villa|casa|stanza|loft|monolocale|bed_breakfast",
-  "property_address": "Via/strada (es. Via Roma)",
-  "property_street_number": "Numero civico (es. 123)",
-  "property_city": "Città",
-  "property_state": "Provincia o stato (es. RM, CA)",
-  "property_postal_code": "CAP o codice postale",
-  "property_country": "Paese (es. IT, US, ES)",
   "property_description": "Descrizione dettagliata della proprietà",
   "check_in_time": "Orario check-in (es. 15:00 - 20:00)",
   "check_out_time": "Orario check-out (es. 10:00)",
@@ -5513,7 +5509,6 @@ Contenuto della pagina:
 Estrai le informazioni dal testo sopra e includi:
 - Nome della proprietà
 - Tipo di proprietà  
-- Indirizzo dettagliato (via, numero civico, città, provincia/stato, CAP, paese)
 - Descrizione dettagliata
 - Orari di check-in e check-out
 - Regole della casa
@@ -5530,17 +5525,13 @@ Estrai le informazioni dal testo sopra e includi:
 - FAQ
 - Informazioni WiFi (nome rete e password)
 
+⚠️ IMPORTANTE: NON includere informazioni sull'indirizzo nel JSON. L'indirizzo sarà inserito separatamente dall'host tramite validazione Google API.
+
 Estrai le informazioni e restituisci SOLO un JSON valido con questa struttura esatta:
 
 {{
   "property_name": "Nome della proprietà",
   "property_type": "appartamento|villa|casa|stanza|loft|monolocale|bed_breakfast",
-  "property_address": "Via/strada (es. Via Roma)",
-  "property_street_number": "Numero civico (es. 123)",
-  "property_city": "Città",
-  "property_state": "Provincia o stato (es. RM, CA)",
-  "property_postal_code": "CAP o codice postale",
-  "property_country": "Paese (es. IT, US, ES)",
   "property_description": "Descrizione dettagliata della proprietà",
   "check_in_time": "Orario check-in (es. 15:00 - 20:00)",
   "check_out_time": "Orario check-out (es. 10:00)",
