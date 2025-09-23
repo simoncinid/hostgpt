@@ -92,7 +92,7 @@ export default function Sidebar({ currentPath, onLogout, isSidebarCollapsed: ext
             className={`flex items-center ${isSidebarCollapsed ? 'justify-center px-2 py-3' : 'px-6 py-3'} ${currentPath.startsWith('/dashboard/stampe') || currentPath.startsWith('/stampe') ? 'bg-yellow-100 text-yellow-600 border-r-3 border-yellow-500' : 'text-gray-600 hover:bg-gray-50'}`}
           >
             <Package className={`${isSidebarCollapsed ? 'w-6 h-6' : 'w-5 h-5'} ${!isSidebarCollapsed ? 'mr-3' : ''}`} />
-            {!isSidebarCollapsed && 'Stampe QR-Code'}
+            {!isSidebarCollapsed && t.common.print}
           </Link>
           <Link 
             href="/dashboard/settings" 

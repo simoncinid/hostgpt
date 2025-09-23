@@ -407,7 +407,7 @@ function DashboardContent() {
           >
             <div className="flex flex-col md:flex-row md:items-center md:justify-between">
               <div className="flex items-center space-x-3 mb-4 md:mb-0">
-                <div className="hidden md:block w-10 h-10 bg-yellow-300 rounded-full flex items-center justify-center">
+                <div className="hidden md:flex w-10 h-10 bg-yellow-300 rounded-full items-center justify-center">
                   <QrCode className="w-6 h-6 text-yellow-800" />
                 </div>
                 <div className="flex-1">

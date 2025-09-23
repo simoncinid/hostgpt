@@ -177,6 +177,7 @@ export interface Translations {
     terms: string
     contact: string
     done: string
+    print: string
   }
   
   // Services
@@ -1362,7 +1363,8 @@ export const translations: Record<Language, Translations> = {
       privacy: "Privacy",
       terms: "Termini",
       contact: "Contatti",
-      done: "Fatto"
+      done: "Fatto",
+      print: "Stampe QR-Code"
     },
     
     // Services
@@ -1620,8 +1622,8 @@ export const translations: Record<Language, Translations> = {
         createFirst: "Crea il tuo primo chatbot"
       },
       moreStructures: {
-        title: "Hai più strutture?",
-        description: "Ogni account può avere un solo chatbot. Se ti servono più chatbot perché gestisci più strutture, contattami al 3391797616.",
+        title: "Hai più proprietà?",
+        description: "Gestisci hotel, villaggi turistici, B&B, alloggi per studenti o altre strutture ricettive? Ogni account può avere un solo chatbot. Se ti servono più chatbot perché gestisci più strutture, contattami al 3391797616.",
         whatsappButton: "Scrivimi su WhatsApp"
       },
       qrModal: {
@@ -2567,7 +2569,8 @@ export const translations: Record<Language, Translations> = {
       privacy: "Privacy",
       terms: "Terms",
       contact: "Contact",
-      done: "Done"
+      done: "Done",
+      print: "QR-Code Prints"
     },
     
     // Services
@@ -2825,8 +2828,8 @@ export const translations: Record<Language, Translations> = {
         createFirst: "Create your first chatbot"
       },
       moreStructures: {
-        title: "Have more properties?",
-        description: "Each account can have only one chatbot. If you need more chatbots because you manage multiple properties, contact me at 3391797616.",
+        title: "Managing multiple accommodations?",
+        description: "Do you manage hotels, tourist villages, B&Bs, student housing, or other accommodation facilities? Each account can have only one chatbot. If you need more chatbots because you manage multiple properties, contact me at 3391797616.",
         whatsappButton: "Write me on WhatsApp"
       },
       qrModal: {
