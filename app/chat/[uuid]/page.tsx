@@ -480,39 +480,15 @@ export default function ChatWidgetPage() {
       if (error.name === 'NotAllowedError') {
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
         if (isMobile) {
-          // Su mobile, mostra un toast con pulsante per aprire le impostazioni
-          toast.error(
-            <div className="flex items-center gap-2">
-              <span>🚫 Permessi microfono negati</span>
-              <button 
-                onClick={() => {
-                  // Su mobile, mostra istruzioni specifiche
-                  alert('Vai in Impostazioni > Privacy > Microfono e abilita l\'accesso per questo sito.')
-                }}
-                className="bg-blue-500 text-white px-2 py-1 rounded text-xs hover:bg-blue-600"
-              >
-                Abilita
-              </button>
-            </div>,
-            { duration: 8000 }
-          )
+          // Su mobile, mostra un toast semplice
+          toast.error('🚫 Permessi microfono negati. Vai in Impostazioni > Privacy > Microfono e abilita l\'accesso per questo sito.', { 
+            duration: 8000
+          })
         } else {
-          // Su desktop, mostra un toast con pulsante per le istruzioni
-          toast.error(
-            <div className="flex items-center gap-2">
-              <span>🚫 Permessi microfono negati</span>
-              <button 
-                onClick={() => {
-                  // Mostra istruzioni specifiche per desktop
-                  alert('ISTRUZIONI:\n\n1. Clicca sull\'icona del microfono nella barra degli indirizzi\n2. Seleziona "Consenti sempre" o "Consenti"\n3. Ricarica la pagina\n\nSe non vedi l\'icona, vai in Impostazioni > Privacy > Microfono')
-                }}
-                className="bg-blue-500 text-white px-2 py-1 rounded text-xs hover:bg-blue-600"
-              >
-                Istruzioni
-              </button>
-            </div>,
-            { duration: 8000 }
-          )
+          // Su desktop, mostra un toast semplice
+          toast.error('🚫 Permessi microfono negati. Clicca sull\'icona del microfono nella barra degli indirizzi e abilita l\'accesso.', { 
+            duration: 8000
+          })
         }
       } else if (error.name === 'NotFoundError') {
         toast.error('🎤 Microfono non trovato. Verifica che sia collegato e funzionante.')
@@ -521,26 +497,17 @@ export default function ChatWidgetPage() {
       } else if (error.message.includes('HTTPS')) {
         toast.error('🔒 Registrazione audio richiede HTTPS. Usa https:// invece di http://')
       } else if (error.message.includes('negati in precedenza')) {
-        // Mostra un toast con pulsante per aprire le impostazioni
-        toast.error(
-          <div className="flex items-center gap-2">
-            <span>🚫 Permessi microfono negati in precedenza</span>
-            <button 
-              onClick={() => {
-                const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
-                if (isMobile) {
-                  alert('Vai in Impostazioni > Privacy > Microfono e abilita l\'accesso per questo sito.')
-                } else {
-                  alert('ISTRUZIONI:\n\n1. Clicca sull\'icona del microfono nella barra degli indirizzi\n2. Seleziona "Consenti sempre" o "Consenti"\n3. Ricarica la pagina\n\nSe non vedi l\'icona, vai in Impostazioni > Privacy > Microfono')
-                }
-              }}
-              className="bg-blue-500 text-white px-2 py-1 rounded text-xs hover:bg-blue-600"
-            >
-              Abilita
-            </button>
-          </div>,
-          { duration: 8000 }
-        )
+        // Mostra un toast semplice
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+        if (isMobile) {
+          toast.error('🚫 Permessi microfono negati in precedenza. Vai in Impostazioni > Privacy > Microfono e abilita l\'accesso per questo sito.', { 
+            duration: 8000
+          })
+        } else {
+          toast.error('🚫 Permessi microfono negati in precedenza. Clicca sull\'icona del microfono nella barra degli indirizzi e abilita l\'accesso.', { 
+            duration: 8000
+          })
+        }
       } else {
         toast.error(`❌ Errore microfono: ${error.message}`)
       }
