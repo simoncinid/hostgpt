@@ -199,7 +199,11 @@ export const chat = {
   
   sendVoiceMessage: async (uuid: string, audioBlob: Blob, threadId?: string, guestName?: string) => {
     const formData = new FormData()
-    formData.append('audio_file', audioBlob, 'voice-message.webm')
+    // Usa l'estensione corretta basata sul tipo MIME
+    const extension = audioBlob.type.includes('webm') ? 'webm' : 
+                     audioBlob.type.includes('mp4') ? 'mp4' : 
+                     audioBlob.type.includes('wav') ? 'wav' : 'webm'
+    formData.append('audio_file', audioBlob, `voice-message.${extension}`)
     if (threadId) formData.append('thread_id', threadId)
     if (guestName) formData.append('guest_name', guestName)
 

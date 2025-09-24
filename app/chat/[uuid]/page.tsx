@@ -369,7 +369,21 @@ export default function ChatWidgetPage() {
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-      const recorder = new MediaRecorder(stream)
+      
+      // Prova diversi formati audio supportati
+      let mimeType = 'audio/webm;codecs=opus'
+      if (!MediaRecorder.isTypeSupported(mimeType)) {
+        mimeType = 'audio/webm'
+        if (!MediaRecorder.isTypeSupported(mimeType)) {
+          mimeType = 'audio/mp4'
+          if (!MediaRecorder.isTypeSupported(mimeType)) {
+            mimeType = 'audio/wav'
+          }
+        }
+      }
+      
+      console.log('🎤 Usando formato audio:', mimeType)
+      const recorder = new MediaRecorder(stream, { mimeType })
       
       recorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
@@ -378,7 +392,8 @@ export default function ChatWidgetPage() {
       }
       
       recorder.onstop = async () => {
-        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' })
+        const audioBlob = new Blob(audioChunks, { type: mimeType })
+        console.log('🎤 Blob creato:', audioBlob.size, 'bytes, tipo:', audioBlob.type)
         await sendVoiceMessage(audioBlob)
         setAudioChunks([])
         stream.getTracks().forEach(track => track.stop())
