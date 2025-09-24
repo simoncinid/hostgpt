@@ -367,7 +367,33 @@ export default function ChatWidgetPage() {
   // Funzioni per registrazione audio
   const startRecording = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      // Verifica se MediaRecorder è supportato
+      if (!window.MediaRecorder) {
+        throw new Error('MediaRecorder non supportato da questo browser')
+      }
+      
+      // Verifica se getUserMedia è supportato
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error('getUserMedia non supportato da questo browser')
+      }
+      
+      // Richiedi esplicitamente i permessi del microfono
+      console.log('🎤 Richiesta permessi microfono...')
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true
+        } 
+      })
+      console.log('🎤 Permessi microfono concessi')
+      console.log('🎤 Stream attivo:', stream.active)
+      console.log('🎤 Track audio:', stream.getAudioTracks().length)
+      
+      // Verifica che ci sia almeno un track audio
+      if (stream.getAudioTracks().length === 0) {
+        throw new Error('Nessun track audio disponibile')
+      }
       
       // Prova diversi formati audio supportati
       let mimeType = 'audio/webm;codecs=opus'
@@ -400,7 +426,9 @@ export default function ChatWidgetPage() {
         
         if (audioBlob.size === 0) {
           console.error('🎤 ERRORE: File audio vuoto!')
-          toast.error('Errore nella registrazione audio. Riprova.')
+          console.error('🎤 Chunks ricevuti:', chunks.length)
+          console.error('🎤 Dimensione chunks:', chunks.map(c => c.size))
+          toast.error('Errore nella registrazione audio. Assicurati di parlare durante la registrazione.')
           stream.getTracks().forEach(track => track.stop())
           return
         }
@@ -413,9 +441,21 @@ export default function ChatWidgetPage() {
       recorder.start(100) // Raccoglie dati ogni 100ms
       setIsRecording(true)
       console.log('🎤 Registrazione iniziata')
-    } catch (error) {
+      
+      // Mostra istruzioni all'utente
+      toast.success('Registrazione iniziata. Parla ora!', { duration: 2000 })
+    } catch (error: any) {
       console.error('Errore accesso microfono:', error)
-      toast.error('Impossibile accedere al microfono')
+      
+      if (error.name === 'NotAllowedError') {
+        toast.error('Permessi microfono negati. Abilita l\'accesso al microfono nelle impostazioni del browser.')
+      } else if (error.name === 'NotFoundError') {
+        toast.error('Microfono non trovato. Verifica che sia collegato.')
+      } else if (error.name === 'NotSupportedError') {
+        toast.error('Registrazione audio non supportata da questo browser.')
+      } else {
+        toast.error(`Errore microfono: ${error.message}`)
+      }
     }
   }
 
