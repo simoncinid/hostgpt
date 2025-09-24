@@ -5328,7 +5328,7 @@ IMPORTANTE:
         
         try:
             completion = client.chat.completions.create(
-                model="gpt-4",
+                model="gpt-4o-mini",
                 messages=[
                     {
                         "role": "system",
@@ -5706,13 +5706,13 @@ IMPORTANTE:
 """
         
         try:
-            logger.info(f"🔍 Invio prompt a gpt-4o...")
+            logger.info(f"🔍 Invio prompt a gpt-4o-mini...")
             logger.info(f"🔍 Prompt: {prompt[:2000]}...")
-            logger.info(f"🔍 Model: gpt-4o")
+            logger.info(f"🔍 Model: gpt-4o-mini")
             logger.info(f"🔍 Analizzando testo estratto")
             
             completion = client.chat.completions.create(
-                model="gpt-4o",
+                model="gpt-4o-mini",
                 messages=[
                     {"role": "system", "content": "Sei un assistente esperto nell'analisi di pagine web di proprietà di affitto vacanze. Estrai tutte le informazioni disponibili e restituisci solo un JSON valido."},
                     {"role": "user", "content": prompt}
@@ -5721,7 +5721,7 @@ IMPORTANTE:
                 max_tokens=4000
             )
             
-            logger.info(f"✅ Risposta ricevuta da gpt-4o")
+            logger.info(f"✅ Risposta ricevuta da gpt-4o-mini")
             response_text = completion.choices[0].message.content.strip()
             logger.info(f"🔍 Risposta completa: {response_text[:500]}...")
             logger.info(f"🔍 Lunghezza risposta: {len(response_text)} caratteri")
