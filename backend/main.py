@@ -3740,11 +3740,40 @@ async def send_voice_message(
         
         # Converte l'audio in testo usando OpenAI Whisper
         logger.info("🎤 Trascrizione audio in corso...")
-        transcript = client.audio.transcriptions.create(
-            model="whisper-1",
-            file=io.BytesIO(audio_content),
-            language="it"  # Italiano
-        )
+        logger.info(f"🎤 Tipo file ricevuto: {audio_file.content_type}")
+        logger.info(f"🎤 Nome file: {audio_file.filename}")
+        
+        # Crea un file temporaneo con l'estensione corretta
+        import tempfile
+        import os
+        
+        # Determina l'estensione basata sul content type
+        if audio_file.content_type == 'audio/webm':
+            extension = 'webm'
+        elif audio_file.content_type == 'audio/mp4':
+            extension = 'mp4'
+        elif audio_file.content_type == 'audio/wav':
+            extension = 'wav'
+        else:
+            extension = 'webm'  # Default
+        
+        # Crea file temporaneo
+        with tempfile.NamedTemporaryFile(delete=False, suffix=f'.{extension}') as temp_file:
+            temp_file.write(audio_content)
+            temp_file_path = temp_file.name
+        
+        try:
+            # Apri il file temporaneo
+            with open(temp_file_path, 'rb') as audio_file_obj:
+                transcript = client.audio.transcriptions.create(
+                    model="whisper-1",
+                    file=audio_file_obj,
+                    language="it"  # Italiano
+                )
+        finally:
+            # Pulisci il file temporaneo
+            if os.path.exists(temp_file_path):
+                os.unlink(temp_file_path)
         
         transcribed_text = transcript.text
         logger.info(f"🎤 Testo trascritto: {transcribed_text[:100]}...")
