@@ -3767,8 +3767,8 @@ async def send_voice_message(
             with open(temp_file_path, 'rb') as audio_file_obj:
                 transcript = client.audio.transcriptions.create(
                     model="whisper-1",
-                    file=audio_file_obj,
-                    language="it"  # Italiano
+                    file=audio_file_obj
+                    # Rimosso language="it" per rilevamento automatico della lingua
                 )
         finally:
             # Pulisci il file temporaneo
