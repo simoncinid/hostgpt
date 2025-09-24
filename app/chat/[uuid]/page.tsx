@@ -65,7 +65,6 @@ export default function ChatWidgetPage() {
   const [isRecording, setIsRecording] = useState(false)
   const [isProcessingAudio, setIsProcessingAudio] = useState(false)
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null)
-  const [audioChunks, setAudioChunks] = useState<Blob[]>([])
   
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -385,24 +384,35 @@ export default function ChatWidgetPage() {
       console.log('🎤 Usando formato audio:', mimeType)
       const recorder = new MediaRecorder(stream, { mimeType })
       
+      const chunks: Blob[] = []
+      
       recorder.ondataavailable = (event) => {
+        console.log('🎤 Chunk ricevuto:', event.data.size, 'bytes')
         if (event.data.size > 0) {
-          setAudioChunks(prev => [...prev, event.data])
+          chunks.push(event.data)
         }
       }
       
       recorder.onstop = async () => {
-        const audioBlob = new Blob(audioChunks, { type: mimeType })
+        console.log('🎤 Registrazione fermata, chunks totali:', chunks.length)
+        const audioBlob = new Blob(chunks, { type: mimeType })
         console.log('🎤 Blob creato:', audioBlob.size, 'bytes, tipo:', audioBlob.type)
+        
+        if (audioBlob.size === 0) {
+          console.error('🎤 ERRORE: File audio vuoto!')
+          toast.error('Errore nella registrazione audio. Riprova.')
+          stream.getTracks().forEach(track => track.stop())
+          return
+        }
+        
         await sendVoiceMessage(audioBlob)
-        setAudioChunks([])
         stream.getTracks().forEach(track => track.stop())
       }
       
       setMediaRecorder(recorder)
-      recorder.start()
+      recorder.start(100) // Raccoglie dati ogni 100ms
       setIsRecording(true)
-      setAudioChunks([])
+      console.log('🎤 Registrazione iniziata')
     } catch (error) {
       console.error('Errore accesso microfono:', error)
       toast.error('Impossibile accedere al microfono')
@@ -411,6 +421,7 @@ export default function ChatWidgetPage() {
 
   const stopRecording = () => {
     if (mediaRecorder && isRecording) {
+      console.log('🎤 Fermando registrazione...')
       mediaRecorder.stop()
       setIsRecording(false)
     }
