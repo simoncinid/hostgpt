@@ -3702,9 +3702,14 @@ async def send_voice_message(
     Converte l'audio in testo usando OpenAI Whisper e processa come messaggio normale.
     """
     logger.info(f"🎤 Messaggio vocale ricevuto per chatbot {uuid}")
+    logger.info(f"🎤 Content type: {audio_file.content_type}")
+    logger.info(f"🎤 File name: {audio_file.filename}")
+    logger.info(f"🎤 Thread ID: {thread_id}")
+    logger.info(f"🎤 Guest name: {guest_name}")
     
     # Verifica che il file sia audio
     if not audio_file.content_type or not audio_file.content_type.startswith('audio/'):
+        logger.error(f"🎤 Tipo file non supportato: {audio_file.content_type}")
         raise HTTPException(status_code=400, detail="Il file deve essere un file audio")
     
     # Verifica chatbot
@@ -3725,10 +3730,13 @@ async def send_voice_message(
         )
     
     try:
+        logger.info("🎤 Inizio elaborazione messaggio vocale...")
         client = get_openai_client()
         
         # Leggi il file audio
+        logger.info("🎤 Lettura file audio...")
         audio_content = await audio_file.read()
+        logger.info(f"🎤 Dimensione file audio: {len(audio_content)} bytes")
         
         # Converte l'audio in testo usando OpenAI Whisper
         logger.info("🎤 Trascrizione audio in corso...")
@@ -3832,6 +3840,11 @@ async def send_voice_message(
             messages_remaining = owner.free_trial_messages_limit - owner.free_trial_messages_used
         else:
             messages_remaining = owner.messages_limit - owner.messages_used
+        
+        logger.info("🎤 Messaggio vocale processato con successo!")
+        logger.info(f"🎤 Thread ID: {thread_id}")
+        logger.info(f"🎤 Testo trascritto: {transcribed_text[:50]}...")
+        logger.info(f"🎤 Risposta assistente: {assistant_message[:50]}...")
         
         return {
             "thread_id": thread_id,

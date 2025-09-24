@@ -405,32 +405,21 @@ export default function ChatWidgetPage() {
     setIsProcessingAudio(true)
     
     try {
-      const formData = new FormData()
-      formData.append('audio_file', audioBlob, 'voice-message.webm')
-      if (threadId) formData.append('thread_id', threadId)
-      if (guestName) formData.append('guest_name', guestName)
-
-      const response = await fetch(`/api/chat/${uuid}/voice-message`, {
-        method: 'POST',
-        body: formData
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.detail || 'Errore nel processare il messaggio vocale')
-      }
-
-      const data = await response.json()
+      console.log('🎤 Inizio invio messaggio vocale...')
+      
+      const response = await chat.sendVoiceMessage(uuid, audioBlob, threadId || undefined, guestName || undefined)
+      
+      console.log('🎤 Response data:', response.data)
       
       if (!threadId) {
-        setThreadId(data.thread_id)
+        setThreadId(response.data.thread_id)
       }
 
       // Aggiungi messaggio utente (testo trascritto)
       const userMessage: Message = {
         id: Date.now().toString(),
         role: 'user',
-        content: data.transcribed_text,
+        content: response.data.transcribed_text,
         timestamp: new Date()
       }
       setMessages(prev => [...prev, userMessage])
@@ -439,7 +428,7 @@ export default function ChatWidgetPage() {
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: data.message,
+        content: response.data.message,
         timestamp: new Date()
       }
       setMessages(prev => [...prev, assistantMessage])
@@ -447,7 +436,11 @@ export default function ChatWidgetPage() {
       toast.success('Messaggio vocale inviato!')
     } catch (error: any) {
       console.error('Errore invio messaggio vocale:', error)
-      toast.error(error.message || 'Errore nel processare il messaggio vocale')
+      if (error.response?.status === 403) {
+        setSubscriptionCancelled(true)
+      } else {
+        toast.error('Errore nel processare il messaggio vocale')
+      }
     } finally {
       setIsProcessingAudio(false)
     }

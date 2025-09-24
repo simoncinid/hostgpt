@@ -197,6 +197,38 @@ export const chat = {
   sendMessage: (uuid: string, data: any) =>
     api.post(`/chat/${uuid}/message`, data),
   
+  sendVoiceMessage: async (uuid: string, audioBlob: Blob, threadId?: string, guestName?: string) => {
+    const formData = new FormData()
+    formData.append('audio_file', audioBlob, 'voice-message.webm')
+    if (threadId) formData.append('thread_id', threadId)
+    if (guestName) formData.append('guest_name', guestName)
+
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
+    
+    const response = await fetch(`${API_URL}/api/chat/${uuid}/voice-message`, {
+      method: 'POST',
+      headers: {
+        'Authorization': token ? `Bearer ${token}` : '',
+      },
+      body: formData
+    })
+    
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}))
+      throw {
+        response: {
+          status: response.status,
+          data: errorData
+        }
+      }
+    }
+    
+    return {
+      data: await response.json()
+    }
+  },
+  
   downloadHouseRulesPDF: (uuid: string, lang: string = 'IT') =>
     api.get(`/chat/${uuid}/house-rules-pdf?lang=${lang}`, { responseType: 'blob' }),
   
