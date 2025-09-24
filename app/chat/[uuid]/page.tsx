@@ -367,6 +367,12 @@ export default function ChatWidgetPage() {
   // Funzioni per registrazione audio
   const startRecording = async () => {
     try {
+      // Verifica se siamo in un contesto sicuro (HTTPS o localhost)
+      const isSecureContext = window.isSecureContext || location.hostname === 'localhost'
+      if (!isSecureContext) {
+        throw new Error('Registrazione audio richiede HTTPS. Usa https:// invece di http://')
+      }
+      
       // Verifica se MediaRecorder è supportato
       if (!window.MediaRecorder) {
         throw new Error('MediaRecorder non supportato da questo browser')
@@ -379,6 +385,30 @@ export default function ChatWidgetPage() {
       
       // Richiedi esplicitamente i permessi del microfono
       console.log('🎤 Richiesta permessi microfono...')
+      console.log('🎤 Contesto sicuro:', window.isSecureContext)
+      console.log('🎤 Hostname:', location.hostname)
+      console.log('🎤 Protocollo:', location.protocol)
+      console.log('🎤 User Agent:', navigator.userAgent)
+      
+      // Su mobile, forziamo il popup con un timeout
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+      if (isMobile) {
+        console.log('🎤 Rilevato dispositivo mobile, forzando popup permessi...')
+        // Su mobile, il popup appare solo dopo un piccolo delay
+        await new Promise(resolve => setTimeout(resolve, 100))
+      }
+      
+      // Controlla se i permessi sono già stati negati
+      try {
+        const permissionStatus = await navigator.permissions.query({ name: 'microphone' as PermissionName })
+        console.log('🎤 Stato permessi microfono:', permissionStatus.state)
+        if (permissionStatus.state === 'denied') {
+          throw new Error('Permessi microfono negati in precedenza. Abilitali nelle impostazioni del browser.')
+        }
+      } catch (e) {
+        console.log('🎤 Impossibile controllare stato permessi:', e)
+      }
+      
       const stream = await navigator.mediaDevices.getUserMedia({ 
         audio: {
           echoCancellation: true,
@@ -443,18 +473,76 @@ export default function ChatWidgetPage() {
       console.log('🎤 Registrazione iniziata')
       
       // Mostra istruzioni all'utente
-      toast.success('Registrazione iniziata. Parla ora!', { duration: 2000 })
+      toast.success('🎤 Registrazione iniziata! Parla ora e clicca di nuovo per fermare.', { duration: 3000 })
     } catch (error: any) {
       console.error('Errore accesso microfono:', error)
       
       if (error.name === 'NotAllowedError') {
-        toast.error('Permessi microfono negati. Abilita l\'accesso al microfono nelle impostazioni del browser.')
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+        if (isMobile) {
+          // Su mobile, mostra un toast con pulsante per aprire le impostazioni
+          toast.error(
+            <div className="flex items-center gap-2">
+              <span>🚫 Permessi microfono negati</span>
+              <button 
+                onClick={() => {
+                  // Su mobile, mostra istruzioni specifiche
+                  alert('Vai in Impostazioni > Privacy > Microfono e abilita l\'accesso per questo sito.')
+                }}
+                className="bg-blue-500 text-white px-2 py-1 rounded text-xs hover:bg-blue-600"
+              >
+                Abilita
+              </button>
+            </div>,
+            { duration: 8000 }
+          )
+        } else {
+          // Su desktop, mostra un toast con pulsante per le istruzioni
+          toast.error(
+            <div className="flex items-center gap-2">
+              <span>🚫 Permessi microfono negati</span>
+              <button 
+                onClick={() => {
+                  // Mostra istruzioni specifiche per desktop
+                  alert('ISTRUZIONI:\n\n1. Clicca sull\'icona del microfono nella barra degli indirizzi\n2. Seleziona "Consenti sempre" o "Consenti"\n3. Ricarica la pagina\n\nSe non vedi l\'icona, vai in Impostazioni > Privacy > Microfono')
+                }}
+                className="bg-blue-500 text-white px-2 py-1 rounded text-xs hover:bg-blue-600"
+              >
+                Istruzioni
+              </button>
+            </div>,
+            { duration: 8000 }
+          )
+        }
       } else if (error.name === 'NotFoundError') {
-        toast.error('Microfono non trovato. Verifica che sia collegato.')
+        toast.error('🎤 Microfono non trovato. Verifica che sia collegato e funzionante.')
       } else if (error.name === 'NotSupportedError') {
-        toast.error('Registrazione audio non supportata da questo browser.')
+        toast.error('❌ Registrazione audio non supportata da questo browser. Prova con Chrome, Firefox o Safari.')
+      } else if (error.message.includes('HTTPS')) {
+        toast.error('🔒 Registrazione audio richiede HTTPS. Usa https:// invece di http://')
+      } else if (error.message.includes('negati in precedenza')) {
+        // Mostra un toast con pulsante per aprire le impostazioni
+        toast.error(
+          <div className="flex items-center gap-2">
+            <span>🚫 Permessi microfono negati in precedenza</span>
+            <button 
+              onClick={() => {
+                const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+                if (isMobile) {
+                  alert('Vai in Impostazioni > Privacy > Microfono e abilita l\'accesso per questo sito.')
+                } else {
+                  alert('ISTRUZIONI:\n\n1. Clicca sull\'icona del microfono nella barra degli indirizzi\n2. Seleziona "Consenti sempre" o "Consenti"\n3. Ricarica la pagina\n\nSe non vedi l\'icona, vai in Impostazioni > Privacy > Microfono')
+                }
+              }}
+              className="bg-blue-500 text-white px-2 py-1 rounded text-xs hover:bg-blue-600"
+            >
+              Abilita
+            </button>
+          </div>,
+          { duration: 8000 }
+        )
       } else {
-        toast.error(`Errore microfono: ${error.message}`)
+        toast.error(`❌ Errore microfono: ${error.message}`)
       }
     }
   }
@@ -894,6 +982,7 @@ export default function ChatWidgetPage() {
                         ? 'bg-red-500 text-white animate-pulse' 
                         : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
                     } ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600' : ''} disabled:opacity-50 disabled:cursor-not-allowed`}
+                    title={isRecording ? 'Ferma registrazione' : 'Inizia registrazione vocale'}
                   >
                     {isRecording ? (
                       <Square className="w-3 h-3 md:w-5 md:h-5" />
