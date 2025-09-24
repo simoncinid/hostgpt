@@ -3688,6 +3688,161 @@ async def send_message(
         logger.error(f"Error in chat: {e}")
         raise HTTPException(status_code=500, detail="Errore nel processare il messaggio")
 
+@app.post("/api/chat/{uuid}/voice-message")
+async def send_voice_message(
+    uuid: str,
+    audio_file: UploadFile = File(...),
+    thread_id: Optional[str] = Form(None),
+    guest_name: Optional[str] = Form(None),
+    request: Request = None,
+    db: Session = Depends(get_db)
+):
+    """
+    Endpoint per inviare messaggi vocali.
+    Converte l'audio in testo usando OpenAI Whisper e processa come messaggio normale.
+    """
+    logger.info(f"🎤 Messaggio vocale ricevuto per chatbot {uuid}")
+    
+    # Verifica che il file sia audio
+    if not audio_file.content_type or not audio_file.content_type.startswith('audio/'):
+        raise HTTPException(status_code=400, detail="Il file deve essere un file audio")
+    
+    # Verifica chatbot
+    chatbot = db.query(Chatbot).filter(Chatbot.uuid == uuid).first()
+    if not chatbot or not chatbot.is_active:
+        raise HTTPException(status_code=404, detail="Chatbot non trovato")
+    
+    # Ottieni il proprietario del chatbot
+    owner = db.query(User).filter(User.id == chatbot.user_id).first()
+    if not owner:
+        raise HTTPException(status_code=404, detail="Proprietario del chatbot non trovato")
+    
+    # Verifica abbonamento attivo
+    if not is_subscription_active(owner.subscription_status):
+        raise HTTPException(
+            status_code=403, 
+            detail="Il proprietario di questo chatbot non ha un abbonamento attivo. Il servizio è temporaneamente non disponibile."
+        )
+    
+    try:
+        client = get_openai_client()
+        
+        # Leggi il file audio
+        audio_content = await audio_file.read()
+        
+        # Converte l'audio in testo usando OpenAI Whisper
+        logger.info("🎤 Trascrizione audio in corso...")
+        transcript = client.audio.transcriptions.create(
+            model="whisper-1",
+            file=io.BytesIO(audio_content),
+            language="it"  # Italiano
+        )
+        
+        transcribed_text = transcript.text
+        logger.info(f"🎤 Testo trascritto: {transcribed_text[:100]}...")
+        
+        # Processa il testo come un messaggio normale
+        # Crea o recupera thread
+        if not thread_id:
+            thread = client.beta.threads.create(extra_headers={"OpenAI-Beta": "assistants=v2"})
+            thread_id = thread.id
+            
+            # Crea nuova conversazione nel DB
+            guest_identifier = request.client.host
+            conversation = Conversation(
+                chatbot_id=chatbot.id,
+                thread_id=thread_id,
+                guest_name=guest_name,
+                guest_identifier=guest_identifier
+            )
+            db.add(conversation)
+            db.commit()
+            db.refresh(conversation)
+            is_new_conversation = True
+        else:
+            conversation = db.query(Conversation).filter(
+                Conversation.thread_id == thread_id
+            ).first()
+            is_new_conversation = False
+        
+        # Invia messaggio trascritto a OpenAI
+        client.beta.threads.messages.create(
+            thread_id=thread_id,
+            role="user",
+            content=transcribed_text,
+            extra_headers={"OpenAI-Beta": "assistants=v2"}
+        )
+        
+        # Esegui assistant
+        run = client.beta.threads.runs.create(
+            thread_id=thread_id,
+            assistant_id=chatbot.assistant_id,
+            extra_headers={"OpenAI-Beta": "assistants=v2"}
+        )
+        
+        # Attendi risposta
+        import time
+        while run.status in ["queued", "in_progress"]:
+            time.sleep(1)
+            run = client.beta.threads.runs.retrieve(
+                thread_id=thread_id,
+                run_id=run.id,
+                extra_headers={"OpenAI-Beta": "assistants=v2"}
+            )
+        
+        # Ottieni risposta
+        messages = client.beta.threads.messages.list(thread_id=thread_id, extra_headers={"OpenAI-Beta": "assistants=v2"})
+        assistant_message = messages.data[0].content[0].text.value
+        
+        # Salva messaggi nel DB
+        user_msg = Message(
+            conversation_id=conversation.id,
+            role="user",
+            content=transcribed_text
+        )
+        assistant_msg = Message(
+            conversation_id=conversation.id,
+            role="assistant",
+            content=assistant_message
+        )
+        db.add(user_msg)
+        db.add(assistant_msg)
+        
+        # Aggiorna statistiche
+        conversation.message_count += 2
+        chatbot.total_messages += 2
+        
+        if is_new_conversation:
+            chatbot.total_conversations += 1
+        
+        # Incrementa il contatore messaggi dell'utente
+        if owner.subscription_status == 'free_trial':
+            owner.free_trial_messages_used += 1
+        else:
+            owner.messages_used += 1
+        
+        db.commit()
+        
+        # Analizza la conversazione con Guardian (in background)
+        import asyncio
+        asyncio.create_task(analyze_conversation_with_guardian(conversation.id, db))
+        
+        # Calcola messaggi rimanenti
+        if owner.subscription_status == 'free_trial':
+            messages_remaining = owner.free_trial_messages_limit - owner.free_trial_messages_used
+        else:
+            messages_remaining = owner.messages_limit - owner.messages_used
+        
+        return {
+            "thread_id": thread_id,
+            "transcribed_text": transcribed_text,
+            "message": assistant_message,
+            "messages_remaining": messages_remaining
+        }
+        
+    except Exception as e:
+        logger.error(f"Error in voice message: {e}")
+        raise HTTPException(status_code=500, detail="Errore nel processare il messaggio vocale")
 
 
 # --- Conversations & Analytics ---

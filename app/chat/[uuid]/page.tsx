@@ -16,7 +16,10 @@ import {
   Moon,
   Sun,
   Clock,
-  FileText
+  FileText,
+  Mic,
+  MicOff,
+  Square
 } from 'lucide-react'
 import { chat } from '@/lib/api'
 import toast from 'react-hot-toast'
@@ -57,6 +60,12 @@ export default function ChatWidgetPage() {
   const [freeTrialExpired, setFreeTrialExpired] = useState(false)
   const [language, setLanguage] = useState<'IT' | 'ENG'>('IT')
   const [isDarkMode, setIsDarkMode] = useState(false)
+  
+  // Stati per registrazione audio
+  const [isRecording, setIsRecording] = useState(false)
+  const [isProcessingAudio, setIsProcessingAudio] = useState(false)
+  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null)
+  const [audioChunks, setAudioChunks] = useState<Blob[]>([])
   
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -353,6 +362,94 @@ export default function ChatWidgetPage() {
       }
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  // Funzioni per registrazione audio
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      const recorder = new MediaRecorder(stream)
+      
+      recorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          setAudioChunks(prev => [...prev, event.data])
+        }
+      }
+      
+      recorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' })
+        await sendVoiceMessage(audioBlob)
+        setAudioChunks([])
+        stream.getTracks().forEach(track => track.stop())
+      }
+      
+      setMediaRecorder(recorder)
+      recorder.start()
+      setIsRecording(true)
+      setAudioChunks([])
+    } catch (error) {
+      console.error('Errore accesso microfono:', error)
+      toast.error('Impossibile accedere al microfono')
+    }
+  }
+
+  const stopRecording = () => {
+    if (mediaRecorder && isRecording) {
+      mediaRecorder.stop()
+      setIsRecording(false)
+    }
+  }
+
+  const sendVoiceMessage = async (audioBlob: Blob) => {
+    setIsProcessingAudio(true)
+    
+    try {
+      const formData = new FormData()
+      formData.append('audio_file', audioBlob, 'voice-message.webm')
+      if (threadId) formData.append('thread_id', threadId)
+      if (guestName) formData.append('guest_name', guestName)
+
+      const response = await fetch(`/api/chat/${uuid}/voice-message`, {
+        method: 'POST',
+        body: formData
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.detail || 'Errore nel processare il messaggio vocale')
+      }
+
+      const data = await response.json()
+      
+      if (!threadId) {
+        setThreadId(data.thread_id)
+      }
+
+      // Aggiungi messaggio utente (testo trascritto)
+      const userMessage: Message = {
+        id: Date.now().toString(),
+        role: 'user',
+        content: data.transcribed_text,
+        timestamp: new Date()
+      }
+      setMessages(prev => [...prev, userMessage])
+
+      // Aggiungi risposta assistente
+      const assistantMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: data.message,
+        timestamp: new Date()
+      }
+      setMessages(prev => [...prev, assistantMessage])
+
+      toast.success('Messaggio vocale inviato!')
+    } catch (error: any) {
+      console.error('Errore invio messaggio vocale:', error)
+      toast.error(error.message || 'Errore nel processare il messaggio vocale')
+    } finally {
+      setIsProcessingAudio(false)
     }
   }
 
@@ -720,19 +817,42 @@ export default function ChatWidgetPage() {
                     value={inputMessage}
                     onChange={(e) => setInputMessage(e.target.value)}
                     placeholder={currentTexts.placeholder}
-                    disabled={isLoading}
+                    disabled={isLoading || isProcessingAudio}
                     className={`flex-1 px-3 md:px-4 py-1.5 md:py-2.5 rounded-full border outline-none transition text-sm md:text-base ${
                       isDarkMode 
                         ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-primary focus:ring-2 focus:ring-primary/20' 
                         : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-primary focus:ring-2 focus:ring-primary/20'
                     }`}
                   />
+                  
+                  {/* Pulsante microfono */}
+                  <button
+                    type="button"
+                    onClick={isRecording ? stopRecording : startRecording}
+                    disabled={isLoading || isProcessingAudio}
+                    className={`w-8 h-8 md:w-11 md:h-11 rounded-full flex items-center justify-center transition ${
+                      isRecording 
+                        ? 'bg-red-500 text-white animate-pulse' 
+                        : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                    } ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600' : ''} disabled:opacity-50 disabled:cursor-not-allowed`}
+                  >
+                    {isRecording ? (
+                      <Square className="w-3 h-3 md:w-5 md:h-5" />
+                    ) : (
+                      <Mic className="w-3 h-3 md:w-5 md:h-5" />
+                    )}
+                  </button>
+                  
                   <button
                     type="submit"
-                    disabled={isLoading || !inputMessage.trim()}
+                    disabled={isLoading || isProcessingAudio || !inputMessage.trim()}
                     className="w-8 h-8 md:w-11 md:h-11 bg-gradient-to-r from-primary to-secondary text-white rounded-full flex items-center justify-center hover:from-secondary hover:to-accent transition disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <Send className="w-3 h-3 md:w-5 md:h-5" />
+                    {isProcessingAudio ? (
+                      <Loader2 className="w-3 h-3 md:w-5 md:h-5 animate-spin" />
+                    ) : (
+                      <Send className="w-3 h-3 md:w-5 md:h-5" />
+                    )}
                   </button>
                 </form>
               </div>
