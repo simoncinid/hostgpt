@@ -115,7 +115,8 @@ export default function ChatWidgetPage() {
       freeTrialLimitReached: "Limite messaggi free trial raggiunto",
       freeTrialLimitReachedDesc: "L'host ha raggiunto il limite di messaggi del periodo di prova gratuito. Il servizio sarà ripristinato con l'abbonamento completo.",
       freeTrialExpired: "Periodo di prova scaduto",
-      freeTrialExpiredDesc: "Il periodo di prova gratuito dell'host è scaduto. Il servizio sarà ripristinato con l'abbonamento completo."
+      freeTrialExpiredDesc: "Il periodo di prova gratuito dell'host è scaduto. Il servizio sarà ripristinato con l'abbonamento completo.",
+      welcomeMessage: "Ciao! Sono qui per aiutarti con qualsiasi domanda sulla casa e sulla zona. Come posso esserti utile?"
     },
     ENG: {
       assistant: 'Virtual Assistant',
@@ -147,7 +148,8 @@ export default function ChatWidgetPage() {
       freeTrialLimitReached: "Free trial message limit reached",
       freeTrialLimitReachedDesc: "The host has reached the free trial message limit. Service will be restored with a complete subscription.",
       freeTrialExpired: "Free trial expired",
-      freeTrialExpiredDesc: "The host's free trial period has expired. Service will be restored with a complete subscription."
+      freeTrialExpiredDesc: "The host's free trial period has expired. Service will be restored with a complete subscription.",
+      welcomeMessage: "Hello! I'm here to help you with any questions about the house and the area. How can I be useful?"
     }
   }
 
@@ -672,6 +674,29 @@ export default function ChatWidgetPage() {
         setMessages([])
         setInputMessage('')
         
+        // Invia automaticamente il messaggio di benvenuto
+        setTimeout(async () => {
+          try {
+            const welcomeResponse = await chat.sendMessage(uuid, {
+              message: currentTexts.welcomeMessage,
+              thread_id: response.data.thread_id,
+              guestData: {
+                id: guestData.id,
+                phone: guestData.phone,
+                email: guestData.email,
+                first_name: guestData.first_name,
+                last_name: guestData.last_name
+              }
+            })
+            
+            if (welcomeResponse.data) {
+              setMessages([welcomeResponse.data])
+            }
+          } catch (error) {
+            console.error('Errore invio messaggio benvenuto:', error)
+          }
+        }, 500)
+        
         toast.success(language === 'IT' ? 'Nuova conversazione creata' : 'New conversation created')
       } catch (error) {
         console.error('Errore creazione nuova conversazione:', error)
@@ -913,7 +938,7 @@ export default function ChatWidgetPage() {
                     {language === 'IT' ? 'Numero di telefono' : 'Phone number'}
                   </label>
                   <div className="flex gap-2">
-                    <div className="w-32">
+                    <div className="w-40">
                       <CountrySelector
                         value={selectedCountryCode}
                         onChange={setSelectedCountryCode}
