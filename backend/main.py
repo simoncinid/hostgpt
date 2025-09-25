@@ -381,7 +381,41 @@ def find_or_create_guest(phone: Optional[str], email: Optional[str],
         db.refresh(guest)
         return guest
     
-    # Se l'ospite NON ESISTE per questo chatbot, richiedi ENTRAMBI i campi
+    # Se l'ospite NON ESISTE per questo chatbot, controlla se esiste globalmente
+    existing_guest = None
+    if phone:
+        existing_guest = db.query(Guest).filter(Guest.phone == phone).first()
+    
+    if not existing_guest and email:
+        existing_guest = db.query(Guest).filter(Guest.email == email).first()
+    
+    # Se l'ospite esiste globalmente ma non per questo chatbot
+    if existing_guest:
+        # Aggiorna informazioni se fornite
+        if phone and not existing_guest.phone:
+            existing_guest.phone = phone
+        if email and not existing_guest.email:
+            existing_guest.email = email
+        if first_name:
+            existing_guest.first_name = first_name
+        if last_name:
+            existing_guest.last_name = last_name
+        
+        db.commit()
+        db.refresh(existing_guest)
+        
+        # Crea solo l'associazione chatbot-guest
+        chatbot_guest = ChatbotGuest(
+            chatbot_id=chatbot_id,
+            guest_id=existing_guest.id
+        )
+        
+        db.add(chatbot_guest)
+        db.commit()
+        
+        return existing_guest
+    
+    # Se l'ospite NON ESISTE globalmente, richiedi ENTRAMBI i campi
     if not phone or not email:
         raise ValueError("Per i nuovi ospiti sono richiesti sia il numero di telefono che l'email")
     
