@@ -328,7 +328,7 @@ export default function ChatWidgetPage() {
         // Il thread_id verrà creato solo quando l'utente invierà il primo messaggio
         setThreadId(null)
         
-        // Mostra il messaggio di benvenuto dal DB
+        // Mostra SUBITO il messaggio di benvenuto dal DB in chat
         const welcomeMessage = {
           id: welcomeResponse.data.welcome_message.id.toString(),
           role: 'assistant' as const,
@@ -336,6 +336,9 @@ export default function ChatWidgetPage() {
           timestamp: new Date(welcomeResponse.data.welcome_message.timestamp)
         }
         setMessages([welcomeMessage])
+        
+        // NON mostrare la schermata di benvenuto - vai direttamente alla chat
+        setShowWelcome(false)
         
       } catch (welcomeError) {
         console.error('Errore creazione conversazione di benvenuto:', welcomeError)
@@ -347,6 +350,7 @@ export default function ChatWidgetPage() {
           timestamp: new Date()
         }
         setMessages([welcomeMessage])
+        setShowWelcome(false)
       }
       
     } catch (error: any) {
