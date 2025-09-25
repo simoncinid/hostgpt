@@ -185,6 +185,7 @@ export default function LandingPage() {
   const [demoShowInfo, setDemoShowInfo] = useState(false)
   const [demoLanguage, setDemoLanguage] = useState<'IT' | 'ENG'>('IT')
   const [demoIsDarkMode, setDemoIsDarkMode] = useState(false)
+  const [isDownloadingPDF, setIsDownloadingPDF] = useState(false)
   
   const demoInputRef = useRef<HTMLInputElement>(null)
 
@@ -380,6 +381,7 @@ export default function LandingPage() {
   }
 
   const downloadDemoPropertyPDF = async () => {
+    setIsDownloadingPDF(true)
     try {
       const response = await chat.downloadHouseRulesPDF(DEMO_CHATBOT_UUID, demoLanguage)
       
@@ -404,6 +406,8 @@ export default function LandingPage() {
       console.error('Errore nel download del PDF:', error)
       // Fallback: mostra un messaggio di errore
       alert(demoLanguage === 'IT' ? 'Errore nel download del PDF' : 'Error downloading PDF')
+    } finally {
+      setIsDownloadingPDF(false)
     }
   }
 
@@ -1429,7 +1433,7 @@ export default function LandingPage() {
             initial={{ opacity: 0, scale: 0.95, y: 50 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             transition={{ duration: 1.2, delay: 1, ease: [0.23, 1, 0.320, 1] }}
-            className="relative w-[90%] mx-[5%] md:w-full md:max-w-4xl md:mx-auto"
+            className="relative w-[95%] mx-[2.5%] md:w-full md:max-w-4xl md:mx-auto"
           >
             <div className={`h-[90vh] flex flex-col overflow-hidden transition-colors duration-300 w-full md:w-auto ${
               demoIsDarkMode 
@@ -1438,7 +1442,7 @@ export default function LandingPage() {
             }`}>
               {/* Header - FISSO */}
               <div className={`${demoIsDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'} shadow-sm flex-shrink-0 border-b transition-colors duration-300`}>
-                <div className="w-full md:max-w-4xl md:mx-auto px-0 md:px-2 py-4">
+                <div className="w-full md:max-w-4xl md:mx-auto px-2 md:px-2 py-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center">
                       <DemoChatbotIcon size="md" className="mr-3" />
@@ -1508,7 +1512,7 @@ export default function LandingPage() {
                   animate={{ opacity: 1, y: 0 }}
                   className="bg-blue-50 border-b border-blue-200 flex-shrink-0"
                 >
-                  <div className="w-full md:max-w-4xl md:mx-auto px-0 md:px-4 py-4">
+                  <div className="w-full md:max-w-4xl md:mx-auto px-2 md:px-4 py-4">
                     <div className="flex items-start justify-between">
                       <div>
                         <p className="text-sm text-blue-800 mb-2">
@@ -1532,7 +1536,7 @@ export default function LandingPage() {
               )}
 
               {/* Main Chat Area - FISSA */}
-              <div className="flex-1 flex flex-col w-full md:max-w-4xl md:mx-auto px-0 md:px-4 py-4 md:py-6 overflow-hidden">
+              <div className="flex-1 flex flex-col w-full md:max-w-4xl md:mx-auto px-2 md:px-4 py-4 md:py-6 overflow-hidden">
                 <div className={`${demoIsDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl shadow-xl overflow-hidden flex flex-col h-full transition-colors duration-300`}>
                   {/* Welcome Screen */}
                   {demoShowWelcome && demoMessages.length <= 1 && (
@@ -1635,7 +1639,7 @@ export default function LandingPage() {
                       </div>
 
                       {/* Messaggi Suggeriti - SU UNA RIGA SOLA - Disabilitati durante il caricamento */}
-                      <div className={`border-t p-2 transition-colors duration-300 ${
+                      <div className={`border-t px-2 py-2 transition-colors duration-300 ${
                         demoIsDarkMode ? 'border-gray-700' : 'border-gray-100'
                       }`}>
                         <div className="flex justify-center gap-2 md:gap-3 overflow-x-auto chat-scrollbar">
@@ -1645,15 +1649,15 @@ export default function LandingPage() {
                             animate={{ opacity: 1, scale: 1 }}
                             transition={{ delay: 0 }}
                             onClick={downloadDemoPropertyPDF}
-                            disabled={isDemoLoading}
-                            className={`px-3 py-2 md:px-4 md:py-2 rounded-full text-xs md:text-sm font-medium transition-all duration-200 hover:scale-105 active:scale-95 whitespace-nowrap flex-shrink-0 flex items-center gap-2 ${
-                              isDemoLoading 
-                                ? 'bg-gray-100 text-gray-400 border border-gray-200 cursor-not-allowed' 
-                                : 'bg-gradient-to-r from-blue-500/10 to-blue-600/10 text-blue-600 border border-blue-500/20 hover:from-blue-500/20 hover:to-blue-600/20 hover:border-blue-500/40'
+                            disabled={isDemoLoading || isDownloadingPDF}
+                            className={`p-2 rounded-full transition-all duration-200 hover:scale-105 active:scale-95 flex-shrink-0 ${
+                              isDemoLoading || isDownloadingPDF
+                                ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                                : 'bg-blue-50 text-blue-600 hover:bg-blue-100'
                             }`}
+                            title={demoLanguage === 'IT' ? 'Scarica informazioni proprietà' : 'Download property information'}
                           >
                             <FileText className="w-4 h-4" />
-                            <span>{demoLanguage === 'IT' ? 'Info PDF' : 'Info PDF'}</span>
                           </motion.button>
                           {currentDemoTexts.suggestedMessages.map((message: string, index: number) => (
                   <motion.button
