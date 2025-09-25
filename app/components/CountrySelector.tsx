@@ -16,19 +16,38 @@ interface CountrySelectorProps {
   placeholder?: string
   className?: string
   isDarkMode?: boolean
+  language?: 'IT' | 'ENG'
 }
 
 export default function CountrySelector({ 
   value, 
   onChange, 
-  placeholder = "Seleziona paese",
+  placeholder,
   className = "",
-  isDarkMode = false
+  isDarkMode = false,
+  language = 'IT'
 }: CountrySelectorProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [countries, setCountries] = useState<CountryCode[]>([])
   const [loading, setLoading] = useState(true)
+
+  const texts = {
+    IT: {
+      placeholder: "Paese",
+      searchPlaceholder: "Cerca paese...",
+      noResults: "Nessun paese trovato",
+      loading: "Caricamento paesi..."
+    },
+    ENG: {
+      placeholder: "Country",
+      searchPlaceholder: "Search country...",
+      noResults: "No country found",
+      loading: "Loading countries..."
+    }
+  }
+
+  const currentTexts = texts[language]
 
   useEffect(() => {
     loadCountries()
@@ -46,11 +65,13 @@ export default function CountrySelector({
     }
   }
 
-  const filteredCountries = countries.filter(country =>
-    country.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    country.country.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    country.code.includes(searchTerm)
-  )
+  const filteredCountries = searchTerm.trim() === '' 
+    ? countries 
+    : countries.filter(country =>
+        country.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        country.country.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        country.code.includes(searchTerm)
+      )
 
   const selectedCountry = countries.find(country => country.code === value)
 
@@ -79,7 +100,7 @@ export default function CountrySelector({
                 <span className="ml-2 text-xs text-gray-500">({selectedCountry.code})</span>
               </>
             ) : (
-              <span className="text-gray-500">{placeholder}</span>
+              <span className="text-gray-500">{placeholder || currentTexts.placeholder}</span>
             )}
           </div>
           <ChevronDown className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
@@ -95,7 +116,7 @@ export default function CountrySelector({
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Cerca paese..."
+                placeholder={currentTexts.searchPlaceholder}
                 className="w-full pl-10 pr-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                 autoFocus
               />
@@ -105,11 +126,11 @@ export default function CountrySelector({
           <div className="max-h-48 overflow-y-auto">
             {loading ? (
               <div className="p-4 text-center text-gray-500">
-                Caricamento paesi...
+                {currentTexts.loading}
               </div>
             ) : filteredCountries.length === 0 ? (
               <div className="p-4 text-center text-gray-500">
-                Nessun paese trovato
+                {currentTexts.noResults}
               </div>
             ) : (
               filteredCountries.map((country) => (

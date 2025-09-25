@@ -867,7 +867,7 @@ export default function ChatWidgetPage() {
                 <MessageSquare className="w-10 h-10 text-rose-500" />
               </div>
               <h2 className={`text-2xl font-bold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'} transition-colors duration-300`}>{currentTexts.welcome}</h2>
-              <p className={`mb-6 max-w-md mx-auto transition-colors duration-300 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+              <p className={`mb-6 max-w-2xl mx-auto transition-colors duration-300 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
                 {currentTexts.welcomeSubtitle}
               </p>
               
@@ -884,6 +884,7 @@ export default function ChatWidgetPage() {
                         value={selectedCountryCode}
                         onChange={setSelectedCountryCode}
                         isDarkMode={isDarkMode}
+                        language={language}
                         className="text-sm"
                       />
                     </div>
