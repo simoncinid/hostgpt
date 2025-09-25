@@ -3581,9 +3581,8 @@ async def download_house_rules_pdf(uuid: str, lang: str = "IT", db: Session = De
                             break
                     
                     if not logo_path:
-                        logger.warning("Logo file not found in any expected location")
-                        logger.warning(f"Current working directory: {os.getcwd()}")
-                        logger.warning(f"Backend file location: {os.path.dirname(__file__)}")
+                        # Logo non trovato, salta il watermark
+                        logger.info("Logo not found, skipping watermark...")
                         return
                 
                 logger.info(f"Using logo path: {logo_path}")

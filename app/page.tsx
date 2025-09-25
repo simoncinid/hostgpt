@@ -1429,9 +1429,9 @@ export default function LandingPage() {
             initial={{ opacity: 0, scale: 0.95, y: 50 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             transition={{ duration: 1.2, delay: 1, ease: [0.23, 1, 0.320, 1] }}
-            className="relative w-full md:max-w-4xl md:mx-auto"
+            className="relative w-[90%] mx-[5%] md:w-full md:max-w-4xl md:mx-auto"
           >
-            <div className={`h-[90vh] flex flex-col overflow-hidden transition-colors duration-300 ${
+            <div className={`h-[90vh] flex flex-col overflow-hidden transition-colors duration-300 w-full md:w-auto ${
               demoIsDarkMode 
                 ? 'bg-gradient-to-br from-gray-900 to-gray-800' 
                 : 'bg-gradient-to-br from-primary/5 to-accent/5'
@@ -1468,17 +1468,6 @@ export default function LandingPage() {
                         className="px-3 py-1.5 bg-gradient-to-r from-primary/10 to-accent/10 text-primary border border-primary/20 rounded-lg text-sm font-medium hover:from-primary/20 hover:to-accent/20 hover:border-primary/40 transition-all duration-200"
                       >
                         {demoLanguage}
-                      </button>
-                      <button
-                        onClick={downloadDemoPropertyPDF}
-                        className={`p-2 rounded-lg transition-colors duration-200 group ${
-                          demoIsDarkMode ? 'hover:bg-gray-700' : 'hover:bg-blue-50'
-                        }`}
-                        title={demoLanguage === 'IT' ? 'Scarica informazioni proprietà' : 'Download property information'}
-                      >
-                        <FileText className={`w-5 h-5 transition-colors duration-200 ${
-                          demoIsDarkMode ? 'text-blue-400 group-hover:text-blue-300' : 'text-blue-600 group-hover:text-blue-700'
-                        }`} />
                       </button>
                       <button
                         onClick={() => setDemoIsDarkMode(!demoIsDarkMode)}
@@ -1650,12 +1639,28 @@ export default function LandingPage() {
                         demoIsDarkMode ? 'border-gray-700' : 'border-gray-100'
                       }`}>
                         <div className="flex justify-center gap-2 md:gap-3 overflow-x-auto chat-scrollbar">
+                          {/* Bottone download PDF */}
+                          <motion.button
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ delay: 0 }}
+                            onClick={downloadDemoPropertyPDF}
+                            disabled={isDemoLoading}
+                            className={`px-3 py-2 md:px-4 md:py-2 rounded-full text-xs md:text-sm font-medium transition-all duration-200 hover:scale-105 active:scale-95 whitespace-nowrap flex-shrink-0 flex items-center gap-2 ${
+                              isDemoLoading 
+                                ? 'bg-gray-100 text-gray-400 border border-gray-200 cursor-not-allowed' 
+                                : 'bg-gradient-to-r from-blue-500/10 to-blue-600/10 text-blue-600 border border-blue-500/20 hover:from-blue-500/20 hover:to-blue-600/20 hover:border-blue-500/40'
+                            }`}
+                          >
+                            <FileText className="w-4 h-4" />
+                            <span>{demoLanguage === 'IT' ? 'Info PDF' : 'Info PDF'}</span>
+                          </motion.button>
                           {currentDemoTexts.suggestedMessages.map((message: string, index: number) => (
                   <motion.button
                               key={index}
                               initial={{ opacity: 0, scale: 0.9 }}
                               animate={{ opacity: 1, scale: 1 }}
-                              transition={{ delay: index * 0.1 }}
+                              transition={{ delay: (index + 1) * 0.1 }}
                               onClick={() => !isDemoLoading && handleDemoSuggestedMessage(message)}
                               disabled={isDemoLoading}
                               className={`px-3 py-2 md:px-4 md:py-2 rounded-full text-xs md:text-sm font-medium transition-all duration-200 hover:scale-105 active:scale-95 whitespace-nowrap flex-shrink-0 ${
@@ -1667,6 +1672,21 @@ export default function LandingPage() {
                               {message}
                   </motion.button>
                           ))}
+                          
+                          {/* Bottone Download PDF */}
+                          <motion.button
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ delay: 0.3 }}
+                            onClick={downloadDemoPropertyPDF}
+                            className={`px-3 py-2 md:px-4 md:py-2 rounded-full text-xs md:text-sm font-medium transition-all duration-200 hover:scale-105 active:scale-95 whitespace-nowrap flex-shrink-0 flex items-center gap-2 ${
+                              'bg-gradient-to-r from-blue-500/10 to-blue-600/10 text-blue-600 border border-blue-500/20 hover:from-blue-500/20 hover:to-blue-600/20 hover:border-blue-500/40'
+                            }`}
+                            title={demoLanguage === 'IT' ? 'Scarica informazioni proprietà' : 'Download property information'}
+                          >
+                            <FileText className="w-4 h-4" />
+                            <span className="hidden md:inline">{demoLanguage === 'IT' ? 'Info PDF' : 'Info PDF'}</span>
+                          </motion.button>
                         </div>
             </div>
 
