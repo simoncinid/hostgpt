@@ -338,7 +338,7 @@ def find_or_create_guest(phone: Optional[str], email: Optional[str],
                         db: Session = None) -> Guest:
     """Trova un ospite esistente o ne crea uno nuovo"""
     
-    # Validazione input
+    # Validazione input base
     if not phone and not email:
         raise ValueError("Almeno uno tra telefono ed email deve essere fornito")
     
@@ -348,7 +348,7 @@ def find_or_create_guest(phone: Optional[str], email: Optional[str],
     if email and not validate_email_format(email):
         raise ValueError("Formato email non valido")
     
-    # Cerca ospite esistente
+    # PRIMA controlla se l'ospite esiste già
     guest = None
     if phone:
         guest = db.query(Guest).filter(Guest.phone == phone).first()
@@ -356,6 +356,7 @@ def find_or_create_guest(phone: Optional[str], email: Optional[str],
     if not guest and email:
         guest = db.query(Guest).filter(Guest.email == email).first()
     
+    # Se l'ospite ESISTE, aggiorna e restituisci
     if guest:
         # Aggiorna informazioni se fornite
         if phone and not guest.phone:
@@ -371,7 +372,7 @@ def find_or_create_guest(phone: Optional[str], email: Optional[str],
         db.refresh(guest)
         return guest
     
-    # Per i NUOVI ospiti, richiedi ENTRAMBI telefono ed email
+    # Se l'ospite NON ESISTE (nuovo), richiedi ENTRAMBI i campi
     if not phone or not email:
         raise ValueError("Per i nuovi ospiti sono richiesti sia il numero di telefono che l'email")
     

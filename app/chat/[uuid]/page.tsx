@@ -643,6 +643,10 @@ export default function ChatWidgetPage() {
       // Gestisci errori specifici
       if (error.response?.data?.detail?.includes('Per i nuovi ospiti sono richiesti')) {
         toast.error(language === 'IT' ? 'Per i nuovi ospiti sono richiesti sia il telefono che l\'email' : 'Both phone and email are required for new guests')
+      } else if (error.response?.data?.detail?.includes('Formato numero di telefono non valido')) {
+        toast.error(language === 'IT' ? 'Formato numero di telefono non valido' : 'Invalid phone number format')
+      } else if (error.response?.data?.detail?.includes('Formato email non valido')) {
+        toast.error(language === 'IT' ? 'Formato email non valido' : 'Invalid email format')
       } else {
         toast.error(language === 'IT' ? 'Errore nell\'identificazione' : 'Identification error')
       }
