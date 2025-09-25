@@ -291,6 +291,17 @@ export default function ChatWidgetPage() {
   }
 
   useEffect(() => {
+    // Reset dello stato al cambio di UUID (refresh)
+    setMessages([])
+    setThreadId(null)
+    setInputMessage('')
+    setShowWelcome(true)
+    setGuestData(null)
+    setGuestPhone('')
+    setGuestEmail('')
+    setPhoneNumber('')
+    setSelectedCountryCode('+39')
+    
     loadChatInfo()
   }, [uuid])
 
@@ -303,15 +314,34 @@ export default function ChatWidgetPage() {
       const response = await chat.getInfo(uuid)
       setChatInfo(response.data)
       
-      // Aggiungi messaggio di benvenuto
-      if (response.data.welcome_message) {
-        setMessages([{
+      // Crea immediatamente una conversazione con messaggio di benvenuto nel DB
+      try {
+        const welcomeResponse = await chat.createWelcomeConversation(uuid)
+        
+        // Imposta il thread_id per la nuova conversazione
+        setThreadId(welcomeResponse.data.thread_id)
+        
+        // Mostra il messaggio di benvenuto dal DB
+        const welcomeMessage = {
+          id: welcomeResponse.data.welcome_message.id.toString(),
+          role: 'assistant' as const,
+          content: welcomeResponse.data.welcome_message.content,
+          timestamp: new Date(welcomeResponse.data.welcome_message.timestamp)
+        }
+        setMessages([welcomeMessage])
+        
+      } catch (welcomeError) {
+        console.error('Errore creazione conversazione di benvenuto:', welcomeError)
+        // Fallback: mostra messaggio di benvenuto senza salvare nel DB
+        const welcomeMessage = {
           id: 'welcome',
-          role: 'assistant',
-          content: response.data.welcome_message,
+          role: 'assistant' as const,
+          content: response.data.welcome_message || currentTexts.welcomeMessage,
           timestamp: new Date()
-        }])
+        }
+        setMessages([welcomeMessage])
       }
+      
     } catch (error: any) {
       if (error.response?.status === 403) {
         setSubscriptionCancelled(true)

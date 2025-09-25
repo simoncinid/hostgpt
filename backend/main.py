@@ -7264,6 +7264,66 @@ async def create_new_conversation(
         logger.error(f"Error creating new conversation: {e}")
         raise HTTPException(status_code=500, detail="Errore nella creazione della conversazione")
 
+@app.post("/api/chat/{uuid}/create-welcome-conversation")
+async def create_welcome_conversation(
+    uuid: str,
+    request: Request,
+    db: Session = Depends(get_db)
+):
+    """Crea una nuova conversazione con messaggio di benvenuto al refresh"""
+    
+    # Verifica chatbot
+    chatbot = db.query(Chatbot).filter(Chatbot.uuid == uuid).first()
+    if not chatbot or not chatbot.is_active:
+        raise HTTPException(status_code=404, detail="Chatbot non trovato")
+    
+    try:
+        client = get_openai_client()
+        
+        # Crea nuovo thread
+        thread = client.beta.threads.create(extra_headers={"OpenAI-Beta": "assistants=v2"})
+        thread_id = thread.id
+        
+        # Crea nuova conversazione nel DB (senza ospite specifico)
+        guest_identifier = request.client.host
+        conversation = Conversation(
+            chatbot_id=chatbot.id,
+            guest_id=None,  # Nessun ospite specifico al refresh
+            thread_id=thread_id,
+            guest_name=None,
+            guest_identifier=guest_identifier,
+            is_forced_new=False  # Non è una conversazione forzata, è un refresh
+        )
+        db.add(conversation)
+        db.commit()
+        db.refresh(conversation)
+        
+        # Salva il messaggio di benvenuto nel DB
+        welcome_message = Message(
+            conversation_id=conversation.id,
+            role="assistant",
+            content=chatbot.welcome_message or "Ciao! Sono qui per aiutarti con qualsiasi domanda sulla casa e sulla zona. Come posso esserti utile?",
+            timestamp=func.now()
+        )
+        db.add(welcome_message)
+        db.commit()
+        db.refresh(welcome_message)
+        
+        return {
+            "conversation_id": conversation.id,
+            "thread_id": thread_id,
+            "welcome_message": {
+                "id": welcome_message.id,
+                "content": welcome_message.content,
+                "timestamp": welcome_message.timestamp.isoformat()
+            },
+            "message": "Conversazione di benvenuto creata con successo"
+        }
+        
+    except Exception as e:
+        logger.error(f"Error creating welcome conversation: {e}")
+        raise HTTPException(status_code=500, detail="Errore nella creazione della conversazione di benvenuto")
+
 @app.get("/api/chat/{uuid}/guest/{guest_id}/messages")
 async def get_guest_messages(
     uuid: str,
