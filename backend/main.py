@@ -264,7 +264,9 @@ app.add_middleware(
         "http://localhost:3000",
         "https://*.vercel.app",  # Permette richieste da Vercel
         "https://hostgpt-docker.onrender.com",  # Dominio specifico Render
-        "https://hostgpt.vercel.app"  # Dominio specifico Vercel
+        "https://hostgpt.vercel.app",  # Dominio specifico Vercel
+        "https://www.hostgpt.it",  # Dominio di produzione
+        "https://hostgpt.it"  # Dominio di produzione senza www
     ],
     allow_credentials=True,
     allow_methods=["*"],
