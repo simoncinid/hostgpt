@@ -317,7 +317,7 @@ export default function ChatWidgetPage() {
       const response = await chat.getInfo(uuid)
       setChatInfo(response.data)
       
-      // Crea immediatamente una conversazione con messaggio di benvenuto nel DB
+      // SEMPRE crea una nuova conversazione con messaggio di benvenuto
       try {
         const welcomeResponse = await chat.createWelcomeConversation(uuid)
         
@@ -723,7 +723,7 @@ export default function ChatWidgetPage() {
     setSelectedCountryCode('+39')
     setShowWelcome(true)
     
-    // Ricarica le informazioni del chatbot e crea una nuova conversazione
+    // SEMPRE crea una nuova conversazione con messaggio di benvenuto
     await loadChatInfo()
     
     toast.success(language === 'IT' ? 'Nuova conversazione creata' : 'New conversation created')

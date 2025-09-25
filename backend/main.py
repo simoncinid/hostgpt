@@ -3756,13 +3756,12 @@ async def send_message(
         thread_id = message.thread_id
         is_new_conversation = False
         
-        # Prima cerca una conversazione esistente senza thread_id (conversazione di benvenuto)
+        # Cerca la conversazione di benvenuto più recente per questo chatbot
         if not conversation:
             existing_welcome_conversation = db.query(Conversation).filter(
                 Conversation.chatbot_id == chatbot.id,
-                Conversation.thread_id.is_(None),
-                Conversation.guest_id.is_(None)
-            ).first()
+                Conversation.thread_id.is_(None)
+            ).order_by(Conversation.started_at.desc()).first()
             
             if existing_welcome_conversation:
                 # Collega l'ospite alla conversazione di benvenuto esistente
@@ -7199,7 +7198,7 @@ async def identify_guest(
         # Verifica se è la prima volta
         is_first_time = is_guest_first_time(guest, chatbot.id, db)
         
-        # Cerca conversazione esistente
+        # Cerca conversazione esistente dell'ospite
         existing_conversation = get_latest_guest_conversation(chatbot.id, guest.id, db)
         
         return GuestIdentificationResponse(
