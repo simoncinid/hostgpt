@@ -595,9 +595,9 @@ export default function ChatWidgetPage() {
     // Costruisci il numero completo con il prefisso corretto
     const fullPhoneNumber = phoneNumber ? selectedCountryCode + phoneNumber : ''
     
-    // Validazione base
-    if (!fullPhoneNumber && !guestEmail) {
-      toast.error(language === 'IT' ? 'Inserisci almeno telefono o email' : 'Please enter phone or email')
+    // Validazione base - per nuovi ospiti servono sempre entrambi
+    if (!fullPhoneNumber || !guestEmail) {
+      toast.error(language === 'IT' ? 'Per iniziare una conversazione sono richiesti sia il numero di telefono che l\'email' : 'Both phone number and email are required to start a conversation')
       return
     }
 
@@ -634,7 +634,7 @@ export default function ChatWidgetPage() {
               timestamp: msg.timestamp ? new Date(msg.timestamp) : new Date(),
               // Assicurati che tutti i campi necessari siano presenti
               id: msg.id || Date.now() + Math.random(),
-              role: msg.role || 'assistant',
+              role: (msg.role || 'assistant') as 'assistant' | 'user',
               content: msg.content || ''
             }))
             setMessages(formattedMessages || [])
@@ -691,7 +691,17 @@ export default function ChatWidgetPage() {
             })
             
             if (welcomeResponse.data) {
-              setMessages([welcomeResponse.data])
+              console.log('Welcome message response:', welcomeResponse.data)
+              // Crea il messaggio nel formato corretto
+              const welcomeMessage = {
+                id: welcomeResponse.data.id || Date.now(),
+                role: 'assistant' as const,
+                content: welcomeResponse.data.content || welcomeResponse.data.message,
+                timestamp: welcomeResponse.data.timestamp ? new Date(welcomeResponse.data.timestamp) : new Date()
+              }
+              setMessages([welcomeMessage])
+            } else {
+              console.log('No welcome message data received')
             }
           } catch (error) {
             console.error('Errore invio messaggio benvenuto:', error)
@@ -1039,7 +1049,10 @@ export default function ChatWidgetPage() {
                         <p className={`text-xs mt-1 ${
                           message.role === 'user' ? 'text-white/70' : 'text-gray-400'
                         }`}>
-                          {message.timestamp.toLocaleTimeString('it-IT', {
+                          {message.timestamp ? message.timestamp.toLocaleTimeString('it-IT', {
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          }) : new Date().toLocaleTimeString('it-IT', {
                             hour: '2-digit',
                             minute: '2-digit'
                           })}

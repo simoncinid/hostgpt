@@ -117,6 +117,7 @@ class Chatbot(Base):
     # Relationships
     owner = relationship("User", back_populates="chatbots")
     conversations = relationship("Conversation", back_populates="chatbot", cascade="all, delete-orphan")
+    chatbot_guests = relationship("ChatbotGuest", back_populates="chatbot", cascade="all, delete-orphan")
     
 class Guest(Base):
     __tablename__ = "guests"
@@ -131,6 +132,19 @@ class Guest(Base):
     
     # Relationships
     conversations = relationship("Conversation", back_populates="guest", cascade="all, delete-orphan")
+    chatbot_guests = relationship("ChatbotGuest", back_populates="guest", cascade="all, delete-orphan")
+
+class ChatbotGuest(Base):
+    __tablename__ = "chatbot_guests"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    chatbot_id = Column(Integer, ForeignKey("chatbots.id"), nullable=False)
+    guest_id = Column(Integer, ForeignKey("guests.id"), nullable=False)
+    first_interaction_at = Column(DateTime, server_default=func.now())
+    
+    # Relationships
+    chatbot = relationship("Chatbot", back_populates="chatbot_guests")
+    guest = relationship("Guest", back_populates="chatbot_guests")
 
 class Conversation(Base):
     __tablename__ = "conversations"

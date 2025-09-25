@@ -37,7 +37,7 @@ from odf import text as odf_text, teletype
 from odf.opendocument import load as odf_load
 
 from database import get_db, engine
-from models import Base, User, Chatbot, Conversation, Message, KnowledgeBase, Analytics, GuardianAlert, GuardianAnalysis, ReferralCode, PrintOrder, PrintOrderItem, Guest
+from models import Base, User, Chatbot, Conversation, Message, KnowledgeBase, Analytics, GuardianAlert, GuardianAnalysis, ReferralCode, PrintOrder, PrintOrderItem, Guest, ChatbotGuest
 from config import settings
 from sms_service import sms_service
 from email_templates_simple import (
@@ -334,7 +334,7 @@ def validate_email_format(email: str) -> bool:
     return bool(re.match(pattern, email))
 
 def find_or_create_guest(phone: Optional[str], email: Optional[str], 
-                        first_name: Optional[str] = None, last_name: Optional[str] = None, 
+                        chatbot_id: int, first_name: Optional[str] = None, last_name: Optional[str] = None, 
                         db: Session = None) -> Guest:
     """Trova un ospite esistente o ne crea uno nuovo"""
     
@@ -348,16 +348,23 @@ def find_or_create_guest(phone: Optional[str], email: Optional[str],
     if email and not validate_email_format(email):
         raise ValueError("Formato email non valido")
     
-    # PRIMA controlla se l'ospite esiste già
-    guest = None
+    # PRIMA controlla se l'ospite esiste già per questo chatbot specifico
+    chatbot_guest = None
     if phone:
-        guest = db.query(Guest).filter(Guest.phone == phone).first()
+        chatbot_guest = db.query(ChatbotGuest).join(Guest).filter(
+            ChatbotGuest.chatbot_id == chatbot_id,
+            Guest.phone == phone
+        ).first()
     
-    if not guest and email:
-        guest = db.query(Guest).filter(Guest.email == email).first()
+    if not chatbot_guest and email:
+        chatbot_guest = db.query(ChatbotGuest).join(Guest).filter(
+            ChatbotGuest.chatbot_id == chatbot_id,
+            Guest.email == email
+        ).first()
     
-    # Se l'ospite ESISTE, aggiorna e restituisci
-    if guest:
+    # Se l'ospite ESISTE per questo chatbot, aggiorna e restituisci
+    if chatbot_guest:
+        guest = chatbot_guest.guest
         # Aggiorna informazioni se fornite
         if phone and not guest.phone:
             guest.phone = phone
@@ -372,7 +379,7 @@ def find_or_create_guest(phone: Optional[str], email: Optional[str],
         db.refresh(guest)
         return guest
     
-    # Se l'ospite NON ESISTE (nuovo), richiedi ENTRAMBI i campi
+    # Se l'ospite NON ESISTE per questo chatbot, richiedi ENTRAMBI i campi
     if not phone or not email:
         raise ValueError("Per i nuovi ospiti sono richiesti sia il numero di telefono che l'email")
     
@@ -387,6 +394,16 @@ def find_or_create_guest(phone: Optional[str], email: Optional[str],
     db.add(guest)
     db.commit()
     db.refresh(guest)
+    
+    # Crea associazione chatbot-guest
+    chatbot_guest = ChatbotGuest(
+        chatbot_id=chatbot_id,
+        guest_id=guest.id
+    )
+    
+    db.add(chatbot_guest)
+    db.commit()
+    
     return guest
 
 def get_latest_guest_conversation(chatbot_id: int, guest_id: int, db: Session) -> Optional[Conversation]:
@@ -399,12 +416,13 @@ def get_latest_guest_conversation(chatbot_id: int, guest_id: int, db: Session) -
 
 def is_guest_first_time(guest: Guest, chatbot_id: int, db: Session) -> bool:
     """Verifica se è la prima volta che l'ospite interagisce con questo chatbot"""
-    existing_conversations = db.query(Conversation).filter(
-        Conversation.chatbot_id == chatbot_id,
-        Conversation.guest_id == guest.id
-    ).count()
+    # Controlla se esiste l'associazione chatbot-guest
+    chatbot_guest = db.query(ChatbotGuest).filter(
+        ChatbotGuest.chatbot_id == chatbot_id,
+        ChatbotGuest.guest_id == guest.id
+    ).first()
     
-    return existing_conversations == 0
+    return chatbot_guest is None
 
 # OAuth2 bearer per estrarre il token dall'header Authorization
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
@@ -3689,6 +3707,7 @@ async def send_message(
                 guest = find_or_create_guest(
                     phone=message.phone,
                     email=message.email,
+                    chatbot_id=chatbot.id,
                     first_name=message.first_name,
                     last_name=message.last_name,
                     db=db
@@ -3805,7 +3824,11 @@ async def send_message(
         return {
             "thread_id": thread_id,
             "message": assistant_message,
-            "messages_remaining": messages_remaining
+            "messages_remaining": messages_remaining,
+            "id": assistant_msg.id,
+            "role": "assistant",
+            "content": assistant_message,
+            "timestamp": assistant_msg.timestamp.isoformat() if assistant_msg.timestamp else datetime.now().isoformat()
         }
         
     except Exception as e:
@@ -3918,6 +3941,7 @@ async def send_voice_message(
                 guest = find_or_create_guest(
                     phone=phone,
                     email=email,
+                    chatbot_id=chatbot.id,
                     first_name=first_name,
                     last_name=last_name,
                     db=db
@@ -7002,10 +7026,33 @@ async def identify_guest(
         raise HTTPException(status_code=400, detail="Almeno uno tra telefono ed email deve essere fornito")
     
     try:
+        # Prima controlla se l'ospite esiste per questo chatbot
+        chatbot_guest = None
+        if request.phone:
+            chatbot_guest = db.query(ChatbotGuest).join(Guest).filter(
+                ChatbotGuest.chatbot_id == chatbot.id,
+                Guest.phone == request.phone
+            ).first()
+        
+        if not chatbot_guest and request.email:
+            chatbot_guest = db.query(ChatbotGuest).join(Guest).filter(
+                ChatbotGuest.chatbot_id == chatbot.id,
+                Guest.email == request.email
+            ).first()
+        
+        # Se l'ospite NON esiste per questo chatbot, richiedi entrambi i campi
+        if not chatbot_guest:
+            if not request.phone or not request.email:
+                raise HTTPException(
+                    status_code=400, 
+                    detail="Per i nuovi ospiti sono richiesti sia il numero di telefono che l'email"
+                )
+        
         # Identifica o crea l'ospite
         guest = find_or_create_guest(
             phone=request.phone,
             email=request.email,
+            chatbot_id=chatbot.id,
             first_name=request.first_name,
             last_name=request.last_name,
             db=db
