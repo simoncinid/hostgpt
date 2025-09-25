@@ -118,17 +118,33 @@ class Chatbot(Base):
     owner = relationship("User", back_populates="chatbots")
     conversations = relationship("Conversation", back_populates="chatbot", cascade="all, delete-orphan")
     
+class Guest(Base):
+    __tablename__ = "guests"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    phone = Column(String(20), unique=True, nullable=True)  # Numero di telefono con prefisso internazionale
+    email = Column(String(255), unique=True, nullable=True)  # Email dell'ospite
+    first_name = Column(String(255), nullable=True)  # Nome dell'ospite
+    last_name = Column(String(255), nullable=True)  # Cognome dell'ospite
+    created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, onupdate=func.now())
+    
+    # Relationships
+    conversations = relationship("Conversation", back_populates="guest", cascade="all, delete-orphan")
+
 class Conversation(Base):
     __tablename__ = "conversations"
     
     id = Column(Integer, primary_key=True, index=True)
     chatbot_id = Column(Integer, ForeignKey("chatbots.id"), nullable=False)
+    guest_id = Column(Integer, ForeignKey("guests.id"), nullable=True)  # Riferimento all'ospite
     thread_id = Column(String(255))  # OpenAI Thread ID
-    guest_name = Column(String(255))
-    guest_identifier = Column(String(255))  # IP o session ID
+    guest_name = Column(String(255))  # Mantenuto per compatibilità
+    guest_identifier = Column(String(255))  # IP o session ID - mantenuto per compatibilità
     started_at = Column(DateTime, server_default=func.now())
     ended_at = Column(DateTime)
     message_count = Column(Integer, default=0)
+    is_forced_new = Column(Boolean, default=False)  # True se l'ospite ha cliccato "nuova conversazione"
     
     # Guardian fields
     guardian_analyzed = Column(Boolean, default=False)  # Se la conversazione è già stata analizzata
@@ -137,6 +153,7 @@ class Conversation(Base):
     
     # Relationships
     chatbot = relationship("Chatbot", back_populates="conversations")
+    guest = relationship("Guest", back_populates="conversations")
     messages = relationship("Message", back_populates="conversation", cascade="all, delete-orphan")
     guardian_alerts = relationship("GuardianAlert", back_populates="conversation", cascade="all, delete-orphan")
     

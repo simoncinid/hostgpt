@@ -37,7 +37,7 @@ from odf import text as odf_text, teletype
 from odf.opendocument import load as odf_load
 
 from database import get_db, engine
-from models import Base, User, Chatbot, Conversation, Message, KnowledgeBase, Analytics, GuardianAlert, GuardianAnalysis, ReferralCode, PrintOrder, PrintOrderItem
+from models import Base, User, Chatbot, Conversation, Message, KnowledgeBase, Analytics, GuardianAlert, GuardianAnalysis, ReferralCode, PrintOrder, PrintOrderItem, Guest
 from config import settings
 from sms_service import sms_service
 from email_templates_simple import (
@@ -317,6 +317,90 @@ def get_openai_client():
         default_headers={"OpenAI-Beta": "assistants=v2"}
     )
 
+# ============= Funzioni per gestione ospiti =============
+
+def validate_phone_number(phone: str) -> bool:
+    """Valida il formato del numero di telefono con prefisso internazionale"""
+    import re
+    # Formato: +[prefisso internazionale][numero] (prefisso 1-4 cifre + numero 6-15 cifre)
+    # Supporta tutti i prefissi internazionali del mondo
+    pattern = r'^\+\d{1,4}\d{6,15}$'
+    return bool(re.match(pattern, phone))
+
+def validate_email_format(email: str) -> bool:
+    """Valida il formato dell'email"""
+    import re
+    pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    return bool(re.match(pattern, email))
+
+def find_or_create_guest(phone: Optional[str], email: Optional[str], 
+                        first_name: Optional[str] = None, last_name: Optional[str] = None, 
+                        db: Session = None) -> Guest:
+    """Trova un ospite esistente o ne crea uno nuovo"""
+    
+    # Validazione input
+    if not phone and not email:
+        raise ValueError("Almeno uno tra telefono ed email deve essere fornito")
+    
+    if phone and not validate_phone_number(phone):
+        raise ValueError("Formato numero di telefono non valido. Usa il formato +[prefisso internazionale][numero] (es. +39XXXXXXXXX, +1XXXXXXXXXX)")
+    
+    if email and not validate_email_format(email):
+        raise ValueError("Formato email non valido")
+    
+    # Cerca ospite esistente
+    guest = None
+    if phone:
+        guest = db.query(Guest).filter(Guest.phone == phone).first()
+    
+    if not guest and email:
+        guest = db.query(Guest).filter(Guest.email == email).first()
+    
+    if guest:
+        # Aggiorna informazioni se fornite
+        if phone and not guest.phone:
+            guest.phone = phone
+        if email and not guest.email:
+            guest.email = email
+        if first_name:
+            guest.first_name = first_name
+        if last_name:
+            guest.last_name = last_name
+        
+        db.commit()
+        db.refresh(guest)
+        return guest
+    
+    # Crea nuovo ospite
+    guest = Guest(
+        phone=phone,
+        email=email,
+        first_name=first_name,
+        last_name=last_name
+    )
+    
+    db.add(guest)
+    db.commit()
+    db.refresh(guest)
+    return guest
+
+def get_latest_guest_conversation(chatbot_id: int, guest_id: int, db: Session) -> Optional[Conversation]:
+    """Ottiene l'ultima conversazione di un ospite per un chatbot specifico"""
+    return db.query(Conversation).filter(
+        Conversation.chatbot_id == chatbot_id,
+        Conversation.guest_id == guest_id,
+        Conversation.is_forced_new == False
+    ).order_by(Conversation.started_at.desc()).first()
+
+def is_guest_first_time(guest: Guest, chatbot_id: int, db: Session) -> bool:
+    """Verifica se è la prima volta che l'ospite interagisce con questo chatbot"""
+    existing_conversations = db.query(Conversation).filter(
+        Conversation.chatbot_id == chatbot_id,
+        Conversation.guest_id == guest.id
+    ).count()
+    
+    return existing_conversations == 0
+
 # OAuth2 bearer per estrarre il token dall'header Authorization
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
 
@@ -436,7 +520,13 @@ class ChatbotResponse(BaseModel):
 class MessageCreate(BaseModel):
     content: str
     thread_id: Optional[str] = None
-    guest_name: Optional[str] = None
+    guest_name: Optional[str] = None  # Mantenuto per compatibilità
+    # Nuovi campi per identificazione ospite
+    phone: Optional[str] = None
+    email: Optional[str] = None
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    force_new_conversation: Optional[bool] = False  # True se l'ospite vuole una nuova conversazione
 
 class SubscriptionCreate(BaseModel):
     payment_method_id: str
@@ -3585,8 +3675,38 @@ async def send_message(
     try:
         client = get_openai_client()
         
-        # Crea o recupera thread
-        if not message.thread_id:
+        # ============= NUOVA LOGICA GESTIONE OSPITI =============
+        
+        # Identifica o crea l'ospite
+        guest = None
+        if message.phone or message.email:
+            try:
+                guest = find_or_create_guest(
+                    phone=message.phone,
+                    email=message.email,
+                    first_name=message.first_name,
+                    last_name=message.last_name,
+                    db=db
+                )
+            except ValueError as e:
+                raise HTTPException(status_code=400, detail=str(e))
+        
+        # Determina se creare una nuova conversazione o riprendere una esistente
+        conversation = None
+        thread_id = message.thread_id
+        is_new_conversation = False
+        
+        if guest and not message.force_new_conversation:
+            # Cerca l'ultima conversazione dell'ospite per questo chatbot
+            existing_conversation = get_latest_guest_conversation(chatbot.id, guest.id, db)
+            if existing_conversation:
+                conversation = existing_conversation
+                thread_id = existing_conversation.thread_id
+                is_new_conversation = False
+                logger.info(f"🔄 Riprendendo conversazione esistente per ospite {guest.id}")
+        
+        if not conversation:
+            # Crea nuova conversazione
             thread = client.beta.threads.create(extra_headers={"OpenAI-Beta": "assistants=v2"})
             thread_id = thread.id
             
@@ -3594,20 +3714,19 @@ async def send_message(
             guest_identifier = request.client.host
             conversation = Conversation(
                 chatbot_id=chatbot.id,
+                guest_id=guest.id if guest else None,
                 thread_id=thread_id,
-                guest_name=message.guest_name,
-                guest_identifier=guest_identifier
+                guest_name=message.guest_name or (f"{guest.first_name} {guest.last_name}".strip() if guest else None),
+                guest_identifier=guest_identifier,
+                is_forced_new=message.force_new_conversation
             )
             db.add(conversation)
             db.commit()
             db.refresh(conversation)
             is_new_conversation = True
-        else:
-            thread_id = message.thread_id
-            conversation = db.query(Conversation).filter(
-                Conversation.thread_id == thread_id
-            ).first()
-            is_new_conversation = False
+            logger.info(f"🆕 Creata nuova conversazione per ospite {guest.id if guest else 'anonimo'}")
+        
+        # ============= FINE NUOVA LOGICA =============
         
         # Invia messaggio a OpenAI
         client.beta.threads.messages.create(
@@ -3693,7 +3812,13 @@ async def send_voice_message(
     uuid: str,
     audio_file: UploadFile = File(...),
     thread_id: Optional[str] = Form(None),
-    guest_name: Optional[str] = Form(None),
+    guest_name: Optional[str] = Form(None),  # Mantenuto per compatibilità
+    # Nuovi parametri per identificazione ospite
+    phone: Optional[str] = Form(None),
+    email: Optional[str] = Form(None),
+    first_name: Optional[str] = Form(None),
+    last_name: Optional[str] = Form(None),
+    force_new_conversation: Optional[bool] = Form(False),
     request: Request = None,
     db: Session = Depends(get_db)
 ):
@@ -3779,8 +3904,37 @@ async def send_voice_message(
         logger.info(f"🎤 Testo trascritto: {transcribed_text[:100]}...")
         
         # Processa il testo come un messaggio normale
-        # Crea o recupera thread
-        if not thread_id:
+        # ============= NUOVA LOGICA GESTIONE OSPITI (VOICE) =============
+        
+        # Identifica o crea l'ospite
+        guest = None
+        if phone or email:
+            try:
+                guest = find_or_create_guest(
+                    phone=phone,
+                    email=email,
+                    first_name=first_name,
+                    last_name=last_name,
+                    db=db
+                )
+            except ValueError as e:
+                raise HTTPException(status_code=400, detail=str(e))
+        
+        # Determina se creare una nuova conversazione o riprendere una esistente
+        conversation = None
+        is_new_conversation = False
+        
+        if guest and not force_new_conversation:
+            # Cerca l'ultima conversazione dell'ospite per questo chatbot
+            existing_conversation = get_latest_guest_conversation(chatbot.id, guest.id, db)
+            if existing_conversation:
+                conversation = existing_conversation
+                thread_id = existing_conversation.thread_id
+                is_new_conversation = False
+                logger.info(f"🎤🔄 Riprendendo conversazione esistente per ospite {guest.id}")
+        
+        if not conversation:
+            # Crea nuova conversazione
             thread = client.beta.threads.create(extra_headers={"OpenAI-Beta": "assistants=v2"})
             thread_id = thread.id
             
@@ -3788,19 +3942,19 @@ async def send_voice_message(
             guest_identifier = request.client.host
             conversation = Conversation(
                 chatbot_id=chatbot.id,
+                guest_id=guest.id if guest else None,
                 thread_id=thread_id,
-                guest_name=guest_name,
-                guest_identifier=guest_identifier
+                guest_name=guest_name or (f"{guest.first_name} {guest.last_name}".strip() if guest else None),
+                guest_identifier=guest_identifier,
+                is_forced_new=force_new_conversation
             )
             db.add(conversation)
             db.commit()
             db.refresh(conversation)
             is_new_conversation = True
-        else:
-            conversation = db.query(Conversation).filter(
-                Conversation.thread_id == thread_id
-            ).first()
-            is_new_conversation = False
+            logger.info(f"🎤🆕 Creata nuova conversazione per ospite {guest.id if guest else 'anonimo'}")
+        
+        # ============= FINE NUOVA LOGICA =============
         
         # Invia messaggio trascritto a OpenAI
         client.beta.threads.messages.create(
@@ -6509,6 +6663,462 @@ async def get_address_details(place_id: str):
     except Exception as e:
         logger.error(f"Error getting address details: {e}")
         return {"error": "Internal error"}
+
+# ============= ENDPOINT PER PREFISSI INTERNAZIONALI =============
+
+@app.get("/api/country-codes")
+async def get_country_codes():
+    """Ottiene la lista completa dei prefissi internazionali con bandiere"""
+    return {
+        "country_codes": [
+            {"code": "+1", "country": "United States", "flag": "🇺🇸", "name": "United States"},
+            {"code": "+1", "country": "Canada", "flag": "🇨🇦", "name": "Canada"},
+            {"code": "+7", "country": "Russia", "flag": "🇷🇺", "name": "Russia"},
+            {"code": "+7", "country": "Kazakhstan", "flag": "🇰🇿", "name": "Kazakhstan"},
+            {"code": "+20", "country": "Egypt", "flag": "🇪🇬", "name": "Egypt"},
+            {"code": "+27", "country": "South Africa", "flag": "🇿🇦", "name": "South Africa"},
+            {"code": "+30", "country": "Greece", "flag": "🇬🇷", "name": "Greece"},
+            {"code": "+31", "country": "Netherlands", "flag": "🇳🇱", "name": "Netherlands"},
+            {"code": "+32", "country": "Belgium", "flag": "🇧🇪", "name": "Belgium"},
+            {"code": "+33", "country": "France", "flag": "🇫🇷", "name": "France"},
+            {"code": "+34", "country": "Spain", "flag": "🇪🇸", "name": "Spain"},
+            {"code": "+36", "country": "Hungary", "flag": "🇭🇺", "name": "Hungary"},
+            {"code": "+39", "country": "Italy", "flag": "🇮🇹", "name": "Italy"},
+            {"code": "+40", "country": "Romania", "flag": "🇷🇴", "name": "Romania"},
+            {"code": "+41", "country": "Switzerland", "flag": "🇨🇭", "name": "Switzerland"},
+            {"code": "+43", "country": "Austria", "flag": "🇦🇹", "name": "Austria"},
+            {"code": "+44", "country": "United Kingdom", "flag": "🇬🇧", "name": "United Kingdom"},
+            {"code": "+45", "country": "Denmark", "flag": "🇩🇰", "name": "Denmark"},
+            {"code": "+46", "country": "Sweden", "flag": "🇸🇪", "name": "Sweden"},
+            {"code": "+47", "country": "Norway", "flag": "🇳🇴", "name": "Norway"},
+            {"code": "+48", "country": "Poland", "flag": "🇵🇱", "name": "Poland"},
+            {"code": "+49", "country": "Germany", "flag": "🇩🇪", "name": "Germany"},
+            {"code": "+51", "country": "Peru", "flag": "🇵🇪", "name": "Peru"},
+            {"code": "+52", "country": "Mexico", "flag": "🇲🇽", "name": "Mexico"},
+            {"code": "+53", "country": "Cuba", "flag": "🇨🇺", "name": "Cuba"},
+            {"code": "+54", "country": "Argentina", "flag": "🇦🇷", "name": "Argentina"},
+            {"code": "+55", "country": "Brazil", "flag": "🇧🇷", "name": "Brazil"},
+            {"code": "+56", "country": "Chile", "flag": "🇨🇱", "name": "Chile"},
+            {"code": "+57", "country": "Colombia", "flag": "🇨🇴", "name": "Colombia"},
+            {"code": "+58", "country": "Venezuela", "flag": "🇻🇪", "name": "Venezuela"},
+            {"code": "+60", "country": "Malaysia", "flag": "🇲🇾", "name": "Malaysia"},
+            {"code": "+61", "country": "Australia", "flag": "🇦🇺", "name": "Australia"},
+            {"code": "+62", "country": "Indonesia", "flag": "🇮🇩", "name": "Indonesia"},
+            {"code": "+63", "country": "Philippines", "flag": "🇵🇭", "name": "Philippines"},
+            {"code": "+64", "country": "New Zealand", "flag": "🇳🇿", "name": "New Zealand"},
+            {"code": "+65", "country": "Singapore", "flag": "🇸🇬", "name": "Singapore"},
+            {"code": "+66", "country": "Thailand", "flag": "🇹🇭", "name": "Thailand"},
+            {"code": "+81", "country": "Japan", "flag": "🇯🇵", "name": "Japan"},
+            {"code": "+82", "country": "South Korea", "flag": "🇰🇷", "name": "South Korea"},
+            {"code": "+84", "country": "Vietnam", "flag": "🇻🇳", "name": "Vietnam"},
+            {"code": "+86", "country": "China", "flag": "🇨🇳", "name": "China"},
+            {"code": "+90", "country": "Turkey", "flag": "🇹🇷", "name": "Turkey"},
+            {"code": "+91", "country": "India", "flag": "🇮🇳", "name": "India"},
+            {"code": "+92", "country": "Pakistan", "flag": "🇵🇰", "name": "Pakistan"},
+            {"code": "+93", "country": "Afghanistan", "flag": "🇦🇫", "name": "Afghanistan"},
+            {"code": "+94", "country": "Sri Lanka", "flag": "🇱🇰", "name": "Sri Lanka"},
+            {"code": "+95", "country": "Myanmar", "flag": "🇲🇲", "name": "Myanmar"},
+            {"code": "+98", "country": "Iran", "flag": "🇮🇷", "name": "Iran"},
+            {"code": "+212", "country": "Morocco", "flag": "🇲🇦", "name": "Morocco"},
+            {"code": "+213", "country": "Algeria", "flag": "🇩🇿", "name": "Algeria"},
+            {"code": "+216", "country": "Tunisia", "flag": "🇹🇳", "name": "Tunisia"},
+            {"code": "+218", "country": "Libya", "flag": "🇱🇾", "name": "Libya"},
+            {"code": "+220", "country": "Gambia", "flag": "🇬🇲", "name": "Gambia"},
+            {"code": "+221", "country": "Senegal", "flag": "🇸🇳", "name": "Senegal"},
+            {"code": "+222", "country": "Mauritania", "flag": "🇲🇷", "name": "Mauritania"},
+            {"code": "+223", "country": "Mali", "flag": "🇲🇱", "name": "Mali"},
+            {"code": "+224", "country": "Guinea", "flag": "🇬🇳", "name": "Guinea"},
+            {"code": "+225", "country": "Ivory Coast", "flag": "🇨🇮", "name": "Ivory Coast"},
+            {"code": "+226", "country": "Burkina Faso", "flag": "🇧🇫", "name": "Burkina Faso"},
+            {"code": "+227", "country": "Niger", "flag": "🇳🇪", "name": "Niger"},
+            {"code": "+228", "country": "Togo", "flag": "🇹🇬", "name": "Togo"},
+            {"code": "+229", "country": "Benin", "flag": "🇧🇯", "name": "Benin"},
+            {"code": "+230", "country": "Mauritius", "flag": "🇲🇺", "name": "Mauritius"},
+            {"code": "+231", "country": "Liberia", "flag": "🇱🇷", "name": "Liberia"},
+            {"code": "+232", "country": "Sierra Leone", "flag": "🇸🇱", "name": "Sierra Leone"},
+            {"code": "+233", "country": "Ghana", "flag": "🇬🇭", "name": "Ghana"},
+            {"code": "+234", "country": "Nigeria", "flag": "🇳🇬", "name": "Nigeria"},
+            {"code": "+235", "country": "Chad", "flag": "🇹🇩", "name": "Chad"},
+            {"code": "+236", "country": "Central African Republic", "flag": "🇨🇫", "name": "Central African Republic"},
+            {"code": "+237", "country": "Cameroon", "flag": "🇨🇲", "name": "Cameroon"},
+            {"code": "+238", "country": "Cape Verde", "flag": "🇨🇻", "name": "Cape Verde"},
+            {"code": "+239", "country": "São Tomé and Príncipe", "flag": "🇸🇹", "name": "São Tomé and Príncipe"},
+            {"code": "+240", "country": "Equatorial Guinea", "flag": "🇬🇶", "name": "Equatorial Guinea"},
+            {"code": "+241", "country": "Gabon", "flag": "🇬🇦", "name": "Gabon"},
+            {"code": "+242", "country": "Republic of the Congo", "flag": "🇨🇬", "name": "Republic of the Congo"},
+            {"code": "+243", "country": "Democratic Republic of the Congo", "flag": "🇨🇩", "name": "Democratic Republic of the Congo"},
+            {"code": "+244", "country": "Angola", "flag": "🇦🇴", "name": "Angola"},
+            {"code": "+245", "country": "Guinea-Bissau", "flag": "🇬🇼", "name": "Guinea-Bissau"},
+            {"code": "+246", "country": "British Indian Ocean Territory", "flag": "🇮🇴", "name": "British Indian Ocean Territory"},
+            {"code": "+248", "country": "Seychelles", "flag": "🇸🇨", "name": "Seychelles"},
+            {"code": "+249", "country": "Sudan", "flag": "🇸🇩", "name": "Sudan"},
+            {"code": "+250", "country": "Rwanda", "flag": "🇷🇼", "name": "Rwanda"},
+            {"code": "+251", "country": "Ethiopia", "flag": "🇪🇹", "name": "Ethiopia"},
+            {"code": "+252", "country": "Somalia", "flag": "🇸🇴", "name": "Somalia"},
+            {"code": "+253", "country": "Djibouti", "flag": "🇩🇯", "name": "Djibouti"},
+            {"code": "+254", "country": "Kenya", "flag": "🇰🇪", "name": "Kenya"},
+            {"code": "+255", "country": "Tanzania", "flag": "🇹🇿", "name": "Tanzania"},
+            {"code": "+256", "country": "Uganda", "flag": "🇺🇬", "name": "Uganda"},
+            {"code": "+257", "country": "Burundi", "flag": "🇧🇮", "name": "Burundi"},
+            {"code": "+258", "country": "Mozambique", "flag": "🇲🇿", "name": "Mozambique"},
+            {"code": "+260", "country": "Zambia", "flag": "🇿🇲", "name": "Zambia"},
+            {"code": "+261", "country": "Madagascar", "flag": "🇲🇬", "name": "Madagascar"},
+            {"code": "+262", "country": "Réunion", "flag": "🇷🇪", "name": "Réunion"},
+            {"code": "+263", "country": "Zimbabwe", "flag": "🇿🇼", "name": "Zimbabwe"},
+            {"code": "+264", "country": "Namibia", "flag": "🇳🇦", "name": "Namibia"},
+            {"code": "+265", "country": "Malawi", "flag": "🇲🇼", "name": "Malawi"},
+            {"code": "+266", "country": "Lesotho", "flag": "🇱🇸", "name": "Lesotho"},
+            {"code": "+267", "country": "Botswana", "flag": "🇧🇼", "name": "Botswana"},
+            {"code": "+268", "country": "Swaziland", "flag": "🇸🇿", "name": "Swaziland"},
+            {"code": "+269", "country": "Comoros", "flag": "🇰🇲", "name": "Comoros"},
+            {"code": "+290", "country": "Saint Helena", "flag": "🇸🇭", "name": "Saint Helena"},
+            {"code": "+291", "country": "Eritrea", "flag": "🇪🇷", "name": "Eritrea"},
+            {"code": "+297", "country": "Aruba", "flag": "🇦🇼", "name": "Aruba"},
+            {"code": "+298", "country": "Faroe Islands", "flag": "🇫🇴", "name": "Faroe Islands"},
+            {"code": "+299", "country": "Greenland", "flag": "🇬🇱", "name": "Greenland"},
+            {"code": "+350", "country": "Gibraltar", "flag": "🇬🇮", "name": "Gibraltar"},
+            {"code": "+351", "country": "Portugal", "flag": "🇵🇹", "name": "Portugal"},
+            {"code": "+352", "country": "Luxembourg", "flag": "🇱🇺", "name": "Luxembourg"},
+            {"code": "+353", "country": "Ireland", "flag": "🇮🇪", "name": "Ireland"},
+            {"code": "+354", "country": "Iceland", "flag": "🇮🇸", "name": "Iceland"},
+            {"code": "+355", "country": "Albania", "flag": "🇦🇱", "name": "Albania"},
+            {"code": "+356", "country": "Malta", "flag": "🇲🇹", "name": "Malta"},
+            {"code": "+357", "country": "Cyprus", "flag": "🇨🇾", "name": "Cyprus"},
+            {"code": "+358", "country": "Finland", "flag": "🇫🇮", "name": "Finland"},
+            {"code": "+359", "country": "Bulgaria", "flag": "🇧🇬", "name": "Bulgaria"},
+            {"code": "+370", "country": "Lithuania", "flag": "🇱🇹", "name": "Lithuania"},
+            {"code": "+371", "country": "Latvia", "flag": "🇱🇻", "name": "Latvia"},
+            {"code": "+372", "country": "Estonia", "flag": "🇪🇪", "name": "Estonia"},
+            {"code": "+373", "country": "Moldova", "flag": "🇲🇩", "name": "Moldova"},
+            {"code": "+374", "country": "Armenia", "flag": "🇦🇲", "name": "Armenia"},
+            {"code": "+375", "country": "Belarus", "flag": "🇧🇾", "name": "Belarus"},
+            {"code": "+376", "country": "Andorra", "flag": "🇦🇩", "name": "Andorra"},
+            {"code": "+377", "country": "Monaco", "flag": "🇲🇨", "name": "Monaco"},
+            {"code": "+378", "country": "San Marino", "flag": "🇸🇲", "name": "San Marino"},
+            {"code": "+380", "country": "Ukraine", "flag": "🇺🇦", "name": "Ukraine"},
+            {"code": "+381", "country": "Serbia", "flag": "🇷🇸", "name": "Serbia"},
+            {"code": "+382", "country": "Montenegro", "flag": "🇲🇪", "name": "Montenegro"},
+            {"code": "+383", "country": "Kosovo", "flag": "🇽🇰", "name": "Kosovo"},
+            {"code": "+385", "country": "Croatia", "flag": "🇭🇷", "name": "Croatia"},
+            {"code": "+386", "country": "Slovenia", "flag": "🇸🇮", "name": "Slovenia"},
+            {"code": "+387", "country": "Bosnia and Herzegovina", "flag": "🇧🇦", "name": "Bosnia and Herzegovina"},
+            {"code": "+389", "country": "North Macedonia", "flag": "🇲🇰", "name": "North Macedonia"},
+            {"code": "+420", "country": "Czech Republic", "flag": "🇨🇿", "name": "Czech Republic"},
+            {"code": "+421", "country": "Slovakia", "flag": "🇸🇰", "name": "Slovakia"},
+            {"code": "+423", "country": "Liechtenstein", "flag": "🇱🇮", "name": "Liechtenstein"},
+            {"code": "+500", "country": "Falkland Islands", "flag": "🇫🇰", "name": "Falkland Islands"},
+            {"code": "+501", "country": "Belize", "flag": "🇧🇿", "name": "Belize"},
+            {"code": "+502", "country": "Guatemala", "flag": "🇬🇹", "name": "Guatemala"},
+            {"code": "+503", "country": "El Salvador", "flag": "🇸🇻", "name": "El Salvador"},
+            {"code": "+504", "country": "Honduras", "flag": "🇭🇳", "name": "Honduras"},
+            {"code": "+505", "country": "Nicaragua", "flag": "🇳🇮", "name": "Nicaragua"},
+            {"code": "+506", "country": "Costa Rica", "flag": "🇨🇷", "name": "Costa Rica"},
+            {"code": "+507", "country": "Panama", "flag": "🇵🇦", "name": "Panama"},
+            {"code": "+508", "country": "Saint Pierre and Miquelon", "flag": "🇵🇲", "name": "Saint Pierre and Miquelon"},
+            {"code": "+509", "country": "Haiti", "flag": "🇭🇹", "name": "Haiti"},
+            {"code": "+590", "country": "Guadeloupe", "flag": "🇬🇵", "name": "Guadeloupe"},
+            {"code": "+591", "country": "Bolivia", "flag": "🇧🇴", "name": "Bolivia"},
+            {"code": "+592", "country": "Guyana", "flag": "🇬🇾", "name": "Guyana"},
+            {"code": "+593", "country": "Ecuador", "flag": "🇪🇨", "name": "Ecuador"},
+            {"code": "+594", "country": "French Guiana", "flag": "🇬🇫", "name": "French Guiana"},
+            {"code": "+595", "country": "Paraguay", "flag": "🇵🇾", "name": "Paraguay"},
+            {"code": "+596", "country": "Martinique", "flag": "🇲🇶", "name": "Martinique"},
+            {"code": "+597", "country": "Suriname", "flag": "🇸🇷", "name": "Suriname"},
+            {"code": "+598", "country": "Uruguay", "flag": "🇺🇾", "name": "Uruguay"},
+            {"code": "+599", "country": "Netherlands Antilles", "flag": "🇧🇶", "name": "Netherlands Antilles"},
+            {"code": "+670", "country": "East Timor", "flag": "🇹🇱", "name": "East Timor"},
+            {"code": "+672", "country": "Australian External Territories", "flag": "🇦🇶", "name": "Australian External Territories"},
+            {"code": "+673", "country": "Brunei", "flag": "🇧🇳", "name": "Brunei"},
+            {"code": "+674", "country": "Nauru", "flag": "🇳🇷", "name": "Nauru"},
+            {"code": "+675", "country": "Papua New Guinea", "flag": "🇵🇬", "name": "Papua New Guinea"},
+            {"code": "+676", "country": "Tonga", "flag": "🇹🇴", "name": "Tonga"},
+            {"code": "+677", "country": "Solomon Islands", "flag": "🇸🇧", "name": "Solomon Islands"},
+            {"code": "+678", "country": "Vanuatu", "flag": "🇻🇺", "name": "Vanuatu"},
+            {"code": "+679", "country": "Fiji", "flag": "🇫🇯", "name": "Fiji"},
+            {"code": "+680", "country": "Palau", "flag": "🇵🇼", "name": "Palau"},
+            {"code": "+681", "country": "Wallis and Futuna", "flag": "🇼🇫", "name": "Wallis and Futuna"},
+            {"code": "+682", "country": "Cook Islands", "flag": "🇨🇰", "name": "Cook Islands"},
+            {"code": "+683", "country": "Niue", "flag": "🇳🇺", "name": "Niue"},
+            {"code": "+684", "country": "American Samoa", "flag": "🇦🇸", "name": "American Samoa"},
+            {"code": "+685", "country": "Samoa", "flag": "🇼🇸", "name": "Samoa"},
+            {"code": "+686", "country": "Kiribati", "flag": "🇰🇮", "name": "Kiribati"},
+            {"code": "+687", "country": "New Caledonia", "flag": "🇳🇨", "name": "New Caledonia"},
+            {"code": "+688", "country": "Tuvalu", "flag": "🇹🇻", "name": "Tuvalu"},
+            {"code": "+689", "country": "French Polynesia", "flag": "🇵🇫", "name": "French Polynesia"},
+            {"code": "+690", "country": "Tokelau", "flag": "🇹🇰", "name": "Tokelau"},
+            {"code": "+691", "country": "Micronesia", "flag": "🇫🇲", "name": "Micronesia"},
+            {"code": "+692", "country": "Marshall Islands", "flag": "🇲🇭", "name": "Marshall Islands"},
+            {"code": "+850", "country": "North Korea", "flag": "🇰🇵", "name": "North Korea"},
+            {"code": "+852", "country": "Hong Kong", "flag": "🇭🇰", "name": "Hong Kong"},
+            {"code": "+853", "country": "Macau", "flag": "🇲🇴", "name": "Macau"},
+            {"code": "+855", "country": "Cambodia", "flag": "🇰🇭", "name": "Cambodia"},
+            {"code": "+856", "country": "Laos", "flag": "🇱🇦", "name": "Laos"},
+            {"code": "+880", "country": "Bangladesh", "flag": "🇧🇩", "name": "Bangladesh"},
+            {"code": "+886", "country": "Taiwan", "flag": "🇹🇼", "name": "Taiwan"},
+            {"code": "+960", "country": "Maldives", "flag": "🇲🇻", "name": "Maldives"},
+            {"code": "+961", "country": "Lebanon", "flag": "🇱🇧", "name": "Lebanon"},
+            {"code": "+962", "country": "Jordan", "flag": "🇯🇴", "name": "Jordan"},
+            {"code": "+963", "country": "Syria", "flag": "🇸🇾", "name": "Syria"},
+            {"code": "+964", "country": "Iraq", "flag": "🇮🇶", "name": "Iraq"},
+            {"code": "+965", "country": "Kuwait", "flag": "🇰🇼", "name": "Kuwait"},
+            {"code": "+966", "country": "Saudi Arabia", "flag": "🇸🇦", "name": "Saudi Arabia"},
+            {"code": "+967", "country": "Yemen", "flag": "🇾🇪", "name": "Yemen"},
+            {"code": "+968", "country": "Oman", "flag": "🇴🇲", "name": "Oman"},
+            {"code": "+970", "country": "Palestine", "flag": "🇵🇸", "name": "Palestine"},
+            {"code": "+971", "country": "United Arab Emirates", "flag": "🇦🇪", "name": "United Arab Emirates"},
+            {"code": "+972", "country": "Israel", "flag": "🇮🇱", "name": "Israel"},
+            {"code": "+973", "country": "Bahrain", "flag": "🇧🇭", "name": "Bahrain"},
+            {"code": "+974", "country": "Qatar", "flag": "🇶🇦", "name": "Qatar"},
+            {"code": "+975", "country": "Bhutan", "flag": "🇧🇹", "name": "Bhutan"},
+            {"code": "+976", "country": "Mongolia", "flag": "🇲🇳", "name": "Mongolia"},
+            {"code": "+977", "country": "Nepal", "flag": "🇳🇵", "name": "Nepal"},
+            {"code": "+992", "country": "Tajikistan", "flag": "🇹🇯", "name": "Tajikistan"},
+            {"code": "+993", "country": "Turkmenistan", "flag": "🇹🇲", "name": "Turkmenistan"},
+            {"code": "+994", "country": "Azerbaijan", "flag": "🇦🇿", "name": "Azerbaijan"},
+            {"code": "+995", "country": "Georgia", "flag": "🇬🇪", "name": "Georgia"},
+            {"code": "+996", "country": "Kyrgyzstan", "flag": "🇰🇬", "name": "Kyrgyzstan"},
+            {"code": "+998", "country": "Uzbekistan", "flag": "🇺🇿", "name": "Uzbekistan"}
+        ]
+    }
+
+@app.post("/api/validate-phone")
+async def validate_phone(phone: str):
+    """Valida un numero di telefono e restituisce informazioni sul paese"""
+    
+    if not validate_phone_number(phone):
+        return {
+            "valid": False,
+            "error": "Formato numero di telefono non valido. Usa il formato +[prefisso internazionale][numero]"
+        }
+    
+    # Estrai il prefisso dal numero
+    prefix = phone[1:]  # Rimuovi il +
+    
+    # Trova il paese corrispondente
+    country_codes = [
+        {"code": "+1", "country": "United States", "flag": "🇺🇸", "name": "United States"},
+        {"code": "+1", "country": "Canada", "flag": "🇨🇦", "name": "Canada"},
+        {"code": "+7", "country": "Russia", "flag": "🇷🇺", "name": "Russia"},
+        {"code": "+7", "country": "Kazakhstan", "flag": "🇰🇿", "name": "Kazakhstan"},
+        {"code": "+20", "country": "Egypt", "flag": "🇪🇬", "name": "Egypt"},
+        {"code": "+27", "country": "South Africa", "flag": "🇿🇦", "name": "South Africa"},
+        {"code": "+30", "country": "Greece", "flag": "🇬🇷", "name": "Greece"},
+        {"code": "+31", "country": "Netherlands", "flag": "🇳🇱", "name": "Netherlands"},
+        {"code": "+32", "country": "Belgium", "flag": "🇧🇪", "name": "Belgium"},
+        {"code": "+33", "country": "France", "flag": "🇫🇷", "name": "France"},
+        {"code": "+34", "country": "Spain", "flag": "🇪🇸", "name": "Spain"},
+        {"code": "+36", "country": "Hungary", "flag": "🇭🇺", "name": "Hungary"},
+        {"code": "+39", "country": "Italy", "flag": "🇮🇹", "name": "Italy"},
+        {"code": "+40", "country": "Romania", "flag": "🇷🇴", "name": "Romania"},
+        {"code": "+41", "country": "Switzerland", "flag": "🇨🇭", "name": "Switzerland"},
+        {"code": "+43", "country": "Austria", "flag": "🇦🇹", "name": "Austria"},
+        {"code": "+44", "country": "United Kingdom", "flag": "🇬🇧", "name": "United Kingdom"},
+        {"code": "+45", "country": "Denmark", "flag": "🇩🇰", "name": "Denmark"},
+        {"code": "+46", "country": "Sweden", "flag": "🇸🇪", "name": "Sweden"},
+        {"code": "+47", "country": "Norway", "flag": "🇳🇴", "name": "Norway"},
+        {"code": "+48", "country": "Poland", "flag": "🇵🇱", "name": "Poland"},
+        {"code": "+49", "country": "Germany", "flag": "🇩🇪", "name": "Germany"},
+        {"code": "+51", "country": "Peru", "flag": "🇵🇪", "name": "Peru"},
+        {"code": "+52", "country": "Mexico", "flag": "🇲🇽", "name": "Mexico"},
+        {"code": "+53", "country": "Cuba", "flag": "🇨🇺", "name": "Cuba"},
+        {"code": "+54", "country": "Argentina", "flag": "🇦🇷", "name": "Argentina"},
+        {"code": "+55", "country": "Brazil", "flag": "🇧🇷", "name": "Brazil"},
+        {"code": "+56", "country": "Chile", "flag": "🇨🇱", "name": "Chile"},
+        {"code": "+57", "country": "Colombia", "flag": "🇨🇴", "name": "Colombia"},
+        {"code": "+58", "country": "Venezuela", "flag": "🇻🇪", "name": "Venezuela"},
+        {"code": "+60", "country": "Malaysia", "flag": "🇲🇾", "name": "Malaysia"},
+        {"code": "+61", "country": "Australia", "flag": "🇦🇺", "name": "Australia"},
+        {"code": "+62", "country": "Indonesia", "flag": "🇮🇩", "name": "Indonesia"},
+        {"code": "+63", "country": "Philippines", "flag": "🇵🇭", "name": "Philippines"},
+        {"code": "+64", "country": "New Zealand", "flag": "🇳🇿", "name": "New Zealand"},
+        {"code": "+65", "country": "Singapore", "flag": "🇸🇬", "name": "Singapore"},
+        {"code": "+66", "country": "Thailand", "flag": "🇹🇭", "name": "Thailand"},
+        {"code": "+81", "country": "Japan", "flag": "🇯🇵", "name": "Japan"},
+        {"code": "+82", "country": "South Korea", "flag": "🇰🇷", "name": "South Korea"},
+        {"code": "+84", "country": "Vietnam", "flag": "🇻🇳", "name": "Vietnam"},
+        {"code": "+86", "country": "China", "flag": "🇨🇳", "name": "China"},
+        {"code": "+90", "country": "Turkey", "flag": "🇹🇷", "name": "Turkey"},
+        {"code": "+91", "country": "India", "flag": "🇮🇳", "name": "India"},
+        {"code": "+92", "country": "Pakistan", "flag": "🇵🇰", "name": "Pakistan"},
+        {"code": "+93", "country": "Afghanistan", "flag": "🇦🇫", "name": "Afghanistan"},
+        {"code": "+94", "country": "Sri Lanka", "flag": "🇱🇰", "name": "Sri Lanka"},
+        {"code": "+95", "country": "Myanmar", "flag": "🇲🇲", "name": "Myanmar"},
+        {"code": "+98", "country": "Iran", "flag": "🇮🇷", "name": "Iran"}
+    ]
+    
+    # Trova il paese corrispondente (controlla prefissi più lunghi prima)
+    matched_country = None
+    for country in sorted(country_codes, key=lambda x: len(x["code"]), reverse=True):
+        if phone.startswith(country["code"]):
+            matched_country = country
+            break
+    
+    return {
+        "valid": True,
+        "phone": phone,
+        "country": matched_country,
+        "message": f"Numero valido per {matched_country['name']} {matched_country['flag']}" if matched_country else "Numero valido ma paese non identificato"
+    }
+
+# ============= NUOVI ENDPOINT PER GESTIONE OSPITI =============
+
+class GuestIdentificationRequest(BaseModel):
+    phone: Optional[str] = None
+    email: Optional[str] = None
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+
+class GuestIdentificationResponse(BaseModel):
+    guest_id: int
+    phone: Optional[str]
+    email: Optional[str]
+    first_name: Optional[str]
+    last_name: Optional[str]
+    is_first_time: bool
+    has_existing_conversation: bool
+    existing_conversation_id: Optional[int]
+    existing_thread_id: Optional[str]
+
+@app.post("/api/chat/{uuid}/identify-guest")
+async def identify_guest(
+    uuid: str,
+    request: GuestIdentificationRequest,
+    db: Session = Depends(get_db)
+):
+    """Identifica un ospite e restituisce le informazioni sulla conversazione"""
+    
+    # Verifica chatbot
+    chatbot = db.query(Chatbot).filter(Chatbot.uuid == uuid).first()
+    if not chatbot or not chatbot.is_active:
+        raise HTTPException(status_code=404, detail="Chatbot non trovato")
+    
+    # Validazione input
+    if not request.phone and not request.email:
+        raise HTTPException(status_code=400, detail="Almeno uno tra telefono ed email deve essere fornito")
+    
+    try:
+        # Identifica o crea l'ospite
+        guest = find_or_create_guest(
+            phone=request.phone,
+            email=request.email,
+            first_name=request.first_name,
+            last_name=request.last_name,
+            db=db
+        )
+        
+        # Verifica se è la prima volta
+        is_first_time = is_guest_first_time(guest, chatbot.id, db)
+        
+        # Cerca conversazione esistente
+        existing_conversation = get_latest_guest_conversation(chatbot.id, guest.id, db)
+        
+        return GuestIdentificationResponse(
+            guest_id=guest.id,
+            phone=guest.phone,
+            email=guest.email,
+            first_name=guest.first_name,
+            last_name=guest.last_name,
+            is_first_time=is_first_time,
+            has_existing_conversation=existing_conversation is not None,
+            existing_conversation_id=existing_conversation.id if existing_conversation else None,
+            existing_thread_id=existing_conversation.thread_id if existing_conversation else None
+        )
+        
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.get("/api/chat/{uuid}/guest/{guest_id}/conversations")
+async def get_guest_conversations(
+    uuid: str,
+    guest_id: int,
+    db: Session = Depends(get_db)
+):
+    """Ottiene tutte le conversazioni di un ospite per un chatbot specifico"""
+    
+    # Verifica chatbot
+    chatbot = db.query(Chatbot).filter(Chatbot.uuid == uuid).first()
+    if not chatbot or not chatbot.is_active:
+        raise HTTPException(status_code=404, detail="Chatbot non trovato")
+    
+    # Verifica ospite
+    guest = db.query(Guest).filter(Guest.id == guest_id).first()
+    if not guest:
+        raise HTTPException(status_code=404, detail="Ospite non trovato")
+    
+    # Ottieni conversazioni
+    conversations = db.query(Conversation).filter(
+        Conversation.chatbot_id == chatbot.id,
+        Conversation.guest_id == guest_id
+    ).order_by(Conversation.started_at.desc()).all()
+    
+    return {
+        "guest": {
+            "id": guest.id,
+            "phone": guest.phone,
+            "email": guest.email,
+            "first_name": guest.first_name,
+            "last_name": guest.last_name
+        },
+        "conversations": [
+            {
+                "id": conv.id,
+                "thread_id": conv.thread_id,
+                "started_at": conv.started_at,
+                "ended_at": conv.ended_at,
+                "message_count": conv.message_count,
+                "is_forced_new": conv.is_forced_new
+            }
+            for conv in conversations
+        ]
+    }
+
+@app.post("/api/chat/{uuid}/guest/{guest_id}/new-conversation")
+async def create_new_conversation(
+    uuid: str,
+    guest_id: int,
+    db: Session = Depends(get_db)
+):
+    """Crea una nuova conversazione per un ospite esistente"""
+    
+    # Verifica chatbot
+    chatbot = db.query(Chatbot).filter(Chatbot.uuid == uuid).first()
+    if not chatbot or not chatbot.is_active:
+        raise HTTPException(status_code=404, detail="Chatbot non trovato")
+    
+    # Verifica ospite
+    guest = db.query(Guest).filter(Guest.id == guest_id).first()
+    if not guest:
+        raise HTTPException(status_code=404, detail="Ospite non trovato")
+    
+    try:
+        client = get_openai_client()
+        
+        # Crea nuovo thread
+        thread = client.beta.threads.create(extra_headers={"OpenAI-Beta": "assistants=v2"})
+        thread_id = thread.id
+        
+        # Crea nuova conversazione nel DB
+        conversation = Conversation(
+            chatbot_id=chatbot.id,
+            guest_id=guest.id,
+            thread_id=thread_id,
+            guest_name=f"{guest.first_name} {guest.last_name}".strip() if guest.first_name or guest.last_name else None,
+            guest_identifier=None,  # Non più necessario con il nuovo sistema
+            is_forced_new=True  # Marca come nuova conversazione forzata
+        )
+        db.add(conversation)
+        db.commit()
+        db.refresh(conversation)
+        
+        return {
+            "conversation_id": conversation.id,
+            "thread_id": thread_id,
+            "message": "Nuova conversazione creata con successo"
+        }
+        
+    except Exception as e:
+        logger.error(f"Error creating new conversation: {e}")
+        raise HTTPException(status_code=500, detail="Errore nella creazione della conversazione")
 
 if __name__ == "__main__":
     import uvicorn
