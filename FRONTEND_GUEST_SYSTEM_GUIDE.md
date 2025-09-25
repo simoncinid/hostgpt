@@ -1,12 +1,12 @@
-# Sistema Gestione Ospiti - Frontend
+# Sistema Gestione Ospiti - Frontend (SEMPLIFICATO)
 
-## 🎯 Nuove Funzionalità Implementate
+## 🎯 Implementazione Semplificata
 
-### 1. **Form di Identificazione Ospite**
-- **Prima volta**: Richiede telefono + email (entrambi obbligatori)
-- **Volte successive**: Basta telefono OPPURE email
+### 1. **Form Unico nella Schermata di Benvenuto**
+- **Un solo form**: Telefono ed email nella schermata di benvenuto
 - **Validazione**: Formato telefono internazionale e email
 - **Menu a tendina**: Selezione paese con bandiere
+- **Niente passaggi multipli**: Tutto in un unico step
 
 ### 2. **Ricaricamento Automatico Conversazioni**
 - **Identificazione**: Sistema riconosce l'ospite tramite telefono/email
@@ -25,17 +25,19 @@
 />
 ```
 
-#### **GuestIdentificationForm.tsx**
+#### **Form Integrato nella Schermata di Benvenuto**
 ```typescript
-// Form completo per identificazione ospite
-<GuestIdentificationForm
-  onSubmit={handleGuestIdentification}
-  onCancel={() => setShowGuestForm(false)}
-  isFirstTime={isFirstTime}
-  hasExistingConversation={hasExistingConversation}
-  language={language}
-  isDarkMode={isDarkMode}
-/>
+// Form direttamente nella schermata di benvenuto
+<div className="max-w-md mx-auto space-y-4 mb-6">
+  {/* Telefono con menu a tendina paese */}
+  <div className="flex gap-2">
+    <CountrySelector value={selectedCountryCode} onChange={setSelectedCountryCode} />
+    <input type="tel" value={phoneNumber} onChange={handlePhoneChange} />
+  </div>
+  
+  {/* Email */}
+  <input type="email" value={guestEmail} onChange={setGuestEmail} />
+</div>
 ```
 
 ### 4. **API Aggiornate**
@@ -58,25 +60,18 @@ chat.validatePhone(phone)
 chat.getCountryCodes()
 ```
 
-### 5. **Flusso di Lavoro**
+### 5. **Flusso di Lavoro SEMPLIFICATO**
 
-#### **Prima Volta (Ospite Nuovo)**
-1. Utente clicca "Inizia Chat"
-2. Appare form con telefono + email obbligatori
-3. Validazione formato
-4. Creazione nuovo ospite nel DB
-5. Creazione nuova conversazione
-6. Inizio chat normale
-
-#### **Volte Successive (Ospite Esistente)**
-1. Utente clicca "Inizia Chat"
-2. Appare form con telefono OPPURE email
-3. Sistema trova ospite esistente
-4. **Automaticamente** riprende ultima conversazione
-5. Continua chat esistente
+#### **Tutti i Casi (Semplificato)**
+1. Utente apre chat → **Schermata di benvenuto con form**
+2. Inserisce telefono ed email (almeno uno dei due)
+3. Clicca "Inizia Chat"
+4. Sistema identifica ospite e carica conversazione
+5. **Automaticamente** riprende ultima conversazione se esiste
+6. Altrimenti crea nuova conversazione
 
 #### **Nuova Conversazione Forzata**
-1. Ospite clicca "Nuova Conversazione"
+1. Da chat esistente, clicca "Nuova Conversazione"
 2. Sistema crea nuova conversazione per l'ospite
 3. Marca come `is_forced_new = true`
 4. Inizio chat fresca

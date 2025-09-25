@@ -26,7 +26,7 @@ import toast from 'react-hot-toast'
 import ChatbotIcon from '@/app/components/ChatbotIcon'
 import MarkdownText from '@/app/components/MarkdownText'
 import HostGPTLogo from '@/app/components/HostGPTLogo'
-import GuestIdentificationForm from '@/app/components/GuestIdentificationForm'
+import CountrySelector from '@/app/components/CountrySelector'
 
 interface Message {
   id: string
@@ -56,8 +56,11 @@ export default function ChatWidgetPage() {
   const [guestName, setGuestName] = useState('')
   const [showWelcome, setShowWelcome] = useState(true)
   
-  // Nuovi stati per gestione ospiti
-  const [showGuestForm, setShowGuestForm] = useState(false)
+  // Stati per identificazione ospite
+  const [guestPhone, setGuestPhone] = useState('')
+  const [guestEmail, setGuestEmail] = useState('')
+  const [selectedCountryCode, setSelectedCountryCode] = useState('+39')
+  const [phoneNumber, setPhoneNumber] = useState('')
   const [guestData, setGuestData] = useState<{
     id?: number
     phone?: string
@@ -65,8 +68,6 @@ export default function ChatWidgetPage() {
     first_name?: string
     last_name?: string
   } | null>(null)
-  const [isFirstTime, setIsFirstTime] = useState(false)
-  const [hasExistingConversation, setHasExistingConversation] = useState(false)
   const [showInfo, setShowInfo] = useState(false)
   const [subscriptionCancelled, setSubscriptionCancelled] = useState(false)
   const [freeTrialLimitReached, setFreeTrialLimitReached] = useState(false)
@@ -583,19 +584,25 @@ export default function ChatWidgetPage() {
     }
   }
 
-  const handleStartChat = () => {
-    // Mostra il form di identificazione ospite invece di iniziare direttamente
-    setShowGuestForm(true)
+  const handlePhoneChange = (value: string) => {
+    setPhoneNumber(value)
+    setGuestPhone(selectedCountryCode + value)
   }
 
-  const handleGuestIdentification = async (data: {
-    phone?: string
-    email?: string
-    first_name?: string
-    last_name?: string
-  }) => {
+  const handleStartChat = async () => {
+    // Validazione base
+    if (!guestPhone && !guestEmail) {
+      toast.error(language === 'IT' ? 'Inserisci almeno telefono o email' : 'Please enter phone or email')
+      return
+    }
+
     try {
-      const response = await chat.identifyGuest(uuid, data)
+      // Identifica l'ospite
+      const response = await chat.identifyGuest(uuid, {
+        phone: guestPhone || undefined,
+        email: guestEmail || undefined
+      })
+      
       const guestInfo = response.data
       
       setGuestData({
@@ -606,36 +613,20 @@ export default function ChatWidgetPage() {
         last_name: guestInfo.last_name
       })
       
-      setIsFirstTime(guestInfo.is_first_time)
-      setHasExistingConversation(guestInfo.has_existing_conversation)
-      
-      // Se c'è una conversazione esistente, carica i messaggi
+      // Se c'è una conversazione esistente, carica il thread
       if (guestInfo.has_existing_conversation && guestInfo.existing_thread_id) {
         setThreadId(guestInfo.existing_thread_id)
-        // Carica i messaggi della conversazione esistente
-        await loadExistingConversation(guestInfo.existing_thread_id)
+        toast.success(language === 'IT' ? 'Conversazione esistente caricata' : 'Existing conversation loaded')
+      } else {
+        toast.success(language === 'IT' ? 'Nuova conversazione iniziata' : 'New conversation started')
       }
       
-      setShowGuestForm(false)
       setShowWelcome(false)
       setTimeout(() => inputRef.current?.focus(), 100)
       
     } catch (error: any) {
       console.error('Errore identificazione ospite:', error)
       toast.error(language === 'IT' ? 'Errore nell\'identificazione' : 'Identification error')
-    }
-  }
-
-  const loadExistingConversation = async (existingThreadId: string) => {
-    // Qui potresti implementare il caricamento dei messaggi esistenti
-    // Per ora, mostriamo solo un messaggio di benvenuto
-    if (chatInfo?.welcome_message) {
-      setMessages([{
-        id: 'welcome',
-        role: 'assistant',
-        content: chatInfo.welcome_message,
-        timestamp: new Date()
-      }])
     }
   }
 
@@ -646,16 +637,6 @@ export default function ChatWidgetPage() {
         setThreadId(response.data.thread_id)
         setMessages([])
         setInputMessage('')
-        
-        // Mostra messaggio di benvenuto per la nuova conversazione
-        if (chatInfo?.welcome_message) {
-          setMessages([{
-            id: 'welcome',
-            role: 'assistant',
-            content: chatInfo.welcome_message,
-            timestamp: new Date()
-          }])
-        }
         
         toast.success(language === 'IT' ? 'Nuova conversazione creata' : 'New conversation created')
       } catch (error) {
@@ -875,21 +856,8 @@ export default function ChatWidgetPage() {
             </motion.div>
           )}
 
-          {/* Guest Identification Form */}
-          {showGuestForm && !subscriptionCancelled && !freeTrialLimitReached && !freeTrialExpired && (
-            <GuestIdentificationForm
-              onSubmit={handleGuestIdentification}
-              onCancel={() => setShowGuestForm(false)}
-              isFirstTime={isFirstTime}
-              hasExistingConversation={hasExistingConversation}
-              existingGuestName={guestData ? `${guestData.first_name} ${guestData.last_name}`.trim() : undefined}
-              language={language}
-              isDarkMode={isDarkMode}
-            />
-          )}
-
           {/* Welcome Screen */}
-          {showWelcome && messages.length <= 1 && !subscriptionCancelled && !freeTrialLimitReached && !freeTrialExpired && !showGuestForm && (
+          {showWelcome && messages.length <= 1 && !subscriptionCancelled && !freeTrialLimitReached && !freeTrialExpired && (
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -902,19 +870,58 @@ export default function ChatWidgetPage() {
               <p className={`mb-6 max-w-md mx-auto transition-colors duration-300 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
                 {currentTexts.welcomeSubtitle}
               </p>
-              <div className="mb-6">
-                <input
-                  type="text"
-                  value={guestName}
-                  onChange={(e) => setGuestName(e.target.value)}
-                  placeholder={currentTexts.namePlaceholder}
-                  className={`max-w-xs mx-auto px-4 py-3 rounded-lg border transition-all duration-200 ${
-                    isDarkMode 
-                      ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-primary focus:ring-2 focus:ring-primary/20' 
-                      : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-primary focus:ring-2 focus:ring-primary/20'
-                  } outline-none`}
-                />
+              
+              {/* Form identificazione ospite */}
+              <div className="max-w-md mx-auto space-y-4 mb-6">
+                {/* Telefono */}
+                <div>
+                  <label className={`block text-sm font-medium mb-2 text-left ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    {language === 'IT' ? 'Numero di telefono' : 'Phone number'}
+                  </label>
+                  <div className="flex gap-2">
+                    <div className="w-32">
+                      <CountrySelector
+                        value={selectedCountryCode}
+                        onChange={setSelectedCountryCode}
+                        isDarkMode={isDarkMode}
+                        className="text-sm"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <input
+                        type="tel"
+                        value={phoneNumber}
+                        onChange={(e) => handlePhoneChange(e.target.value)}
+                        placeholder={language === 'IT' ? 'Inserisci il numero' : 'Enter phone number'}
+                        className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors ${
+                          isDarkMode 
+                            ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                            : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                        }`}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Email */}
+                <div>
+                  <label className={`block text-sm font-medium mb-2 text-left ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    {language === 'IT' ? 'Email' : 'Email'}
+                  </label>
+                  <input
+                    type="email"
+                    value={guestEmail}
+                    onChange={(e) => setGuestEmail(e.target.value)}
+                    placeholder={language === 'IT' ? 'Inserisci la tua email' : 'Enter your email'}
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors ${
+                      isDarkMode 
+                        ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                        : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                    }`}
+                  />
+                </div>
               </div>
+
               <button
                 onClick={handleStartChat}
                 className="px-6 py-3 bg-gradient-to-r from-primary to-secondary text-white rounded-2xl font-semibold hover:from-secondary hover:to-accent transition-all duration-200"
@@ -925,7 +932,7 @@ export default function ChatWidgetPage() {
           )}
 
           {/* Messages Area - FISSA */}
-          {(!showWelcome || messages.length > 1) && !subscriptionCancelled && !freeTrialLimitReached && !freeTrialExpired && !showGuestForm && (
+          {(!showWelcome || messages.length > 1) && !subscriptionCancelled && !freeTrialLimitReached && !freeTrialExpired && (
             <>
               <div className="flex-1 overflow-y-auto chat-scrollbar p-2 md:p-6 space-y-4">
                 {messages.map((message, index) => (
