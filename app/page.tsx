@@ -1438,7 +1438,7 @@ export default function LandingPage() {
             }`}>
               {/* Header - FISSO */}
               <div className={`${demoIsDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'} shadow-sm flex-shrink-0 border-b transition-colors duration-300`}>
-                <div className="w-full md:max-w-4xl md:mx-auto px-2 py-4">
+                <div className="w-full md:max-w-4xl md:mx-auto px-0 md:px-2 py-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center">
                       <DemoChatbotIcon size="md" className="mr-3" />
@@ -1519,7 +1519,7 @@ export default function LandingPage() {
                   animate={{ opacity: 1, y: 0 }}
                   className="bg-blue-50 border-b border-blue-200 flex-shrink-0"
                 >
-                  <div className="w-full md:max-w-4xl md:mx-auto px-4 py-4">
+                  <div className="w-full md:max-w-4xl md:mx-auto px-0 md:px-4 py-4">
                     <div className="flex items-start justify-between">
                       <div>
                         <p className="text-sm text-blue-800 mb-2">
@@ -1543,7 +1543,7 @@ export default function LandingPage() {
               )}
 
               {/* Main Chat Area - FISSA */}
-              <div className="flex-1 flex flex-col w-full md:max-w-4xl md:mx-auto px-4 py-4 md:py-6 overflow-hidden">
+              <div className="flex-1 flex flex-col w-full md:max-w-4xl md:mx-auto px-0 md:px-4 py-4 md:py-6 overflow-hidden">
                 <div className={`${demoIsDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl shadow-xl overflow-hidden flex flex-col h-full transition-colors duration-300`}>
                   {/* Welcome Screen */}
                   {demoShowWelcome && demoMessages.length <= 1 && (
@@ -1616,7 +1616,7 @@ export default function LandingPage() {
                                   ? 'bg-gradient-to-r from-rose-500 to-pink-600 text-white rounded-br-sm'
                                   : 'bg-gray-100 text-gray-900 rounded-bl-sm'
                               }`}>
-                                <MarkdownText content={message.content} />
+                                <MarkdownText content={message.content} className="text-sm md:text-base" />
                                 <p className={`text-xs mt-1 ${
                                   message.role === 'user' ? 'text-white/70' : 'text-gray-400'
                                 }`}>
@@ -1638,7 +1638,7 @@ export default function LandingPage() {
                           >
                             <div className="flex items-center bg-gray-100 rounded-2xl rounded-bl-sm px-4 py-3">
                               <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                              <span className="text-gray-600">{currentDemoTexts.writing}</span>
+                              <span className="text-sm md:text-base text-gray-600">{currentDemoTexts.writing}</span>
                       </div>
                     </motion.div>
                         )}
@@ -1682,7 +1682,7 @@ export default function LandingPage() {
                             onChange={(e) => setDemoInput(e.target.value)}
                             placeholder={currentDemoTexts.placeholder}
                             disabled={isDemoLoading}
-                            className={`flex-1 px-4 py-2.5 rounded-full border outline-none transition ${
+                            className={`flex-1 px-4 py-2.5 rounded-full border outline-none transition text-sm md:text-base ${
                               demoIsDarkMode 
                                 ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-primary focus:ring-2 focus:ring-primary/20' 
                                 : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-primary focus:ring-2 focus:ring-primary/20'

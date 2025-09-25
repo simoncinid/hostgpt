@@ -3548,10 +3548,21 @@ async def download_house_rules_pdf(uuid: str, lang: str = "IT", db: Session = De
                 # Prova diversi path possibili
                 possible_paths = [
                     "/app/public/icons/logohostgpt.png",  # Docker path
+                    "/app/backend/../public/icons/logohostgpt.png",  # Docker path alternativo
                     "public/icons/logohostgpt.png",       # Se eseguito dalla root
                     "../public/icons/logohostgpt.png",     # Se eseguito da backend/
                     os.path.join(os.path.dirname(__file__), "..", "public", "icons", "logohostgpt.png"),  # Path assoluto
                 ]
+                
+                # Debug: lista tutti i file nella directory /app
+                try:
+                    logger.info(f"Contents of /app: {os.listdir('/app')}")
+                    if os.path.exists('/app/public'):
+                        logger.info(f"Contents of /app/public: {os.listdir('/app/public')}")
+                        if os.path.exists('/app/public/icons'):
+                            logger.info(f"Contents of /app/public/icons: {os.listdir('/app/public/icons')}")
+                except Exception as e:
+                    logger.warning(f"Could not list directory contents: {e}")
                 
                 logo_path = None
                 for path in possible_paths:
@@ -3561,10 +3572,19 @@ async def download_house_rules_pdf(uuid: str, lang: str = "IT", db: Session = De
                         break
                 
                 if not logo_path:
-                    logger.warning("Logo file not found in any expected location")
-                    logger.warning(f"Current working directory: {os.getcwd()}")
-                    logger.warning(f"Backend file location: {os.path.dirname(__file__)}")
-                    return
+                    # Ricerca ricorsiva del logo
+                    logger.info("Searching for logo file recursively...")
+                    for root, dirs, files in os.walk('/app'):
+                        if 'logohostgpt.png' in files:
+                            logo_path = os.path.join(root, 'logohostgpt.png')
+                            logger.info(f"Found logo at: {logo_path}")
+                            break
+                    
+                    if not logo_path:
+                        logger.warning("Logo file not found in any expected location")
+                        logger.warning(f"Current working directory: {os.getcwd()}")
+                        logger.warning(f"Backend file location: {os.path.dirname(__file__)}")
+                        return
                 
                 logger.info(f"Using logo path: {logo_path}")
                 
