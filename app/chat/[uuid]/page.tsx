@@ -650,56 +650,27 @@ export default function ChatWidgetPage() {
         last_name: guestInfo.last_name
       })
       
-      // Se c'è una conversazione esistente, carica il thread e i messaggi
-      if (guestInfo.has_existing_conversation && guestInfo.existing_thread_id) {
-        setThreadId(guestInfo.existing_thread_id)
-        
-        // Carica i messaggi della conversazione esistente
-        try {
-          const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
-          const messagesResponse = await fetch(`${API_URL}/api/chat/${uuid}/guest/${guestInfo.guest_id}/messages`)
-          if (messagesResponse.ok) {
-            const messagesData = await messagesResponse.json()
-            // Converti i timestamp da stringa ISO a oggetti Date
-            const formattedMessages = messagesData.messages.map((msg: any) => ({
-              ...msg,
-              timestamp: msg.timestamp ? new Date(msg.timestamp) : new Date(),
-              // Assicurati che tutti i campi necessari siano presenti
-              id: msg.id || Date.now() + Math.random(),
-              role: (msg.role || 'assistant') as 'assistant' | 'user',
-              content: msg.content || ''
-            }))
-            setMessages(formattedMessages || [])
-          }
-        } catch (error) {
-          console.error('Errore nel caricamento dei messaggi:', error)
-          // Se c'è un errore nel caricamento dei messaggi, continua comunque
-          toast.error(language === 'IT' ? 'Errore nel caricamento della conversazione precedente' : 'Error loading previous conversation')
+      // SEMPRE usa la conversazione corrente (quella con il messaggio di benvenuto)
+      // Al refresh vogliamo sempre una nuova conversazione vuota con solo il messaggio di benvenuto
+      try {
+        const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+        const messagesResponse = await fetch(`${API_URL}/api/chat/${uuid}/conversation/${conversationId}/messages`)
+        if (messagesResponse.ok) {
+          const messagesData = await messagesResponse.json()
+          const formattedMessages = messagesData.messages.map((msg: any) => ({
+            ...msg,
+            timestamp: msg.timestamp ? new Date(msg.timestamp) : new Date(),
+            id: msg.id || Date.now() + Math.random(),
+            role: (msg.role || 'assistant') as 'assistant' | 'user',
+            content: msg.content || ''
+          }))
+          setMessages(formattedMessages || [])
         }
-        
-        toast.success(language === 'IT' ? 'Conversazione esistente caricata' : 'Existing conversation loaded')
-      } else {
-        // Per nuove conversazioni, carica il messaggio di benvenuto dalla conversazione corrente
-        try {
-          const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
-          const messagesResponse = await fetch(`${API_URL}/api/chat/${uuid}/conversation/${conversationId}/messages`)
-          if (messagesResponse.ok) {
-            const messagesData = await messagesResponse.json()
-            const formattedMessages = messagesData.messages.map((msg: any) => ({
-              ...msg,
-              timestamp: msg.timestamp ? new Date(msg.timestamp) : new Date(),
-              id: msg.id || Date.now() + Math.random(),
-              role: (msg.role || 'assistant') as 'assistant' | 'user',
-              content: msg.content || ''
-            }))
-            setMessages(formattedMessages || [])
-          }
-        } catch (error) {
-          console.error('Errore nel caricamento del messaggio di benvenuto:', error)
-        }
-        
-        toast.success(language === 'IT' ? 'Nuova conversazione iniziata' : 'New conversation started')
+      } catch (error) {
+        console.error('Errore nel caricamento del messaggio di benvenuto:', error)
       }
+      
+      toast.success(language === 'IT' ? 'Nuova conversazione iniziata' : 'New conversation started')
       
       setShowWelcome(false)
       setTimeout(() => inputRef.current?.focus(), 100)

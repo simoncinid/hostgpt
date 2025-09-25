@@ -3770,14 +3770,8 @@ async def send_message(
                 conversation = existing_welcome_conversation
                 logger.info(f"🔄 Collegando ospite {guest.id if guest else 'anonimo'} alla conversazione di benvenuto esistente")
         
-        # Se non c'è conversazione di benvenuto, cerca conversazioni esistenti dell'ospite
-        if not conversation and guest and not message.force_new_conversation:
-            existing_conversation = get_latest_guest_conversation(chatbot.id, guest.id, db)
-            if existing_conversation:
-                conversation = existing_conversation
-                thread_id = existing_conversation.thread_id
-                is_new_conversation = False
-                logger.info(f"🔄 Riprendendo conversazione esistente per ospite {guest.id}")
+        # NON cerchiamo conversazioni esistenti dell'ospite
+        # Al refresh vogliamo sempre usare la conversazione di benvenuto corrente
         
         if not conversation:
             # Crea nuova conversazione
@@ -7198,8 +7192,8 @@ async def identify_guest(
         # Verifica se è la prima volta
         is_first_time = is_guest_first_time(guest, chatbot.id, db)
         
-        # Cerca conversazione esistente dell'ospite
-        existing_conversation = get_latest_guest_conversation(chatbot.id, guest.id, db)
+        # NON cerchiamo conversazioni esistenti dell'ospite
+        # Al refresh vogliamo sempre una nuova conversazione vuota con solo il messaggio di benvenuto
         
         return GuestIdentificationResponse(
             guest_id=guest.id,
@@ -7208,9 +7202,9 @@ async def identify_guest(
             first_name=guest.first_name,
             last_name=guest.last_name,
             is_first_time=is_first_time,
-            has_existing_conversation=existing_conversation is not None,
-            existing_conversation_id=existing_conversation.id if existing_conversation else None,
-            existing_thread_id=existing_conversation.thread_id if existing_conversation else None
+            has_existing_conversation=False,  # Sempre False - al refresh vogliamo nuova conversazione
+            existing_conversation_id=None,
+            existing_thread_id=None
         )
         
     except ValueError as e:
