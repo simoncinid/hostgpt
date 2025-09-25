@@ -19,6 +19,7 @@ from reportlab.lib.pagesizes import letter, A4
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
+from reportlab.pdfgen import canvas
 from pydantic import BaseModel, EmailStr
 import aiosmtplib
 from email.mime.text import MIMEText
@@ -3519,8 +3520,8 @@ async def get_chat_info(uuid: str, db: Session = Depends(get_db)):
 
 @app.get("/api/chat/{uuid}/house-rules-pdf")
 async def download_house_rules_pdf(uuid: str, lang: str = "IT", db: Session = Depends(get_db)):
-    """Genera e scarica PDF delle regole della casa"""
-    logger.info(f"PDF generation requested for chatbot UUID: {uuid}, language: {lang}")
+    """Genera e scarica PDF con tutte le informazioni della proprietà"""
+    logger.info(f"Property info PDF generation requested for chatbot UUID: {uuid}, language: {lang}")
     
     chatbot = db.query(Chatbot).filter(Chatbot.uuid == uuid).first()
     
@@ -3530,12 +3531,6 @@ async def download_house_rules_pdf(uuid: str, lang: str = "IT", db: Session = De
     
     logger.info(f"Chatbot found: {chatbot.property_name}")
     
-    if not chatbot.house_rules or not chatbot.house_rules.strip():
-        logger.warning(f"No house rules available for chatbot UUID: {uuid}")
-        raise HTTPException(status_code=404, detail="Nessuna regola della casa disponibile")
-    
-    logger.info(f"House rules length: {len(chatbot.house_rules)} characters")
-    
     try:
         # Crea buffer in memoria per il PDF
         buffer = io.BytesIO()
@@ -3544,6 +3539,30 @@ async def download_house_rules_pdf(uuid: str, lang: str = "IT", db: Session = De
         # Configura il documento PDF
         doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=72, leftMargin=72, topMargin=72, bottomMargin=72)
         logger.info("Created PDF document template")
+        
+        # Aggiungi il logo come watermark
+        def add_watermark(canvas, doc):
+            try:
+                # Path del logo (relativo alla directory del backend)
+                logo_path = "../public/icons/logohostgpt.png"
+                
+                # Dimensioni del logo (grande e sbiadito)
+                logo_width = 400
+                logo_height = 400
+                
+                # Posizione centrata
+                page_width, page_height = A4
+                x = (page_width - logo_width) / 2
+                y = (page_height - logo_height) / 2
+                
+                # Disegna il logo con trasparenza (sbiadito)
+                canvas.saveState()
+                canvas.setFillAlpha(0.1)  # Molto trasparente per essere sbiadito
+                canvas.drawImage(logo_path, x, y, width=logo_width, height=logo_height, mask='auto')
+                canvas.restoreState()
+            except Exception as e:
+                logger.warning(f"Could not add watermark: {e}")
+                # Continua senza watermark se c'è un errore
         
         # Stili
         styles = getSampleStyleSheet()
@@ -3556,10 +3575,19 @@ async def download_house_rules_pdf(uuid: str, lang: str = "IT", db: Session = De
             alignment=1  # Center
         )
         
+        section_style = ParagraphStyle(
+            'SectionTitle',
+            parent=styles['Heading2'],
+            fontSize=16,
+            spaceAfter=15,
+            spaceBefore=20,
+            textColor='#34495e'
+        )
+        
         property_style = ParagraphStyle(
             'PropertyName',
             parent=styles['Heading2'],
-            fontSize=16,
+            fontSize=18,
             spaceAfter=20,
             textColor='#666666',
             alignment=1  # Center
@@ -3588,7 +3616,7 @@ async def download_house_rules_pdf(uuid: str, lang: str = "IT", db: Session = De
         story = []
         
         # Titolo
-        title_text = "Regole della Casa" if lang == "IT" else "House Rules"
+        title_text = "Informazioni della Proprietà" if lang == "IT" else "Property Information"
         story.append(Paragraph(title_text, title_style))
         story.append(Spacer(1, 12))
         
@@ -3596,31 +3624,173 @@ async def download_house_rules_pdf(uuid: str, lang: str = "IT", db: Session = De
         story.append(Paragraph(chatbot.property_name, property_style))
         story.append(Spacer(1, 20))
         
-        # Contenuto regole (diviso in paragrafi)
-        rules_lines = chatbot.house_rules.split('\n')
-        logger.info(f"Processing {len(rules_lines)} lines of house rules")
+        # Informazioni base della proprietà
+        if chatbot.property_type:
+            section_title = "Tipo di Proprietà" if lang == "IT" else "Property Type"
+            story.append(Paragraph(section_title, section_style))
+            story.append(Paragraph(chatbot.property_type, content_style))
+            story.append(Spacer(1, 10))
         
-        for line in rules_lines:
-            if line.strip():
-                story.append(Paragraph(line.strip(), content_style))
-            else:
-                story.append(Spacer(1, 6))
+        # Indirizzo completo
+        if chatbot.property_address or chatbot.property_city:
+            section_title = "Indirizzo" if lang == "IT" else "Address"
+            story.append(Paragraph(section_title, section_style))
+            address_parts = []
+            if chatbot.property_address:
+                address_parts.append(chatbot.property_address)
+            if chatbot.property_street_number:
+                address_parts.append(chatbot.property_street_number)
+            if chatbot.property_city:
+                address_parts.append(chatbot.property_city)
+            if chatbot.property_state:
+                address_parts.append(chatbot.property_state)
+            if chatbot.property_postal_code:
+                address_parts.append(chatbot.property_postal_code)
+            if chatbot.property_country:
+                address_parts.append(chatbot.property_country)
+            
+            if address_parts:
+                story.append(Paragraph(", ".join(address_parts), content_style))
+            story.append(Spacer(1, 10))
+        
+        # Descrizione della proprietà
+        if chatbot.property_description:
+            section_title = "Descrizione" if lang == "IT" else "Description"
+            story.append(Paragraph(section_title, section_style))
+            story.append(Paragraph(chatbot.property_description, content_style))
+            story.append(Spacer(1, 10))
+        
+        # Orari di check-in e check-out
+        if chatbot.check_in_time or chatbot.check_out_time:
+            section_title = "Orari" if lang == "IT" else "Check-in/Check-out Times"
+            story.append(Paragraph(section_title, section_style))
+            if chatbot.check_in_time:
+                check_in_text = f"Check-in: {chatbot.check_in_time}" if lang == "IT" else f"Check-in: {chatbot.check_in_time}"
+                story.append(Paragraph(check_in_text, content_style))
+            if chatbot.check_out_time:
+                check_out_text = f"Check-out: {chatbot.check_out_time}" if lang == "IT" else f"Check-out: {chatbot.check_out_time}"
+                story.append(Paragraph(check_out_text, content_style))
+            story.append(Spacer(1, 10))
+        
+        # Servizi e amenità
+        if chatbot.amenities:
+            section_title = "Servizi e Amenità" if lang == "IT" else "Amenities"
+            story.append(Paragraph(section_title, section_style))
+            if isinstance(chatbot.amenities, list):
+                for amenity in chatbot.amenities:
+                    story.append(Paragraph(f"• {amenity}", content_style))
+            story.append(Spacer(1, 10))
+        
+        # Descrizione del quartiere
+        if chatbot.neighborhood_description:
+            section_title = "Quartiere" if lang == "IT" else "Neighborhood"
+            story.append(Paragraph(section_title, section_style))
+            story.append(Paragraph(chatbot.neighborhood_description, content_style))
+            story.append(Spacer(1, 10))
+        
+        # Attrazioni vicine
+        if chatbot.nearby_attractions:
+            section_title = "Attrazioni Vicine" if lang == "IT" else "Nearby Attractions"
+            story.append(Paragraph(section_title, section_style))
+            if isinstance(chatbot.nearby_attractions, list):
+                for attraction in chatbot.nearby_attractions:
+                    story.append(Paragraph(f"• {attraction}", content_style))
+            story.append(Spacer(1, 10))
+        
+        # Informazioni sui trasporti
+        if chatbot.transportation_info:
+            section_title = "Trasporti" if lang == "IT" else "Transportation"
+            story.append(Paragraph(section_title, section_style))
+            story.append(Paragraph(chatbot.transportation_info, content_style))
+            story.append(Spacer(1, 10))
+        
+        # Ristoranti e bar
+        if chatbot.restaurants_bars:
+            section_title = "Ristoranti e Bar" if lang == "IT" else "Restaurants & Bars"
+            story.append(Paragraph(section_title, section_style))
+            if isinstance(chatbot.restaurants_bars, list):
+                for place in chatbot.restaurants_bars:
+                    story.append(Paragraph(f"• {place}", content_style))
+            story.append(Spacer(1, 10))
+        
+        # Informazioni shopping
+        if chatbot.shopping_info:
+            section_title = "Shopping" if lang == "IT" else "Shopping"
+            story.append(Paragraph(section_title, section_style))
+            story.append(Paragraph(chatbot.shopping_info, content_style))
+            story.append(Spacer(1, 10))
+        
+        # Informazioni WiFi
+        if chatbot.wifi_info:
+            section_title = "WiFi" if lang == "IT" else "WiFi"
+            story.append(Paragraph(section_title, section_style))
+            if isinstance(chatbot.wifi_info, dict):
+                for key, value in chatbot.wifi_info.items():
+                    story.append(Paragraph(f"{key}: {value}", content_style))
+            story.append(Spacer(1, 10))
+        
+        # Informazioni parcheggio
+        if chatbot.parking_info:
+            section_title = "Parcheggio" if lang == "IT" else "Parking"
+            story.append(Paragraph(section_title, section_style))
+            story.append(Paragraph(chatbot.parking_info, content_style))
+            story.append(Spacer(1, 10))
+        
+        # Istruzioni speciali
+        if chatbot.special_instructions:
+            section_title = "Istruzioni Speciali" if lang == "IT" else "Special Instructions"
+            story.append(Paragraph(section_title, section_style))
+            story.append(Paragraph(chatbot.special_instructions, content_style))
+            story.append(Spacer(1, 10))
+        
+        # Contatti di emergenza
+        if chatbot.emergency_contacts:
+            section_title = "Contatti di Emergenza" if lang == "IT" else "Emergency Contacts"
+            story.append(Paragraph(section_title, section_style))
+            if isinstance(chatbot.emergency_contacts, list):
+                for contact in chatbot.emergency_contacts:
+                    story.append(Paragraph(f"• {contact}", content_style))
+            story.append(Spacer(1, 10))
+        
+        # FAQ
+        if chatbot.faq:
+            section_title = "Domande Frequenti" if lang == "IT" else "Frequently Asked Questions"
+            story.append(Paragraph(section_title, section_style))
+            if isinstance(chatbot.faq, list):
+                for faq_item in chatbot.faq:
+                    if isinstance(faq_item, dict) and 'question' in faq_item and 'answer' in faq_item:
+                        story.append(Paragraph(f"Q: {faq_item['question']}", content_style))
+                        story.append(Paragraph(f"A: {faq_item['answer']}", content_style))
+                        story.append(Spacer(1, 8))
+            story.append(Spacer(1, 10))
+        
+        # Regole della casa (se presenti)
+        if chatbot.house_rules and chatbot.house_rules.strip():
+            section_title = "Regole della Casa" if lang == "IT" else "House Rules"
+            story.append(Paragraph(section_title, section_style))
+            rules_lines = chatbot.house_rules.split('\n')
+            for line in rules_lines:
+                if line.strip():
+                    story.append(Paragraph(line.strip(), content_style))
+                else:
+                    story.append(Spacer(1, 6))
+            story.append(Spacer(1, 10))
         
         story.append(Spacer(1, 40))
         
         # Footer
-        footer_text = f"Generato da HostGPT - {datetime.now().strftime('%d/%m/%Y')}" if lang == "IT" else f"Generated by HostGPT - {datetime.now().strftime('%m/%d/%Y')}"
+        footer_text = "Generato da HostGPT" if lang == "IT" else "Generated by HostGPT"
         story.append(Paragraph(footer_text, footer_style))
         
-        logger.info("Built PDF story with all elements")
+        logger.info("Built PDF story with all property information")
         
-        # Genera PDF
-        doc.build(story)
+        # Genera PDF con watermark
+        doc.build(story, onFirstPage=add_watermark, onLaterPages=add_watermark)
         buffer.seek(0)
-        logger.info("PDF generated successfully")
+        logger.info("Property info PDF generated successfully with watermark")
         
         # Nome file
-        filename = f"REGOLE_{chatbot.property_name.replace(' ', '_').upper()}.pdf" if lang == "IT" else f"{chatbot.property_name.replace(' ', '_').upper()}_RULES.pdf"
+        filename = f"INFO_{chatbot.property_name.replace(' ', '_').upper()}.pdf" if lang == "IT" else f"{chatbot.property_name.replace(' ', '_').upper()}_INFO.pdf"
         logger.info(f"Generated filename: {filename}")
         
         return StreamingResponse(
@@ -3630,7 +3800,7 @@ async def download_house_rules_pdf(uuid: str, lang: str = "IT", db: Session = De
         )
         
     except Exception as e:
-        logger.error(f"Error generating house rules PDF for UUID {uuid}: {str(e)}", exc_info=True)
+        logger.error(f"Error generating property info PDF for UUID {uuid}: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail="Errore nella generazione del PDF")
 
 @app.get("/api/demo/info")

@@ -247,11 +247,6 @@ export default function ChatWidgetPage() {
 
 
   const downloadHouseRulesPDF = async () => {
-    if (!chatInfo?.house_rules || !chatInfo.house_rules.trim()) {
-      toast.error(language === 'IT' ? 'Nessuna regola della casa disponibile' : 'No house rules available')
-      return
-    }
-
     try {
       // Chiama l'endpoint backend per generare il PDF usando l'API centralizzata
       console.log('📄 Calling PDF endpoint for UUID:', uuid, 'Language:', language)
@@ -265,8 +260,8 @@ export default function ChatWidgetPage() {
       // Nome del file dalla header della risposta o default
       const contentDisposition = response.headers['content-disposition']
       let fileName = language === 'IT' 
-        ? `REGOLE_${chatInfo.property_name.replace(/[^a-zA-Z0-9]/g, '_').toUpperCase()}.pdf`
-        : `${chatInfo.property_name.replace(/[^a-zA-Z0-9]/g, '_').toUpperCase()}_RULES.pdf`
+        ? `INFO_${chatInfo?.property_name?.replace(/[^a-zA-Z0-9]/g, '_').toUpperCase() || 'PROPRIETA'}.pdf`
+        : `${chatInfo?.property_name?.replace(/[^a-zA-Z0-9]/g, '_').toUpperCase() || 'PROPERTY'}_INFO.pdf`
       
       if (contentDisposition) {
         const fileNameMatch = contentDisposition.match(/filename=(.+)/)
@@ -285,9 +280,9 @@ export default function ChatWidgetPage() {
       document.body.removeChild(link)
       URL.revokeObjectURL(url)
 
-      toast.success(language === 'IT' ? 'PDF delle regole scaricato' : 'House rules PDF downloaded')
+      toast.success(language === 'IT' ? 'PDF delle informazioni scaricato' : 'Property information PDF downloaded')
     } catch (error) {
-      console.error('Error downloading house rules PDF:', error)
+      console.error('Error downloading property info PDF:', error)
       toast.error(language === 'IT' ? 'Errore nel download del PDF' : 'Error downloading PDF')
     }
   }
@@ -1071,16 +1066,14 @@ export default function ChatWidgetPage() {
                 isDarkMode ? 'border-gray-700' : 'border-gray-100'
               }`}>
                 <div className="flex justify-center items-center gap-2 md:gap-3 overflow-x-auto">
-                  {/* Pulsante Download Regole Casa - Blu e nella sezione suggerimenti */}
-                  {chatInfo?.house_rules && (
-                    <button
-                      onClick={downloadHouseRulesPDF}
-                      className="p-2 rounded-full bg-blue-500 hover:bg-blue-600 transition-colors duration-200 flex-shrink-0"
-                      title={language === 'IT' ? 'Scarica regole della casa' : 'Download house rules'}
-                    >
-                      <FileText className="w-4 h-4 text-white" />
-                    </button>
-                  )}
+                  {/* Pulsante Download Informazioni Proprietà - Blu e nella sezione suggerimenti */}
+                  <button
+                    onClick={downloadHouseRulesPDF}
+                    className="p-2 rounded-full bg-blue-500 hover:bg-blue-600 transition-colors duration-200 flex-shrink-0"
+                    title={language === 'IT' ? 'Scarica informazioni della proprietà' : 'Download property information'}
+                  >
+                    <FileText className="w-4 h-4 text-white" />
+                  </button>
                   {currentTexts.suggestedMessages.map((message: string, index: number) => (
                     <motion.button
                       key={index}

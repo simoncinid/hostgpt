@@ -16,12 +16,13 @@ import {
   MoreVertical,
   Edit,
   Trash2,
-  Eye
+  Eye,
+  FileText
 } from 'lucide-react'
 import { useAuthStore, useChatbotStore } from '@/lib/store'
 import { useAuthInit } from '@/lib/useAuthInit'
 import { useLanguage } from '@/lib/languageContext'
-import { chatbots as chatbotsApi, subscription, auth } from '@/lib/api'
+import { chatbots as chatbotsApi, subscription, auth, chat } from '@/lib/api'
 import toast from 'react-hot-toast'
 import Sidebar from '@/app/components/Sidebar'
 import ChatbotIcon from '@/app/components/ChatbotIcon'
@@ -131,6 +132,33 @@ function DashboardContent() {
     setShowQRModal(true)
   }
 
+  const downloadPropertyPDF = async (chatbotUuid: string, propertyName: string) => {
+    try {
+      const response = await chat.downloadHouseRulesPDF(chatbotUuid, 'IT')
+      
+      // Ottieni il blob del PDF dalla risposta
+      const blob = response.data
+      
+      // Nome del file
+      let fileName = `INFO_${propertyName.replace(/[^a-zA-Z0-9]/g, '_').toUpperCase()}.pdf`
+      
+      // Crea un link temporaneo per il download
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = fileName
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(url)
+
+      toast.success('PDF delle informazioni scaricato')
+    } catch (error) {
+      console.error('Error downloading property info PDF:', error)
+      toast.error('Errore nel download del PDF')
+    }
+  }
+
   // Calcola statistiche totali
   const totalStats = {
     totalBots: chatbots.length,
@@ -162,7 +190,7 @@ function DashboardContent() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-4 gap-2 md:grid-cols-4 md:gap-6 mb-8">
+        <div className="grid grid-cols-3 gap-2 md:grid-cols-3 md:gap-6 mb-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -219,26 +247,6 @@ function DashboardContent() {
               <span className="hidden md:inline">{t.dashboard.stats.allChatbots}</span>
             </p>
           </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="stats-card p-2 md:p-6"
-          >
-            <div className="flex items-center justify-between mb-1 md:mb-2">
-              <Clock className="w-4 h-4 md:w-8 md:h-8 text-primary" />
-              <span className="text-sm md:text-3xl font-bold">
-                <span className="md:hidden">24/7</span>
-                <span className="hidden md:inline">24/7</span>
-              </span>
-            </div>
-            <p className="text-gray-600 text-xs md:text-base">
-              <span className="md:hidden">{t.common.support}</span>
-              <span className="hidden md:inline">{t.common.support}</span>
-            </p>
-            <p className="text-xs md:text-sm text-green-600 mt-1">{t.dashboard.stats.alwaysOnline}</p>
-          </motion.div>
         </div>
 
         {/* Free Trial Banner */}
@@ -278,12 +286,17 @@ function DashboardContent() {
         <div className="bg-white rounded-2xl shadow-lg p-4 md:p-6 mb-8">
           <div className="flex items-center justify-between mb-4 md:mb-6">
             <h2 className="text-xl font-bold text-dark">{t.dashboard.chatbots.title}</h2>
-            <Link 
-              href="/dashboard/chatbots"
-              className="text-primary hover:text-secondary"
-            >
-              {t.dashboard.chatbots.seeAll}
-            </Link>
+            <div className="flex items-center gap-4">
+              <Link 
+                href="/dashboard/chatbots"
+                className="text-primary hover:text-secondary"
+              >
+                {t.dashboard.chatbots.seeAll}
+              </Link>
+              <Link href="/dashboard/chatbots/create" className="btn-primary text-sm px-4 py-2">
+                {t.dashboard.quickActions.createChatbot}
+              </Link>
+            </div>
           </div>
 
           {isLoading ? (
@@ -354,6 +367,16 @@ function DashboardContent() {
                        title="QR Code"
                      >
                        <QrCode className="w-4 h-4 md:w-5 md:h-5" />
+                     </button>
+                     <button
+                       onClick={(e) => {
+                         e.stopPropagation()
+                         downloadPropertyPDF(bot.uuid, bot.property_name)
+                       }}
+                       className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition"
+                       title="Scarica informazioni proprietà"
+                     >
+                       <FileText className="w-4 h-4 md:w-5 md:h-5" />
                      </button>
                      <a
                        href={bot.chat_url}
