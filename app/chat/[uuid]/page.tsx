@@ -75,6 +75,7 @@ export default function ChatWidgetPage() {
   const [freeTrialExpired, setFreeTrialExpired] = useState(false)
   const [language, setLanguage] = useState<'IT' | 'ENG'>('IT')
   const [isDarkMode, setIsDarkMode] = useState(false)
+  const [isDownloadingPDF, setIsDownloadingPDF] = useState(false)
   
   // Stati per registrazione audio
   const [isRecording, setIsRecording] = useState(false)
@@ -247,6 +248,9 @@ export default function ChatWidgetPage() {
 
 
   const downloadHouseRulesPDF = async () => {
+    if (isDownloadingPDF) return // Evita doppi click
+    
+    setIsDownloadingPDF(true)
     try {
       // Chiama l'endpoint backend per generare il PDF usando l'API centralizzata
       console.log('📄 Calling PDF endpoint for UUID:', uuid, 'Language:', language)
@@ -284,6 +288,8 @@ export default function ChatWidgetPage() {
     } catch (error) {
       console.error('Error downloading property info PDF:', error)
       toast.error(language === 'IT' ? 'Errore nel download del PDF' : 'Error downloading PDF')
+    } finally {
+      setIsDownloadingPDF(false)
     }
   }
 
@@ -1069,7 +1075,12 @@ export default function ChatWidgetPage() {
                   {/* Pulsante Download Informazioni Proprietà - Blu e nella sezione suggerimenti */}
                   <button
                     onClick={downloadHouseRulesPDF}
-                    className="p-2 rounded-full bg-blue-500 hover:bg-blue-600 transition-colors duration-200 flex-shrink-0"
+                    disabled={isDownloadingPDF}
+                    className={`p-2 rounded-full transition-colors duration-200 flex-shrink-0 ${
+                      isDownloadingPDF 
+                        ? 'bg-gray-400 cursor-not-allowed' 
+                        : 'bg-blue-500 hover:bg-blue-600'
+                    }`}
                     title={language === 'IT' ? 'Scarica informazioni della proprietà' : 'Download property information'}
                   >
                     <FileText className="w-4 h-4 text-white" />

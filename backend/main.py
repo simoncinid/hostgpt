@@ -3544,7 +3544,28 @@ async def download_house_rules_pdf(uuid: str, lang: str = "IT", db: Session = De
         def add_watermark(canvas, doc):
             try:
                 # Path del logo (relativo alla directory del backend)
-                logo_path = "../public/icons/logohostgpt.png"
+                import os
+                # Prova diversi path possibili
+                possible_paths = [
+                    "public/icons/logohostgpt.png",     # Se eseguito dalla root (più probabile)
+                    "../public/icons/logohostgpt.png",  # Se eseguito da backend/
+                    os.path.join(os.path.dirname(__file__), "..", "public", "icons", "logohostgpt.png"),  # Path assoluto
+                ]
+                
+                logo_path = None
+                for path in possible_paths:
+                    logger.info(f"Checking path: {path} - exists: {os.path.exists(path)}")
+                    if os.path.exists(path):
+                        logo_path = path
+                        break
+                
+                if not logo_path:
+                    logger.warning("Logo file not found in any expected location")
+                    logger.warning(f"Current working directory: {os.getcwd()}")
+                    logger.warning(f"Backend file location: {os.path.dirname(__file__)}")
+                    return
+                
+                logger.info(f"Using logo path: {logo_path}")
                 
                 # Dimensioni del logo (grande e sbiadito)
                 logo_width = 400
@@ -3625,7 +3646,7 @@ async def download_house_rules_pdf(uuid: str, lang: str = "IT", db: Session = De
         story.append(Spacer(1, 20))
         
         # Funzione per migliorare il testo con OpenAI
-        async def improve_text_with_openai(text: str, context: str = "") -> str:
+        def improve_text_with_openai(text: str, context: str = "") -> str:
             try:
                 if not text or text.strip() == "":
                     return "Nessuna informazione disponibile" if lang == "IT" else "No information available"
@@ -3635,7 +3656,7 @@ async def download_house_rules_pdf(uuid: str, lang: str = "IT", db: Session = De
                     return "Nessuna informazione disponibile" if lang == "IT" else "No information available"
                 
                 # Usa un modello leggero e poco costoso
-                response = await openai.chat.completions.create(
+                response = openai.chat.completions.create(
                     model="gpt-3.5-turbo",  # Modello leggero e poco costoso
                     messages=[
                         {
@@ -3666,7 +3687,7 @@ async def download_house_rules_pdf(uuid: str, lang: str = "IT", db: Session = De
         if chatbot.property_type:
             section_title = "Tipo di Proprietà" if lang == "IT" else "Property Type"
             story.append(Paragraph(section_title, section_style))
-            improved_text = await improve_text_with_openai(chatbot.property_type, "Tipo di proprietà")
+            improved_text = improve_text_with_openai(chatbot.property_type, "Tipo di proprietà")
             story.append(Paragraph(improved_text, content_style))
             story.append(Spacer(1, 10))
         
@@ -3690,7 +3711,7 @@ async def download_house_rules_pdf(uuid: str, lang: str = "IT", db: Session = De
             
             if address_parts:
                 address_text = ", ".join(address_parts)
-                improved_address = await improve_text_with_openai(address_text, "Indirizzo della proprietà")
+                improved_address = improve_text_with_openai(address_text, "Indirizzo della proprietà")
                 story.append(Paragraph(improved_address, content_style))
             story.append(Spacer(1, 10))
         
@@ -3698,7 +3719,7 @@ async def download_house_rules_pdf(uuid: str, lang: str = "IT", db: Session = De
         if chatbot.property_description:
             section_title = "Descrizione" if lang == "IT" else "Description"
             story.append(Paragraph(section_title, section_style))
-            improved_description = await improve_text_with_openai(chatbot.property_description, "Descrizione della proprietà")
+            improved_description = improve_text_with_openai(chatbot.property_description, "Descrizione della proprietà")
             story.append(Paragraph(improved_description, content_style))
             story.append(Spacer(1, 10))
         
@@ -3715,7 +3736,7 @@ async def download_house_rules_pdf(uuid: str, lang: str = "IT", db: Session = De
                 times_text = f"Check-out: {chatbot.check_out_time}"
             
             if times_text:
-                improved_times = await improve_text_with_openai(times_text, "Orari di check-in e check-out")
+                improved_times = improve_text_with_openai(times_text, "Orari di check-in e check-out")
                 story.append(Paragraph(improved_times, content_style))
             story.append(Spacer(1, 10))
         
@@ -3728,7 +3749,7 @@ async def download_house_rules_pdf(uuid: str, lang: str = "IT", db: Session = De
                 valid_amenities = [a for a in chatbot.amenities if a and str(a).strip() and not str(a).startswith('{')]
                 if valid_amenities:
                     amenities_text = ", ".join(valid_amenities)
-                    improved_amenities = await improve_text_with_openai(amenities_text, "Servizi e amenità della proprietà")
+                    improved_amenities = improve_text_with_openai(amenities_text, "Servizi e amenità della proprietà")
                     story.append(Paragraph(improved_amenities, content_style))
                 else:
                     no_info_text = "Nessuna informazione disponibile" if lang == "IT" else "No information available"
@@ -3739,7 +3760,7 @@ async def download_house_rules_pdf(uuid: str, lang: str = "IT", db: Session = De
         if chatbot.neighborhood_description:
             section_title = "Quartiere" if lang == "IT" else "Neighborhood"
             story.append(Paragraph(section_title, section_style))
-            improved_neighborhood = await improve_text_with_openai(chatbot.neighborhood_description, "Descrizione del quartiere")
+            improved_neighborhood = improve_text_with_openai(chatbot.neighborhood_description, "Descrizione del quartiere")
             story.append(Paragraph(improved_neighborhood, content_style))
             story.append(Spacer(1, 10))
         
@@ -3752,7 +3773,7 @@ async def download_house_rules_pdf(uuid: str, lang: str = "IT", db: Session = De
                 valid_attractions = [a for a in chatbot.nearby_attractions if a and str(a).strip() and not str(a).startswith('{')]
                 if valid_attractions:
                     attractions_text = ", ".join(valid_attractions)
-                    improved_attractions = await improve_text_with_openai(attractions_text, "Attrazioni e luoghi di interesse vicini")
+                    improved_attractions = improve_text_with_openai(attractions_text, "Attrazioni e luoghi di interesse vicini")
                     story.append(Paragraph(improved_attractions, content_style))
                 else:
                     no_info_text = "Nessuna informazione disponibile" if lang == "IT" else "No information available"
@@ -3763,7 +3784,7 @@ async def download_house_rules_pdf(uuid: str, lang: str = "IT", db: Session = De
         if chatbot.transportation_info:
             section_title = "Trasporti" if lang == "IT" else "Transportation"
             story.append(Paragraph(section_title, section_style))
-            improved_transportation = await improve_text_with_openai(chatbot.transportation_info, "Informazioni sui trasporti pubblici")
+            improved_transportation = improve_text_with_openai(chatbot.transportation_info, "Informazioni sui trasporti pubblici")
             story.append(Paragraph(improved_transportation, content_style))
             story.append(Spacer(1, 10))
         
@@ -3776,7 +3797,7 @@ async def download_house_rules_pdf(uuid: str, lang: str = "IT", db: Session = De
                 valid_restaurants = [r for r in chatbot.restaurants_bars if r and str(r).strip() and not str(r).startswith('{')]
                 if valid_restaurants:
                     restaurants_text = ", ".join(valid_restaurants)
-                    improved_restaurants = await improve_text_with_openai(restaurants_text, "Ristoranti e bar consigliati")
+                    improved_restaurants = improve_text_with_openai(restaurants_text, "Ristoranti e bar consigliati")
                     story.append(Paragraph(improved_restaurants, content_style))
                 else:
                     no_info_text = "Nessuna informazione disponibile" if lang == "IT" else "No information available"
@@ -3787,7 +3808,7 @@ async def download_house_rules_pdf(uuid: str, lang: str = "IT", db: Session = De
         if chatbot.shopping_info:
             section_title = "Shopping" if lang == "IT" else "Shopping"
             story.append(Paragraph(section_title, section_style))
-            improved_shopping = await improve_text_with_openai(chatbot.shopping_info, "Informazioni sui negozi e shopping")
+            improved_shopping = improve_text_with_openai(chatbot.shopping_info, "Informazioni sui negozi e shopping")
             story.append(Paragraph(improved_shopping, content_style))
             story.append(Spacer(1, 10))
         
@@ -3800,7 +3821,7 @@ async def download_house_rules_pdf(uuid: str, lang: str = "IT", db: Session = De
                 valid_wifi = {k: v for k, v in chatbot.wifi_info.items() if v and str(v).strip()}
                 if valid_wifi:
                     wifi_text = ", ".join([f"{k}: {v}" for k, v in valid_wifi.items()])
-                    improved_wifi = await improve_text_with_openai(wifi_text, "Informazioni di connessione WiFi")
+                    improved_wifi = improve_text_with_openai(wifi_text, "Informazioni di connessione WiFi")
                     story.append(Paragraph(improved_wifi, content_style))
                 else:
                     no_info_text = "Nessuna informazione disponibile" if lang == "IT" else "No information available"
@@ -3811,7 +3832,7 @@ async def download_house_rules_pdf(uuid: str, lang: str = "IT", db: Session = De
         if chatbot.parking_info:
             section_title = "Parcheggio" if lang == "IT" else "Parking"
             story.append(Paragraph(section_title, section_style))
-            improved_parking = await improve_text_with_openai(chatbot.parking_info, "Informazioni sul parcheggio")
+            improved_parking = improve_text_with_openai(chatbot.parking_info, "Informazioni sul parcheggio")
             story.append(Paragraph(improved_parking, content_style))
             story.append(Spacer(1, 10))
         
@@ -3819,7 +3840,7 @@ async def download_house_rules_pdf(uuid: str, lang: str = "IT", db: Session = De
         if chatbot.special_instructions:
             section_title = "Istruzioni Speciali" if lang == "IT" else "Special Instructions"
             story.append(Paragraph(section_title, section_style))
-            improved_instructions = await improve_text_with_openai(chatbot.special_instructions, "Istruzioni speciali per gli ospiti")
+            improved_instructions = improve_text_with_openai(chatbot.special_instructions, "Istruzioni speciali per gli ospiti")
             story.append(Paragraph(improved_instructions, content_style))
             story.append(Spacer(1, 10))
         
@@ -3832,7 +3853,7 @@ async def download_house_rules_pdf(uuid: str, lang: str = "IT", db: Session = De
                 valid_contacts = [c for c in chatbot.emergency_contacts if c and str(c).strip() and not str(c).startswith('{')]
                 if valid_contacts:
                     contacts_text = ", ".join(valid_contacts)
-                    improved_contacts = await improve_text_with_openai(contacts_text, "Contatti di emergenza e assistenza")
+                    improved_contacts = improve_text_with_openai(contacts_text, "Contatti di emergenza e assistenza")
                     story.append(Paragraph(improved_contacts, content_style))
                 else:
                     no_info_text = "Nessuna informazione disponibile" if lang == "IT" else "No information available"
@@ -3850,8 +3871,8 @@ async def download_house_rules_pdf(uuid: str, lang: str = "IT", db: Session = De
                     for faq_item in valid_faqs:
                         question = faq_item['question']
                         answer = faq_item['answer']
-                        improved_question = await improve_text_with_openai(question, "Domanda frequente")
-                        improved_answer = await improve_text_with_openai(answer, "Risposta alla domanda")
+                        improved_question = improve_text_with_openai(question, "Domanda frequente")
+                        improved_answer = improve_text_with_openai(answer, "Risposta alla domanda")
                         story.append(Paragraph(f"Q: {improved_question}", content_style))
                         story.append(Paragraph(f"A: {improved_answer}", content_style))
                         story.append(Spacer(1, 8))
@@ -3864,7 +3885,7 @@ async def download_house_rules_pdf(uuid: str, lang: str = "IT", db: Session = De
         if chatbot.house_rules and chatbot.house_rules.strip():
             section_title = "Regole della Casa" if lang == "IT" else "House Rules"
             story.append(Paragraph(section_title, section_style))
-            improved_rules = await improve_text_with_openai(chatbot.house_rules, "Regole della casa per gli ospiti")
+            improved_rules = improve_text_with_openai(chatbot.house_rules, "Regole della casa per gli ospiti")
             story.append(Paragraph(improved_rules, content_style))
             story.append(Spacer(1, 10))
         

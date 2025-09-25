@@ -38,6 +38,7 @@ function DashboardContent() {
   const [showQRModal, setShowQRModal] = useState(false)
   const [currentQR, setCurrentQR] = useState<{ url: string; qr: string } | null>(null)
   const [isStartingCheckout, setIsStartingCheckout] = useState(false)
+  const [downloadingPDF, setDownloadingPDF] = useState<string | null>(null) // UUID del chatbot per cui si sta scaricando
   
   // Inizializza automaticamente l'autenticazione
   const { isHydrated } = useAuthInit()
@@ -133,6 +134,9 @@ function DashboardContent() {
   }
 
   const downloadPropertyPDF = async (chatbotUuid: string, propertyName: string) => {
+    if (downloadingPDF === chatbotUuid) return // Evita doppi click
+    
+    setDownloadingPDF(chatbotUuid)
     try {
       const response = await chat.downloadHouseRulesPDF(chatbotUuid, language)
       
@@ -158,6 +162,8 @@ function DashboardContent() {
     } catch (error) {
       console.error('Error downloading property info PDF:', error)
       toast.error(language === 'IT' ? 'Errore nel download del PDF' : 'Error downloading PDF')
+    } finally {
+      setDownloadingPDF(null)
     }
   }
 
@@ -375,7 +381,12 @@ function DashboardContent() {
                          e.stopPropagation()
                          downloadPropertyPDF(bot.uuid, bot.property_name)
                        }}
-                       className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition"
+                       disabled={downloadingPDF === bot.uuid}
+                       className={`p-2 rounded-lg transition ${
+                         downloadingPDF === bot.uuid
+                           ? 'text-gray-400 bg-gray-100 cursor-not-allowed'
+                           : 'text-blue-600 hover:bg-blue-50'
+                       }`}
                        title={language === 'IT' ? 'Scarica informazioni proprietà' : 'Download property information'}
                      >
                        <FileText className="w-4 h-4 md:w-5 md:h-5" />

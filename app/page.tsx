@@ -50,7 +50,8 @@ import {
   Info,
   User,
   Bot,
-  Loader2
+  Loader2,
+  FileText
 } from 'lucide-react'
 
 export default function LandingPage() {
@@ -375,6 +376,34 @@ export default function LandingPage() {
         content: demoChatInfo.welcome_message,
         timestamp: new Date()
       }])
+    }
+  }
+
+  const downloadDemoPropertyPDF = async () => {
+    try {
+      const response = await chat.downloadHouseRulesPDF(DEMO_CHATBOT_UUID, demoLanguage)
+      
+      // Ottieni il blob del PDF dalla risposta
+      const blob = response.data
+      
+      // Nome del file
+      let fileName = demoLanguage === 'IT' 
+        ? `INFO_${(demoChatInfo?.property_name || 'DEMO').replace(/[^a-zA-Z0-9]/g, '_').toUpperCase()}.pdf`
+        : `${(demoChatInfo?.property_name || 'DEMO').replace(/[^a-zA-Z0-9]/g, '_').toUpperCase()}_INFO.pdf`
+      
+      // Crea un link temporaneo per il download
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = fileName
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
+    } catch (error) {
+      console.error('Errore nel download del PDF:', error)
+      // Fallback: mostra un messaggio di errore
+      alert(demoLanguage === 'IT' ? 'Errore nel download del PDF' : 'Error downloading PDF')
     }
   }
 
@@ -1400,7 +1429,7 @@ export default function LandingPage() {
             initial={{ opacity: 0, scale: 0.95, y: 50 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             transition={{ duration: 1.2, delay: 1, ease: [0.23, 1, 0.320, 1] }}
-            className="relative max-w-4xl mx-auto"
+            className="relative w-full md:max-w-4xl md:mx-auto"
           >
             <div className={`h-[90vh] flex flex-col overflow-hidden transition-colors duration-300 ${
               demoIsDarkMode 
@@ -1409,7 +1438,7 @@ export default function LandingPage() {
             }`}>
               {/* Header - FISSO */}
               <div className={`${demoIsDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'} shadow-sm flex-shrink-0 border-b transition-colors duration-300`}>
-                <div className="max-w-4xl mx-auto px-2 py-4">
+                <div className="w-full md:max-w-4xl md:mx-auto px-2 py-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center">
                       <DemoChatbotIcon size="md" className="mr-3" />
@@ -1439,6 +1468,17 @@ export default function LandingPage() {
                         className="px-3 py-1.5 bg-gradient-to-r from-primary/10 to-accent/10 text-primary border border-primary/20 rounded-lg text-sm font-medium hover:from-primary/20 hover:to-accent/20 hover:border-primary/40 transition-all duration-200"
                       >
                         {demoLanguage}
+                      </button>
+                      <button
+                        onClick={downloadDemoPropertyPDF}
+                        className={`p-2 rounded-lg transition-colors duration-200 group ${
+                          demoIsDarkMode ? 'hover:bg-gray-700' : 'hover:bg-blue-50'
+                        }`}
+                        title={demoLanguage === 'IT' ? 'Scarica informazioni proprietà' : 'Download property information'}
+                      >
+                        <FileText className={`w-5 h-5 transition-colors duration-200 ${
+                          demoIsDarkMode ? 'text-blue-400 group-hover:text-blue-300' : 'text-blue-600 group-hover:text-blue-700'
+                        }`} />
                       </button>
                       <button
                         onClick={() => setDemoIsDarkMode(!demoIsDarkMode)}
@@ -1479,7 +1519,7 @@ export default function LandingPage() {
                   animate={{ opacity: 1, y: 0 }}
                   className="bg-blue-50 border-b border-blue-200 flex-shrink-0"
                 >
-                  <div className="max-w-4xl mx-auto px-4 py-4">
+                  <div className="w-full md:max-w-4xl md:mx-auto px-4 py-4">
                     <div className="flex items-start justify-between">
                       <div>
                         <p className="text-sm text-blue-800 mb-2">
@@ -1503,7 +1543,7 @@ export default function LandingPage() {
               )}
 
               {/* Main Chat Area - FISSA */}
-              <div className="flex-1 flex flex-col max-w-4xl mx-auto w-full px-4 py-4 md:py-6 overflow-hidden">
+              <div className="flex-1 flex flex-col w-full md:max-w-4xl md:mx-auto px-4 py-4 md:py-6 overflow-hidden">
                 <div className={`${demoIsDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl shadow-xl overflow-hidden flex flex-col h-full transition-colors duration-300`}>
                   {/* Welcome Screen */}
                   {demoShowWelcome && demoMessages.length <= 1 && (
