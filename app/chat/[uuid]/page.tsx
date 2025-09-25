@@ -934,7 +934,7 @@ export default function ChatWidgetPage() {
           )}
 
           {/* Welcome Screen */}
-          {showWelcome && messages.length <= 1 && !subscriptionCancelled && !freeTrialLimitReached && !freeTrialExpired && (
+          {showWelcome && !subscriptionCancelled && !freeTrialLimitReached && !freeTrialExpired && (
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -1010,7 +1010,7 @@ export default function ChatWidgetPage() {
           )}
 
           {/* Messages Area - FISSA */}
-          {(!showWelcome || messages.length > 1) && !subscriptionCancelled && !freeTrialLimitReached && !freeTrialExpired && (
+          {(!showWelcome || messages.length > 0) && !subscriptionCancelled && !freeTrialLimitReached && !freeTrialExpired && (
             <>
               <div className="flex-1 overflow-y-auto chat-scrollbar p-2 md:p-6 space-y-4">
                 {messages.map((message, index) => (
