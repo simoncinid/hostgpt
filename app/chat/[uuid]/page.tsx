@@ -26,6 +26,7 @@ import toast from 'react-hot-toast'
 import ChatbotIcon from '@/app/components/ChatbotIcon'
 import MarkdownText from '@/app/components/MarkdownText'
 import HostGPTLogo from '@/app/components/HostGPTLogo'
+import GuestIdentificationForm from '@/app/components/GuestIdentificationForm'
 
 interface Message {
   id: string
@@ -54,6 +55,18 @@ export default function ChatWidgetPage() {
   const [threadId, setThreadId] = useState<string | null>(null)
   const [guestName, setGuestName] = useState('')
   const [showWelcome, setShowWelcome] = useState(true)
+  
+  // Nuovi stati per gestione ospiti
+  const [showGuestForm, setShowGuestForm] = useState(false)
+  const [guestData, setGuestData] = useState<{
+    id?: number
+    phone?: string
+    email?: string
+    first_name?: string
+    last_name?: string
+  } | null>(null)
+  const [isFirstTime, setIsFirstTime] = useState(false)
+  const [hasExistingConversation, setHasExistingConversation] = useState(false)
   const [showInfo, setShowInfo] = useState(false)
   const [subscriptionCancelled, setSubscriptionCancelled] = useState(false)
   const [freeTrialLimitReached, setFreeTrialLimitReached] = useState(false)
@@ -171,7 +184,13 @@ export default function ChatWidgetPage() {
       const response = await chat.sendMessage(uuid, {
         content: fullMessage,
         thread_id: threadId,
-        guest_name: guestName || undefined
+        guest_name: guestName || undefined,
+        // Nuovi parametri per identificazione ospite
+        phone: guestData?.phone,
+        email: guestData?.email,
+        first_name: guestData?.first_name,
+        last_name: guestData?.last_name,
+        force_new_conversation: false
       })
 
       if (!threadId) {
@@ -221,21 +240,6 @@ export default function ChatWidgetPage() {
     setIsDarkMode(!isDarkMode)
   }
 
-  const handleNewConversation = () => {
-    setMessages([])
-    setThreadId(null)
-    setInputMessage('')
-    setShowWelcome(true)
-    // Ricarica il messaggio di benvenuto
-    if (chatInfo?.welcome_message) {
-      setMessages([{
-        id: 'welcome',
-        role: 'assistant',
-        content: chatInfo.welcome_message,
-        timestamp: new Date()
-      }])
-    }
-  }
 
   const downloadHouseRulesPDF = async () => {
     if (!chatInfo?.house_rules || !chatInfo.house_rules.trim()) {
@@ -338,7 +342,13 @@ export default function ChatWidgetPage() {
       const response = await chat.sendMessage(uuid, {
         content: inputMessage,
         thread_id: threadId,
-        guest_name: guestName || undefined
+        guest_name: guestName || undefined,
+        // Nuovi parametri per identificazione ospite
+        phone: guestData?.phone,
+        email: guestData?.email,
+        first_name: guestData?.first_name,
+        last_name: guestData?.last_name,
+        force_new_conversation: false
       })
 
       if (!threadId) {
@@ -528,7 +538,13 @@ export default function ChatWidgetPage() {
     try {
       console.log('🎤 Inizio invio messaggio vocale...')
       
-      const response = await chat.sendVoiceMessage(uuid, audioBlob, threadId || undefined, guestName || undefined)
+      const response = await chat.sendVoiceMessage(uuid, audioBlob, threadId || undefined, guestName || undefined, {
+        phone: guestData?.phone,
+        email: guestData?.email,
+        first_name: guestData?.first_name,
+        last_name: guestData?.last_name,
+        force_new_conversation: false
+      })
       
       console.log('🎤 Response data:', response.data)
       
@@ -568,8 +584,91 @@ export default function ChatWidgetPage() {
   }
 
   const handleStartChat = () => {
-    setShowWelcome(false)
-    setTimeout(() => inputRef.current?.focus(), 100)
+    // Mostra il form di identificazione ospite invece di iniziare direttamente
+    setShowGuestForm(true)
+  }
+
+  const handleGuestIdentification = async (data: {
+    phone?: string
+    email?: string
+    first_name?: string
+    last_name?: string
+  }) => {
+    try {
+      const response = await chat.identifyGuest(uuid, data)
+      const guestInfo = response.data
+      
+      setGuestData({
+        id: guestInfo.guest_id,
+        phone: guestInfo.phone,
+        email: guestInfo.email,
+        first_name: guestInfo.first_name,
+        last_name: guestInfo.last_name
+      })
+      
+      setIsFirstTime(guestInfo.is_first_time)
+      setHasExistingConversation(guestInfo.has_existing_conversation)
+      
+      // Se c'è una conversazione esistente, carica i messaggi
+      if (guestInfo.has_existing_conversation && guestInfo.existing_thread_id) {
+        setThreadId(guestInfo.existing_thread_id)
+        // Carica i messaggi della conversazione esistente
+        await loadExistingConversation(guestInfo.existing_thread_id)
+      }
+      
+      setShowGuestForm(false)
+      setShowWelcome(false)
+      setTimeout(() => inputRef.current?.focus(), 100)
+      
+    } catch (error: any) {
+      console.error('Errore identificazione ospite:', error)
+      toast.error(language === 'IT' ? 'Errore nell\'identificazione' : 'Identification error')
+    }
+  }
+
+  const loadExistingConversation = async (existingThreadId: string) => {
+    // Qui potresti implementare il caricamento dei messaggi esistenti
+    // Per ora, mostriamo solo un messaggio di benvenuto
+    if (chatInfo?.welcome_message) {
+      setMessages([{
+        id: 'welcome',
+        role: 'assistant',
+        content: chatInfo.welcome_message,
+        timestamp: new Date()
+      }])
+    }
+  }
+
+  const handleNewConversation = async () => {
+    if (guestData?.id) {
+      try {
+        const response = await chat.createNewConversation(uuid, guestData.id)
+        setThreadId(response.data.thread_id)
+        setMessages([])
+        setInputMessage('')
+        
+        // Mostra messaggio di benvenuto per la nuova conversazione
+        if (chatInfo?.welcome_message) {
+          setMessages([{
+            id: 'welcome',
+            role: 'assistant',
+            content: chatInfo.welcome_message,
+            timestamp: new Date()
+          }])
+        }
+        
+        toast.success(language === 'IT' ? 'Nuova conversazione creata' : 'New conversation created')
+      } catch (error) {
+        console.error('Errore creazione nuova conversazione:', error)
+        toast.error(language === 'IT' ? 'Errore nella creazione della conversazione' : 'Error creating conversation')
+      }
+    } else {
+      // Fallback al comportamento precedente
+      setMessages([])
+      setThreadId(null)
+      setInputMessage('')
+      setShowWelcome(true)
+    }
   }
 
   if (!chatInfo && !subscriptionCancelled) {
@@ -776,8 +875,21 @@ export default function ChatWidgetPage() {
             </motion.div>
           )}
 
+          {/* Guest Identification Form */}
+          {showGuestForm && !subscriptionCancelled && !freeTrialLimitReached && !freeTrialExpired && (
+            <GuestIdentificationForm
+              onSubmit={handleGuestIdentification}
+              onCancel={() => setShowGuestForm(false)}
+              isFirstTime={isFirstTime}
+              hasExistingConversation={hasExistingConversation}
+              existingGuestName={guestData ? `${guestData.first_name} ${guestData.last_name}`.trim() : undefined}
+              language={language}
+              isDarkMode={isDarkMode}
+            />
+          )}
+
           {/* Welcome Screen */}
-          {showWelcome && messages.length <= 1 && !subscriptionCancelled && !freeTrialLimitReached && !freeTrialExpired && (
+          {showWelcome && messages.length <= 1 && !subscriptionCancelled && !freeTrialLimitReached && !freeTrialExpired && !showGuestForm && (
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -813,7 +925,7 @@ export default function ChatWidgetPage() {
           )}
 
           {/* Messages Area - FISSA */}
-          {(!showWelcome || messages.length > 1) && !subscriptionCancelled && !freeTrialLimitReached && !freeTrialExpired && (
+          {(!showWelcome || messages.length > 1) && !subscriptionCancelled && !freeTrialLimitReached && !freeTrialExpired && !showGuestForm && (
             <>
               <div className="flex-1 overflow-y-auto chat-scrollbar p-2 md:p-6 space-y-4">
                 {messages.map((message, index) => (

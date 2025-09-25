@@ -197,7 +197,34 @@ export const chat = {
   sendMessage: (uuid: string, data: any) =>
     api.post(`/chat/${uuid}/message`, data),
   
-  sendVoiceMessage: async (uuid: string, audioBlob: Blob, threadId?: string, guestName?: string) => {
+  // Nuove funzioni per gestione ospiti
+  identifyGuest: (uuid: string, data: {
+    phone?: string
+    email?: string
+    first_name?: string
+    last_name?: string
+  }) =>
+    api.post(`/chat/${uuid}/identify-guest`, data),
+  
+  getGuestConversations: (uuid: string, guestId: number) =>
+    api.get(`/chat/${uuid}/guest/${guestId}/conversations`),
+  
+  createNewConversation: (uuid: string, guestId: number) =>
+    api.post(`/chat/${uuid}/guest/${guestId}/new-conversation`),
+  
+  validatePhone: (phone: string) =>
+    api.post('/validate-phone', { phone }),
+  
+  getCountryCodes: () =>
+    api.get('/country-codes'),
+  
+  sendVoiceMessage: async (uuid: string, audioBlob: Blob, threadId?: string, guestName?: string, guestData?: {
+    phone?: string
+    email?: string
+    first_name?: string
+    last_name?: string
+    force_new_conversation?: boolean
+  }) => {
     const formData = new FormData()
     // Usa l'estensione corretta basata sul tipo MIME
     const extension = audioBlob.type.includes('webm') ? 'webm' : 
@@ -206,6 +233,17 @@ export const chat = {
     formData.append('audio_file', audioBlob, `voice-message.${extension}`)
     if (threadId) formData.append('thread_id', threadId)
     if (guestName) formData.append('guest_name', guestName)
+    
+    // Nuovi parametri per identificazione ospite
+    if (guestData) {
+      if (guestData.phone) formData.append('phone', guestData.phone)
+      if (guestData.email) formData.append('email', guestData.email)
+      if (guestData.first_name) formData.append('first_name', guestData.first_name)
+      if (guestData.last_name) formData.append('last_name', guestData.last_name)
+      if (guestData.force_new_conversation !== undefined) {
+        formData.append('force_new_conversation', guestData.force_new_conversation.toString())
+      }
+    }
 
     const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
