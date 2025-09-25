@@ -7278,18 +7278,15 @@ async def create_welcome_conversation(
         raise HTTPException(status_code=404, detail="Chatbot non trovato")
     
     try:
-        client = get_openai_client()
-        
-        # Crea nuovo thread
-        thread = client.beta.threads.create(extra_headers={"OpenAI-Beta": "assistants=v2"})
-        thread_id = thread.id
+        # NON creiamo un thread OpenAI per il messaggio di benvenuto
+        # Il thread verrà creato solo quando l'utente invierà il primo messaggio
         
         # Crea nuova conversazione nel DB (senza ospite specifico)
         guest_identifier = request.client.host
         conversation = Conversation(
             chatbot_id=chatbot.id,
             guest_id=None,  # Nessun ospite specifico al refresh
-            thread_id=thread_id,
+            thread_id=None,  # Nessun thread OpenAI ancora
             guest_name=None,
             guest_identifier=guest_identifier,
             is_forced_new=False  # Non è una conversazione forzata, è un refresh
@@ -7298,10 +7295,11 @@ async def create_welcome_conversation(
         db.commit()
         db.refresh(conversation)
         
-        # Salva il messaggio di benvenuto nel DB
+        # Salva il messaggio di benvenuto nel DB come messaggio dell'assistente
+        # NON chiamiamo OpenAI, è un messaggio diretto dell'assistente
         welcome_message = Message(
             conversation_id=conversation.id,
-            role="assistant",
+            role="assistant",  # IMPORTANTE: è un messaggio dell'assistente
             content=chatbot.welcome_message or "Ciao! Sono qui per aiutarti con qualsiasi domanda sulla casa e sulla zona. Come posso esserti utile?",
             timestamp=func.now()
         )
@@ -7311,7 +7309,7 @@ async def create_welcome_conversation(
         
         return {
             "conversation_id": conversation.id,
-            "thread_id": thread_id,
+            "thread_id": None,  # Nessun thread OpenAI ancora
             "welcome_message": {
                 "id": welcome_message.id,
                 "content": welcome_message.content,

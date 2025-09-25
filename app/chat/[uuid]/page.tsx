@@ -318,8 +318,9 @@ export default function ChatWidgetPage() {
       try {
         const welcomeResponse = await chat.createWelcomeConversation(uuid)
         
-        // Imposta il thread_id per la nuova conversazione
-        setThreadId(welcomeResponse.data.thread_id)
+        // NON impostiamo thread_id qui perché non esiste ancora
+        // Il thread_id verrà creato solo quando l'utente invierà il primo messaggio
+        setThreadId(null)
         
         // Mostra il messaggio di benvenuto dal DB
         const welcomeMessage = {
