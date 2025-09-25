@@ -623,10 +623,21 @@ export default function ChatWidgetPage() {
           const messagesResponse = await fetch(`${API_URL}/api/chat/${uuid}/guest/${guestInfo.guest_id}/messages`)
           if (messagesResponse.ok) {
             const messagesData = await messagesResponse.json()
-            setMessages(messagesData.messages || [])
+            // Converti i timestamp da stringa ISO a oggetti Date
+            const formattedMessages = messagesData.messages.map((msg: any) => ({
+              ...msg,
+              timestamp: msg.timestamp ? new Date(msg.timestamp) : new Date(),
+              // Assicurati che tutti i campi necessari siano presenti
+              id: msg.id || Date.now() + Math.random(),
+              role: msg.role || 'assistant',
+              content: msg.content || ''
+            }))
+            setMessages(formattedMessages || [])
           }
         } catch (error) {
           console.error('Errore nel caricamento dei messaggi:', error)
+          // Se c'è un errore nel caricamento dei messaggi, continua comunque
+          toast.error(language === 'IT' ? 'Errore nel caricamento della conversazione precedente' : 'Error loading previous conversation')
         }
         
         toast.success(language === 'IT' ? 'Conversazione esistente caricata' : 'Existing conversation loaded')

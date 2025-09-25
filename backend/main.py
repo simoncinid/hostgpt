@@ -7164,7 +7164,7 @@ async def get_guest_messages(
                 "id": msg.id,
                 "role": msg.role,
                 "content": msg.content,
-                "timestamp": msg.timestamp.isoformat() if msg.timestamp else None,
+                "timestamp": msg.timestamp.isoformat() if msg.timestamp else datetime.now().isoformat(),
                 "conversation_id": msg.conversation_id
             })
         
