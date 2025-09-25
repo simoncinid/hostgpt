@@ -122,7 +122,7 @@ class Chatbot(Base):
 class Guest(Base):
     __tablename__ = "guests"
     
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     phone = Column(String(20), unique=True, nullable=True)  # Numero di telefono con prefisso internazionale
     email = Column(String(255), unique=True, nullable=True)  # Email dell'ospite
     first_name = Column(String(255), nullable=True)  # Nome dell'ospite
@@ -137,7 +137,7 @@ class Guest(Base):
 class ChatbotGuest(Base):
     __tablename__ = "chatbot_guests"
     
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     chatbot_id = Column(Integer, ForeignKey("chatbots.id"), nullable=False)
     guest_id = Column(Integer, ForeignKey("guests.id"), nullable=False)
     first_interaction_at = Column(DateTime, server_default=func.now())
