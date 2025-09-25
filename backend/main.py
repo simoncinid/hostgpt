@@ -3547,8 +3547,9 @@ async def download_house_rules_pdf(uuid: str, lang: str = "IT", db: Session = De
                 import os
                 # Prova diversi path possibili
                 possible_paths = [
-                    "public/icons/logohostgpt.png",     # Se eseguito dalla root (più probabile)
-                    "../public/icons/logohostgpt.png",  # Se eseguito da backend/
+                    "/app/public/icons/logohostgpt.png",  # Docker path
+                    "public/icons/logohostgpt.png",       # Se eseguito dalla root
+                    "../public/icons/logohostgpt.png",     # Se eseguito da backend/
                     os.path.join(os.path.dirname(__file__), "..", "public", "icons", "logohostgpt.png"),  # Path assoluto
                 ]
                 
@@ -3661,13 +3662,17 @@ async def download_house_rules_pdf(uuid: str, lang: str = "IT", db: Session = De
                     messages=[
                         {
                             "role": "system", 
-                            "content": f"""Sei un assistente che migliora testi per documenti di proprietà. 
+                            "content": f"""Sei un assistente che traduce e migliora testi per documenti di proprietà. 
+                            IMPORTANTE: Rispondi SOLO con il testo tradotto e migliorato, senza spiegazioni o prefissi.
+                            
+                            Regole:
                             - Traduci in {lang == "IT" and "italiano" or "inglese"}
                             - Rendi il testo più discorsivo e naturale
                             - Evita formati JSON o liste tecniche
                             - Scrivi in modo elegante e professionale
-                            - Se il testo è vuoto o contiene solo oggetti vuoti, rispondi con "Nessuna informazione disponibile" (IT) o "No information available" (ENG)
-                            - Mantieni le informazioni essenziali ma rendile più leggibili"""
+                            - Se il testo è vuoto, rispondi SOLO con "Nessuna informazione disponibile" (IT) o "No information available" (ENG)
+                            - NON aggiungere prefissi come "Traduzione:" o "Rendendo il testo più discorsivo:"
+                            - Rispondi SOLO con il risultato finale"""
                         },
                         {
                             "role": "user", 
