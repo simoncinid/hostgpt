@@ -588,12 +588,15 @@ export default function ChatWidgetPage() {
 
   const handlePhoneChange = (value: string) => {
     setPhoneNumber(value)
-    setGuestPhone(selectedCountryCode + value)
+    // Non aggiornare guestPhone qui, lo faremo in handleStartChat
   }
 
   const handleStartChat = async () => {
+    // Costruisci il numero completo con il prefisso corretto
+    const fullPhoneNumber = phoneNumber ? selectedCountryCode + phoneNumber : ''
+    
     // Validazione base
-    if (!guestPhone && !guestEmail) {
+    if (!fullPhoneNumber && !guestEmail) {
       toast.error(language === 'IT' ? 'Inserisci almeno telefono o email' : 'Please enter phone or email')
       return
     }
@@ -601,7 +604,7 @@ export default function ChatWidgetPage() {
     try {
       // Identifica l'ospite
       const response = await chat.identifyGuest(uuid, {
-        phone: guestPhone || undefined,
+        phone: fullPhoneNumber || undefined,
         email: guestEmail || undefined
       })
       
@@ -609,7 +612,7 @@ export default function ChatWidgetPage() {
       
       setGuestData({
         id: guestInfo.guest_id,
-        phone: guestInfo.phone,
+        phone: fullPhoneNumber,
         email: guestInfo.email,
         first_name: guestInfo.first_name,
         last_name: guestInfo.last_name
@@ -678,15 +681,13 @@ export default function ChatWidgetPage() {
         setTimeout(async () => {
           try {
             const welcomeResponse = await chat.sendMessage(uuid, {
-              message: currentTexts.welcomeMessage,
+              content: currentTexts.welcomeMessage,
               thread_id: response.data.thread_id,
-              guestData: {
-                id: guestData.id,
-                phone: guestData.phone,
-                email: guestData.email,
-                first_name: guestData.first_name,
-                last_name: guestData.last_name
-              }
+              phone: guestData.phone,
+              email: guestData.email,
+              first_name: guestData.first_name,
+              last_name: guestData.last_name,
+              force_new_conversation: false
             })
             
             if (welcomeResponse.data) {
