@@ -32,7 +32,7 @@ function DashboardContent() {
   const searchParams = useSearchParams()
   const { user, logout, setAuth, setUser, isAuthenticated } = useAuthStore()
   const { chatbots, limits, setChatbots, setLimits, deleteChatbot } = useChatbotStore()
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
   const [isLoading, setIsLoading] = useState(true)
   const [selectedBot, setSelectedBot] = useState<number | null>(null)
   const [showQRModal, setShowQRModal] = useState(false)
@@ -134,13 +134,15 @@ function DashboardContent() {
 
   const downloadPropertyPDF = async (chatbotUuid: string, propertyName: string) => {
     try {
-      const response = await chat.downloadHouseRulesPDF(chatbotUuid, 'IT')
+      const response = await chat.downloadHouseRulesPDF(chatbotUuid, language)
       
       // Ottieni il blob del PDF dalla risposta
       const blob = response.data
       
       // Nome del file
-      let fileName = `INFO_${propertyName.replace(/[^a-zA-Z0-9]/g, '_').toUpperCase()}.pdf`
+      let fileName = language === 'IT' 
+        ? `INFO_${propertyName.replace(/[^a-zA-Z0-9]/g, '_').toUpperCase()}.pdf`
+        : `${propertyName.replace(/[^a-zA-Z0-9]/g, '_').toUpperCase()}_INFO.pdf`
       
       // Crea un link temporaneo per il download
       const url = URL.createObjectURL(blob)
@@ -152,10 +154,10 @@ function DashboardContent() {
       document.body.removeChild(link)
       URL.revokeObjectURL(url)
 
-      toast.success('PDF delle informazioni scaricato')
+      toast.success(language === 'IT' ? 'PDF delle informazioni scaricato' : 'Property information PDF downloaded')
     } catch (error) {
       console.error('Error downloading property info PDF:', error)
-      toast.error('Errore nel download del PDF')
+      toast.error(language === 'IT' ? 'Errore nel download del PDF' : 'Error downloading PDF')
     }
   }
 
@@ -374,7 +376,7 @@ function DashboardContent() {
                          downloadPropertyPDF(bot.uuid, bot.property_name)
                        }}
                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition"
-                       title="Scarica informazioni proprietà"
+                       title={language === 'IT' ? 'Scarica informazioni proprietà' : 'Download property information'}
                      >
                        <FileText className="w-4 h-4 md:w-5 md:h-5" />
                      </button>

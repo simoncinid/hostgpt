@@ -925,12 +925,10 @@ export default function LandingPage() {
               {/* Desktop Menu premium - Ripensato per essere più pulito e organizzato */}
               <div className="hidden md:flex items-center space-x-2 relative z-10">
                 {[
-                  { href: "https://wa.me/393391797616", label: t.navbar.contactUs, isExternal: true },
-                  { href: "#features", label: t.navbar.features },
                   { href: "#demo", label: t.navbar.demo },
                   { href: "#how-it-works", label: t.navbar.howItWorks },
-                  { href: "#pricing", label: t.navbar.pricing },
-                  { href: "#feedback", label: t.navbar.feedback }
+                  { href: "#features", label: t.navbar.features },
+                  { href: "#pricing", label: t.navbar.pricing }
                 ].map((item, index) => (
                   <motion.div
                     key={item.href}
@@ -942,21 +940,13 @@ export default function LandingPage() {
                   >
                     <Link 
                       href={item.href} 
-                      target={item.isExternal ? "_blank" : undefined}
-                      rel={item.isExternal ? "noopener noreferrer" : undefined}
-                      className={`relative px-3 py-2 font-medium transition-all duration-300 rounded-lg group text-sm ${
-                        item.isExternal 
-                          ? "text-blue-800 bg-sky-100 hover:bg-sky-200 hover:text-blue-900" 
-                          : "text-gray-700 hover:text-gray-900 hover:bg-white/40"
-                      }`}
+                      className="relative px-3 py-2 font-medium transition-all duration-300 rounded-lg group text-sm text-gray-700 hover:text-gray-900 hover:bg-white/40"
                     >
                       <span className="relative z-10">{item.label}</span>
-                      {!item.isExternal && (
-                        <motion.div
-                          className="absolute inset-0 bg-gradient-to-r from-rose-100/50 to-pink-100/50 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                          layoutId="navbar-hover"
-                        />
-                      )}
+                      <motion.div
+                        className="absolute inset-0 bg-gradient-to-r from-rose-100/50 to-pink-100/50 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                        layoutId="navbar-hover"
+                      />
                     </Link>
                   </motion.div>
                 ))}
@@ -970,11 +960,32 @@ export default function LandingPage() {
                 {/* Separatore */}
                 <div className="w-px h-6 bg-gray-300 mx-2"></div>
                 
+                {/* Contattaci Desktop */}
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: 0.5 }}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <Link 
+                    href="https://wa.me/393391797616" 
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-3 py-2 text-blue-800 bg-sky-100 hover:bg-sky-200 hover:text-blue-900 font-medium transition-all duration-300 rounded-lg text-sm"
+                  >
+                    {t.navbar.contactUs}
+                  </Link>
+                </motion.div>
+                
+                {/* Separatore */}
+                <div className="w-px h-6 bg-gray-300 mx-2"></div>
+                
                 {/* Bottone Login */}
                 <motion.div
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.5, delay: 0.6 }}
+                  transition={{ duration: 0.5, delay: 0.7 }}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >
@@ -990,7 +1001,7 @@ export default function LandingPage() {
                 <motion.div
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.5, delay: 0.7 }}
+                  transition={{ duration: 0.5, delay: 0.8 }}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   className="ml-2"
@@ -1085,12 +1096,10 @@ export default function LandingPage() {
 
                 <div className="space-y-2 relative z-10">
                   {[
-                    { href: "https://wa.me/393391797616", label: t.navbar.contactUs, isExternal: true },
-                    { href: "#features", label: t.navbar.features },
                     { href: "#demo", label: t.navbar.demo },
                     { href: "#how-it-works", label: t.navbar.howItWorks },
-                    { href: "#pricing", label: t.navbar.pricing },
-                    { href: "#feedback", label: t.navbar.feedback }
+                    { href: "#features", label: t.navbar.features },
+                    { href: "#pricing", label: t.navbar.pricing }
                   ].map((item, index) => (
                     <motion.div
                       key={item.href}
@@ -1100,19 +1109,30 @@ export default function LandingPage() {
                     >
                       <Link 
                         href={item.href} 
-                        target={item.isExternal ? "_blank" : undefined}
-                        rel={item.isExternal ? "noopener noreferrer" : undefined}
                         onClick={() => setIsMenuOpen(false)} 
-                        className={`block px-4 py-2.5 font-medium rounded-lg transition-all duration-300 text-sm ${
-                          item.isExternal 
-                            ? "text-blue-800 bg-sky-100 hover:bg-sky-200 hover:text-blue-900" 
-                            : "text-gray-700 hover:text-gray-900 hover:bg-white/30"
-                        }`}
+                        className="block px-4 py-2.5 font-medium rounded-lg transition-all duration-300 text-sm text-gray-700 hover:text-gray-900 hover:bg-white/30"
                       >
                         {item.label}
                       </Link>
                     </motion.div>
                   ))}
+                  
+                  {/* Contattaci mobile */}
+                  <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.3, delay: 0.2 }}
+                  >
+                    <Link 
+                      href="https://wa.me/393391797616" 
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => setIsMenuOpen(false)} 
+                      className="block px-4 py-2.5 text-blue-800 bg-sky-100 hover:bg-sky-200 hover:text-blue-900 font-medium rounded-lg transition-all duration-300 text-sm"
+                    >
+                      {t.navbar.contactUs}
+                    </Link>
+                  </motion.div>
                   
                   {/* Separatore mobile */}
                   <div className="border-t border-white/20 my-2"></div>
@@ -1121,7 +1141,7 @@ export default function LandingPage() {
                   <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.4, delay: 0.3 }}
+                    transition={{ duration: 0.4, delay: 0.4 }}
                   >
                     <Link 
                       href="/login" 
@@ -1136,7 +1156,7 @@ export default function LandingPage() {
                   <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.4, delay: 0.4 }}
+                    transition={{ duration: 0.4, delay: 0.5 }}
                     className="pt-2"
                   >
                     <Link 
@@ -1376,6 +1396,7 @@ export default function LandingPage() {
 
           {/* Demo Chat - COPIA ESATTA di /chat */}
           <motion.div
+            id="demo"
             initial={{ opacity: 0, scale: 0.95, y: 50 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             transition={{ duration: 1.2, delay: 1, ease: [0.23, 1, 0.320, 1] }}

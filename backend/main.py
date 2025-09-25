@@ -3624,11 +3624,50 @@ async def download_house_rules_pdf(uuid: str, lang: str = "IT", db: Session = De
         story.append(Paragraph(chatbot.property_name, property_style))
         story.append(Spacer(1, 20))
         
+        # Funzione per migliorare il testo con OpenAI
+        async def improve_text_with_openai(text: str, context: str = "") -> str:
+            try:
+                if not text or text.strip() == "":
+                    return "Nessuna informazione disponibile" if lang == "IT" else "No information available"
+                
+                # Se il testo contiene oggetti JSON vuoti o malformati, restituisci messaggio di default
+                if any(pattern in text for pattern in ["{'name': '',", "{'name': '',", "• {'", "• {"]):
+                    return "Nessuna informazione disponibile" if lang == "IT" else "No information available"
+                
+                # Usa un modello leggero e poco costoso
+                response = await openai.chat.completions.create(
+                    model="gpt-3.5-turbo",  # Modello leggero e poco costoso
+                    messages=[
+                        {
+                            "role": "system", 
+                            "content": f"""Sei un assistente che migliora testi per documenti di proprietà. 
+                            - Traduci in {lang == "IT" and "italiano" or "inglese"}
+                            - Rendi il testo più discorsivo e naturale
+                            - Evita formati JSON o liste tecniche
+                            - Scrivi in modo elegante e professionale
+                            - Se il testo è vuoto o contiene solo oggetti vuoti, rispondi con "Nessuna informazione disponibile" (IT) o "No information available" (ENG)
+                            - Mantieni le informazioni essenziali ma rendile più leggibili"""
+                        },
+                        {
+                            "role": "user", 
+                            "content": f"Contesto: {context}\n\nTesto da migliorare: {text}"
+                        }
+                    ],
+                    max_tokens=200,
+                    temperature=0.3
+                )
+                
+                return response.choices[0].message.content.strip()
+            except Exception as e:
+                logger.warning(f"OpenAI improvement failed: {e}")
+                return text  # Fallback al testo originale
+        
         # Informazioni base della proprietà
         if chatbot.property_type:
             section_title = "Tipo di Proprietà" if lang == "IT" else "Property Type"
             story.append(Paragraph(section_title, section_style))
-            story.append(Paragraph(chatbot.property_type, content_style))
+            improved_text = await improve_text_with_openai(chatbot.property_type, "Tipo di proprietà")
+            story.append(Paragraph(improved_text, content_style))
             story.append(Spacer(1, 10))
         
         # Indirizzo completo
@@ -3650,130 +3689,183 @@ async def download_house_rules_pdf(uuid: str, lang: str = "IT", db: Session = De
                 address_parts.append(chatbot.property_country)
             
             if address_parts:
-                story.append(Paragraph(", ".join(address_parts), content_style))
+                address_text = ", ".join(address_parts)
+                improved_address = await improve_text_with_openai(address_text, "Indirizzo della proprietà")
+                story.append(Paragraph(improved_address, content_style))
             story.append(Spacer(1, 10))
         
         # Descrizione della proprietà
         if chatbot.property_description:
             section_title = "Descrizione" if lang == "IT" else "Description"
             story.append(Paragraph(section_title, section_style))
-            story.append(Paragraph(chatbot.property_description, content_style))
+            improved_description = await improve_text_with_openai(chatbot.property_description, "Descrizione della proprietà")
+            story.append(Paragraph(improved_description, content_style))
             story.append(Spacer(1, 10))
         
         # Orari di check-in e check-out
         if chatbot.check_in_time or chatbot.check_out_time:
             section_title = "Orari" if lang == "IT" else "Check-in/Check-out Times"
             story.append(Paragraph(section_title, section_style))
-            if chatbot.check_in_time:
-                check_in_text = f"Check-in: {chatbot.check_in_time}" if lang == "IT" else f"Check-in: {chatbot.check_in_time}"
-                story.append(Paragraph(check_in_text, content_style))
-            if chatbot.check_out_time:
-                check_out_text = f"Check-out: {chatbot.check_out_time}" if lang == "IT" else f"Check-out: {chatbot.check_out_time}"
-                story.append(Paragraph(check_out_text, content_style))
+            times_text = ""
+            if chatbot.check_in_time and chatbot.check_out_time:
+                times_text = f"Check-in: {chatbot.check_in_time}, Check-out: {chatbot.check_out_time}"
+            elif chatbot.check_in_time:
+                times_text = f"Check-in: {chatbot.check_in_time}"
+            elif chatbot.check_out_time:
+                times_text = f"Check-out: {chatbot.check_out_time}"
+            
+            if times_text:
+                improved_times = await improve_text_with_openai(times_text, "Orari di check-in e check-out")
+                story.append(Paragraph(improved_times, content_style))
             story.append(Spacer(1, 10))
         
         # Servizi e amenità
         if chatbot.amenities:
             section_title = "Servizi e Amenità" if lang == "IT" else "Amenities"
             story.append(Paragraph(section_title, section_style))
-            if isinstance(chatbot.amenities, list):
-                for amenity in chatbot.amenities:
-                    story.append(Paragraph(f"• {amenity}", content_style))
+            if isinstance(chatbot.amenities, list) and chatbot.amenities:
+                # Filtra amenità vuote o malformate
+                valid_amenities = [a for a in chatbot.amenities if a and str(a).strip() and not str(a).startswith('{')]
+                if valid_amenities:
+                    amenities_text = ", ".join(valid_amenities)
+                    improved_amenities = await improve_text_with_openai(amenities_text, "Servizi e amenità della proprietà")
+                    story.append(Paragraph(improved_amenities, content_style))
+                else:
+                    no_info_text = "Nessuna informazione disponibile" if lang == "IT" else "No information available"
+                    story.append(Paragraph(no_info_text, content_style))
             story.append(Spacer(1, 10))
         
         # Descrizione del quartiere
         if chatbot.neighborhood_description:
             section_title = "Quartiere" if lang == "IT" else "Neighborhood"
             story.append(Paragraph(section_title, section_style))
-            story.append(Paragraph(chatbot.neighborhood_description, content_style))
+            improved_neighborhood = await improve_text_with_openai(chatbot.neighborhood_description, "Descrizione del quartiere")
+            story.append(Paragraph(improved_neighborhood, content_style))
             story.append(Spacer(1, 10))
         
         # Attrazioni vicine
         if chatbot.nearby_attractions:
             section_title = "Attrazioni Vicine" if lang == "IT" else "Nearby Attractions"
             story.append(Paragraph(section_title, section_style))
-            if isinstance(chatbot.nearby_attractions, list):
-                for attraction in chatbot.nearby_attractions:
-                    story.append(Paragraph(f"• {attraction}", content_style))
+            if isinstance(chatbot.nearby_attractions, list) and chatbot.nearby_attractions:
+                # Filtra attrazioni vuote o malformate
+                valid_attractions = [a for a in chatbot.nearby_attractions if a and str(a).strip() and not str(a).startswith('{')]
+                if valid_attractions:
+                    attractions_text = ", ".join(valid_attractions)
+                    improved_attractions = await improve_text_with_openai(attractions_text, "Attrazioni e luoghi di interesse vicini")
+                    story.append(Paragraph(improved_attractions, content_style))
+                else:
+                    no_info_text = "Nessuna informazione disponibile" if lang == "IT" else "No information available"
+                    story.append(Paragraph(no_info_text, content_style))
             story.append(Spacer(1, 10))
         
         # Informazioni sui trasporti
         if chatbot.transportation_info:
             section_title = "Trasporti" if lang == "IT" else "Transportation"
             story.append(Paragraph(section_title, section_style))
-            story.append(Paragraph(chatbot.transportation_info, content_style))
+            improved_transportation = await improve_text_with_openai(chatbot.transportation_info, "Informazioni sui trasporti pubblici")
+            story.append(Paragraph(improved_transportation, content_style))
             story.append(Spacer(1, 10))
         
         # Ristoranti e bar
         if chatbot.restaurants_bars:
             section_title = "Ristoranti e Bar" if lang == "IT" else "Restaurants & Bars"
             story.append(Paragraph(section_title, section_style))
-            if isinstance(chatbot.restaurants_bars, list):
-                for place in chatbot.restaurants_bars:
-                    story.append(Paragraph(f"• {place}", content_style))
+            if isinstance(chatbot.restaurants_bars, list) and chatbot.restaurants_bars:
+                # Filtra ristoranti vuoti o malformati
+                valid_restaurants = [r for r in chatbot.restaurants_bars if r and str(r).strip() and not str(r).startswith('{')]
+                if valid_restaurants:
+                    restaurants_text = ", ".join(valid_restaurants)
+                    improved_restaurants = await improve_text_with_openai(restaurants_text, "Ristoranti e bar consigliati")
+                    story.append(Paragraph(improved_restaurants, content_style))
+                else:
+                    no_info_text = "Nessuna informazione disponibile" if lang == "IT" else "No information available"
+                    story.append(Paragraph(no_info_text, content_style))
             story.append(Spacer(1, 10))
         
         # Informazioni shopping
         if chatbot.shopping_info:
             section_title = "Shopping" if lang == "IT" else "Shopping"
             story.append(Paragraph(section_title, section_style))
-            story.append(Paragraph(chatbot.shopping_info, content_style))
+            improved_shopping = await improve_text_with_openai(chatbot.shopping_info, "Informazioni sui negozi e shopping")
+            story.append(Paragraph(improved_shopping, content_style))
             story.append(Spacer(1, 10))
         
         # Informazioni WiFi
         if chatbot.wifi_info:
             section_title = "WiFi" if lang == "IT" else "WiFi"
             story.append(Paragraph(section_title, section_style))
-            if isinstance(chatbot.wifi_info, dict):
-                for key, value in chatbot.wifi_info.items():
-                    story.append(Paragraph(f"{key}: {value}", content_style))
+            if isinstance(chatbot.wifi_info, dict) and chatbot.wifi_info:
+                # Filtra informazioni WiFi vuote
+                valid_wifi = {k: v for k, v in chatbot.wifi_info.items() if v and str(v).strip()}
+                if valid_wifi:
+                    wifi_text = ", ".join([f"{k}: {v}" for k, v in valid_wifi.items()])
+                    improved_wifi = await improve_text_with_openai(wifi_text, "Informazioni di connessione WiFi")
+                    story.append(Paragraph(improved_wifi, content_style))
+                else:
+                    no_info_text = "Nessuna informazione disponibile" if lang == "IT" else "No information available"
+                    story.append(Paragraph(no_info_text, content_style))
             story.append(Spacer(1, 10))
         
         # Informazioni parcheggio
         if chatbot.parking_info:
             section_title = "Parcheggio" if lang == "IT" else "Parking"
             story.append(Paragraph(section_title, section_style))
-            story.append(Paragraph(chatbot.parking_info, content_style))
+            improved_parking = await improve_text_with_openai(chatbot.parking_info, "Informazioni sul parcheggio")
+            story.append(Paragraph(improved_parking, content_style))
             story.append(Spacer(1, 10))
         
         # Istruzioni speciali
         if chatbot.special_instructions:
             section_title = "Istruzioni Speciali" if lang == "IT" else "Special Instructions"
             story.append(Paragraph(section_title, section_style))
-            story.append(Paragraph(chatbot.special_instructions, content_style))
+            improved_instructions = await improve_text_with_openai(chatbot.special_instructions, "Istruzioni speciali per gli ospiti")
+            story.append(Paragraph(improved_instructions, content_style))
             story.append(Spacer(1, 10))
         
         # Contatti di emergenza
         if chatbot.emergency_contacts:
             section_title = "Contatti di Emergenza" if lang == "IT" else "Emergency Contacts"
             story.append(Paragraph(section_title, section_style))
-            if isinstance(chatbot.emergency_contacts, list):
-                for contact in chatbot.emergency_contacts:
-                    story.append(Paragraph(f"• {contact}", content_style))
+            if isinstance(chatbot.emergency_contacts, list) and chatbot.emergency_contacts:
+                # Filtra contatti vuoti o malformati
+                valid_contacts = [c for c in chatbot.emergency_contacts if c and str(c).strip() and not str(c).startswith('{')]
+                if valid_contacts:
+                    contacts_text = ", ".join(valid_contacts)
+                    improved_contacts = await improve_text_with_openai(contacts_text, "Contatti di emergenza e assistenza")
+                    story.append(Paragraph(improved_contacts, content_style))
+                else:
+                    no_info_text = "Nessuna informazione disponibile" if lang == "IT" else "No information available"
+                    story.append(Paragraph(no_info_text, content_style))
             story.append(Spacer(1, 10))
         
         # FAQ
         if chatbot.faq:
             section_title = "Domande Frequenti" if lang == "IT" else "Frequently Asked Questions"
             story.append(Paragraph(section_title, section_style))
-            if isinstance(chatbot.faq, list):
-                for faq_item in chatbot.faq:
-                    if isinstance(faq_item, dict) and 'question' in faq_item and 'answer' in faq_item:
-                        story.append(Paragraph(f"Q: {faq_item['question']}", content_style))
-                        story.append(Paragraph(f"A: {faq_item['answer']}", content_style))
+            if isinstance(chatbot.faq, list) and chatbot.faq:
+                # Filtra FAQ valide
+                valid_faqs = [f for f in chatbot.faq if isinstance(f, dict) and f.get('question') and f.get('answer') and str(f.get('question')).strip() and str(f.get('answer')).strip()]
+                if valid_faqs:
+                    for faq_item in valid_faqs:
+                        question = faq_item['question']
+                        answer = faq_item['answer']
+                        improved_question = await improve_text_with_openai(question, "Domanda frequente")
+                        improved_answer = await improve_text_with_openai(answer, "Risposta alla domanda")
+                        story.append(Paragraph(f"Q: {improved_question}", content_style))
+                        story.append(Paragraph(f"A: {improved_answer}", content_style))
                         story.append(Spacer(1, 8))
+                else:
+                    no_info_text = "Nessuna informazione disponibile" if lang == "IT" else "No information available"
+                    story.append(Paragraph(no_info_text, content_style))
             story.append(Spacer(1, 10))
         
         # Regole della casa (se presenti)
         if chatbot.house_rules and chatbot.house_rules.strip():
             section_title = "Regole della Casa" if lang == "IT" else "House Rules"
             story.append(Paragraph(section_title, section_style))
-            rules_lines = chatbot.house_rules.split('\n')
-            for line in rules_lines:
-                if line.strip():
-                    story.append(Paragraph(line.strip(), content_style))
-                else:
-                    story.append(Spacer(1, 6))
+            improved_rules = await improve_text_with_openai(chatbot.house_rules, "Regole della casa per gli ospiti")
+            story.append(Paragraph(improved_rules, content_style))
             story.append(Spacer(1, 10))
         
         story.append(Spacer(1, 40))

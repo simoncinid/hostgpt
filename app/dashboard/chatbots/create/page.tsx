@@ -1126,8 +1126,8 @@ export default function CreateChatbotPage() {
                 />
                 <p className="text-sm text-gray-600">
                   {language === 'IT' 
-                    ? 'Incolla l\'URL della pagina della proprietà. L\'AI analizzerà automaticamente la pagina e compilerà i campi del form.'
-                    : 'Paste the URL of the property page. The AI will automatically analyze the page and fill in the form fields.'
+                    ? 'Incolla l\'URL della pagina della proprietà (sito web, airbnb, booking, ecc.). L\'AI analizzerà automaticamente la pagina e compilerà i campi del form.'
+                    : 'Paste the URL of the property page (website, airbnb, booking, etc.). The AI will automatically analyze the page and fill in the form fields.'
                   }
                 </p>
                 <button
