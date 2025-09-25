@@ -7418,6 +7418,52 @@ async def get_guest_messages(
         logger.error(f"Error getting guest messages: {e}")
         raise HTTPException(status_code=500, detail="Errore nel recupero dei messaggi")
 
+@app.get("/api/chat/{uuid}/conversation/{conversation_id}/messages")
+async def get_conversation_messages(
+    uuid: str,
+    conversation_id: int,
+    db: Session = Depends(get_db)
+):
+    """Ottieni tutti i messaggi di una conversazione specifica"""
+    try:
+        # Trova il chatbot
+        chatbot = db.query(Chatbot).filter(Chatbot.uuid == uuid).first()
+        if not chatbot:
+            raise HTTPException(status_code=404, detail="Chatbot non trovato")
+        
+        # Trova la conversazione
+        conversation = db.query(Conversation).filter(
+            Conversation.id == conversation_id,
+            Conversation.chatbot_id == chatbot.id
+        ).first()
+        
+        if not conversation:
+            raise HTTPException(status_code=404, detail="Conversazione non trovata")
+        
+        # Ottieni tutti i messaggi della conversazione
+        messages = db.query(Message).filter(
+            Message.conversation_id == conversation.id
+        ).order_by(Message.timestamp).all()
+        
+        # Converti i messaggi nel formato giusto
+        formatted_messages = []
+        for msg in messages:
+            formatted_messages.append({
+                "id": msg.id,
+                "role": msg.role,
+                "content": msg.content,
+                "timestamp": msg.timestamp.isoformat() if msg.timestamp else datetime.now().isoformat(),
+                "conversation_id": msg.conversation_id
+            })
+        
+        return {"messages": formatted_messages}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting conversation messages: {e}")
+        raise HTTPException(status_code=500, detail="Errore nel recupero dei messaggi")
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)

@@ -328,29 +328,18 @@ export default function ChatWidgetPage() {
         // Il thread_id verrà creato solo quando l'utente invierà il primo messaggio
         setThreadId(null)
         
-        // Mostra SUBITO il messaggio di benvenuto dal DB in chat
-        const welcomeMessage = {
-          id: welcomeResponse.data.welcome_message.id.toString(),
-          role: 'assistant' as const,
-          content: welcomeResponse.data.welcome_message.content,
-          timestamp: new Date(welcomeResponse.data.welcome_message.timestamp)
-        }
-        setMessages([welcomeMessage])
+        // NON mostrare ancora il messaggio di benvenuto
+        // L'utente deve prima identificarsi
+        setMessages([])
         
-        // NON mostrare la schermata di benvenuto - vai direttamente alla chat
-        setShowWelcome(false)
+        // Mostra la schermata di identificazione
+        setShowWelcome(true)
         
       } catch (welcomeError) {
         console.error('Errore creazione conversazione di benvenuto:', welcomeError)
-        // Fallback: mostra messaggio di benvenuto senza salvare nel DB
-        const welcomeMessage = {
-          id: 'welcome',
-          role: 'assistant' as const,
-          content: response.data.welcome_message || currentTexts.welcomeMessage,
-          timestamp: new Date()
-        }
-        setMessages([welcomeMessage])
-        setShowWelcome(false)
+        // Fallback: non mostrare messaggio di benvenuto, l'utente deve identificarsi
+        setMessages([])
+        setShowWelcome(true)
       }
       
     } catch (error: any) {
@@ -690,8 +679,25 @@ export default function ChatWidgetPage() {
         
         toast.success(language === 'IT' ? 'Conversazione esistente caricata' : 'Existing conversation loaded')
       } else {
-        // Per nuove conversazioni, usa la conversazione già creata con il messaggio di benvenuto
-        // Non facciamo nulla di speciale, la conversazione è già pronta
+        // Per nuove conversazioni, carica il messaggio di benvenuto dalla conversazione corrente
+        try {
+          const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+          const messagesResponse = await fetch(`${API_URL}/api/chat/${uuid}/conversation/${conversationId}/messages`)
+          if (messagesResponse.ok) {
+            const messagesData = await messagesResponse.json()
+            const formattedMessages = messagesData.messages.map((msg: any) => ({
+              ...msg,
+              timestamp: msg.timestamp ? new Date(msg.timestamp) : new Date(),
+              id: msg.id || Date.now() + Math.random(),
+              role: (msg.role || 'assistant') as 'assistant' | 'user',
+              content: msg.content || ''
+            }))
+            setMessages(formattedMessages || [])
+          }
+        } catch (error) {
+          console.error('Errore nel caricamento del messaggio di benvenuto:', error)
+        }
+        
         toast.success(language === 'IT' ? 'Nuova conversazione iniziata' : 'New conversation started')
       }
       
