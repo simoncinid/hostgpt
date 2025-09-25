@@ -1659,7 +1659,7 @@ export default function LandingPage() {
                           >
                             <FileText className="w-4 h-4" />
                           </motion.button>
-                          {currentDemoTexts.suggestedMessages.map((message: string, index: number) => (
+                          {currentDemoTexts.suggestedMessages.slice(0, 2).map((message: string, index: number) => (
                   <motion.button
                               key={index}
                               initial={{ opacity: 0, scale: 0.9 }}
@@ -1677,20 +1677,6 @@ export default function LandingPage() {
                   </motion.button>
                           ))}
                           
-                          {/* Bottone Download PDF */}
-                          <motion.button
-                            initial={{ opacity: 0, scale: 0.9 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            transition={{ delay: 0.3 }}
-                            onClick={downloadDemoPropertyPDF}
-                            className={`px-3 py-2 md:px-4 md:py-2 rounded-full text-xs md:text-sm font-medium transition-all duration-200 hover:scale-105 active:scale-95 whitespace-nowrap flex-shrink-0 flex items-center gap-2 ${
-                              'bg-gradient-to-r from-blue-500/10 to-blue-600/10 text-blue-600 border border-blue-500/20 hover:from-blue-500/20 hover:to-blue-600/20 hover:border-blue-500/40'
-                            }`}
-                            title={demoLanguage === 'IT' ? 'Scarica informazioni proprietà' : 'Download property information'}
-                          >
-                            <FileText className="w-4 h-4" />
-                            <span className="hidden md:inline">{demoLanguage === 'IT' ? 'Info PDF' : 'Info PDF'}</span>
-                          </motion.button>
                         </div>
             </div>
 
