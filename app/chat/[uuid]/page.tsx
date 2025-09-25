@@ -613,9 +613,22 @@ export default function ChatWidgetPage() {
         last_name: guestInfo.last_name
       })
       
-      // Se c'è una conversazione esistente, carica il thread
+      // Se c'è una conversazione esistente, carica il thread e i messaggi
       if (guestInfo.has_existing_conversation && guestInfo.existing_thread_id) {
         setThreadId(guestInfo.existing_thread_id)
+        
+        // Carica i messaggi della conversazione esistente
+        try {
+          const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+          const messagesResponse = await fetch(`${API_URL}/api/chat/${uuid}/guest/${guestInfo.guest_id}/messages`)
+          if (messagesResponse.ok) {
+            const messagesData = await messagesResponse.json()
+            setMessages(messagesData.messages || [])
+          }
+        } catch (error) {
+          console.error('Errore nel caricamento dei messaggi:', error)
+        }
+        
         toast.success(language === 'IT' ? 'Conversazione esistente caricata' : 'Existing conversation loaded')
       } else {
         toast.success(language === 'IT' ? 'Nuova conversazione iniziata' : 'New conversation started')
@@ -626,7 +639,13 @@ export default function ChatWidgetPage() {
       
     } catch (error: any) {
       console.error('Errore identificazione ospite:', error)
-      toast.error(language === 'IT' ? 'Errore nell\'identificazione' : 'Identification error')
+      
+      // Gestisci errori specifici
+      if (error.response?.data?.detail?.includes('Per i nuovi ospiti sono richiesti')) {
+        toast.error(language === 'IT' ? 'Per i nuovi ospiti sono richiesti sia il telefono che l\'email' : 'Both phone and email are required for new guests')
+      } else {
+        toast.error(language === 'IT' ? 'Errore nell\'identificazione' : 'Identification error')
+      }
     }
   }
 

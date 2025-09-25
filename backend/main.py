@@ -371,6 +371,10 @@ def find_or_create_guest(phone: Optional[str], email: Optional[str],
         db.refresh(guest)
         return guest
     
+    # Per i NUOVI ospiti, richiedi ENTRAMBI telefono ed email
+    if not phone or not email:
+        raise ValueError("Per i nuovi ospiti sono richiesti sia il numero di telefono che l'email")
+    
     # Crea nuovo ospite
     guest = Guest(
         phone=phone,
@@ -7119,6 +7123,57 @@ async def create_new_conversation(
     except Exception as e:
         logger.error(f"Error creating new conversation: {e}")
         raise HTTPException(status_code=500, detail="Errore nella creazione della conversazione")
+
+@app.get("/api/chat/{uuid}/guest/{guest_id}/messages")
+async def get_guest_messages(
+    uuid: str,
+    guest_id: int,
+    db: Session = Depends(get_db)
+):
+    """Ottieni tutti i messaggi di un ospite per un chatbot specifico"""
+    try:
+        # Trova il chatbot
+        chatbot = db.query(Chatbot).filter(Chatbot.uuid == uuid).first()
+        if not chatbot:
+            raise HTTPException(status_code=404, detail="Chatbot non trovato")
+        
+        # Trova l'ospite
+        guest = db.query(Guest).filter(Guest.id == guest_id).first()
+        if not guest:
+            raise HTTPException(status_code=404, detail="Ospite non trovato")
+        
+        # Trova la conversazione più recente dell'ospite per questo chatbot
+        conversation = db.query(Conversation).filter(
+            Conversation.chatbot_id == chatbot.id,
+            Conversation.guest_id == guest_id
+        ).order_by(Conversation.started_at.desc()).first()
+        
+        if not conversation:
+            return {"messages": []}
+        
+        # Ottieni tutti i messaggi della conversazione
+        messages = db.query(Message).filter(
+            Message.conversation_id == conversation.id
+        ).order_by(Message.timestamp).all()
+        
+        # Converti i messaggi nel formato giusto
+        formatted_messages = []
+        for msg in messages:
+            formatted_messages.append({
+                "id": msg.id,
+                "role": msg.role,
+                "content": msg.content,
+                "timestamp": msg.timestamp.isoformat() if msg.timestamp else None,
+                "conversation_id": msg.conversation_id
+            })
+        
+        return {"messages": formatted_messages}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting guest messages: {e}")
+        raise HTTPException(status_code=500, detail="Errore nel recupero dei messaggi")
 
 if __name__ == "__main__":
     import uvicorn
