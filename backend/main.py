@@ -385,11 +385,9 @@ def find_or_create_guest(phone: Optional[str], email: Optional[str],
     existing_guest = None
     if phone:
         existing_guest = db.query(Guest).filter(Guest.phone == phone).first()
-        print(f"🔍 Ricerca per telefono {phone}: {existing_guest}")
     
     if not existing_guest and email:
         existing_guest = db.query(Guest).filter(Guest.email == email).first()
-        print(f"🔍 Ricerca per email {email}: {existing_guest}")
     
     # Se l'ospite esiste globalmente ma non per questo chatbot
     if existing_guest:
@@ -7078,13 +7076,39 @@ async def identify_guest(
                 Guest.email == request.email
             ).first()
         
-        # Se l'ospite NON esiste per questo chatbot, richiedi entrambi i campi
-        if not chatbot_guest:
-            if not request.phone or not request.email:
-                raise HTTPException(
-                    status_code=400, 
-                    detail="Per i nuovi ospiti sono richiesti sia il numero di telefono che l'email"
-                )
+        # Se l'ospite esiste per questo chatbot, restituisci le informazioni
+        if chatbot_guest:
+            guest = chatbot_guest.guest
+            # Aggiorna informazioni se fornite
+            if request.phone and not guest.phone:
+                guest.phone = request.phone
+            if request.email and not guest.email:
+                guest.email = request.email
+            if request.first_name:
+                guest.first_name = request.first_name
+            if request.last_name:
+                guest.last_name = request.last_name
+            
+            db.commit()
+            db.refresh(guest)
+            
+            # Verifica se è la prima volta
+            is_first_time = is_guest_first_time(guest, chatbot.id, db)
+            
+            # Cerca conversazione esistente
+            existing_conversation = get_latest_guest_conversation(chatbot.id, guest.id, db)
+            
+            return GuestIdentificationResponse(
+                guest_id=guest.id,
+                phone=guest.phone,
+                email=guest.email,
+                first_name=guest.first_name,
+                last_name=guest.last_name,
+                is_first_time=is_first_time,
+                has_existing_conversation=existing_conversation is not None,
+                existing_conversation_id=existing_conversation.id if existing_conversation else None,
+                existing_thread_id=existing_conversation.thread_id if existing_conversation else None
+            )
         
         # Identifica o crea l'ospite
         guest = find_or_create_guest(
