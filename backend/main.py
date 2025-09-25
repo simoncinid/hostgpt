@@ -385,9 +385,11 @@ def find_or_create_guest(phone: Optional[str], email: Optional[str],
     existing_guest = None
     if phone:
         existing_guest = db.query(Guest).filter(Guest.phone == phone).first()
+        print(f"🔍 Ricerca per telefono {phone}: {existing_guest}")
     
     if not existing_guest and email:
         existing_guest = db.query(Guest).filter(Guest.email == email).first()
+        print(f"🔍 Ricerca per email {email}: {existing_guest}")
     
     # Se l'ospite esiste globalmente ma non per questo chatbot
     if existing_guest:
