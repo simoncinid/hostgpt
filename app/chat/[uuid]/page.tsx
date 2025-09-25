@@ -677,7 +677,7 @@ export default function ChatWidgetPage() {
         setMessages([])
         setInputMessage('')
         
-        // Invia automaticamente il messaggio di benvenuto
+        // Invia automaticamente il messaggio di benvenutoo
         setTimeout(async () => {
           try {
             const welcomeResponse = await chat.sendMessage(uuid, {
