@@ -595,9 +595,9 @@ export default function ChatWidgetPage() {
     // Costruisci il numero completo con il prefisso corretto
     const fullPhoneNumber = phoneNumber ? selectedCountryCode + phoneNumber : ''
     
-    // Validazione base - per nuovi ospiti servono sempre entrambi
-    if (!fullPhoneNumber || !guestEmail) {
-      toast.error(language === 'IT' ? 'Per iniziare una conversazione sono richiesti sia il numero di telefono che l\'email' : 'Both phone number and email are required to start a conversation')
+    // Validazione base - almeno uno tra telefono ed email deve essere fornito
+    if (!fullPhoneNumber && !guestEmail) {
+      toast.error(language === 'IT' ? 'È necessario fornire almeno il numero di telefono o l\'email' : 'At least phone number or email is required')
       return
     }
 
