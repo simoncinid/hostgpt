@@ -7062,11 +7062,6 @@ async def identify_guest(
         raise HTTPException(status_code=400, detail="Almeno uno tra telefono ed email deve essere fornito")
     
     try:
-        print(f"🚀 INIZIO IDENTIFICAZIONE GUEST")
-        print(f"📞 Telefono ricevuto: {request.phone}")
-        print(f"📧 Email ricevuta: {request.email}")
-        print(f"🤖 Chatbot ID: {chatbot.id}")
-        
         # LOGICA SEMPLICE E CHIARA:
         # 1. Cerca se l'ospite esiste GLOBALMENTE (per telefono o email)
         # 2. Se esiste, controlla se è già associato a questo chatbot
@@ -7076,75 +7071,64 @@ async def identify_guest(
         guest = None
         
         # Cerca ospite esistente per telefono
-        if request.phone:
-            print(f"🔍 CERCO OSPITE PER TELEFONO: {request.phone}")
-            guest = db.query(Guest).filter(Guest.phone == request.phone).first()
-            print(f"📞 RISULTATO RICERCA TELEFONO: {guest}")
+        guest_by_phone = None
+        guest_by_email = None
         
-        # Se non trovato per telefono, cerca per email
-        if not guest and request.email:
-            print(f"🔍 CERCO OSPITE PER EMAIL: {request.email}")
-            guest = db.query(Guest).filter(Guest.email == request.email).first()
-            print(f"📧 RISULTATO RICERCA EMAIL: {guest}")
+        if request.phone:
+            guest_by_phone = db.query(Guest).filter(Guest.phone == request.phone).first()
+        
+        if request.email:
+            guest_by_email = db.query(Guest).filter(Guest.email == request.email).first()
+        
+        # Controlla se ci sono conflitti
+        if guest_by_phone and guest_by_email and guest_by_phone.id != guest_by_email.id:
+            raise HTTPException(
+                status_code=400, 
+                detail="Il numero di telefono e l'email sono associati a ospiti diversi. Verifica i dati inseriti."
+            )
+        
+        # Se non ci sono conflitti, usa il guest trovato
+        guest = guest_by_phone or guest_by_email
         
         # Se l'ospite ESISTE globalmente
         if guest:
-            print(f"✅ OSPITE TROVATO GLOBALMENTE: ID={guest.id}, Phone={guest.phone}, Email={guest.email}")
-            
             # Controlla se è già associato a questo chatbot
-            print(f"🔍 CERCO ASSOCIAZIONE CHATBOT-GUEST: chatbot_id={chatbot.id}, guest_id={guest.id}")
             chatbot_guest = db.query(ChatbotGuest).filter(
                 ChatbotGuest.chatbot_id == chatbot.id,
                 ChatbotGuest.guest_id == guest.id
             ).first()
-            print(f"🔗 ASSOCIAZIONE TROVATA: {chatbot_guest}")
             
             # Se non è associato, crea l'associazione
             if not chatbot_guest:
-                print(f"➕ CREO NUOVA ASSOCIAZIONE CHATBOT-GUEST")
                 chatbot_guest = ChatbotGuest(
                     chatbot_id=chatbot.id,
                     guest_id=guest.id
                 )
                 db.add(chatbot_guest)
                 db.commit()
-                print(f"✅ ASSOCIAZIONE CREATA")
-            else:
-                print(f"✅ ASSOCIAZIONE GIÀ ESISTENTE")
             
             # Aggiorna informazioni se fornite
-            print(f"🔄 AGGIORNO INFORMAZIONI GUEST")
             if request.phone and not guest.phone:
                 guest.phone = request.phone
-                print(f"📞 AGGIORNATO TELEFONO: {guest.phone}")
             if request.email and not guest.email:
                 guest.email = request.email
-                print(f"📧 AGGIORNATA EMAIL: {guest.email}")
             if request.first_name:
                 guest.first_name = request.first_name
-                print(f"👤 AGGIORNATO NOME: {guest.first_name}")
             if request.last_name:
                 guest.last_name = request.last_name
-                print(f"👤 AGGIORNATO COGNOME: {guest.last_name}")
             
             db.commit()
             db.refresh(guest)
-            print(f"✅ GUEST AGGIORNATO: {guest}")
         
         # Se l'ospite NON ESISTE globalmente
         else:
-            print(f"❌ OSPITE NON TROVATO GLOBALMENTE")
-            print(f"🔍 CONTROLLO SE HA ENTRAMBI I CAMPI: phone={request.phone}, email={request.email}")
-            
             # Per nuovi ospiti, richiedi entrambi i campi
             if not request.phone or not request.email:
-                print(f"❌ ERRORE: MANCANO CAMPI PER NUOVO OSPITE")
                 raise HTTPException(
                     status_code=400, 
                     detail="Per i nuovi ospiti sono richiesti sia il numero di telefono che l'email"
                 )
             
-            print(f"➕ CREO NUOVO OSPITE")
             # Crea nuovo ospite
             guest = Guest(
                 phone=request.phone,
@@ -7156,7 +7140,6 @@ async def identify_guest(
             db.add(guest)
             db.commit()
             db.refresh(guest)
-            print(f"✅ NUOVO OSPITE CREATO: ID={guest.id}")
             
             # Crea associazione chatbot-guest
             chatbot_guest = ChatbotGuest(
@@ -7166,20 +7149,14 @@ async def identify_guest(
             
             db.add(chatbot_guest)
             db.commit()
-            print(f"✅ ASSOCIAZIONE NUOVO OSPITE CREATA")
         
-        print(f"🔍 VERIFICO SE È PRIMA VOLTA")
         # Verifica se è la prima volta
         is_first_time = is_guest_first_time(guest, chatbot.id, db)
-        print(f"🆕 È PRIMA VOLTA: {is_first_time}")
         
-        print(f"🔍 CERCO CONVERSAZIONE ESISTENTE")
         # Cerca conversazione esistente
         existing_conversation = get_latest_guest_conversation(chatbot.id, guest.id, db)
-        print(f"💬 CONVERSAZIONE ESISTENTE: {existing_conversation}")
         
-        print(f"🎯 CREO RISPOSTA FINALE")
-        response = GuestIdentificationResponse(
+        return GuestIdentificationResponse(
             guest_id=guest.id,
             phone=guest.phone,
             email=guest.email,
@@ -7190,8 +7167,6 @@ async def identify_guest(
             existing_conversation_id=existing_conversation.id if existing_conversation else None,
             existing_thread_id=existing_conversation.thread_id if existing_conversation else None
         )
-        print(f"✅ RISPOSTA CREATA: {response}")
-        return response
         
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
