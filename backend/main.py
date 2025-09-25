@@ -3756,8 +3756,23 @@ async def send_message(
         thread_id = message.thread_id
         is_new_conversation = False
         
-        if guest and not message.force_new_conversation:
-            # Cerca l'ultima conversazione dell'ospite per questo chatbot
+        # Prima cerca una conversazione esistente senza thread_id (conversazione di benvenuto)
+        if not conversation:
+            existing_welcome_conversation = db.query(Conversation).filter(
+                Conversation.chatbot_id == chatbot.id,
+                Conversation.thread_id.is_(None),
+                Conversation.guest_id.is_(None)
+            ).first()
+            
+            if existing_welcome_conversation:
+                # Collega l'ospite alla conversazione di benvenuto esistente
+                existing_welcome_conversation.guest_id = guest.id if guest else None
+                existing_welcome_conversation.guest_name = message.guest_name or (f"{guest.first_name} {guest.last_name}".strip() if guest else None)
+                conversation = existing_welcome_conversation
+                logger.info(f"🔄 Collegando ospite {guest.id if guest else 'anonimo'} alla conversazione di benvenuto esistente")
+        
+        # Se non c'è conversazione di benvenuto, cerca conversazioni esistenti dell'ospite
+        if not conversation and guest and not message.force_new_conversation:
             existing_conversation = get_latest_guest_conversation(chatbot.id, guest.id, db)
             if existing_conversation:
                 conversation = existing_conversation
@@ -3787,6 +3802,14 @@ async def send_message(
             logger.info(f"🆕 Creata nuova conversazione per ospite {guest.id if guest else 'anonimo'}")
         
         # ============= FINE NUOVA LOGICA =============
+        
+        # Se la conversazione non ha ancora un thread_id, crealo ora
+        if not conversation.thread_id:
+            thread = client.beta.threads.create(extra_headers={"OpenAI-Beta": "assistants=v2"})
+            thread_id = thread.id
+            conversation.thread_id = thread_id
+            db.commit()
+            logger.info(f"🆕 Creato thread OpenAI per conversazione esistente: {thread_id}")
         
         # Invia messaggio a OpenAI
         client.beta.threads.messages.create(
@@ -3989,8 +4012,23 @@ async def send_voice_message(
         conversation = None
         is_new_conversation = False
         
-        if guest and not force_new_conversation:
-            # Cerca l'ultima conversazione dell'ospite per questo chatbot
+        # Prima cerca una conversazione esistente senza thread_id (conversazione di benvenuto)
+        if not conversation:
+            existing_welcome_conversation = db.query(Conversation).filter(
+                Conversation.chatbot_id == chatbot.id,
+                Conversation.thread_id.is_(None),
+                Conversation.guest_id.is_(None)
+            ).first()
+            
+            if existing_welcome_conversation:
+                # Collega l'ospite alla conversazione di benvenuto esistente
+                existing_welcome_conversation.guest_id = guest.id if guest else None
+                existing_welcome_conversation.guest_name = guest_name or (f"{guest.first_name} {guest.last_name}".strip() if guest else None)
+                conversation = existing_welcome_conversation
+                logger.info(f"🎤🔄 Collegando ospite {guest.id if guest else 'anonimo'} alla conversazione di benvenuto esistente")
+        
+        # Se non c'è conversazione di benvenuto, cerca conversazioni esistenti dell'ospite
+        if not conversation and guest and not force_new_conversation:
             existing_conversation = get_latest_guest_conversation(chatbot.id, guest.id, db)
             if existing_conversation:
                 conversation = existing_conversation
@@ -4020,6 +4058,14 @@ async def send_voice_message(
             logger.info(f"🎤🆕 Creata nuova conversazione per ospite {guest.id if guest else 'anonimo'}")
         
         # ============= FINE NUOVA LOGICA =============
+        
+        # Se la conversazione non ha ancora un thread_id, crealo ora
+        if not conversation.thread_id:
+            thread = client.beta.threads.create(extra_headers={"OpenAI-Beta": "assistants=v2"})
+            thread_id = thread.id
+            conversation.thread_id = thread_id
+            db.commit()
+            logger.info(f"🎤🆕 Creato thread OpenAI per conversazione esistente: {thread_id}")
         
         # Invia messaggio trascritto a OpenAI
         client.beta.threads.messages.create(

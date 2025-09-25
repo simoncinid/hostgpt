@@ -52,6 +52,7 @@ export default function ChatWidgetPage() {
   const [inputMessage, setInputMessage] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [chatInfo, setChatInfo] = useState<ChatInfo | null>(null)
+  const [conversationId, setConversationId] = useState<number | null>(null)
   const [threadId, setThreadId] = useState<string | null>(null)
   const [guestName, setGuestName] = useState('')
   const [showWelcome, setShowWelcome] = useState(true)
@@ -196,6 +197,7 @@ export default function ChatWidgetPage() {
         force_new_conversation: false
       })
 
+      // Se non abbiamo ancora un thread_id, lo salviamo
       if (!threadId) {
         setThreadId(response.data.thread_id)
       }
@@ -293,6 +295,7 @@ export default function ChatWidgetPage() {
   useEffect(() => {
     // Reset dello stato al cambio di UUID (refresh)
     setMessages([])
+    setConversationId(null)
     setThreadId(null)
     setInputMessage('')
     setShowWelcome(true)
@@ -317,6 +320,9 @@ export default function ChatWidgetPage() {
       // Crea immediatamente una conversazione con messaggio di benvenuto nel DB
       try {
         const welcomeResponse = await chat.createWelcomeConversation(uuid)
+        
+        // Salva l'ID della conversazione
+        setConversationId(welcomeResponse.data.conversation_id)
         
         // NON impostiamo thread_id qui perché non esiste ancora
         // Il thread_id verrà creato solo quando l'utente invierà il primo messaggio
@@ -385,6 +391,7 @@ export default function ChatWidgetPage() {
         force_new_conversation: false
       })
 
+      // Se non abbiamo ancora un thread_id, lo salviamo
       if (!threadId) {
         setThreadId(response.data.thread_id)
       }
@@ -582,6 +589,7 @@ export default function ChatWidgetPage() {
       
       console.log('🎤 Response data:', response.data)
       
+      // Se non abbiamo ancora un thread_id, lo salviamo
       if (!threadId) {
         setThreadId(response.data.thread_id)
       }
@@ -669,35 +677,6 @@ export default function ChatWidgetPage() {
               content: msg.content || ''
             }))
             setMessages(formattedMessages || [])
-            
-            // Se non ci sono messaggi, invia il messaggio di benvenuto
-            if (formattedMessages.length === 0) {
-              setTimeout(async () => {
-                try {
-                  const welcomeResponse = await chat.sendMessage(uuid, {
-                    content: currentTexts.welcomeMessage,
-                    thread_id: guestInfo.existing_thread_id,
-                    phone: guestData?.phone,
-                    email: guestData?.email,
-                    first_name: guestData?.first_name,
-                    last_name: guestData?.last_name,
-                    force_new_conversation: false
-                  })
-                  
-                  if (welcomeResponse.data) {
-                    const welcomeMessage = {
-                      id: welcomeResponse.data.id || Date.now(),
-                      role: 'assistant' as const,
-                      content: welcomeResponse.data.content || welcomeResponse.data.message,
-                      timestamp: welcomeResponse.data.timestamp ? new Date(welcomeResponse.data.timestamp) : new Date()
-                    }
-                    setMessages([welcomeMessage])
-                  }
-                } catch (error) {
-                  console.error('Errore invio messaggio benvenuto:', error)
-                }
-              }, 500)
-            }
           }
         } catch (error) {
           console.error('Errore nel caricamento dei messaggi:', error)
@@ -707,34 +686,8 @@ export default function ChatWidgetPage() {
         
         toast.success(language === 'IT' ? 'Conversazione esistente caricata' : 'Existing conversation loaded')
       } else {
-        // Per nuove conversazioni, invia il messaggio di benvenuto
-        setTimeout(async () => {
-          try {
-            const welcomeResponse = await chat.sendMessage(uuid, {
-              content: currentTexts.welcomeMessage,
-              thread_id: null, // Nuova conversazione
-              phone: guestData?.phone,
-              email: guestData?.email,
-              first_name: guestData?.first_name,
-              last_name: guestData?.last_name,
-              force_new_conversation: false
-            })
-            
-            if (welcomeResponse.data) {
-              setThreadId(welcomeResponse.data.thread_id)
-              const welcomeMessage = {
-                id: welcomeResponse.data.id || Date.now(),
-                role: 'assistant' as const,
-                content: welcomeResponse.data.content || welcomeResponse.data.message,
-                timestamp: welcomeResponse.data.timestamp ? new Date(welcomeResponse.data.timestamp) : new Date()
-              }
-              setMessages([welcomeMessage])
-            }
-          } catch (error) {
-            console.error('Errore invio messaggio benvenuto:', error)
-          }
-        }, 500)
-        
+        // Per nuove conversazioni, usa la conversazione già creata con il messaggio di benvenuto
+        // Non facciamo nulla di speciale, la conversazione è già pronta
         toast.success(language === 'IT' ? 'Nuova conversazione iniziata' : 'New conversation started')
       }
       
@@ -758,56 +711,22 @@ export default function ChatWidgetPage() {
   }
 
   const handleNewConversation = async () => {
-    if (guestData?.id) {
-      try {
-        const response = await chat.createNewConversation(uuid, guestData.id)
-        setThreadId(response.data.thread_id)
-        setMessages([])
-        setInputMessage('')
-        
-        // Invia automaticamente il messaggio di benvenutoo
-        setTimeout(async () => {
-          try {
-            const welcomeResponse = await chat.sendMessage(uuid, {
-              content: currentTexts.welcomeMessage,
-              thread_id: response.data.thread_id,
-              phone: guestData.phone,
-              email: guestData.email,
-              first_name: guestData.first_name,
-              last_name: guestData.last_name,
-              force_new_conversation: false
-            })
-            
-            if (welcomeResponse.data) {
-              console.log('Welcome message response:', welcomeResponse.data)
-              // Crea il messaggio nel formato corretto
-              const welcomeMessage = {
-                id: welcomeResponse.data.id || Date.now(),
-                role: 'assistant' as const,
-                content: welcomeResponse.data.content || welcomeResponse.data.message,
-                timestamp: welcomeResponse.data.timestamp ? new Date(welcomeResponse.data.timestamp) : new Date()
-              }
-              setMessages([welcomeMessage])
-            } else {
-              console.log('No welcome message data received')
-            }
-          } catch (error) {
-            console.error('Errore invio messaggio benvenuto:', error)
-          }
-        }, 500)
-        
-        toast.success(language === 'IT' ? 'Nuova conversazione creata' : 'New conversation created')
-      } catch (error) {
-        console.error('Errore creazione nuova conversazione:', error)
-        toast.error(language === 'IT' ? 'Errore nella creazione della conversazione' : 'Error creating conversation')
-      }
-    } else {
-      // Fallback al comportamento precedente
-      setMessages([])
-      setThreadId(null)
-      setInputMessage('')
-      setShowWelcome(true)
-    }
+    // Reset completo dello stato
+    setMessages([])
+    setConversationId(null)
+    setThreadId(null)
+    setInputMessage('')
+    setGuestData(null)
+    setGuestPhone('')
+    setGuestEmail('')
+    setPhoneNumber('')
+    setSelectedCountryCode('+39')
+    setShowWelcome(true)
+    
+    // Ricarica le informazioni del chatbot e crea una nuova conversazione
+    await loadChatInfo()
+    
+    toast.success(language === 'IT' ? 'Nuova conversazione creata' : 'New conversation created')
   }
 
   if (!chatInfo && !subscriptionCancelled) {
