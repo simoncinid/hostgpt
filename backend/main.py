@@ -1973,6 +1973,15 @@ async def create_checkout_session(
         
         # Log per debug - mostra i price_id configurati
         logger.info(f"Configured price_ids: PREMIUM_PRICE_ID={settings.STRIPE_PREMIUM_PRICE_ID}, ANNUAL_PREMIUM_PRICE_ID={settings.STRIPE_ANNUAL_PREMIUM_PRICE_ID}")
+        logger.info(f"All Stripe price_ids: {settings.STRIPE_PRICE_ID}, {settings.STRIPE_PREMIUM_PRICE_ID}, {settings.STRIPE_PRO_PRICE_ID}, {settings.STRIPE_ENTERPRISE_PRICE_ID}")
+        logger.info(f"All Annual price_ids: {settings.STRIPE_ANNUAL_STANDARD_PRICE_ID}, {settings.STRIPE_ANNUAL_PREMIUM_PRICE_ID}, {settings.STRIPE_ANNUAL_PRO_PRICE_ID}, {settings.STRIPE_ANNUAL_ENTERPRISE_PRICE_ID}")
+        
+        # Debug delle variabili d'ambiente
+        import os
+        logger.info(f"Environment variables check:")
+        logger.info(f"STRIPE_PREMIUM_PRICE_ID from os.getenv: {os.getenv('STRIPE_PREMIUM_PRICE_ID')}")
+        logger.info(f"STRIPE_ANNUAL_PREMIUM_PRICE_ID from os.getenv: {os.getenv('STRIPE_ANNUAL_PREMIUM_PRICE_ID')}")
+        logger.info(f"All env vars starting with STRIPE: {[k for k in os.environ.keys() if k.startswith('STRIPE')]}")
         
         if request and 'price_id' in request:
             # Caso 1: Arrivo da selezione servizi con parametri URL
