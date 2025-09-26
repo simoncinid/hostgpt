@@ -4555,7 +4555,7 @@ async def send_message(
                 # Verifica limite conversazioni (i reset sono gestiti dai webhook Stripe)
                 if owner.conversations_used >= owner.conversations_limit:
                     # Messaggio di errore multilingue con numero host
-                    error_message = f"{'Monthly limit of ' if (owner.language or 'it') == 'en' else 'Limite mensile di '}{owner.conversations_limit}{' conversations reached. The limit resets automatically on subscription renewal. For assistance contact: ' if (owner.language or 'it') == 'en' else ' conversazioni raggiunto. Il limite si resetta automaticamente al rinnovo dell\'abbonamento. Per assistenza contatta il numero: '}{owner.phone}"
+                    error_message = f"{'Monthly limit of ' if (owner.language or 'it') == 'en' else 'Limite mensile di '}{owner.conversations_limit}{' conversations reached. The limit resets automatically on subscription renewal. For assistance contact: ' if (owner.language or 'it') == 'en' else ' conversazioni raggiunto. Il limite si resetta automaticamente al rinnovo dell'abbonamento. Per assistenza contatta il numero: '}{owner.phone}"
                     raise HTTPException(
                         status_code=429, 
                         detail=error_message
@@ -4851,7 +4851,7 @@ async def send_voice_message(
                 # Verifica limite conversazioni (i reset sono gestiti dai webhook Stripe)
                 if owner.conversations_used >= owner.conversations_limit:
                     # Messaggio di errore multilingue con numero host
-                    error_message = f"{'Monthly limit of ' if (owner.language or 'it') == 'en' else 'Limite mensile di '}{owner.conversations_limit}{' conversations reached. The limit resets automatically on subscription renewal. For assistance contact: ' if (owner.language or 'it') == 'en' else ' conversazioni raggiunto. Il limite si resetta automaticamente al rinnovo dell\'abbonamento. Per assistenza contatta il numero: '}{owner.phone}"
+                    error_message = f"{'Monthly limit of ' if (owner.language or 'it') == 'en' else 'Limite mensile di '}{owner.conversations_limit}{' conversations reached. The limit resets automatically on subscription renewal. For assistance contact: ' if (owner.language or 'it') == 'en' else ' conversazioni raggiunto. Il limite si resetta automaticamente al rinnovo dell'abbonamento. Per assistenza contatta il numero: '}{owner.phone}"
                     raise HTTPException(
                         status_code=429, 
                         detail=error_message
@@ -8114,7 +8114,7 @@ async def create_new_conversation(
         # Verifica limite conversazioni (i reset sono gestiti dai webhook Stripe)
         if owner.conversations_used >= owner.conversations_limit:
             # Messaggio di errore multilingue con numero host
-            error_message = f"{'Monthly limit of ' if (owner.language or 'it') == 'en' else 'Limite mensile di '}{owner.conversations_limit}{' conversations reached. The limit resets automatically on subscription renewal. For assistance contact: ' if (owner.language or 'it') == 'en' else ' conversazioni raggiunto. Il limite si resetta automaticamente al rinnovo dell\'abbonamento. Per assistenza contatta il numero: '}{owner.phone}"
+            error_message = f"{'Monthly limit of ' if (owner.language or 'it') == 'en' else 'Limite mensile di '}{owner.conversations_limit}{' conversations reached. The limit resets automatically on subscription renewal. For assistance contact: ' if (owner.language or 'it') == 'en' else ' conversazioni raggiunto. Il limite si resetta automaticamente al rinnovo dell'abbonamento. Per assistenza contatta il numero: '}{owner.phone}"
             raise HTTPException(
                 status_code=429, 
                 detail=error_message
