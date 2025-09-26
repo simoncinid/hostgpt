@@ -1941,9 +1941,11 @@ async def handle_checkout_session_completed(event, db: Session):
             user.conversations_limit = 20  # Fallback
             logger.info(f"🔍 [DEBUG] Using fallback STANDARD plan - conversations_limit: 20")
         
-        # Reset dei contatori
-        user.conversations_used = 0
-        user.conversations_reset_date = datetime.utcnow()
+        # Reset dei contatori solo se è un nuovo abbonamento o rinnovo
+        # Non resettare ad ogni webhook per evitare di perdere il conteggio
+        if not user.conversations_reset_date or (datetime.utcnow() - user.conversations_reset_date).days >= 30:
+            user.conversations_used = 0
+            user.conversations_reset_date = datetime.utcnow()
         user.max_chatbots = 100
         
         logger.info(f"🔍 [DEBUG] Final user state before commit:")
@@ -1984,11 +1986,13 @@ async def handle_invoice_payment_succeeded(event, db: Session):
             logger.error(f"User not found for subscription {subscription_id}")
             return
         
-        # Reset delle conversazioni al rinnovo
-        user.conversations_used = 0
-        user.conversations_reset_date = datetime.utcnow()
-        user.messages_used = 0
-        user.messages_reset_date = datetime.utcnow()
+        # Reset delle conversazioni al rinnovo solo se è passato almeno un mese
+        if not user.conversations_reset_date or (datetime.utcnow() - user.conversations_reset_date).days >= 30:
+            user.conversations_used = 0
+            user.conversations_reset_date = datetime.utcnow()
+        if not user.messages_reset_date or (datetime.utcnow() - user.messages_reset_date).days >= 30:
+            user.messages_used = 0
+            user.messages_reset_date = datetime.utcnow()
         
         # Assicura che il limite di chatbot sia sempre 100 per abbonamenti attivi
         user.max_chatbots = 100
@@ -2016,9 +2020,12 @@ async def handle_subscription_updated(event, db: Session):
             price_id = subscription['items']['data'][0]['price']['id']
             new_limit = get_conversations_limit_by_price_id(price_id)
             
+            # Reset al cambio piano solo se il nuovo limite è diverso dal precedente
+            old_limit = user.conversations_limit
             user.conversations_limit = new_limit
-            user.conversations_used = 0  # Reset al cambio piano
-            user.conversations_reset_date = datetime.utcnow()
+            if old_limit != new_limit:
+                user.conversations_used = 0
+                user.conversations_reset_date = datetime.utcnow()
             
             # Assicura che il limite di chatbot sia sempre 100 per abbonamenti attivi
             user.max_chatbots = 100
@@ -2359,8 +2366,10 @@ async def confirm_payment(
         # Imposta i limiti in base al piano scelto
         conversations_limit = get_conversations_limit_by_price_id(price_id)
         current_user.conversations_limit = conversations_limit
-        current_user.conversations_used = 0
-        current_user.conversations_reset_date = datetime.utcnow()
+        # Reset solo se è un nuovo abbonamento (non se è un rinnovo)
+        if not current_user.conversations_reset_date:
+            current_user.conversations_used = 0
+            current_user.conversations_reset_date = datetime.utcnow()
         
         # Imposta il limite di chatbot a 100 per tutti gli abbonamenti
         current_user.max_chatbots = 100
@@ -2928,9 +2937,11 @@ async def confirm_subscription(
                     current_user.conversations_limit = 20  # Fallback
                     logger.info(f"🔍 [DEBUG] Using fallback STANDARD plan - conversations_limit: 20")
                 
-                # Reset dei contatori
-                current_user.conversations_used = 0
-                current_user.conversations_reset_date = datetime.utcnow()
+                # Reset dei contatori solo se è un nuovo abbonamento o rinnovo
+                # Non resettare ad ogni webhook per evitare di perdere il conteggio
+                if not current_user.conversations_reset_date or (datetime.utcnow() - current_user.conversations_reset_date).days >= 30:
+                    current_user.conversations_used = 0
+                    current_user.conversations_reset_date = datetime.utcnow()
                 current_user.max_chatbots = 100
                 
                 logger.info(f"🔍 [DEBUG] Final user state before commit:")
@@ -4526,14 +4537,16 @@ async def send_message(
                 if owner.free_trial_conversations_used >= owner.free_trial_conversations_limit:
                     raise HTTPException(
                         status_code=429,
-                        detail="Hai raggiunto il limite di 5 conversazioni del periodo di prova gratuito. Sottoscrivi un abbonamento per continuare."
+                        detail=f"{'You have reached the limit of 5 conversations for the free trial period. Subscribe to a plan to continue. For assistance contact: ' if (owner.language or 'it') == 'en' else 'Hai raggiunto il limite di 5 conversazioni del periodo di prova gratuito. Sottoscrivi un abbonamento per continuare. Per assistenza contatta il numero: '}{owner.phone}"
                     )
             else:
                 # Verifica limite conversazioni (i reset sono gestiti dai webhook Stripe)
                 if owner.conversations_used >= owner.conversations_limit:
+                    # Messaggio di errore multilingue con numero host
+                    error_message = f"{'Monthly limit of ' if (owner.language or 'it') == 'en' else 'Limite mensile di '}{owner.conversations_limit}{' conversations reached. The limit resets automatically on subscription renewal. For assistance contact: ' if (owner.language or 'it') == 'en' else ' conversazioni raggiunto. Il limite si resetta automaticamente al rinnovo dell\'abbonamento. Per assistenza contatta il numero: '}{owner.phone}"
                     raise HTTPException(
                         status_code=429, 
-                        detail=f"Limite mensile di {owner.conversations_limit} conversazioni raggiunto. Il limite si resetta automaticamente al rinnovo dell'abbonamento."
+                        detail=error_message
                     )
             
             # Crea nuova conversazione
@@ -4559,9 +4572,12 @@ async def send_message(
             # Incrementa il contatore delle conversazioni
             if owner.subscription_status == 'free_trial':
                 owner.free_trial_conversations_used += 1
+                logger.info(f"🔄 [DEBUG] Incrementato free_trial_conversations_used: {owner.free_trial_conversations_used}")
             else:
                 owner.conversations_used += 1
+                logger.info(f"🔄 [DEBUG] Incrementato conversations_used: {owner.conversations_used}")
             db.commit()
+            logger.info(f"🔄 [DEBUG] Dopo commit - conversations_used: {owner.conversations_used}, free_trial_conversations_used: {owner.free_trial_conversations_used}")
         
         # ============= FINE NUOVA LOGICA =============
         
@@ -4805,14 +4821,16 @@ async def send_voice_message(
                 if owner.free_trial_conversations_used >= owner.free_trial_conversations_limit:
                     raise HTTPException(
                         status_code=429,
-                        detail="Hai raggiunto il limite di 5 conversazioni del periodo di prova gratuito. Sottoscrivi un abbonamento per continuare."
+                        detail=f"{'You have reached the limit of 5 conversations for the free trial period. Subscribe to a plan to continue. For assistance contact: ' if (owner.language or 'it') == 'en' else 'Hai raggiunto il limite di 5 conversazioni del periodo di prova gratuito. Sottoscrivi un abbonamento per continuare. Per assistenza contatta il numero: '}{owner.phone}"
                     )
             else:
                 # Verifica limite conversazioni (i reset sono gestiti dai webhook Stripe)
                 if owner.conversations_used >= owner.conversations_limit:
+                    # Messaggio di errore multilingue con numero host
+                    error_message = f"{'Monthly limit of ' if (owner.language or 'it') == 'en' else 'Limite mensile di '}{owner.conversations_limit}{' conversations reached. The limit resets automatically on subscription renewal. For assistance contact: ' if (owner.language or 'it') == 'en' else ' conversazioni raggiunto. Il limite si resetta automaticamente al rinnovo dell\'abbonamento. Per assistenza contatta il numero: '}{owner.phone}"
                     raise HTTPException(
                         status_code=429, 
-                        detail=f"Limite mensile di {owner.conversations_limit} conversazioni raggiunto. Il limite si resetta automaticamente al rinnovo dell'abbonamento."
+                        detail=error_message
                     )
             
             # Crea nuova conversazione
@@ -4838,9 +4856,12 @@ async def send_voice_message(
             # Incrementa il contatore delle conversazioni
             if owner.subscription_status == 'free_trial':
                 owner.free_trial_conversations_used += 1
+                logger.info(f"🔄 [DEBUG] Incrementato free_trial_conversations_used: {owner.free_trial_conversations_used}")
             else:
                 owner.conversations_used += 1
+                logger.info(f"🔄 [DEBUG] Incrementato conversations_used: {owner.conversations_used}")
             db.commit()
+            logger.info(f"🔄 [DEBUG] Dopo commit - conversations_used: {owner.conversations_used}, free_trial_conversations_used: {owner.free_trial_conversations_used}")
         
         # ============= FINE NUOVA LOGICA =============
         
@@ -8028,6 +8049,43 @@ async def create_new_conversation(
     if not guest:
         raise HTTPException(status_code=404, detail="Ospite non trovato")
     
+    # Ottieni il proprietario del chatbot
+    owner = db.query(User).filter(User.id == chatbot.user_id).first()
+    if not owner:
+        raise HTTPException(status_code=404, detail="Proprietario del chatbot non trovato")
+    
+    # Verifica abbonamento attivo
+    if not is_subscription_active(owner.subscription_status):
+        raise HTTPException(
+            status_code=403, 
+            detail="Il proprietario di questo chatbot non ha un abbonamento attivo. Il servizio è temporaneamente non disponibile."
+        )
+    
+    # Gestione free trial
+    if owner.subscription_status == 'free_trial':
+        # Verifica se il free trial è ancora attivo
+        if not is_free_trial_active(owner):
+            raise HTTPException(
+                status_code=403,
+                detail="Il periodo di prova gratuito è scaduto. Sottoscrivi un abbonamento per continuare a utilizzare il servizio."
+            )
+        
+        # Verifica limite conversazioni free trial
+        if owner.free_trial_conversations_used >= owner.free_trial_conversations_limit:
+            raise HTTPException(
+                status_code=429,
+                detail=f"{'You have reached the limit of 5 conversations for the free trial period. Subscribe to a plan to continue. For assistance contact: ' if (owner.language or 'it') == 'en' else 'Hai raggiunto il limite di 5 conversazioni del periodo di prova gratuito. Sottoscrivi un abbonamento per continuare. Per assistenza contatta il numero: '}{owner.phone}"
+            )
+    else:
+        # Verifica limite conversazioni (i reset sono gestiti dai webhook Stripe)
+        if owner.conversations_used >= owner.conversations_limit:
+            # Messaggio di errore multilingue con numero host
+            error_message = f"{'Monthly limit of ' if (owner.language or 'it') == 'en' else 'Limite mensile di '}{owner.conversations_limit}{' conversations reached. The limit resets automatically on subscription renewal. For assistance contact: ' if (owner.language or 'it') == 'en' else ' conversazioni raggiunto. Il limite si resetta automaticamente al rinnovo dell\'abbonamento. Per assistenza contatta il numero: '}{owner.phone}"
+            raise HTTPException(
+                status_code=429, 
+                detail=error_message
+            )
+    
     try:
         client = get_openai_client()
         
@@ -8047,6 +8105,16 @@ async def create_new_conversation(
         db.add(conversation)
         db.commit()
         db.refresh(conversation)
+        
+        # Incrementa il contatore delle conversazioni
+        if owner.subscription_status == 'free_trial':
+            owner.free_trial_conversations_used += 1
+            logger.info(f"🔄 [DEBUG] Incrementato free_trial_conversations_used: {owner.free_trial_conversations_used}")
+        else:
+            owner.conversations_used += 1
+            logger.info(f"🔄 [DEBUG] Incrementato conversations_used: {owner.conversations_used}")
+        db.commit()
+        logger.info(f"🔄 [DEBUG] Dopo commit - conversations_used: {owner.conversations_used}, free_trial_conversations_used: {owner.free_trial_conversations_used}")
         
         return {
             "conversation_id": conversation.id,
