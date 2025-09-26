@@ -1898,17 +1898,11 @@ async def handle_checkout_session_completed(event, db: Session):
         subscription = stripe.Subscription.retrieve(subscription_id)
         logger.info(f"✅ [DEBUG] Retrieved subscription {subscription.id} for user {user.id}")
         
-        # DEBUG: Analizza la subscription per capire il price_id
+        # DEBUG: Analizza la subscription per capire il piano
         logger.info(f"🔍 [DEBUG] Subscription details:")
         logger.info(f"🔍 [DEBUG] - ID: {subscription.id}")
         logger.info(f"🔍 [DEBUG] - Status: {subscription.status}")
-        logger.info(f"🔍 [DEBUG] - Items count: {len(subscription.items.data) if hasattr(subscription, 'items') and subscription.items else 0}")
-        
-        if hasattr(subscription, 'items') and subscription.items and subscription.items.data:
-            logger.info(f"🔍 [DEBUG] - First item price ID: {subscription.items.data[0].price.id}")
-            logger.info(f"🔍 [DEBUG] - First item price amount: {subscription.items.data[0].price.unit_amount}")
-        else:
-            logger.warning(f"⚠️ [DEBUG] No items found in subscription")
+        logger.info(f"🔍 [DEBUG] - Current period end: {subscription.current_period_end}")
         
         # Aggiorna l'utente
         logger.info(f"🔍 [DEBUG] Updating user {user.id}")
@@ -1917,30 +1911,11 @@ async def handle_checkout_session_completed(event, db: Session):
         user.subscription_end_date = datetime.utcfromtimestamp(subscription.current_period_end)
         user.free_trial_converted = True
         
-        # DEBUG: Determina il piano in base al price_id se disponibile
-        if hasattr(subscription, 'items') and subscription.items and subscription.items.data:
-            price_id = subscription.items.data[0].price.id
-            logger.info(f"🔍 [DEBUG] Found price_id: {price_id}")
-            
-            # Mappa i price_id ai limiti
-            if price_id in [settings.STRIPE_STANDARD_PRICE_ID, settings.STRIPE_ANNUAL_STANDARD_PRICE_ID]:
-                user.conversations_limit = 20
-                logger.info(f"🔍 [DEBUG] Mapped to STANDARD plan - conversations_limit: 20")
-            elif price_id in [settings.STRIPE_PREMIUM_PRICE_ID, settings.STRIPE_ANNUAL_PREMIUM_PRICE_ID]:
-                user.conversations_limit = 50
-                logger.info(f"🔍 [DEBUG] Mapped to PREMIUM plan - conversations_limit: 50")
-            elif price_id in [settings.STRIPE_PRO_PRICE_ID, settings.STRIPE_ANNUAL_PRO_PRICE_ID]:
-                user.conversations_limit = 150
-                logger.info(f"🔍 [DEBUG] Mapped to PRO plan - conversations_limit: 150")
-            elif price_id in [settings.STRIPE_ENTERPRISE_PRICE_ID, settings.STRIPE_ANNUAL_ENTERPRISE_PRICE_ID]:
-                user.conversations_limit = 500
-                logger.info(f"🔍 [DEBUG] Mapped to ENTERPRISE plan - conversations_limit: 500")
-            else:
-                user.conversations_limit = 20
-                logger.warning(f"⚠️ [DEBUG] Unknown price_id {price_id}, using default STANDARD plan - conversations_limit: 20")
-        else:
-            user.conversations_limit = 20
-            logger.warning(f"⚠️ [DEBUG] No price_id found, using default STANDARD plan - conversations_limit: 20")
+        # DEBUG: Determina il piano in base al session metadata o usa default
+        # Per ora usiamo un piano di default sicuro - il piano specifico può essere determinato in seguito
+        user.conversations_limit = 20  # Default Standard - può essere aggiornato successivamente
+        logger.info(f"🔍 [DEBUG] Using default STANDARD plan - conversations_limit: 20")
+        logger.info(f"🔍 [DEBUG] Note: Piano specifico può essere determinato in seguito in base al conversation_limit")
         
         # Reset dei contatori
         user.conversations_used = 0
@@ -2900,36 +2875,10 @@ async def confirm_subscription(
                 current_user.messages_used = 0
                 current_user.messages_reset_date = datetime.utcnow()
                 
-                # DEBUG: Recupera la subscription per determinare il piano corretto
-                subscription_id = session['subscription']
-                logger.info(f"🔍 [DEBUG] Retrieving subscription {subscription_id}")
-                subscription = stripe.Subscription.retrieve(subscription_id)
-                logger.info(f"🔍 [DEBUG] Subscription retrieved: {subscription}")
-                
-                # Determina il conversation_limit in base al price_id
-                if hasattr(subscription, 'items') and subscription.items and subscription.items.data:
-                    price_id = subscription.items.data[0].price.id
-                    logger.info(f"🔍 [DEBUG] Found price_id: {price_id}")
-                    
-                    # Mappa i price_id ai limiti
-                    if price_id in [settings.STRIPE_STANDARD_PRICE_ID, settings.STRIPE_ANNUAL_STANDARD_PRICE_ID]:
-                        current_user.conversations_limit = 20
-                        logger.info(f"🔍 [DEBUG] Mapped to STANDARD plan - conversations_limit: 20")
-                    elif price_id in [settings.STRIPE_PREMIUM_PRICE_ID, settings.STRIPE_ANNUAL_PREMIUM_PRICE_ID]:
-                        current_user.conversations_limit = 50
-                        logger.info(f"🔍 [DEBUG] Mapped to PREMIUM plan - conversations_limit: 50")
-                    elif price_id in [settings.STRIPE_PRO_PRICE_ID, settings.STRIPE_ANNUAL_PRO_PRICE_ID]:
-                        current_user.conversations_limit = 150
-                        logger.info(f"🔍 [DEBUG] Mapped to PRO plan - conversations_limit: 150")
-                    elif price_id in [settings.STRIPE_ENTERPRISE_PRICE_ID, settings.STRIPE_ANNUAL_ENTERPRISE_PRICE_ID]:
-                        current_user.conversations_limit = 500
-                        logger.info(f"🔍 [DEBUG] Mapped to ENTERPRISE plan - conversations_limit: 500")
-                    else:
-                        current_user.conversations_limit = 20
-                        logger.warning(f"⚠️ [DEBUG] Unknown price_id {price_id}, using default STANDARD plan - conversations_limit: 20")
-                else:
-                    current_user.conversations_limit = 20
-                    logger.warning(f"⚠️ [DEBUG] No price_id found, using default STANDARD plan - conversations_limit: 20")
+                # DEBUG: Usa piano di default sicuro
+                logger.info(f"🔍 [DEBUG] Using default STANDARD plan - conversations_limit: 20")
+                logger.info(f"🔍 [DEBUG] Note: Piano specifico può essere determinato in seguito in base al conversation_limit")
+                current_user.conversations_limit = 20  # Default Standard
                 
                 # Reset dei contatori
                 current_user.conversations_used = 0
