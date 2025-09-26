@@ -614,44 +614,6 @@ export interface Translations {
     title: string
     subtitle: string
     backToDashboard: string
-    hostgpt: {
-      title: string
-      description: string
-      button: string
-      features: {
-        conversations: string
-        chatbots: string
-        support: string
-      }
-    }
-    guardian: {
-      title: string
-      description: string
-      button: string
-      features: {
-        analysis: string
-        reports: string
-        alerts: string
-      }
-    }
-    combined: {
-      badge: string
-      title: string
-      description: string
-      button: string
-      originalPrice: string
-      features: {
-        hostgpt: string
-        guardian: string
-        savings: string
-      }
-    }
-    benefits: {
-      title: string
-      cancelAnytime: string
-      securePayment: string
-      support: string
-    }
   }
   
   // Chatbots
@@ -2401,47 +2363,9 @@ export const translations: Record<Language, Translations> = {
     },
     selectService: {
       freeTrialStatus: "Periodo di prova gratuito attivo",
-      title: "Scegli il tuo servizio",
-      subtitle: "Seleziona il servizio che vuoi attivare per continuare a utilizzare HostGPT",
-      backToDashboard: "Torna alla Dashboard",
-      hostgpt: {
-        title: "Solo HostGPT",
-        description: "Chatbot per ospiti con risposte automatiche",
-        button: "Attiva HostGPT",
-        features: {
-          conversations: "1000 conversazioni/mese",
-          chatbots: "Chatbot illimitati",
-          support: "Supporto email"
-        }
-      },
-      guardian: {
-        title: "Solo Guardian",
-        description: "Analisi avanzata delle conversazioni",
-        button: "Attiva Guardian",
-        features: {
-          analysis: "Analisi conversazioni",
-          reports: "Report dettagliati",
-          alerts: "Avvisi automatici"
-        }
-      },
-      combined: {
-        badge: "CONSIGLIATO",
-        title: "Pacchetto Completo",
-        description: "HostGPT + Guardian insieme",
-        button: "Attiva Pacchetto Completo",
-        originalPrice: "38€/mese",
-        features: {
-          hostgpt: "Tutto HostGPT incluso",
-          guardian: "Tutto Guardian incluso",
-          savings: "Risparmi 0€/mese"
-        }
-      },
-      benefits: {
-        title: "Vantaggi inclusi",
-        cancelAnytime: "Cancella quando vuoi",
-        securePayment: "Pagamento sicuro",
-        support: "Supporto 24/7"
-      }
+      title: "Scegli il tuo piano",
+      subtitle: "Seleziona il piano che vuoi attivare per continuare a utilizzare HostGPT",
+      backToDashboard: "Torna alla Dashboard"
     }
   },
   
@@ -3670,47 +3594,9 @@ export const translations: Record<Language, Translations> = {
     },
     selectService: {
       freeTrialStatus: "Free trial period active",
-      title: "Choose your service",
-      subtitle: "Select the service you want to activate to continue using HostGPT",
-      backToDashboard: "Back to Dashboard",
-      hostgpt: {
-        title: "HostGPT Only",
-        description: "Guest chatbot with automatic responses",
-        button: "Activate HostGPT",
-        features: {
-          conversations: "1000 conversations/month",
-          chatbots: "Unlimited chatbots",
-          support: "Email support"
-        }
-      },
-      guardian: {
-        title: "Guardian Only",
-        description: "Advanced conversation analysis",
-        button: "Activate Guardian",
-        features: {
-          analysis: "Conversation analysis",
-          reports: "Detailed reports",
-          alerts: "Automatic alerts"
-        }
-      },
-      combined: {
-        badge: "RECOMMENDED",
-        title: "Complete Package",
-        description: "HostGPT + Guardian together",
-        button: "Activate Complete Package",
-        originalPrice: "38€/month",
-        features: {
-          hostgpt: "All HostGPT included",
-          guardian: "All Guardian included",
-          savings: "Save 0€/month"
-        }
-      },
-      benefits: {
-        title: "Included benefits",
-        cancelAnytime: "Cancel anytime",
-        securePayment: "Secure payment",
-        support: "24/7 support"
-      }
+      title: "Choose your plan",
+      subtitle: "Select the plan you want to activate to continue using HostGPT",
+      backToDashboard: "Back to Dashboard"
     }
   }
 }
