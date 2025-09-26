@@ -1882,41 +1882,35 @@ async def handle_checkout_session_completed(event, db: Session):
         
         logger.info(f"Found user {user.id} for customer {customer_id}")
         
-        # Recupera la sottoscrizione creata
-        subscriptions = stripe.Subscription.list(
-            customer=customer_id,
-            limit=1,
-            created={'gte': int((datetime.utcnow() - timedelta(minutes=5)).timestamp())}
-        )
+        # Recupera la sottoscrizione direttamente dalla sessione
+        subscription_id = session.get('subscription')
+        if not subscription_id:
+            logger.error(f"No subscription ID found in session for customer {customer_id}")
+            return
+            
+        subscription = stripe.Subscription.retrieve(subscription_id)
+        logger.info(f"Retrieved subscription {subscription.id} for user {user.id}")
         
-        logger.info(f"Found {len(subscriptions.data) if subscriptions and subscriptions.data else 0} subscriptions for customer {customer_id}")
+        # Aggiorna l'utente
+        user.stripe_subscription_id = subscription.id
+        user.subscription_status = 'active'
+        user.subscription_end_date = datetime.utcfromtimestamp(subscription.current_period_end)
+        user.free_trial_converted = True
         
-        if subscriptions and subscriptions.data and len(subscriptions.data) > 0:
-            subscription = subscriptions.data[0]
-            logger.info(f"Using subscription {subscription.id} for user {user.id}")
-            
-            # Aggiorna l'utente
-            user.stripe_subscription_id = subscription.id
-            user.subscription_status = 'active'
-            user.subscription_end_date = datetime.utcfromtimestamp(subscription.current_period_end)
-            user.free_trial_converted = True
-            
-            # Determina il piano basandosi sul price_id
-            price_id = subscription.items.data[0].price.id if subscription.items.data else None
-            if price_id in [settings.STRIPE_STANDARD_PRICE_ID, settings.STRIPE_ANNUAL_STANDARD_PRICE_ID]:
-                user.subscription_plan = 'standard'
-            elif price_id in [settings.STRIPE_PREMIUM_PRICE_ID, settings.STRIPE_ANNUAL_PREMIUM_PRICE_ID]:
-                user.subscription_plan = 'premium'
-            elif price_id in [settings.STRIPE_PRO_PRICE_ID, settings.STRIPE_ANNUAL_PRO_PRICE_ID]:
-                user.subscription_plan = 'pro'
-            elif price_id in [settings.STRIPE_ENTERPRISE_PRICE_ID, settings.STRIPE_ANNUAL_ENTERPRISE_PRICE_ID]:
-                user.subscription_plan = 'enterprise'
-            
-            db.commit()
-            
-            logger.info(f"User {user.id} subscription activated: {subscription.id}, plan: {user.subscription_plan}")
-        else:
-            logger.error(f"No subscription found for customer {customer_id}")
+        # Determina il piano basandosi sul price_id
+        price_id = subscription.items.data[0].price.id if subscription.items.data else None
+        if price_id in [settings.STRIPE_STANDARD_PRICE_ID, settings.STRIPE_ANNUAL_STANDARD_PRICE_ID]:
+            user.subscription_plan = 'standard'
+        elif price_id in [settings.STRIPE_PREMIUM_PRICE_ID, settings.STRIPE_ANNUAL_PREMIUM_PRICE_ID]:
+            user.subscription_plan = 'premium'
+        elif price_id in [settings.STRIPE_PRO_PRICE_ID, settings.STRIPE_ANNUAL_PRO_PRICE_ID]:
+            user.subscription_plan = 'pro'
+        elif price_id in [settings.STRIPE_ENTERPRISE_PRICE_ID, settings.STRIPE_ANNUAL_ENTERPRISE_PRICE_ID]:
+            user.subscription_plan = 'enterprise'
+        
+        db.commit()
+        
+        logger.info(f"User {user.id} subscription activated: {subscription.id}, plan: {user.subscription_plan}")
             
     except Exception as e:
         logger.error(f"Error processing checkout.session.completed: {e}")
