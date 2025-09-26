@@ -34,7 +34,8 @@ class Settings(BaseSettings):
     STRIPE_WEBHOOK_SECRET: str = os.getenv("STRIPE_WEBHOOK_SECRET", "whsec_your-webhook-secret")
     STRIPE_PRINT_ORDERS_WEBHOOK_SECRET: str = os.getenv("STRIPE_PRINT_ORDERS_WEBHOOK_SECRET", "whsec_your-print-orders-webhook-secret")
     # Stripe Price IDs per i diversi piani
-    STRIPE_PRICE_ID: str = os.getenv("STRIPE_PRICE_ID", "price_your-monthly-19eur-price-id")  # Standard: 19€/mese
+    STRIPE_PRICE_ID: str = os.getenv("STRIPE_PRICE_ID", "price_your-monthly-19eur-price-id")  # Standard: 19€/mese (legacy)
+    STRIPE_STANDARD_PRICE_ID: str = os.getenv("STRIPE_STANDARD_PRICE_ID", "price_your-monthly-19eur-price-id")  # Standard: 19€/mese
     STRIPE_PREMIUM_PRICE_ID: str = os.getenv("STRIPE_PREMIUM_PRICE_ID", "price_your-monthly-39eur-price-id")  # Premium: 39€/mese
     STRIPE_PRO_PRICE_ID: str = os.getenv("STRIPE_PRO_PRICE_ID", "price_your-monthly-79eur-price-id")  # Pro: 79€/mese
     STRIPE_ENTERPRISE_PRICE_ID: str = os.getenv("STRIPE_ENTERPRISE_PRICE_ID", "price_your-monthly-199eur-price-id")  # Enterprise: 199€/mese
