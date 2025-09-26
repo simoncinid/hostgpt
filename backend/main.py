@@ -2950,7 +2950,19 @@ async def confirm_subscription(
                     email_body
                 )
                 
-                return {"status": "active"}
+                return {
+                    "success": True,
+                    "status": "active",
+                    "user": {
+                        "id": current_user.id,
+                        "email": current_user.email,
+                        "full_name": current_user.full_name,
+                        "subscription_status": current_user.subscription_status,
+                        "conversations_limit": current_user.conversations_limit,
+                        "conversations_used": current_user.conversations_used,
+                        "max_chatbots": current_user.max_chatbots
+                    }
+                }
 
         # Fallback: controlla lo stato su Stripe dal customer
         if current_user.stripe_customer_id:
@@ -2976,13 +2988,49 @@ async def confirm_subscription(
                             email_body
                         )
                     
-                    return {"status": "active"}
+                    return {
+                        "success": True,
+                        "status": "active",
+                        "user": {
+                            "id": current_user.id,
+                            "email": current_user.email,
+                            "full_name": current_user.full_name,
+                            "subscription_status": current_user.subscription_status,
+                            "conversations_limit": current_user.conversations_limit,
+                            "conversations_used": current_user.conversations_used,
+                            "max_chatbots": current_user.max_chatbots
+                        }
+                    }
                 elif sub.status in ['active', 'trialing'] and sub.cancel_at_period_end:
                     # L'abbonamento è attivo ma in fase di cancellazione
                     logger.info(f"User {current_user.id} has subscription in cancellation phase")
-                    return {"status": "cancelling"}
+                    return {
+                        "success": True,
+                        "status": "cancelling",
+                        "user": {
+                            "id": current_user.id,
+                            "email": current_user.email,
+                            "full_name": current_user.full_name,
+                            "subscription_status": current_user.subscription_status,
+                            "conversations_limit": current_user.conversations_limit,
+                            "conversations_used": current_user.conversations_used,
+                            "max_chatbots": current_user.max_chatbots
+                        }
+                    }
 
-        return {"status": current_user.subscription_status or 'inactive'}
+        return {
+            "success": True,
+            "status": current_user.subscription_status or 'inactive',
+            "user": {
+                "id": current_user.id,
+                "email": current_user.email,
+                "full_name": current_user.full_name,
+                "subscription_status": current_user.subscription_status,
+                "conversations_limit": current_user.conversations_limit,
+                "conversations_used": current_user.conversations_used,
+                "max_chatbots": current_user.max_chatbots
+            }
+        }
     except Exception as e:
         logger.error(f"Subscription confirm error: {e}")
         raise HTTPException(status_code=400, detail=str(e))
