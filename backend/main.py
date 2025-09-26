@@ -1959,48 +1959,40 @@ async def create_checkout_session(
         price_id_to_use = settings.STRIPE_PRICE_ID  # Default
         
         # Mappa i price_id del frontend ai veri price_id di Stripe
-        # Verifica se i price_id mensili sono configurati (non sono placeholder)
-        monthly_configured = (
-            not settings.STRIPE_PRICE_ID.startswith('price_your-') and
-            not settings.STRIPE_PREMIUM_PRICE_ID.startswith('price_your-') and
-            not settings.STRIPE_PRO_PRICE_ID.startswith('price_your-') and
-            not settings.STRIPE_ENTERPRISE_PRICE_ID.startswith('price_your-')
-        )
+        # Crea sempre una mappatura completa, indipendentemente dalla configurazione
+        price_id_mapping = {
+            'STANDARD_PRICE_ID': settings.STRIPE_PRICE_ID,  # 19€/mese
+            'PREMIUM_PRICE_ID': settings.STRIPE_PREMIUM_PRICE_ID,  # 39€/mese
+            'PRO_PRICE_ID': settings.STRIPE_PRO_PRICE_ID,  # 79€/mese
+            'ENTERPRISE_PRICE_ID': settings.STRIPE_ENTERPRISE_PRICE_ID,  # 199€/mese
+            'ANNUAL_STANDARD_PRICE_ID': settings.STRIPE_ANNUAL_STANDARD_PRICE_ID,  # 190€/anno
+            'ANNUAL_PREMIUM_PRICE_ID': settings.STRIPE_ANNUAL_PREMIUM_PRICE_ID,  # 390€/anno
+            'ANNUAL_PRO_PRICE_ID': settings.STRIPE_ANNUAL_PRO_PRICE_ID,  # 790€/anno
+            'ANNUAL_ENTERPRISE_PRICE_ID': settings.STRIPE_ANNUAL_ENTERPRISE_PRICE_ID,  # 1990€/anno
+        }
         
-        if monthly_configured:
-            # Usa i price_id configurati
-            price_id_mapping = {
-                'STANDARD_PRICE_ID': settings.STRIPE_PRICE_ID,  # 19€/mese
-                'PREMIUM_PRICE_ID': settings.STRIPE_PREMIUM_PRICE_ID,  # 39€/mese
-                'PRO_PRICE_ID': settings.STRIPE_PRO_PRICE_ID,  # 79€/mese
-                'ENTERPRISE_PRICE_ID': settings.STRIPE_ENTERPRISE_PRICE_ID,  # 199€/mese
-                'ANNUAL_STANDARD_PRICE_ID': settings.STRIPE_ANNUAL_STANDARD_PRICE_ID,  # 190€/anno
-                'ANNUAL_PREMIUM_PRICE_ID': settings.STRIPE_ANNUAL_PREMIUM_PRICE_ID,  # 390€/anno
-                'ANNUAL_PRO_PRICE_ID': settings.STRIPE_ANNUAL_PRO_PRICE_ID,  # 790€/anno
-                'ANNUAL_ENTERPRISE_PRICE_ID': settings.STRIPE_ANNUAL_ENTERPRISE_PRICE_ID,  # 1990€/anno
-            }
-        else:
-            # Fallback: usa solo i price_id annuali configurati
-            logger.warning("Monthly price_ids not configured, using annual price_ids as fallback")
-            price_id_mapping = {
-                'STANDARD_PRICE_ID': settings.STRIPE_ANNUAL_STANDARD_PRICE_ID,  # 190€/anno
-                'PREMIUM_PRICE_ID': settings.STRIPE_ANNUAL_PREMIUM_PRICE_ID,  # 390€/anno
-                'PRO_PRICE_ID': settings.STRIPE_ANNUAL_PRO_PRICE_ID,  # 790€/anno
-                'ENTERPRISE_PRICE_ID': settings.STRIPE_ANNUAL_ENTERPRISE_PRICE_ID,  # 1990€/anno
-                'ANNUAL_STANDARD_PRICE_ID': settings.STRIPE_ANNUAL_STANDARD_PRICE_ID,  # 190€/anno
-                'ANNUAL_PREMIUM_PRICE_ID': settings.STRIPE_ANNUAL_PREMIUM_PRICE_ID,  # 390€/anno
-                'ANNUAL_PRO_PRICE_ID': settings.STRIPE_ANNUAL_PRO_PRICE_ID,  # 790€/anno
-                'ANNUAL_ENTERPRISE_PRICE_ID': settings.STRIPE_ANNUAL_ENTERPRISE_PRICE_ID,  # 1990€/anno
-            }
+        # Log per debug - mostra i price_id configurati
+        logger.info(f"Configured price_ids: PREMIUM_PRICE_ID={settings.STRIPE_PREMIUM_PRICE_ID}, ANNUAL_PREMIUM_PRICE_ID={settings.STRIPE_ANNUAL_PREMIUM_PRICE_ID}")
         
         if request and 'price_id' in request:
             # Caso 1: Arrivo da selezione servizi con parametri URL
             requested_price_id = request['price_id']
+            billing_param = request.get('billing', 'monthly')
+            
+            # Determina il price_id corretto basandosi sui parametri
+            if billing_param == 'annual' and not requested_price_id.startswith('ANNUAL_'):
+                # Se è annuale ma il price_id non ha il prefisso ANNUAL_, aggiungilo
+                requested_price_id = f"ANNUAL_{requested_price_id}"
+            elif billing_param == 'monthly' and requested_price_id.startswith('ANNUAL_'):
+                # Se è mensile ma il price_id ha il prefisso ANNUAL_, rimuovilo
+                requested_price_id = requested_price_id.replace('ANNUAL_', '')
+            
             if requested_price_id in price_id_mapping:
                 price_id_to_use = price_id_mapping[requested_price_id]
-                logger.info(f"Using URL price_id: {requested_price_id} -> {price_id_to_use}")
+                logger.info(f"Using URL price_id: {requested_price_id} -> {price_id_to_use} (billing: {billing_param})")
             else:
                 logger.warning(f"Unknown price_id requested: {requested_price_id}, using default")
+                
         elif current_user.desired_plan:
             # Caso 2: Arrivo da email di verifica, usa il desired_plan dell'utente
             desired_plan = current_user.desired_plan
