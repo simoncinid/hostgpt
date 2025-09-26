@@ -1849,8 +1849,11 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
             raise HTTPException(status_code=400, detail="Invalid signature")
         
         # Gestisci l'evento
+        logger.info(f"🔍 [DEBUG] Processing event type: {event['type']}")
         if event['type'] == 'checkout.session.completed':
+            logger.info(f"🔍 [DEBUG] Calling handle_checkout_session_completed")
             await handle_checkout_session_completed(event, db)
+            logger.info(f"✅ [DEBUG] handle_checkout_session_completed completed")
         elif event['type'] == 'invoice.payment_succeeded':
             await handle_invoice_payment_succeeded(event, db)
         elif event['type'] == 'customer.subscription.updated':
@@ -1867,46 +1870,93 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
 async def handle_checkout_session_completed(event, db: Session):
     """Gestisce il completamento di una sessione di checkout"""
     try:
+        logger.info("🔍 [DEBUG] Starting handle_checkout_session_completed")
+        
         session = event['data']['object']
         customer_id = session['customer']
         subscription_type = session.get('metadata', {}).get('subscription_type', 'hostgpt')
         
-        logger.info(f"Processing checkout.session.completed for customer {customer_id}, type: {subscription_type}")
-        logger.info(f"Session data: {session}")
+        logger.info(f"🔍 [DEBUG] Processing checkout.session.completed for customer {customer_id}, type: {subscription_type}")
+        logger.info(f"🔍 [DEBUG] Session data: {session}")
         
         # Trova l'utente
         user = db.query(User).filter(User.stripe_customer_id == customer_id).first()
         if not user:
-            logger.error(f"User not found for customer {customer_id}")
+            logger.error(f"❌ [DEBUG] User not found for customer {customer_id}")
             return
         
-        logger.info(f"Found user {user.id} for customer {customer_id}")
+        logger.info(f"✅ [DEBUG] Found user {user.id} for customer {customer_id}")
+        logger.info(f"🔍 [DEBUG] User current state - conversations_limit: {user.conversations_limit}, subscription_status: {user.subscription_status}")
         
         # Recupera la sottoscrizione direttamente dalla sessione
         subscription_id = session.get('subscription')
         if not subscription_id:
-            logger.error(f"No subscription ID found in session for customer {customer_id}")
+            logger.error(f"❌ [DEBUG] No subscription ID found in session for customer {customer_id}")
             return
             
+        logger.info(f"🔍 [DEBUG] Retrieving subscription {subscription_id}")
         subscription = stripe.Subscription.retrieve(subscription_id)
-        logger.info(f"Retrieved subscription {subscription.id} for user {user.id}")
+        logger.info(f"✅ [DEBUG] Retrieved subscription {subscription.id} for user {user.id}")
+        
+        # DEBUG: Analizza la subscription per capire il price_id
+        logger.info(f"🔍 [DEBUG] Subscription details:")
+        logger.info(f"🔍 [DEBUG] - ID: {subscription.id}")
+        logger.info(f"🔍 [DEBUG] - Status: {subscription.status}")
+        logger.info(f"🔍 [DEBUG] - Items count: {len(subscription.items.data) if hasattr(subscription, 'items') and subscription.items else 0}")
+        
+        if hasattr(subscription, 'items') and subscription.items and subscription.items.data:
+            logger.info(f"🔍 [DEBUG] - First item price ID: {subscription.items.data[0].price.id}")
+            logger.info(f"🔍 [DEBUG] - First item price amount: {subscription.items.data[0].price.unit_amount}")
+        else:
+            logger.warning(f"⚠️ [DEBUG] No items found in subscription")
         
         # Aggiorna l'utente
+        logger.info(f"🔍 [DEBUG] Updating user {user.id}")
         user.stripe_subscription_id = subscription.id
         user.subscription_status = 'active'
         user.subscription_end_date = datetime.utcfromtimestamp(subscription.current_period_end)
         user.free_trial_converted = True
         
-        # Imposta limiti di default per l'abbonamento attivato
-        # Il piano specifico sarà determinato in seguito in base al conversation_limit
-        user.conversations_limit = 20  # Default Standard - può essere aggiornato successivamente
+        # DEBUG: Determina il piano in base al price_id se disponibile
+        if hasattr(subscription, 'items') and subscription.items and subscription.items.data:
+            price_id = subscription.items.data[0].price.id
+            logger.info(f"🔍 [DEBUG] Found price_id: {price_id}")
+            
+            # Mappa i price_id ai limiti
+            if price_id in [settings.STRIPE_STANDARD_PRICE_ID, settings.STRIPE_ANNUAL_STANDARD_PRICE_ID]:
+                user.conversations_limit = 20
+                logger.info(f"🔍 [DEBUG] Mapped to STANDARD plan - conversations_limit: 20")
+            elif price_id in [settings.STRIPE_PREMIUM_PRICE_ID, settings.STRIPE_ANNUAL_PREMIUM_PRICE_ID]:
+                user.conversations_limit = 50
+                logger.info(f"🔍 [DEBUG] Mapped to PREMIUM plan - conversations_limit: 50")
+            elif price_id in [settings.STRIPE_PRO_PRICE_ID, settings.STRIPE_ANNUAL_PRO_PRICE_ID]:
+                user.conversations_limit = 150
+                logger.info(f"🔍 [DEBUG] Mapped to PRO plan - conversations_limit: 150")
+            elif price_id in [settings.STRIPE_ENTERPRISE_PRICE_ID, settings.STRIPE_ANNUAL_ENTERPRISE_PRICE_ID]:
+                user.conversations_limit = 500
+                logger.info(f"🔍 [DEBUG] Mapped to ENTERPRISE plan - conversations_limit: 500")
+            else:
+                user.conversations_limit = 20
+                logger.warning(f"⚠️ [DEBUG] Unknown price_id {price_id}, using default STANDARD plan - conversations_limit: 20")
+        else:
+            user.conversations_limit = 20
+            logger.warning(f"⚠️ [DEBUG] No price_id found, using default STANDARD plan - conversations_limit: 20")
+        
+        # Reset dei contatori
         user.conversations_used = 0
         user.conversations_reset_date = datetime.utcnow()
         user.max_chatbots = 100
         
-        db.commit()
+        logger.info(f"🔍 [DEBUG] Final user state before commit:")
+        logger.info(f"🔍 [DEBUG] - conversations_limit: {user.conversations_limit}")
+        logger.info(f"🔍 [DEBUG] - conversations_used: {user.conversations_used}")
+        logger.info(f"🔍 [DEBUG] - max_chatbots: {user.max_chatbots}")
+        logger.info(f"🔍 [DEBUG] - subscription_status: {user.subscription_status}")
         
-        logger.info(f"User {user.id} subscription activated: {subscription.id}, conversations_limit: {user.conversations_limit}")
+        db.commit()
+        logger.info(f"✅ [DEBUG] Database committed successfully")
+        
+        logger.info(f"✅ [DEBUG] User {user.id} subscription activated: {subscription.id}, conversations_limit: {user.conversations_limit}")
             
     except Exception as e:
         logger.error(f"Error processing checkout.session.completed: {e}")
@@ -2832,17 +2882,67 @@ async def confirm_subscription(
 ):
     """Conferma lato backend lo stato dell'abbonamento dopo il redirect di successo da Stripe."""
     try:
+        logger.info(f"🔍 [DEBUG] Starting subscription confirm for user {current_user.id}")
         session_id = payload.session_id
+        logger.info(f"🔍 [DEBUG] Session ID: {session_id}")
+        
         # Se viene passato un session_id, recupera i dettagli della sessione
         if session_id:
+            logger.info(f"🔍 [DEBUG] Retrieving session {session_id}")
             session = stripe.checkout.Session.retrieve(session_id)
+            logger.info(f"🔍 [DEBUG] Session retrieved: {session}")
+            
             if session and session.get('customer') == current_user.stripe_customer_id and session.get('subscription'):
+                logger.info(f"🔍 [DEBUG] Session valid, updating user {current_user.id}")
                 current_user.stripe_subscription_id = session['subscription']
                 current_user.subscription_status = 'active'
                 current_user.subscription_end_date = datetime.utcnow() + timedelta(days=30)
                 current_user.messages_used = 0
                 current_user.messages_reset_date = datetime.utcnow()
+                
+                # DEBUG: Recupera la subscription per determinare il piano corretto
+                subscription_id = session['subscription']
+                logger.info(f"🔍 [DEBUG] Retrieving subscription {subscription_id}")
+                subscription = stripe.Subscription.retrieve(subscription_id)
+                logger.info(f"🔍 [DEBUG] Subscription retrieved: {subscription}")
+                
+                # Determina il conversation_limit in base al price_id
+                if hasattr(subscription, 'items') and subscription.items and subscription.items.data:
+                    price_id = subscription.items.data[0].price.id
+                    logger.info(f"🔍 [DEBUG] Found price_id: {price_id}")
+                    
+                    # Mappa i price_id ai limiti
+                    if price_id in [settings.STRIPE_STANDARD_PRICE_ID, settings.STRIPE_ANNUAL_STANDARD_PRICE_ID]:
+                        current_user.conversations_limit = 20
+                        logger.info(f"🔍 [DEBUG] Mapped to STANDARD plan - conversations_limit: 20")
+                    elif price_id in [settings.STRIPE_PREMIUM_PRICE_ID, settings.STRIPE_ANNUAL_PREMIUM_PRICE_ID]:
+                        current_user.conversations_limit = 50
+                        logger.info(f"🔍 [DEBUG] Mapped to PREMIUM plan - conversations_limit: 50")
+                    elif price_id in [settings.STRIPE_PRO_PRICE_ID, settings.STRIPE_ANNUAL_PRO_PRICE_ID]:
+                        current_user.conversations_limit = 150
+                        logger.info(f"🔍 [DEBUG] Mapped to PRO plan - conversations_limit: 150")
+                    elif price_id in [settings.STRIPE_ENTERPRISE_PRICE_ID, settings.STRIPE_ANNUAL_ENTERPRISE_PRICE_ID]:
+                        current_user.conversations_limit = 500
+                        logger.info(f"🔍 [DEBUG] Mapped to ENTERPRISE plan - conversations_limit: 500")
+                    else:
+                        current_user.conversations_limit = 20
+                        logger.warning(f"⚠️ [DEBUG] Unknown price_id {price_id}, using default STANDARD plan - conversations_limit: 20")
+                else:
+                    current_user.conversations_limit = 20
+                    logger.warning(f"⚠️ [DEBUG] No price_id found, using default STANDARD plan - conversations_limit: 20")
+                
+                # Reset dei contatori
+                current_user.conversations_used = 0
+                current_user.conversations_reset_date = datetime.utcnow()
+                current_user.max_chatbots = 100
+                
+                logger.info(f"🔍 [DEBUG] Final user state before commit:")
+                logger.info(f"🔍 [DEBUG] - conversations_limit: {current_user.conversations_limit}")
+                logger.info(f"🔍 [DEBUG] - conversations_used: {current_user.conversations_used}")
+                logger.info(f"🔍 [DEBUG] - max_chatbots: {current_user.max_chatbots}")
+                
                 db.commit()
+                logger.info(f"✅ [DEBUG] Database committed successfully")
                 
                 # Invia email di attivazione abbonamento
                 email_body = create_subscription_activation_email_simple(current_user.full_name or current_user.email, current_user.language or "it")
