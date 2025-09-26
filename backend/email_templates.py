@@ -277,7 +277,7 @@ def create_welcome_email(user_name: str, verification_link: str) -> str:
         </div>
         
         <div class="message" style="font-size: 14px; color: #718096;">
-            <strong>Importante:</strong> Dopo la verifica, verrai reindirizzato alla pagina di pagamento per attivare il tuo abbonamento mensile a 29€/mese.
+            <strong>Importante:</strong> Dopo la verifica, verrai reindirizzato alla pagina di pagamento per attivare il tuo abbonamento.
         </div>
     """
     
@@ -509,8 +509,8 @@ def create_free_trial_welcome_email(user_name: str) -> str:
         
         <div class="message">
             <strong>Importante:</strong> Il tuo periodo di prova scadrà automaticamente tra 14 giorni. 
-            Se decidi di continuare, potrai sottoscrivere l'abbonamento completo a soli <strong>29€/mese</strong> 
-            con 1000 messaggi mensili e tutte le funzionalità avanzate.
+            Se decidi di continuare, potrai sottoscrivere l'abbonamento completo 
+            con tutte le funzionalità avanzate.
         </div>
         
         <div style="background: {HOSTGPT_COLORS['light']}; padding: 15px; border-radius: 8px; margin: 15px 0;">
@@ -592,13 +592,13 @@ def create_free_trial_ending_email(user_name: str, days_remaining: int, messages
                 <li><strong>Accesso illimitato</strong> a tutte le funzionalità</li>
                 <li><strong>Statistiche avanzate</strong> e analisi dettagliate</li>
                 <li><strong>Supporto prioritario</strong> per qualsiasi domanda</li>
-                <li><strong>Solo 29€/mese</strong> - meno di 1€ al giorno</li>
+                <li><strong>Prezzo competitivo</strong> - investimento che si ripaga</li>
             </ul>
         </div>
         
         <div style="text-align: center;">
             <a href="https://hostgpt-docker.onrender.com/checkout" class="cta-button">
-                💳 Attiva l'Abbonamento Completo - 29€/mese
+                💳 Attiva l'Abbonamento Completo
             </a>
         </div>
         
@@ -655,13 +655,13 @@ def create_free_trial_expired_email(user_name: str, messages_used: int, total_me
                 <li><strong>1000 messaggi mensili</strong> invece di 20</li>
                 <li><strong>Accesso illimitato</strong> a tutte le funzionalità</li>
                 <li><strong>Statistiche avanzate</strong> e analisi dettagliate</li>
-                <li><strong>Solo 29€/mese</strong> - meno di 1€ al giorno</li>
+                <li><strong>Prezzo competitivo</strong> - investimento che si ripaga</li>
             </ul>
         </div>
         
         <div style="text-align: center;">
             <a href="https://hostgpt-docker.onrender.com/checkout" class="cta-button">
-                🔓 Riattiva il tuo Chatbot - 29€/mese
+                🔓 Riattiva il tuo Chatbot
             </a>
         </div>
         
@@ -706,7 +706,7 @@ def create_subscription_confirmation_email(user_name: str) -> str:
                 <li><strong>Risposte istantanee</strong> 24/7 ai tuoi ospiti</li>
                 <li><strong>Statistiche avanzate</strong> e analisi dettagliate</li>
                 <li><strong>Supporto prioritario</strong> per qualsiasi domanda</li>
-                <li><strong>29€/mese</strong> - fatturazione automatica</li>
+                <li><strong>Fatturazione automatica</strong> - nessun rinnovo manuale</li>
             </ul>
         </div>
         

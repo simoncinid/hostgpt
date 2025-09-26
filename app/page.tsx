@@ -1054,7 +1054,7 @@ export default function LandingPage() {
                       whileHover={{ scale: 1.1 }}
                     />
                     <Link
-                      href="/register?free_trial=false"
+                      href="#pricing"
                       className="relative inline-flex items-center gap-2 px-4 py-2 text-white font-semibold bg-gradient-to-r from-rose-500 to-pink-600 rounded-xl shadow-lg transition-all duration-300 group-hover:shadow-xl overflow-hidden text-sm"
                     >
                       {/* Effetto shimmer */}
@@ -1202,7 +1202,7 @@ export default function LandingPage() {
                     className="pt-2"
                   >
                     <Link 
-                      href="/register?free_trial=false" 
+                      href="#pricing" 
                       onClick={() => setIsMenuOpen(false)} 
                       className="block w-full text-center px-4 py-3 text-white font-semibold bg-gradient-to-r from-rose-500 to-pink-600 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 text-sm"
                     >
@@ -1404,7 +1404,7 @@ export default function LandingPage() {
                   whileHover={{ scale: 1.1 }}
                 />
                 <Link
-                  href="/register?free_trial=false"
+                  href="#pricing"
                   className="relative flex items-center justify-center gap-3 px-10 py-4 text-base font-bold text-white bg-gradient-to-r from-rose-500 via-pink-500 to-rose-600 rounded-2xl shadow-2xl transition-all duration-300 group-hover:shadow-rose-500/25 overflow-hidden w-[90%] mx-[5%] sm:w-96 sm:mx-0"
                 >
                   {/* Effetto shimmer interno */}
@@ -3373,7 +3373,7 @@ export default function LandingPage() {
                   />
                   
                   <Link
-                    href="/register"
+                    href="#pricing"
                     className="relative inline-flex items-center gap-2 md:gap-4 px-8 py-3 md:px-12 md:py-6 text-sm md:text-xl font-black text-white bg-gradient-to-r from-rose-500 via-pink-500 to-rose-600 rounded-2xl md:rounded-3xl shadow-2xl transition-all duration-300 group-hover:shadow-rose-500/30 overflow-hidden"
                   >
                     {/* Effetto shimmer interno */}

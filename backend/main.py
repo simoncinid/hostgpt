@@ -1544,6 +1544,9 @@ async def verify_email(token: str, db: Session = Depends(get_db)):
         user.conversations_used = 0
         user.conversations_reset_date = now
         
+        # Imposta il limite di chatbot a 1 per il free trial
+        user.max_chatbots = 1
+        
         db.commit()
         
         # Reindirizza al login (l'email di benvenuto è già stata inviata durante la registrazione)
@@ -1876,6 +1879,9 @@ async def handle_invoice_payment_succeeded(event, db: Session):
         user.messages_used = 0
         user.messages_reset_date = datetime.utcnow()
         
+        # Assicura che il limite di chatbot sia sempre 100 per abbonamenti attivi
+        user.max_chatbots = 100
+        
         db.commit()
         logger.info(f"Reset conversations for user {user.id} on invoice payment")
         
@@ -1902,6 +1908,9 @@ async def handle_subscription_updated(event, db: Session):
             user.conversations_limit = new_limit
             user.conversations_used = 0  # Reset al cambio piano
             user.conversations_reset_date = datetime.utcnow()
+            
+            # Assicura che il limite di chatbot sia sempre 100 per abbonamenti attivi
+            user.max_chatbots = 100
             
             db.commit()
             logger.info(f"Updated limits for user {user.id}: {new_limit} conversations")
@@ -2168,6 +2177,9 @@ async def confirm_payment(
         current_user.conversations_limit = conversations_limit
         current_user.conversations_used = 0
         current_user.conversations_reset_date = datetime.utcnow()
+        
+        # Imposta il limite di chatbot a 100 per tutti gli abbonamenti
+        current_user.max_chatbots = 100
         
         # Applica il bonus dei messaggi se presente
         if bonus_messages > 0:
@@ -5838,6 +5850,9 @@ async def start_free_trial(
         current_user.messages_reset_date = now
         current_user.conversations_used = 0
         current_user.conversations_reset_date = now
+        
+        # Imposta il limite di chatbot a 1 per il free trial
+        current_user.max_chatbots = 1
         
         db.commit()
         

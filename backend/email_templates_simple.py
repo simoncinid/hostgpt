@@ -174,12 +174,12 @@ def create_welcome_email_simple(user_name: str, verification_link: str, language
         greeting = f"Welcome to HostGPT, {user_name}! 🎉"
         message = "Thank you for choosing HostGPT! We're excited to have you in our community of innovative hosts."
         cta_text = "Verify Email & Activate Subscription"
-        important_note = "Important: After verification, you'll be redirected to the payment page to activate your monthly subscription for €29/month."
+        important_note = "Important: After verification, you'll be redirected to the payment page to activate your subscription."
     else:  # it
         greeting = f"Benvenuto su HostGPT, {user_name}! 🎉"
         message = "Grazie per aver scelto HostGPT! Siamo entusiasti di averti nella nostra community di host innovativi."
         cta_text = "Verifica Email e Attiva Abbonamento"
-        important_note = "Importante: Dopo la verifica, verrai reindirizzato alla pagina di pagamento per attivare il tuo abbonamento mensile a 29€/mese."
+        important_note = "Importante: Dopo la verifica, verrai reindirizzato alla pagina di pagamento per attivare il tuo abbonamento."
     
     content = f"""
         <div class="greeting">{greeting}</div>
@@ -299,13 +299,13 @@ def create_free_trial_welcome_email_simple(user_name: str, verification_link: st
         message = f"Hi <strong>{user_name}</strong>, welcome to HostGPT! You've just started your <strong>14-day free trial</strong>."
         cta_text = "Start Creating Your Chatbot"
         trial_info = "Your free trial includes: 14 days of full access, 20 free messages, 1 personalized chatbot, complete dashboard, QR code and link to share with guests."
-        important_note = "Important: Your free trial will automatically expire in 14 days. If you decide to continue, you can subscribe to the complete plan for just €29/month with 1000 monthly messages and all advanced features."
+        important_note = "Important: Your free trial will automatically expire in 14 days. If you decide to continue, you can subscribe to the complete plan with all advanced features."
     else:  # it
         greeting = "Benvenuto nel tuo periodo di prova gratuito! 🎉"
         message = f"Ciao <strong>{user_name}</strong>, benvenuto in HostGPT! Hai appena iniziato il tuo periodo di prova gratuito di <strong>14 giorni</strong>."
         cta_text = "Inizia a Creare il tuo Chatbot"
         trial_info = "Il tuo periodo di prova include: 14 giorni di accesso completo, 20 messaggi gratuiti, 1 chatbot personalizzato, dashboard completa, QR code e link da condividere con i tuoi ospiti."
-        important_note = "Importante: Il tuo periodo di prova scadrà automaticamente tra 14 giorni. Se decidi di continuare, potrai sottoscrivere l'abbonamento completo a soli 29€/mese con 1000 messaggi mensili e tutte le funzionalità avanzate."
+        important_note = "Importante: Il tuo periodo di prova scadrà automaticamente tra 14 giorni. Se decidi di continuare, potrai sottoscrivere l'abbonamento completo con tutte le funzionalità avanzate."
     
     content = f"""
         <div class="greeting">{greeting}</div>
@@ -345,7 +345,7 @@ def create_free_trial_ending_email_simple(user_name: str, days_remaining: int, m
     else:  # it
         greeting = "Il tuo periodo di prova sta per scadere ⏰"
         message = f"Ciao <strong>{user_name}</strong>, il tuo periodo di prova gratuito scadrà tra <strong>{days_remaining} giorni</strong>."
-        cta_text = "Attiva l'Abbonamento Completo - 29€/mese"
+        cta_text = "Attiva l'Abbonamento Completo"
         stats_text = f"Le tue statistiche del periodo di prova: {messages_used}/{total_messages} messaggi utilizzati ({usage_percentage:.0f}%), {days_remaining} giorni rimanenti"
         important_note = "Non perdere i benefici! Dopo la scadenza del periodo di prova, il tuo chatbot non sarà più accessibile e perderai tutte le conversazioni e le statistiche raccolte. Attiva l'abbonamento ora per continuare a migliorare l'esperienza dei tuoi ospiti senza interruzioni."
     
@@ -385,7 +385,7 @@ def create_subscription_confirmation_email_simple(user_name: str, language: str 
         greeting = "Abbonamento attivato con successo! 🎉"
         message = f"Ciao <strong>{user_name}</strong>, il tuo abbonamento HostGPT è stato attivato con successo! Ora hai accesso completo a tutte le funzionalità della piattaforma."
         cta_text = "Crea il tuo Chatbot"
-        next_steps = "Il tuo abbonamento include: 1000 messaggi mensili per i tuoi chatbot, chatbot illimitati per tutte le tue proprietà, risposte istantanee 24/7 ai tuoi ospiti, statistiche avanzate e analisi dettagliate, supporto prioritario per qualsiasi domanda, 29€/mese - fatturazione automatica."
+        next_steps = "Il tuo abbonamento include: conversazioni mensili per i tuoi chatbot, chatbot illimitati per tutte le tue proprietà, risposte istantanee 24/7 ai tuoi ospiti, statistiche avanzate e analisi dettagliate, supporto prioritario per qualsiasi domanda, fatturazione automatica."
     
     content = f"""
         <div class="greeting">{greeting}</div>
@@ -506,7 +506,7 @@ def create_free_trial_expired_email_simple(user_name: str, messages_used: int, t
     else:  # it
         greeting = "Il tuo periodo di prova è scaduto ⏰"
         message = f"Ciao <strong>{user_name}</strong>, il tuo periodo di prova gratuito di HostGPT è scaduto. Il tuo chatbot è temporaneamente non disponibile."
-        cta_text = "Riattiva il tuo Chatbot - 29€/mese"
+        cta_text = "Riattiva il tuo Chatbot"
         stats_text = f"Il tuo utilizzo durante la prova: {messages_used}/{total_messages} messaggi utilizzati ({usage_percentage:.0f}%), 1 chatbot personalizzato creato, periodo di prova di 14 giorni completato"
         important_note = "Non perdere i tuoi dati! Tutte le tue configurazioni e statistiche sono ancora disponibili e verranno ripristinate immediatamente dopo l'attivazione dell'abbonamento."
     
