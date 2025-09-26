@@ -1464,7 +1464,7 @@ export const translations: Record<Language, Translations> = {
           responses: "Risposte istantanee",
           support: "Supporto prioritario"
         },
-        button: "Paga 29€/mese",
+        button: "Paga",
         processing: "Elaborazione...",
         referralCode: "Codice Referral (opzionale)",
         referralCodeOptional: "Codice Referral (opzionale)",
@@ -2695,7 +2695,7 @@ export const translations: Record<Language, Translations> = {
           responses: "Instant responses",
           support: "Priority support"
         },
-        button: "Pay €29/month",
+        button: "Pay",
         processing: "Processing...",
         referralCode: "Referral Code (optional)",
         referralCodeOptional: "Referral Code (optional)",

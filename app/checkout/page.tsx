@@ -475,14 +475,14 @@ function CheckoutContent() {
           return
         }
         
-        // Se abbiamo un client_secret, mostra il checkout personalizzato
-        if (resp.data.client_secret) {
+        // Redirect alla checkout session di Stripe
+        if (resp.data.checkout_url) {
+          window.location.href = resp.data.checkout_url
+        } else if (resp.data.client_secret) {
+          // Fallback al checkout personalizzato se non abbiamo checkout_url
           setClientSecret(resp.data.client_secret)
           setPaymentIntentId(resp.data.payment_intent_id)
           setStatus('checkout')
-        } else if (resp.data.checkout_url) {
-          // Fallback al redirect Stripe se non abbiamo client_secret
-          window.location.href = resp.data.checkout_url
         } else {
           throw new Error('URL di checkout non ricevuto')
         }
@@ -564,29 +564,6 @@ function CheckoutContent() {
               </motion.div>
 
               {/* Piano selezionato */}
-              {selectedPlan && (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.1 }}
-                  className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl shadow-lg p-6 border border-blue-200 mb-6"
-                >
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-gray-900">Piano Selezionato</h3>
-                    <Star className="w-5 h-5 text-blue-500" />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="text-xl font-bold text-gray-900">{selectedPlan.name}</h4>
-                      <p className="text-gray-600">{selectedPlan.conversations}</p>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-2xl font-bold text-blue-600">{selectedPlan.price}</div>
-                      <div className="text-sm text-gray-500">{selectedPlan.period}</div>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
 
               {status === 'checkout' && clientSecret && (
                 <motion.div

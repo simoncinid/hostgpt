@@ -476,7 +476,7 @@ function CheckoutContent() {
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-gray-600">{t.checkout.combined.hostgptPro}</span>
-                    <span className="font-semibold">29€/mese</span>
+                    <span className="font-semibold">19€/mese</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-gray-600">{t.checkout.combined.guardian}</span>

@@ -1959,16 +1959,39 @@ async def create_checkout_session(
         price_id_to_use = settings.STRIPE_PRICE_ID  # Default
         
         # Mappa i price_id del frontend ai veri price_id di Stripe
-        price_id_mapping = {
-            'STANDARD_PRICE_ID': settings.STRIPE_PRICE_ID,  # 19€/mese
-            'PREMIUM_PRICE_ID': settings.STRIPE_PREMIUM_PRICE_ID,  # 39€/mese
-            'PRO_PRICE_ID': settings.STRIPE_PRO_PRICE_ID,  # 79€/mese
-            'ENTERPRISE_PRICE_ID': settings.STRIPE_ENTERPRISE_PRICE_ID,  # 199€/mese
-            'ANNUAL_STANDARD_PRICE_ID': settings.STRIPE_ANNUAL_STANDARD_PRICE_ID,  # 190€/anno
-            'ANNUAL_PREMIUM_PRICE_ID': settings.STRIPE_ANNUAL_PREMIUM_PRICE_ID,  # 390€/anno
-            'ANNUAL_PRO_PRICE_ID': settings.STRIPE_ANNUAL_PRO_PRICE_ID,  # 790€/anno
-            'ANNUAL_ENTERPRISE_PRICE_ID': settings.STRIPE_ANNUAL_ENTERPRISE_PRICE_ID,  # 1990€/anno
-        }
+        # Verifica se i price_id mensili sono configurati (non sono placeholder)
+        monthly_configured = (
+            not settings.STRIPE_PRICE_ID.startswith('price_your-') and
+            not settings.STRIPE_PREMIUM_PRICE_ID.startswith('price_your-') and
+            not settings.STRIPE_PRO_PRICE_ID.startswith('price_your-') and
+            not settings.STRIPE_ENTERPRISE_PRICE_ID.startswith('price_your-')
+        )
+        
+        if monthly_configured:
+            # Usa i price_id configurati
+            price_id_mapping = {
+                'STANDARD_PRICE_ID': settings.STRIPE_PRICE_ID,  # 19€/mese
+                'PREMIUM_PRICE_ID': settings.STRIPE_PREMIUM_PRICE_ID,  # 39€/mese
+                'PRO_PRICE_ID': settings.STRIPE_PRO_PRICE_ID,  # 79€/mese
+                'ENTERPRISE_PRICE_ID': settings.STRIPE_ENTERPRISE_PRICE_ID,  # 199€/mese
+                'ANNUAL_STANDARD_PRICE_ID': settings.STRIPE_ANNUAL_STANDARD_PRICE_ID,  # 190€/anno
+                'ANNUAL_PREMIUM_PRICE_ID': settings.STRIPE_ANNUAL_PREMIUM_PRICE_ID,  # 390€/anno
+                'ANNUAL_PRO_PRICE_ID': settings.STRIPE_ANNUAL_PRO_PRICE_ID,  # 790€/anno
+                'ANNUAL_ENTERPRISE_PRICE_ID': settings.STRIPE_ANNUAL_ENTERPRISE_PRICE_ID,  # 1990€/anno
+            }
+        else:
+            # Fallback: usa solo i price_id annuali configurati
+            logger.warning("Monthly price_ids not configured, using annual price_ids as fallback")
+            price_id_mapping = {
+                'STANDARD_PRICE_ID': settings.STRIPE_ANNUAL_STANDARD_PRICE_ID,  # 190€/anno
+                'PREMIUM_PRICE_ID': settings.STRIPE_ANNUAL_PREMIUM_PRICE_ID,  # 390€/anno
+                'PRO_PRICE_ID': settings.STRIPE_ANNUAL_PRO_PRICE_ID,  # 790€/anno
+                'ENTERPRISE_PRICE_ID': settings.STRIPE_ANNUAL_ENTERPRISE_PRICE_ID,  # 1990€/anno
+                'ANNUAL_STANDARD_PRICE_ID': settings.STRIPE_ANNUAL_STANDARD_PRICE_ID,  # 190€/anno
+                'ANNUAL_PREMIUM_PRICE_ID': settings.STRIPE_ANNUAL_PREMIUM_PRICE_ID,  # 390€/anno
+                'ANNUAL_PRO_PRICE_ID': settings.STRIPE_ANNUAL_PRO_PRICE_ID,  # 790€/anno
+                'ANNUAL_ENTERPRISE_PRICE_ID': settings.STRIPE_ANNUAL_ENTERPRISE_PRICE_ID,  # 1990€/anno
+            }
         
         if request and 'price_id' in request:
             # Caso 1: Arrivo da selezione servizi con parametri URL
@@ -2126,27 +2149,29 @@ async def create_checkout_session(
         price_id = price_id_to_use
         logger.info(f"Using price_id: {price_id} for user {current_user.id}")
         
-        # Crea Payment Intent per checkout personalizzato
-        logger.info(f"Creating payment intent for user {current_user.id}")
+        # Crea Checkout Session per subscription con price_id
+        logger.info(f"Creating checkout session for user {current_user.id} with price_id: {price_id}")
         
-        payment_intent = stripe.PaymentIntent.create(
-            amount=2900,  # 29€ in centesimi (verrà aggiornato dal price_id)
-            currency='eur',
+        checkout_session = stripe.checkout.Session.create(
             customer=current_user.stripe_customer_id,
+            payment_method_types=['card'],
+            line_items=[{
+                'price': price_id,
+                'quantity': 1,
+            }],
+            mode='subscription',
+            success_url=f"{settings.FRONTEND_URL}/checkout/success?session_id={{CHECKOUT_SESSION_ID}}",
+            cancel_url=f"{settings.FRONTEND_URL}/checkout",
             metadata={
                 'user_id': str(current_user.id),
                 'subscription_type': 'hostgpt',
-                'price_id': price_id
-            },
-            automatic_payment_methods={
-                'enabled': True,
             },
         )
         
-        logger.info(f"Payment intent created successfully: {payment_intent.id}")
+        logger.info(f"Checkout session created successfully: {checkout_session.id}")
         return {
-            "client_secret": payment_intent.client_secret,
-            "payment_intent_id": payment_intent.id
+            "checkout_url": checkout_session.url,
+            "session_id": checkout_session.id
         }
         
     except Exception as e:
@@ -2608,7 +2633,7 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
                         email_body = create_purchase_confirmation_email_simple(
                             user_name=user.full_name or user.email,
                             subscription_type="hostgpt",
-                            amount="29€",
+                            amount="19€",
                             language=user.language or "it"
                         )
                         email_subject = "Purchase completed successfully - HostGPT" if (user.language or "it") == "en" else "Acquisto completato con successo - HostGPT"
@@ -3103,7 +3128,7 @@ async def create_chatbot(
     if not is_subscription_active(current_user.subscription_status):
         raise HTTPException(
             status_code=403, 
-            detail="Devi attivare un abbonamento per creare un chatbot. Abbonamento mensile: 29€/mese"
+            detail="Devi attivare un abbonamento per creare un chatbot. Abbonamento mensile: 19€/mese"
         )
     
     # Controlla il limite di chatbot per l'utente
@@ -3282,7 +3307,7 @@ async def get_subscription_status(
         "messages_reset_date": current_user.messages_reset_date,
         "next_reset_date": current_user.messages_reset_date + timedelta(days=30) if current_user.messages_reset_date else None,
         "is_blocked": not is_subscription_active(current_user.subscription_status),
-        "monthly_price": "29€"
+        "monthly_price": "19€"
     }
 
 @app.get("/api/chatbots")
@@ -3295,7 +3320,7 @@ async def get_chatbots(
     if not is_subscription_active(current_user.subscription_status):
         raise HTTPException(
             status_code=403,
-            detail="Abbonamento non attivo. Sottoscrivi un abbonamento mensile a 29€ per accedere alle funzionalità."
+            detail="Abbonamento non attivo. Sottoscrivi un abbonamento mensile a 19€ per accedere alle funzionalità."
         )
     chatbots = db.query(Chatbot).filter(Chatbot.user_id == current_user.id).all()
     
@@ -3496,7 +3521,7 @@ async def get_chatbot(
     if not is_subscription_active(current_user.subscription_status):
         raise HTTPException(
             status_code=403,
-            detail="Abbonamento non attivo. Sottoscrivi un abbonamento mensile a 29€ per accedere alle funzionalità."
+            detail="Abbonamento non attivo. Sottoscrivi un abbonamento mensile a 19€ per accedere alle funzionalità."
         )
     chatbot = db.query(Chatbot).filter(
         Chatbot.id == chatbot_id,
@@ -3567,7 +3592,7 @@ async def update_chatbot(
     if not is_subscription_active(current_user.subscription_status):
         raise HTTPException(
             status_code=403,
-            detail="Abbonamento non attivo. Sottoscrivi un abbonamento mensile a 29€ per accedere alle funzionalità."
+            detail="Abbonamento non attivo. Sottoscrivi un abbonamento mensile a 19€ per accedere alle funzionalità."
         )
     chatbot = db.query(Chatbot).filter(
         Chatbot.id == chatbot_id,
@@ -4709,7 +4734,7 @@ async def get_conversations(
     if not is_subscription_active(current_user.subscription_status):
         raise HTTPException(
             status_code=403,
-            detail="Abbonamento non attivo. Sottoscrivi un abbonamento mensile a 29€ per accedere alle funzionalità."
+            detail="Abbonamento non attivo. Sottoscrivi un abbonamento mensile a 19€ per accedere alle funzionalità."
         )
     chatbot = db.query(Chatbot).filter(
         Chatbot.id == chatbot_id,
@@ -4974,7 +4999,7 @@ async def create_combined_checkout_session(current_user: User, db: Session):
             db.commit()
         
         # Price IDs per HostGPT e Guardian
-        hostgpt_price_id = settings.STRIPE_PRICE_ID  # 29€/mese
+        hostgpt_price_id = settings.STRIPE_PRICE_ID  # 19€/mese
         guardian_price_id = "price_1S7fDjCez9NYe6irthMTRaXg"  # 9€/mese
         
         # Crea sessione checkout con entrambi i prodotti
