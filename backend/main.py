@@ -4513,22 +4513,34 @@ async def send_message(
         thread_id = message.thread_id
         is_new_conversation = False
         
-        # Cerca la conversazione di benvenuto più recente per questo chatbot
-        if not conversation:
-            existing_welcome_conversation = db.query(Conversation).filter(
-                Conversation.chatbot_id == chatbot.id,
-                Conversation.thread_id.is_(None)
-            ).order_by(Conversation.started_at.desc()).first()
-            
-            if existing_welcome_conversation:
-                # Collega l'ospite alla conversazione di benvenuto esistente
-                existing_welcome_conversation.guest_id = guest.id if guest else None
-                existing_welcome_conversation.guest_name = message.guest_name or (f"{guest.first_name} {guest.last_name}".strip() if guest else None)
-                conversation = existing_welcome_conversation
-                logger.info(f"🔄 Collegando ospite {guest.id if guest else 'anonimo'} alla conversazione di benvenuto esistente")
+        # Se l'ospite esiste, cerca la sua ultima conversazione
+        if guest and not message.force_new_conversation:
+            # Cerca la conversazione esistente dell'ospite
+            existing_conversation = get_latest_guest_conversation(chatbot.id, guest.id, db)
+            if existing_conversation:
+                conversation = existing_conversation
+                thread_id = existing_conversation.thread_id
+                is_new_conversation = False
+                logger.info(f"🔄 Riprendendo conversazione esistente per ospite {guest.id}")
         
-        # NON cerchiamo conversazioni esistenti dell'ospite
-        # Al refresh vogliamo sempre usare la conversazione di benvenuto corrente
+        # Se non c'è conversazione esistente dell'ospite
+        if not conversation:
+            # Se l'ospite è identificato, crea una nuova conversazione per lui
+            if guest:
+                # Per guest identificato senza conversazioni, crea nuova conversazione
+                # Non cerchiamo conversazioni di benvenuto generiche
+                logger.info(f"🆕 Guest {guest.id} identificato ma senza conversazioni, creerà nuova conversazione")
+            else:
+                # Solo se non c'è guest identificato, cerca conversazione di benvenuto generica
+                existing_welcome_conversation = db.query(Conversation).filter(
+                    Conversation.chatbot_id == chatbot.id,
+                    Conversation.thread_id.is_(None),
+                    Conversation.guest_id.is_(None)  # Solo conversazioni generiche
+                ).order_by(Conversation.started_at.desc()).first()
+                
+                if existing_welcome_conversation:
+                    conversation = existing_welcome_conversation
+                    logger.info(f"🔄 Usando conversazione di benvenuto generica")
         
         if not conversation:
             # Verifica limiti conversazioni prima di crearne una nuova
@@ -4578,6 +4590,18 @@ async def send_message(
                 logger.info(f"🔄 [DEBUG] Incrementato conversations_used: {owner.conversations_used}")
             db.commit()
             logger.info(f"🔄 [DEBUG] Dopo commit - conversations_used: {owner.conversations_used}, free_trial_conversations_used: {owner.free_trial_conversations_used}")
+            
+            # Se è una nuova conversazione per un guest identificato, salva il messaggio di benvenuto
+            if guest and is_new_conversation:
+                welcome_message = Message(
+                    conversation_id=conversation.id,
+                    role="assistant",
+                    content=chatbot.welcome_message or "Ciao! Sono qui per aiutarti con qualsiasi domanda sulla casa e sulla zona. Come posso esserti utile?",
+                    timestamp=func.now()
+                )
+                db.add(welcome_message)
+                db.commit()
+                logger.info(f"🆕 Salvato messaggio di benvenuto per guest {guest.id}")
         
         # ============= FINE NUOVA LOGICA =============
         
@@ -7968,8 +7992,18 @@ async def identify_guest(
         # Verifica se è la prima volta
         is_first_time = is_guest_first_time(guest, chatbot.id, db)
         
-        # NON cerchiamo conversazioni esistenti dell'ospite
-        # Al refresh vogliamo sempre una nuova conversazione vuota con solo il messaggio di benvenuto
+        # Per guest esistenti, cerca l'ultima conversazione
+        has_existing_conversation = False
+        existing_conversation_id = None
+        existing_thread_id = None
+        
+        if not is_first_time:
+            # Cerca l'ultima conversazione dell'ospite per questo chatbot
+            latest_conversation = get_latest_guest_conversation(chatbot.id, guest.id, db)
+            if latest_conversation:
+                has_existing_conversation = True
+                existing_conversation_id = latest_conversation.id
+                existing_thread_id = latest_conversation.thread_id
         
         return GuestIdentificationResponse(
             guest_id=guest.id,
@@ -7978,9 +8012,9 @@ async def identify_guest(
             first_name=guest.first_name,
             last_name=guest.last_name,
             is_first_time=is_first_time,
-            has_existing_conversation=False,  # Sempre False - al refresh vogliamo nuova conversazione
-            existing_conversation_id=None,
-            existing_thread_id=None
+            has_existing_conversation=has_existing_conversation,
+            existing_conversation_id=existing_conversation_id,
+            existing_thread_id=existing_thread_id
         )
         
     except ValueError as e:
@@ -8130,6 +8164,7 @@ async def create_new_conversation(
 async def create_welcome_conversation(
     uuid: str,
     request: Request,
+    guest_id: Optional[int] = None,
     db: Session = Depends(get_db)
 ):
     """Crea una nuova conversazione con messaggio di benvenuto al refresh"""
@@ -8139,17 +8174,24 @@ async def create_welcome_conversation(
     if not chatbot or not chatbot.is_active:
         raise HTTPException(status_code=404, detail="Chatbot non trovato")
     
+    # Se guest_id è fornito, verifica che l'ospite esista
+    guest = None
+    if guest_id:
+        guest = db.query(Guest).filter(Guest.id == guest_id).first()
+        if not guest:
+            raise HTTPException(status_code=404, detail="Ospite non trovato")
+    
     try:
         # NON creiamo un thread OpenAI per il messaggio di benvenuto
         # Il thread verrà creato solo quando l'utente invierà il primo messaggio
         
-        # Crea nuova conversazione nel DB (senza ospite specifico)
+        # Crea nuova conversazione nel DB
         guest_identifier = request.client.host
         conversation = Conversation(
             chatbot_id=chatbot.id,
-            guest_id=None,  # Nessun ospite specifico al refresh
+            guest_id=guest_id,  # Guest specifico se fornito
             thread_id=None,  # Nessun thread OpenAI ancora
-            guest_name=None,
+            guest_name=f"{guest.first_name} {guest.last_name}".strip() if guest and (guest.first_name or guest.last_name) else None,
             guest_identifier=guest_identifier,
             is_forced_new=False  # Non è una conversazione forzata, è un refresh
         )
@@ -8172,6 +8214,7 @@ async def create_welcome_conversation(
         return {
             "conversation_id": conversation.id,
             "thread_id": None,  # Nessun thread OpenAI ancora
+            "guest_id": guest_id,  # Guest specifico se fornito
             "welcome_message": {
                 "id": welcome_message.id,
                 "content": welcome_message.content,
