@@ -55,8 +55,11 @@ export const auth = {
 }
 
 export const subscription = {
-  createCheckout: (priceId?: string) =>
-    api.post('/subscription/create-checkout', priceId ? { price_id: priceId } : {}),
+  createCheckout: (priceId?: string, billing?: string) =>
+    api.post('/subscription/create-checkout', { 
+      ...(priceId && { price_id: priceId }),
+      ...(billing && { billing: billing })
+    }),
   createCombinedCheckout: () =>
     api.post('/subscription/create-combined-checkout'),
   confirm: (session_id?: string) =>

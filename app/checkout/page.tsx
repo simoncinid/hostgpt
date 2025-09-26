@@ -463,7 +463,7 @@ function CheckoutContent() {
           priceIdToSend = userDesiredPlan
         }
         
-        const resp = await subscription.createCheckout(priceIdToSend)
+        const resp = await subscription.createCheckout(priceIdToSend, billingParam || 'monthly')
         
         // Controlla se l'abbonamento è stato riattivato
         if (resp.data.status === 'reactivated') {
