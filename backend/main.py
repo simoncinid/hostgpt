@@ -1944,21 +1944,48 @@ async def handle_subscription_deleted(event, db: Session):
 # --- Subscription/Payment ---
 
 @app.post("/api/subscription/create-checkout")
-async def create_checkout_session(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    """Crea sessione di checkout Stripe - Solo abbonamento mensile a 29€"""
+async def create_checkout_session(
+    request: Optional[dict] = None,
+    current_user: User = Depends(get_current_user), 
+    db: Session = Depends(get_db)
+):
+    """Crea sessione di checkout Stripe con piano personalizzato"""
     try:
         logger.info(f"Starting checkout process for user {current_user.id} (email: {current_user.email})")
         logger.info(f"User subscription status: {current_user.subscription_status}")
         logger.info(f"User is verified: {current_user.is_verified}")
         
-        # Validazione configurazione STRIPE_PRICE_ID
-        if not settings.STRIPE_PRICE_ID or not settings.STRIPE_PRICE_ID.startswith("price_") or "your-monthly" in settings.STRIPE_PRICE_ID:
-            logger.error("Invalid STRIPE_PRICE_ID configuration")
+        # Determina il price_id da usare
+        price_id_to_use = settings.STRIPE_PRICE_ID  # Default
+        
+        if request and 'price_id' in request:
+            # Mappa i price_id del frontend ai veri price_id di Stripe
+            price_id_mapping = {
+                'STANDARD_PRICE_ID': settings.STRIPE_PRICE_ID,  # 19€/mese
+                'PREMIUM_PRICE_ID': settings.STRIPE_PREMIUM_PRICE_ID,  # 39€/mese
+                'PRO_PRICE_ID': settings.STRIPE_PRO_PRICE_ID,  # 79€/mese
+                'ENTERPRISE_PRICE_ID': settings.STRIPE_ENTERPRISE_PRICE_ID,  # 199€/mese
+                'ANNUAL_STANDARD_PRICE_ID': settings.STRIPE_ANNUAL_STANDARD_PRICE_ID,  # 190€/anno
+                'ANNUAL_PREMIUM_PRICE_ID': settings.STRIPE_ANNUAL_PREMIUM_PRICE_ID,  # 390€/anno
+                'ANNUAL_PRO_PRICE_ID': settings.STRIPE_ANNUAL_PRO_PRICE_ID,  # 790€/anno
+                'ANNUAL_ENTERPRISE_PRICE_ID': settings.STRIPE_ANNUAL_ENTERPRISE_PRICE_ID,  # 1990€/anno
+            }
+            
+            requested_price_id = request['price_id']
+            if requested_price_id in price_id_mapping:
+                price_id_to_use = price_id_mapping[requested_price_id]
+                logger.info(f"Using custom price_id: {requested_price_id} -> {price_id_to_use}")
+            else:
+                logger.warning(f"Unknown price_id requested: {requested_price_id}, using default")
+        
+        # Validazione configurazione price_id
+        if not price_id_to_use or not price_id_to_use.startswith("price_") or "your-monthly" in price_id_to_use:
+            logger.error("Invalid price_id configuration")
             raise HTTPException(
                 status_code=400,
                 detail=(
-                    "Configurazione Stripe mancante o non valida: STRIPE_PRICE_ID. "
-                    "Imposta un Price ID ricorrente (mensile 29€) nelle variabili d'ambiente del backend."
+                    "Configurazione Stripe mancante o non valida: price_id. "
+                    "Imposta un Price ID ricorrente valido nelle variabili d'ambiente del backend."
                 ),
             )
 
@@ -2082,8 +2109,8 @@ async def create_checkout_session(current_user: User = Depends(get_current_user)
             else:
                 logger.info(f"No subscriptions found for customer {current_user.stripe_customer_id}")
         
-        # Determina il price_id da usare
-        price_id = current_user.desired_plan or settings.STRIPE_PRICE_ID
+        # Usa il price_id determinato sopra
+        price_id = price_id_to_use
         logger.info(f"Using price_id: {price_id} for user {current_user.id}")
         
         # Crea Payment Intent per checkout personalizzato

@@ -28,13 +28,22 @@ class Settings(BaseSettings):
     # OpenAI
     OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "sk-your-openai-api-key-here")
     
-    # Stripe - Configurazione per abbonamento mensile 29€
+    # Stripe - Configurazione per i diversi piani di abbonamento
     STRIPE_SECRET_KEY: str = os.getenv("STRIPE_SECRET_KEY", "sk_test_your-stripe-secret-key")
     STRIPE_PUBLISHABLE_KEY: str = os.getenv("STRIPE_PUBLISHABLE_KEY", "pk_test_your-stripe-publishable-key")
     STRIPE_WEBHOOK_SECRET: str = os.getenv("STRIPE_WEBHOOK_SECRET", "whsec_your-webhook-secret")
     STRIPE_PRINT_ORDERS_WEBHOOK_SECRET: str = os.getenv("STRIPE_PRINT_ORDERS_WEBHOOK_SECRET", "whsec_your-print-orders-webhook-secret")
-    STRIPE_PRICE_ID: str = os.getenv("STRIPE_PRICE_ID", "price_your-monthly-29eur-price-id")  # IMPORTANTE: Deve essere 29€/mese
-    STRIPE_ANNUAL_PRICE_ID: str = os.getenv("STRIPE_ANNUAL_PRICE_ID", "price_your-annual-299eur-price-id")  # IMPORTANTE: Deve essere 299€/anno
+    # Stripe Price IDs per i diversi piani
+    STRIPE_PRICE_ID: str = os.getenv("STRIPE_PRICE_ID", "price_your-monthly-19eur-price-id")  # Standard: 19€/mese
+    STRIPE_PREMIUM_PRICE_ID: str = os.getenv("STRIPE_PREMIUM_PRICE_ID", "price_your-monthly-39eur-price-id")  # Premium: 39€/mese
+    STRIPE_PRO_PRICE_ID: str = os.getenv("STRIPE_PRO_PRICE_ID", "price_your-monthly-79eur-price-id")  # Pro: 79€/mese
+    STRIPE_ENTERPRISE_PRICE_ID: str = os.getenv("STRIPE_ENTERPRISE_PRICE_ID", "price_your-monthly-199eur-price-id")  # Enterprise: 199€/mese
+    
+    # Stripe Annual Price IDs
+    STRIPE_ANNUAL_STANDARD_PRICE_ID: str = os.getenv("STRIPE_ANNUAL_STANDARD_PRICE_ID", "price_your-annual-190eur-price-id")  # Standard: 190€/anno
+    STRIPE_ANNUAL_PREMIUM_PRICE_ID: str = os.getenv("STRIPE_ANNUAL_PREMIUM_PRICE_ID", "price_your-annual-390eur-price-id")  # Premium: 390€/anno
+    STRIPE_ANNUAL_PRO_PRICE_ID: str = os.getenv("STRIPE_ANNUAL_PRO_PRICE_ID", "price_your-annual-790eur-price-id")  # Pro: 790€/anno
+    STRIPE_ANNUAL_ENTERPRISE_PRICE_ID: str = os.getenv("STRIPE_ANNUAL_ENTERPRISE_PRICE_ID", "price_your-annual-1990eur-price-id")  # Enterprise: 1990€/anno
     
     # Printful - Servizio di stampa on-demand
     PRINTFUL_API_KEY: str = os.getenv("PRINTFUL_API_KEY", "your-printful-api-key")
@@ -76,7 +85,7 @@ IMPORTANTE: Devi fornire le seguenti chiavi API:
 
 1. OPENAI_API_KEY: Ottieni da https://platform.openai.com/api-keys
 2. STRIPE_SECRET_KEY e STRIPE_PUBLISHABLE_KEY: Ottieni da https://dashboard.stripe.com/test/apikeys
-3. STRIPE_PRICE_ID: Crea un prodotto su Stripe con prezzo mensile
+3. STRIPE_PRICE_ID: Crea prodotti su Stripe per tutti i piani (Standard, Premium, Pro, Enterprise) sia mensili che annuali
 4. DATABASE_URL: Configura con i tuoi dati DigitalOcean MySQL
 5. SMTP credentials: Per l'invio email (puoi usare Gmail con App Password)
 6. SECRET_KEY: Genera una chiave sicura per JWT

@@ -31,78 +31,95 @@ import {
 // Inizializza Stripe
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
 
-// Mappa i price_id ai dettagli del piano
-const getPlanDetails = (priceId: string) => {
+// Mappa i piani ai dettagli e price_id
+const getPlanDetails = (planName: string, billing: string) => {
   const plans = {
-    'STANDARD_PRICE_ID': {
+    'STANDARD': {
       name: 'Standard',
-      price: '19€',
-      period: '/mese',
+      monthly: {
+        price: '19€',
+        period: '/mese',
+        priceId: 'STANDARD_PRICE_ID'
+      },
+      annual: {
+        price: '190€',
+        period: '/anno', 
+        priceId: 'ANNUAL_STANDARD_PRICE_ID'
+      },
       conversations: '20 conversazioni/mese',
       features: ['20 conversazioni/mese', 'Chatbot illimitati', 'Supporto email']
     },
-    'PREMIUM_PRICE_ID': {
-      name: 'Premium', 
-      price: '39€',
-      period: '/mese',
+    'PREMIUM': {
+      name: 'Premium',
+      monthly: {
+        price: '39€',
+        period: '/mese',
+        priceId: 'PREMIUM_PRICE_ID'
+      },
+      annual: {
+        price: '390€',
+        period: '/anno',
+        priceId: 'ANNUAL_PREMIUM_PRICE_ID'
+      },
       conversations: '50 conversazioni/mese',
       features: ['50 conversazioni/mese', 'Chatbot illimitati', 'Supporto prioritario']
     },
-    'PRO_PRICE_ID': {
+    'PRO': {
       name: 'Pro',
-      price: '79€', 
-      period: '/mese',
+      monthly: {
+        price: '79€',
+        period: '/mese',
+        priceId: 'PRO_PRICE_ID'
+      },
+      annual: {
+        price: '790€',
+        period: '/anno',
+        priceId: 'ANNUAL_PRO_PRICE_ID'
+      },
       conversations: '150 conversazioni/mese',
       features: ['150 conversazioni/mese', 'Chatbot illimitati', 'Supporto prioritario']
     },
-    'ENTERPRISE_PRICE_ID': {
+    'ENTERPRISE': {
       name: 'Enterprise',
-      price: '199€',
-      period: '/mese', 
-      conversations: '500 conversazioni/mese',
-      features: ['500 conversazioni/mese', 'Chatbot illimitati', 'Supporto dedicato']
-    },
-    'ANNUAL_STANDARD_PRICE_ID': {
-      name: 'Standard',
-      price: '190€',
-      period: '/anno',
-      conversations: '20 conversazioni/mese',
-      features: ['20 conversazioni/mese', 'Chatbot illimitati', 'Supporto email']
-    },
-    'ANNUAL_PREMIUM_PRICE_ID': {
-      name: 'Premium',
-      price: '390€', 
-      period: '/anno',
-      conversations: '50 conversazioni/mese',
-      features: ['50 conversazioni/mese', 'Chatbot illimitati', 'Supporto prioritario']
-    },
-    'ANNUAL_PRO_PRICE_ID': {
-      name: 'Pro',
-      price: '790€',
-      period: '/anno',
-      conversations: '150 conversazioni/mese', 
-      features: ['150 conversazioni/mese', 'Chatbot illimitati', 'Supporto prioritario']
-    },
-    'ANNUAL_ENTERPRISE_PRICE_ID': {
-      name: 'Enterprise',
-      price: '1990€',
-      period: '/anno',
+      monthly: {
+        price: '199€',
+        period: '/mese',
+        priceId: 'ENTERPRISE_PRICE_ID'
+      },
+      annual: {
+        price: '1990€',
+        period: '/anno',
+        priceId: 'ANNUAL_ENTERPRISE_PRICE_ID'
+      },
       conversations: '500 conversazioni/mese',
       features: ['500 conversazioni/mese', 'Chatbot illimitati', 'Supporto dedicato']
     }
   }
   
-  return plans[priceId as keyof typeof plans] || {
-    name: 'Standard',
-    price: '19€',
-    period: '/mese', 
-    conversations: '20 conversazioni/mese',
-    features: ['20 conversazioni/mese', 'Chatbot illimitati', 'Supporto email', 'API access']
+  const plan = plans[planName as keyof typeof plans]
+  if (!plan) {
+    // Fallback al piano Standard
+    const fallback = plans.STANDARD
+    const billingType = billing === 'annual' ? 'annual' : 'monthly'
+    return {
+      ...fallback,
+      price: fallback[billingType].price,
+      period: fallback[billingType].period,
+      priceId: fallback[billingType].priceId
+    }
+  }
+  
+  const billingType = billing === 'annual' ? 'annual' : 'monthly'
+  return {
+    ...plan,
+    price: plan[billingType].price,
+    period: plan[billingType].period,
+    priceId: plan[billingType].priceId
   }
 }
 
 // Componente per il form di pagamento
-function CheckoutForm({ clientSecret, onSuccess, t }: { clientSecret: string, onSuccess: (referralCode?: string) => void, t: any }) {
+function CheckoutForm({ clientSecret, onSuccess, selectedPlan, t }: { clientSecret: string, onSuccess: (referralCode?: string) => void, selectedPlan: any, t: any }) {
   const stripe = useStripe()
   const elements = useElements()
   const [isProcessing, setIsProcessing] = useState(false)
@@ -294,7 +311,12 @@ function CheckoutForm({ clientSecret, onSuccess, t }: { clientSecret: string, on
         ) : (
           <>
             <CreditCard className="w-5 h-5" />
-            <span>{t.checkout.monthly.button}</span>
+            <span>
+              {selectedPlan 
+                ? `${t.checkout.monthly.button} - ${selectedPlan.price}${selectedPlan.period}`
+                : t.checkout.monthly.button
+              }
+            </span>
           </>
         )}
       </button>
@@ -325,6 +347,10 @@ function CheckoutContent() {
     const tokenFromUrl = searchParams.get('token')
     const existingToken = typeof window !== 'undefined' ? localStorage.getItem('token') : null
 
+    // Leggi i parametri del piano dall'URL
+    const planParam = searchParams.get('plan')
+    const billingParam = searchParams.get('billing')
+
     const ensureTokenAndCheckout = async () => {
       try {
         setStatus('processing')
@@ -340,28 +366,55 @@ function CheckoutContent() {
           return
         }
 
-        // Ottieni le informazioni dell'utente per impostare la lingua corretta e il piano selezionato
+        // Ottieni le informazioni dell'utente per impostare la lingua corretta
         try {
           const me = await api.get('/auth/me')
           const userLanguage = me.data?.language
-          const desiredPlan = me.data?.desired_plan
           
           if (userLanguage && (userLanguage === 'en' || userLanguage === 'it')) {
             // Converti la lingua dal backend al formato del frontend
             const frontendLanguage = userLanguage === 'en' ? 'ENG' : 'IT'
             setLanguage(frontendLanguage)
           }
-          
-          // Imposta il piano selezionato
-          if (desiredPlan) {
-            const planDetails = getPlanDetails(desiredPlan)
-            setSelectedPlan(planDetails)
-          }
         } catch (error) {
           console.warn('Could not fetch user language:', error)
         }
 
-        const resp = await subscription.createCheckout()
+        // Determina il piano e il billing
+        let planName = 'STANDARD'
+        let billing = 'monthly'
+        
+        if (planParam) {
+          // Mappa i price_id ai nomi dei piani
+          const planMapping: { [key: string]: string } = {
+            'STANDARD_PRICE_ID': 'STANDARD',
+            'PREMIUM_PRICE_ID': 'PREMIUM', 
+            'PRO_PRICE_ID': 'PRO',
+            'ENTERPRISE_PRICE_ID': 'ENTERPRISE',
+            'ANNUAL_STANDARD_PRICE_ID': 'STANDARD',
+            'ANNUAL_PREMIUM_PRICE_ID': 'PREMIUM',
+            'ANNUAL_PRO_PRICE_ID': 'PRO',
+            'ANNUAL_ENTERPRISE_PRICE_ID': 'ENTERPRISE'
+          }
+          
+          planName = planMapping[planParam] || 'STANDARD'
+          
+          // Determina se è annuale basandosi sul price_id
+          if (planParam.startsWith('ANNUAL_')) {
+            billing = 'annual'
+          }
+        }
+        
+        if (billingParam) {
+          billing = billingParam
+        }
+
+        // Imposta il piano selezionato
+        const planDetails = getPlanDetails(planName, billing)
+        setSelectedPlan(planDetails)
+
+        // Crea il checkout con il price_id corretto
+        const resp = await subscription.createCheckout(planDetails.priceId)
         
         // Controlla se l'abbonamento è stato riattivato
         if (resp.data.status === 'reactivated') {
@@ -461,6 +514,31 @@ function CheckoutContent() {
                 </p>
               </motion.div>
 
+              {/* Piano selezionato */}
+              {selectedPlan && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.1 }}
+                  className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl shadow-lg p-6 border border-blue-200 mb-6"
+                >
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900">Piano Selezionato</h3>
+                    <Star className="w-5 h-5 text-blue-500" />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="text-xl font-bold text-gray-900">{selectedPlan.name}</h4>
+                      <p className="text-gray-600">{selectedPlan.conversations}</p>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-2xl font-bold text-blue-600">{selectedPlan.price}</div>
+                      <div className="text-sm text-gray-500">{selectedPlan.period}</div>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+
               {status === 'checkout' && clientSecret && (
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
@@ -477,6 +555,7 @@ function CheckoutContent() {
                     <CheckoutForm 
                       clientSecret={clientSecret} 
                       onSuccess={handlePaymentSuccess}
+                      selectedPlan={selectedPlan}
                       t={t}
                     />
                   </Elements>
