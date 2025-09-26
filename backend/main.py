@@ -1911,47 +1911,33 @@ async def handle_checkout_session_completed(event, db: Session):
         user.subscription_end_date = datetime.utcfromtimestamp(subscription.current_period_end)
         user.free_trial_converted = True
         
-        # DEBUG: Determina il piano in base all'amount della subscription
-        # Recupera l'amount dalla subscription per determinare il piano
+        # DEBUG: Determina il piano in base all'amount dalla sessione
+        # Usa l'amount dalla sessione che è più affidabile
         try:
-            # Prova a recuperare l'amount dalla subscription
-            amount = None
-            if hasattr(subscription, 'items') and subscription.items:
-                # Prova ad accedere ai dati in modo sicuro
-                try:
-                    items_data = subscription.items.data if hasattr(subscription.items, 'data') else []
-                    if items_data and len(items_data) > 0:
-                        amount = items_data[0].price.unit_amount
-                        logger.info(f"🔍 [DEBUG] Found amount from subscription.items: {amount}")
-                except Exception as e:
-                    logger.warning(f"⚠️ [DEBUG] Could not access subscription.items.data: {e}")
+            amount = session.get('amount_total', 0)  # Amount in centesimi dalla sessione
+            logger.info(f"🔍 [DEBUG] Found amount from session: {amount} cents")
             
-            # Se non riusciamo a ottenere l'amount, usa default
-            if amount is None:
-                user.conversations_limit = 20  # Default Standard
-                logger.info(f"🔍 [DEBUG] Amount not found, using default STANDARD plan - conversations_limit: 20")
+            # Determina il piano in base all'amount (in centesimi)
+            if amount == 1:  # 1 centesimo per test
+                user.conversations_limit = 20
+                logger.info(f"🔍 [DEBUG] Test amount (1 cent), using STANDARD plan - conversations_limit: 20")
+            elif amount in [1900, 19000]:  # 19€ o 190€
+                user.conversations_limit = 20
+                logger.info(f"🔍 [DEBUG] Amount {amount} (19€/190€), using STANDARD plan - conversations_limit: 20")
+            elif amount in [3900, 39000]:  # 39€ o 390€
+                user.conversations_limit = 50
+                logger.info(f"🔍 [DEBUG] Amount {amount} (39€/390€), using PREMIUM plan - conversations_limit: 50")
+            elif amount in [7900, 79000]:  # 79€ o 790€
+                user.conversations_limit = 150
+                logger.info(f"🔍 [DEBUG] Amount {amount} (79€/790€), using PRO plan - conversations_limit: 150")
+            elif amount in [19900, 199000]:  # 199€ o 1990€
+                user.conversations_limit = 500
+                logger.info(f"🔍 [DEBUG] Amount {amount} (199€/1990€), using ENTERPRISE plan - conversations_limit: 500")
             else:
-                # Determina il piano in base all'amount (in centesimi)
-                if amount == 1:  # 1 centesimo per test
-                    user.conversations_limit = 20
-                    logger.info(f"🔍 [DEBUG] Test amount (1 cent), using STANDARD plan - conversations_limit: 20")
-                elif amount in [1900, 19000]:  # 19€ o 190€
-                    user.conversations_limit = 20
-                    logger.info(f"🔍 [DEBUG] Amount {amount} (19€/190€), using STANDARD plan - conversations_limit: 20")
-                elif amount in [3900, 39000]:  # 39€ o 390€
-                    user.conversations_limit = 50
-                    logger.info(f"🔍 [DEBUG] Amount {amount} (39€/390€), using PREMIUM plan - conversations_limit: 50")
-                elif amount in [7900, 79000]:  # 79€ o 790€
-                    user.conversations_limit = 150
-                    logger.info(f"🔍 [DEBUG] Amount {amount} (79€/790€), using PRO plan - conversations_limit: 150")
-                elif amount in [19900, 199000]:  # 199€ o 1990€
-                    user.conversations_limit = 500
-                    logger.info(f"🔍 [DEBUG] Amount {amount} (199€/1990€), using ENTERPRISE plan - conversations_limit: 500")
-                else:
-                    user.conversations_limit = 20
-                    logger.warning(f"⚠️ [DEBUG] Unknown amount {amount}, using default STANDARD plan - conversations_limit: 20")
+                user.conversations_limit = 20
+                logger.warning(f"⚠️ [DEBUG] Unknown amount {amount}, using default STANDARD plan - conversations_limit: 20")
         except Exception as e:
-            logger.error(f"❌ [DEBUG] Error determining plan from amount: {e}")
+            logger.error(f"❌ [DEBUG] Error determining plan from session amount: {e}")
             user.conversations_limit = 20  # Fallback
             logger.info(f"🔍 [DEBUG] Using fallback STANDARD plan - conversations_limit: 20")
         
@@ -2913,48 +2899,32 @@ async def confirm_subscription(
                 current_user.messages_used = 0
                 current_user.messages_reset_date = datetime.utcnow()
                 
-                # DEBUG: Determina il piano in base all'amount della subscription
+                # DEBUG: Determina il piano in base all'amount dalla sessione
                 try:
-                    # Recupera la subscription per ottenere l'amount
-                    subscription_id = session['subscription']
-                    logger.info(f"🔍 [DEBUG] Retrieving subscription {subscription_id} for amount check")
-                    subscription = stripe.Subscription.retrieve(subscription_id)
+                    amount = session.get('amount_total', 0)  # Amount in centesimi dalla sessione
+                    logger.info(f"🔍 [DEBUG] Found amount from session: {amount} cents")
                     
-                    amount = None
-                    if hasattr(subscription, 'items') and subscription.items:
-                        try:
-                            items_data = subscription.items.data if hasattr(subscription.items, 'data') else []
-                            if items_data and len(items_data) > 0:
-                                amount = items_data[0].price.unit_amount
-                                logger.info(f"🔍 [DEBUG] Found amount from subscription.items: {amount}")
-                        except Exception as e:
-                            logger.warning(f"⚠️ [DEBUG] Could not access subscription.items.data: {e}")
-                    
-                    # Determina il piano in base all'amount
-                    if amount is None:
+                    # Determina il piano in base all'amount (in centesimi)
+                    if amount == 1:  # 1 centesimo per test
                         current_user.conversations_limit = 20
-                        logger.info(f"🔍 [DEBUG] Amount not found, using default STANDARD plan - conversations_limit: 20")
+                        logger.info(f"🔍 [DEBUG] Test amount (1 cent), using STANDARD plan - conversations_limit: 20")
+                    elif amount in [1900, 19000]:  # 19€ o 190€
+                        current_user.conversations_limit = 20
+                        logger.info(f"🔍 [DEBUG] Amount {amount} (19€/190€), using STANDARD plan - conversations_limit: 20")
+                    elif amount in [3900, 39000]:  # 39€ o 390€
+                        current_user.conversations_limit = 50
+                        logger.info(f"🔍 [DEBUG] Amount {amount} (39€/390€), using PREMIUM plan - conversations_limit: 50")
+                    elif amount in [7900, 79000]:  # 79€ o 790€
+                        current_user.conversations_limit = 150
+                        logger.info(f"🔍 [DEBUG] Amount {amount} (79€/790€), using PRO plan - conversations_limit: 150")
+                    elif amount in [19900, 199000]:  # 199€ o 1990€
+                        current_user.conversations_limit = 500
+                        logger.info(f"🔍 [DEBUG] Amount {amount} (199€/1990€), using ENTERPRISE plan - conversations_limit: 500")
                     else:
-                        if amount == 1:  # 1 centesimo per test
-                            current_user.conversations_limit = 20
-                            logger.info(f"🔍 [DEBUG] Test amount (1 cent), using STANDARD plan - conversations_limit: 20")
-                        elif amount in [1900, 19000]:  # 19€ o 190€
-                            current_user.conversations_limit = 20
-                            logger.info(f"🔍 [DEBUG] Amount {amount} (19€/190€), using STANDARD plan - conversations_limit: 20")
-                        elif amount in [3900, 39000]:  # 39€ o 390€
-                            current_user.conversations_limit = 50
-                            logger.info(f"🔍 [DEBUG] Amount {amount} (39€/390€), using PREMIUM plan - conversations_limit: 50")
-                        elif amount in [7900, 79000]:  # 79€ o 790€
-                            current_user.conversations_limit = 150
-                            logger.info(f"🔍 [DEBUG] Amount {amount} (79€/790€), using PRO plan - conversations_limit: 150")
-                        elif amount in [19900, 199000]:  # 199€ o 1990€
-                            current_user.conversations_limit = 500
-                            logger.info(f"🔍 [DEBUG] Amount {amount} (199€/1990€), using ENTERPRISE plan - conversations_limit: 500")
-                        else:
-                            current_user.conversations_limit = 20
-                            logger.warning(f"⚠️ [DEBUG] Unknown amount {amount}, using default STANDARD plan - conversations_limit: 20")
+                        current_user.conversations_limit = 20
+                        logger.warning(f"⚠️ [DEBUG] Unknown amount {amount}, using default STANDARD plan - conversations_limit: 20")
                 except Exception as e:
-                    logger.error(f"❌ [DEBUG] Error determining plan from amount: {e}")
+                    logger.error(f"❌ [DEBUG] Error determining plan from session amount: {e}")
                     current_user.conversations_limit = 20  # Fallback
                     logger.info(f"🔍 [DEBUG] Using fallback STANDARD plan - conversations_limit: 20")
                 
