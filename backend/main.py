@@ -1897,20 +1897,37 @@ async def handle_checkout_session_completed(event, db: Session):
         user.subscription_end_date = datetime.utcfromtimestamp(subscription.current_period_end)
         user.free_trial_converted = True
         
-        # Determina il piano basandosi sul price_id
-        price_id = subscription.items.data[0].price.id if subscription.items.data else None
-        if price_id in [settings.STRIPE_STANDARD_PRICE_ID, settings.STRIPE_ANNUAL_STANDARD_PRICE_ID]:
-            user.subscription_plan = 'standard'
-        elif price_id in [settings.STRIPE_PREMIUM_PRICE_ID, settings.STRIPE_ANNUAL_PREMIUM_PRICE_ID]:
-            user.subscription_plan = 'premium'
-        elif price_id in [settings.STRIPE_PRO_PRICE_ID, settings.STRIPE_ANNUAL_PRO_PRICE_ID]:
-            user.subscription_plan = 'pro'
-        elif price_id in [settings.STRIPE_ENTERPRISE_PRICE_ID, settings.STRIPE_ANNUAL_ENTERPRISE_PRICE_ID]:
-            user.subscription_plan = 'enterprise'
+        # Imposta il conversation_limit corretto in base al price_id
+        if subscription.items.data and len(subscription.items.data) > 0:
+            price_id = subscription.items.data[0].price.id
+            # Mappa i price_id reali ai limiti (mensili e annuali)
+            if price_id in [settings.STRIPE_STANDARD_PRICE_ID, settings.STRIPE_ANNUAL_STANDARD_PRICE_ID]:
+                user.conversations_limit = 20
+            elif price_id in [settings.STRIPE_PREMIUM_PRICE_ID, settings.STRIPE_ANNUAL_PREMIUM_PRICE_ID]:
+                user.conversations_limit = 50
+            elif price_id in [settings.STRIPE_PRO_PRICE_ID, settings.STRIPE_ANNUAL_PRO_PRICE_ID]:
+                user.conversations_limit = 150
+            elif price_id in [settings.STRIPE_ENTERPRISE_PRICE_ID, settings.STRIPE_ANNUAL_ENTERPRISE_PRICE_ID]:
+                user.conversations_limit = 500
+            else:
+                user.conversations_limit = 20  # Default Standard
+            
+            # Reset dei contatori
+            user.conversations_used = 0
+            user.conversations_reset_date = datetime.utcnow()
+            
+            # Assicura che il limite di chatbot sia sempre 100 per abbonamenti attivi
+            user.max_chatbots = 100
+        else:
+            # Fallback se non riusciamo a determinare il price_id
+            user.conversations_limit = 20
+            user.conversations_used = 0
+            user.conversations_reset_date = datetime.utcnow()
+            user.max_chatbots = 100
         
         db.commit()
         
-        logger.info(f"User {user.id} subscription activated: {subscription.id}, plan: {user.subscription_plan}")
+        logger.info(f"User {user.id} subscription activated: {subscription.id}, conversations_limit: {user.conversations_limit}")
             
     except Exception as e:
         logger.error(f"Error processing checkout.session.completed: {e}")
