@@ -1872,12 +1872,15 @@ async def handle_checkout_session_completed(event, db: Session):
         subscription_type = session.get('metadata', {}).get('subscription_type', 'hostgpt')
         
         logger.info(f"Processing checkout.session.completed for customer {customer_id}, type: {subscription_type}")
+        logger.info(f"Session data: {session}")
         
         # Trova l'utente
         user = db.query(User).filter(User.stripe_customer_id == customer_id).first()
         if not user:
             logger.error(f"User not found for customer {customer_id}")
             return
+        
+        logger.info(f"Found user {user.id} for customer {customer_id}")
         
         # Recupera la sottoscrizione creata
         subscriptions = stripe.Subscription.list(
@@ -1886,8 +1889,11 @@ async def handle_checkout_session_completed(event, db: Session):
             created={'gte': int((datetime.utcnow() - timedelta(minutes=5)).timestamp())}
         )
         
-        if hasattr(subscriptions, 'data') and subscriptions.data:
+        logger.info(f"Found {len(subscriptions.data) if subscriptions else 0} subscriptions for customer {customer_id}")
+        
+        if subscriptions and len(subscriptions.data) > 0:
             subscription = subscriptions.data[0]
+            logger.info(f"Using subscription {subscription.id} for user {user.id}")
             
             # Aggiorna l'utente
             user.stripe_subscription_id = subscription.id
@@ -1921,8 +1927,11 @@ async def handle_invoice_payment_succeeded(event, db: Session):
         invoice = event['data']['object']
         subscription_id = invoice.get('subscription')
         
+        logger.info(f"Invoice data: {invoice}")
+        logger.info(f"Subscription ID from invoice: {subscription_id}")
+        
         if not subscription_id:
-            logger.error("No subscription ID found in invoice")
+            logger.warning("No subscription ID found in invoice - this might be a one-time payment")
             return
         
         # Trova l'utente
