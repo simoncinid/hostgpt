@@ -369,23 +369,33 @@ def find_or_create_guest(phone: Optional[str], email: Optional[str],
     if email and not validate_email_format(email):
         raise ValueError("Formato email non valido")
     
-    # PRIMA controlla se l'ospite esiste già per questo chatbot specifico
-    chatbot_guest = None
+    # LOGICA CORRETTA:
+    # 1. Cerca se l'ospite esiste GLOBALMENTE (per telefono o email)
+    # 2. Se esiste, controlla se è già associato a questo chatbot
+    # 3. Se non è associato, crea l'associazione
+    # 4. Se non esiste globalmente, crea nuovo ospite (solo se ha entrambi i campi)
+    
+    guest = None
+    
+    # Cerca ospite esistente per telefono
+    guest_by_phone = None
+    guest_by_email = None
+    
     if phone:
-        chatbot_guest = db.query(ChatbotGuest).join(Guest).filter(
-            ChatbotGuest.chatbot_id == chatbot_id,
-            Guest.phone == phone
-        ).first()
+        guest_by_phone = db.query(Guest).filter(Guest.phone == phone).first()
     
-    if not chatbot_guest and email:
-        chatbot_guest = db.query(ChatbotGuest).join(Guest).filter(
-            ChatbotGuest.chatbot_id == chatbot_id,
-            Guest.email == email
-        ).first()
+    if email:
+        guest_by_email = db.query(Guest).filter(Guest.email == email).first()
     
-    # Se l'ospite ESISTE per questo chatbot, aggiorna e restituisci
-    if chatbot_guest:
-        guest = chatbot_guest.guest
+    # Controlla se ci sono conflitti
+    if guest_by_phone and guest_by_email and guest_by_phone.id != guest_by_email.id:
+        raise ValueError("Il numero di telefono e l'email sono associati a ospiti diversi. Verifica i dati inseriti.")
+    
+    # Se non ci sono conflitti, usa il guest trovato
+    guest = guest_by_phone or guest_by_email
+    
+    # Se l'ospite ESISTE globalmente
+    if guest:
         # Aggiorna informazioni se fornite
         if phone and not guest.phone:
             guest.phone = phone
@@ -398,68 +408,52 @@ def find_or_create_guest(phone: Optional[str], email: Optional[str],
         
         db.commit()
         db.refresh(guest)
+        
+        # Controlla se è già associato a questo chatbot
+        existing_chatbot_guest = db.query(ChatbotGuest).filter(
+            ChatbotGuest.chatbot_id == chatbot_id,
+            ChatbotGuest.guest_id == guest.id
+        ).first()
+        
+        # Se non è associato, crea l'associazione
+        if not existing_chatbot_guest:
+            chatbot_guest = ChatbotGuest(
+                chatbot_id=chatbot_id,
+                guest_id=guest.id
+            )
+            db.add(chatbot_guest)
+            db.commit()
+        
         return guest
     
-    # Se l'ospite NON ESISTE per questo chatbot, controlla se esiste globalmente
-    existing_guest = None
-    if phone:
-        existing_guest = db.query(Guest).filter(Guest.phone == phone).first()
-    
-    if not existing_guest and email:
-        existing_guest = db.query(Guest).filter(Guest.email == email).first()
-    
-    # Se l'ospite esiste globalmente ma non per questo chatbot
-    if existing_guest:
-        # Aggiorna informazioni se fornite
-        if phone and not existing_guest.phone:
-            existing_guest.phone = phone
-        if email and not existing_guest.email:
-            existing_guest.email = email
-        if first_name:
-            existing_guest.first_name = first_name
-        if last_name:
-            existing_guest.last_name = last_name
+    # Se l'ospite NON ESISTE globalmente
+    else:
+        # Per nuovi ospiti, richiedi entrambi i campi
+        if not phone or not email:
+            raise ValueError("Per i nuovi ospiti sono richiesti sia il numero di telefono che l'email")
         
+        # Crea nuovo ospite
+        guest = Guest(
+            phone=phone,
+            email=email,
+            first_name=first_name,
+            last_name=last_name
+        )
+        
+        db.add(guest)
         db.commit()
-        db.refresh(existing_guest)
+        db.refresh(guest)
         
-        # Crea solo l'associazione chatbot-guest
+        # Crea associazione chatbot-guest
         chatbot_guest = ChatbotGuest(
             chatbot_id=chatbot_id,
-            guest_id=existing_guest.id
+            guest_id=guest.id
         )
         
         db.add(chatbot_guest)
         db.commit()
         
-        return existing_guest
-    
-    # Se l'ospite NON ESISTE globalmente, richiedi ENTRAMBI i campi
-    if not phone or not email:
-        raise ValueError("Per i nuovi ospiti sono richiesti sia il numero di telefono che l'email")
-    
-    # Crea nuovo ospite
-    guest = Guest(
-        phone=phone,
-        email=email,
-        first_name=first_name,
-        last_name=last_name
-    )
-    
-    db.add(guest)
-    db.commit()
-    db.refresh(guest)
-    
-    # Crea associazione chatbot-guest
-    chatbot_guest = ChatbotGuest(
-        chatbot_id=chatbot_id,
-        guest_id=guest.id
-    )
-    
-    db.add(chatbot_guest)
-    db.commit()
-    
-    return guest
+        return guest
 
 def get_latest_guest_conversation(chatbot_id: int, guest_id: int, db: Session) -> Optional[Conversation]:
     """Ottiene l'ultima conversazione di un ospite per un chatbot specifico"""
@@ -4502,7 +4496,16 @@ async def send_message(
         thread_id = message.thread_id
         is_new_conversation = False
         
-        # Cerca la conversazione di benvenuto più recente per questo chatbot
+        # Se l'ospite esiste, cerca la sua ultima conversazione
+        if guest and not message.force_new_conversation:
+            existing_conversation = get_latest_guest_conversation(chatbot.id, guest.id, db)
+            if existing_conversation:
+                conversation = existing_conversation
+                thread_id = existing_conversation.thread_id
+                is_new_conversation = False
+                logger.info(f"🔄 Riprendendo conversazione esistente per ospite {guest.id}")
+        
+        # Se non c'è conversazione esistente, cerca la conversazione di benvenuto
         if not conversation:
             existing_welcome_conversation = db.query(Conversation).filter(
                 Conversation.chatbot_id == chatbot.id,
@@ -4515,9 +4518,6 @@ async def send_message(
                 existing_welcome_conversation.guest_name = message.guest_name or (f"{guest.first_name} {guest.last_name}".strip() if guest else None)
                 conversation = existing_welcome_conversation
                 logger.info(f"🔄 Collegando ospite {guest.id if guest else 'anonimo'} alla conversazione di benvenuto esistente")
-        
-        # NON cerchiamo conversazioni esistenti dell'ospite
-        # Al refresh vogliamo sempre usare la conversazione di benvenuto corrente
         
         if not conversation:
             # Verifica limiti conversazioni prima di crearne una nuova
@@ -7856,99 +7856,31 @@ async def identify_guest(
         raise HTTPException(status_code=400, detail="Almeno uno tra telefono ed email deve essere fornito")
     
     try:
-        # LOGICA SEMPLICE E CHIARA:
-        # 1. Cerca se l'ospite esiste GLOBALMENTE (per telefono o email)
-        # 2. Se esiste, controlla se è già associato a questo chatbot
-        # 3. Se non è associato, crea l'associazione
-        # 4. Se non esiste globalmente, crea nuovo ospite (solo se ha entrambi i campi)
-        
-        guest = None
-        
-        # Cerca ospite esistente per telefono
-        guest_by_phone = None
-        guest_by_email = None
-        
-        if request.phone:
-            guest_by_phone = db.query(Guest).filter(Guest.phone == request.phone).first()
-        
-        if request.email:
-            guest_by_email = db.query(Guest).filter(Guest.email == request.email).first()
-        
-        # Controlla se ci sono conflitti
-        if guest_by_phone and guest_by_email and guest_by_phone.id != guest_by_email.id:
-            raise HTTPException(
-                status_code=400, 
-                detail="Il numero di telefono e l'email sono associati a ospiti diversi. Verifica i dati inseriti."
-            )
-        
-        # Se non ci sono conflitti, usa il guest trovato
-        guest = guest_by_phone or guest_by_email
-        
-        # Se l'ospite ESISTE globalmente
-        if guest:
-            # Controlla se è già associato a questo chatbot
-            chatbot_guest = db.query(ChatbotGuest).filter(
-                ChatbotGuest.chatbot_id == chatbot.id,
-                ChatbotGuest.guest_id == guest.id
-            ).first()
-            
-            # Se non è associato, crea l'associazione
-            if not chatbot_guest:
-                chatbot_guest = ChatbotGuest(
-                    chatbot_id=chatbot.id,
-                    guest_id=guest.id
-                )
-                db.add(chatbot_guest)
-                db.commit()
-            
-            # Aggiorna informazioni se fornite
-            if request.phone and not guest.phone:
-                guest.phone = request.phone
-            if request.email and not guest.email:
-                guest.email = request.email
-            if request.first_name:
-                guest.first_name = request.first_name
-            if request.last_name:
-                guest.last_name = request.last_name
-            
-            db.commit()
-            db.refresh(guest)
-        
-        # Se l'ospite NON ESISTE globalmente
-        else:
-            # Per nuovi ospiti, richiedi entrambi i campi
-            if not request.phone or not request.email:
-                raise HTTPException(
-                    status_code=400, 
-                    detail="Per i nuovi ospiti sono richiesti sia il numero di telefono che l'email"
-                )
-            
-            # Crea nuovo ospite
-            guest = Guest(
-                phone=request.phone,
-                email=request.email,
-                first_name=request.first_name,
-                last_name=request.last_name
-            )
-            
-            db.add(guest)
-            db.commit()
-            db.refresh(guest)
-            
-            # Crea associazione chatbot-guest
-            chatbot_guest = ChatbotGuest(
-                chatbot_id=chatbot.id,
-                guest_id=guest.id
-            )
-            
-            db.add(chatbot_guest)
-            db.commit()
+        # Usa la funzione find_or_create_guest per logica unificata
+        guest = find_or_create_guest(
+            phone=request.phone,
+            email=request.email,
+            chatbot_id=chatbot.id,
+            first_name=request.first_name,
+            last_name=request.last_name,
+            db=db
+        )
         
         # Verifica se è la prima volta
         is_first_time = is_guest_first_time(guest, chatbot.id, db)
         
-        # NON cerchiamo conversazioni esistenti dell'ospite
-        # Al refresh vogliamo sempre una nuova conversazione vuota con solo il messaggio di benvenuto
+        # Per guest esistenti, cerca l'ultima conversazione
+        has_existing_conversation = False
+        existing_conversation_id = None
+        existing_thread_id = None
+        
+        if not is_first_time:
+            # Cerca l'ultima conversazione dell'ospite per questo chatbot
+            latest_conversation = get_latest_guest_conversation(chatbot.id, guest.id, db)
+            if latest_conversation:
+                has_existing_conversation = True
+                existing_conversation_id = latest_conversation.id
+                existing_thread_id = latest_conversation.thread_id
         
         return GuestIdentificationResponse(
             guest_id=guest.id,
@@ -7957,9 +7889,9 @@ async def identify_guest(
             first_name=guest.first_name,
             last_name=guest.last_name,
             is_first_time=is_first_time,
-            has_existing_conversation=False,  # Sempre False - al refresh vogliamo nuova conversazione
-            existing_conversation_id=None,
-            existing_thread_id=None
+            has_existing_conversation=has_existing_conversation,
+            existing_conversation_id=existing_conversation_id,
+            existing_thread_id=existing_thread_id
         )
         
     except ValueError as e:

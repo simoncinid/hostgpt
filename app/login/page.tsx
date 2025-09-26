@@ -405,7 +405,7 @@ function LoginContent() {
             <div className="text-center mt-4 pt-4 border-t border-gray-100 flex-shrink-0">
               <p className="text-gray-600 text-xs md:text-sm">
                 {t.auth.login.noAccount}{' '}
-                <Link href="/register" className="text-primary hover:text-secondary font-semibold">
+                <Link href="/#pricing" className="text-primary hover:text-secondary font-semibold">
                   {t.auth.login.registerLink}
                 </Link>
               </p>

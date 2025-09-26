@@ -289,8 +289,8 @@ function CheckoutContent() {
           setPaymentIntentId(resp.data.payment_intent_id)
           setStatus('checkout')
         } else if (resp.data.checkout_url) {
-          // Fallback al redirect Stripe se non abbiamo client_secret - apri in nuova tab
-          window.open(resp.data.checkout_url, '_blank')
+          // Fallback al redirect Stripe se non abbiamo client_secret - redirect nella stessa pagina
+          window.location.href = resp.data.checkout_url
         } else {
           throw new Error('URL di checkout non ricevuto')
         }
