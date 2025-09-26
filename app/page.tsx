@@ -153,6 +153,9 @@ export default function LandingPage() {
   const [feedbackMessage, setFeedbackMessage] = useState('')
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false)
 
+  // Stato per il toggle mensile/annuale
+  const [isAnnualBilling, setIsAnnualBilling] = useState(false)
+
 
   // Gestione flip della card pricing - una sola volta
   const handlePricingFlip = () => {
@@ -515,16 +518,22 @@ export default function LandingPage() {
     description: step.description
   }))
 
-  const pricingPlans = t.pricing.plans.map((plan: any, index: number) => ({
-    name: plan.name,
-    price: plan.price,
-    period: plan.period,
-    features: plan.features,
-    hasFreeTrial: true,
-    freeTrialButton: plan.freeTrialButton,
-    ctaButton: plan.ctaButton,
-    priceId: plan.priceId
-  }))
+  const pricingPlans = t.pricing.plans.map((plan: any, index: number) => {
+    // Calcola il prezzo annuale (mensile * 10)
+    const monthlyPrice = parseInt(plan.price.replace('€', ''))
+    const annualPrice = monthlyPrice * 10
+    
+    return {
+      name: plan.name,
+      price: isAnnualBilling ? `€${annualPrice}` : plan.price,
+      period: isAnnualBilling ? "/anno" : plan.period,
+      features: plan.features,
+      hasFreeTrial: true,
+      freeTrialButton: plan.freeTrialButton,
+      ctaButton: plan.ctaButton,
+      priceId: isAnnualBilling ? `ANNUAL_${plan.priceId}` : plan.priceId
+    }
+  })
 
   const nextTestimonial = () => {
     setCurrentTestimonial((prev) => (prev + 1) % testimonials.length)
@@ -2276,68 +2285,108 @@ export default function LandingPage() {
             </motion.p>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+          {/* Toggle Mensile/Annuale */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.8 }}
+            viewport={{ once: true }}
+            className="flex justify-center mb-12"
+          >
+            <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-2 shadow-lg border border-gray-200/50">
+              <div className="flex items-center space-x-4">
+                <span className={`text-sm font-medium transition-colors ${!isAnnualBilling ? 'text-gray-900' : 'text-gray-500'}`}>
+                  Mensile
+                </span>
+                <button
+                  onClick={() => setIsAnnualBilling(!isAnnualBilling)}
+                  className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 ${
+                    isAnnualBilling ? 'bg-rose-600' : 'bg-gray-300'
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-6 w-6 transform rounded-full bg-white shadow-lg transition-transform ${
+                      isAnnualBilling ? 'translate-x-7' : 'translate-x-1'
+                    }`}
+                  />
+                </button>
+                <span className={`text-sm font-medium transition-colors ${isAnnualBilling ? 'text-gray-900' : 'text-gray-500'}`}>
+                  Annuale
+                </span>
+                {isAnnualBilling && (
+                  <span className="text-xs font-semibold text-green-600 bg-green-100 px-2 py-1 rounded-full">
+                    Risparmia 2 mesi
+                  </span>
+                )}
+              </div>
+            </div>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
             {pricingPlans.map((plan, index) => {
-              const isAnnual = plan.name === "Annuale" || plan.name === "Annual"
+              // Ora tutti i piani sono sempre disponibili, la distinzione è gestita dal toggle
+              const isPopular = plan.name === "Premium" // Evidenzia Premium come popolare
               return (
                 <div key={index} className="relative w-full h-auto" style={{ perspective: '1200px' }}>
                   <div className="relative w-full">
                     {/* Card quasi quadrata - ULTRA LUXURIOUS */}
                     <div 
-                      className={`relative rounded-[2rem] p-6 md:p-8 overflow-hidden shadow-2xl flex flex-col ${
-                        isAnnual 
-                          ? 'bg-gradient-to-br from-amber-50 to-orange-50 border-2 border-amber-200/60 aspect-[4/5] md:aspect-square' 
-                          : 'bg-white border border-rose-100/50 aspect-[5/6] md:aspect-square'
+                      className={`relative rounded-[2rem] p-4 md:p-8 overflow-hidden shadow-2xl flex flex-col ${
+                        isPopular 
+                          ? 'bg-gradient-to-br from-rose-50 to-pink-50 border-2 border-rose-200/60 aspect-[3/2] md:aspect-[4/5]' 
+                          : 'bg-white border border-gray-100/50 aspect-[3/2] md:aspect-[4/5]'
                       }`}
                       style={{ 
                         backfaceVisibility: 'hidden',
-                        boxShadow: isAnnual 
-                          ? "0 25px 50px rgba(245, 158, 11, 0.15), 0 0 0 1px rgba(251, 191, 36, 0.2)"
-                          : "0 25px 50px rgba(244, 63, 94, 0.08), 0 0 0 1px rgba(251, 207, 232, 0.1)"
+                        boxShadow: isPopular 
+                          ? "0 25px 50px rgba(244, 63, 94, 0.15), 0 0 0 1px rgba(251, 207, 232, 0.2)"
+                          : "0 25px 50px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(0, 0, 0, 0.05)"
                       }}
                     >
 
                       {/* Background pattern interno */}
                       <div className={`absolute inset-0 ${
-                        isAnnual 
-                          ? 'bg-gradient-to-br from-amber-50/40 via-transparent to-orange-50/30' 
-                          : 'bg-gradient-to-br from-rose-50/30 via-transparent to-pink-50/20'
+                        isPopular 
+                          ? 'bg-gradient-to-br from-rose-50/40 via-transparent to-pink-50/30' 
+                          : 'bg-gradient-to-br from-gray-50/20 via-transparent to-gray-50/10'
                       }`}></div>
                       <div className={`absolute top-0 right-0 w-32 h-32 rounded-full blur-3xl ${
-                        isAnnual 
-                          ? 'bg-gradient-to-br from-amber-100/50 to-transparent' 
-                          : 'bg-gradient-to-br from-rose-100/40 to-transparent'
+                        isPopular 
+                          ? 'bg-gradient-to-br from-rose-100/50 to-transparent' 
+                          : 'bg-gradient-to-br from-gray-100/30 to-transparent'
                       }`}></div>
                       <div className={`absolute bottom-0 left-0 w-24 h-24 rounded-full blur-2xl ${
-                        isAnnual 
-                          ? 'bg-gradient-to-tr from-orange-100/40 to-transparent' 
-                          : 'bg-gradient-to-tr from-pink-100/30 to-transparent'
+                        isPopular 
+                          ? 'bg-gradient-to-tr from-pink-100/40 to-transparent' 
+                          : 'bg-gradient-to-tr from-gray-100/20 to-transparent'
                       }`}></div>
 
                     {/* Header del piano */}
-                    <div className="relative text-center mb-6 flex-shrink-0">
-                      <h3 className="text-2xl md:text-3xl font-black text-gray-900 mb-3">
+                    <div className="relative text-center mb-3 md:mb-6 flex-shrink-0">
+                      <h3 className="text-xl md:text-3xl font-black text-gray-900 mb-2 md:mb-3">
                         {plan.name}
                       </h3>
                       
-                      <div className="mb-6">
-                        <div className="text-4xl md:text-5xl font-black mb-2">
+                      <div className="mb-3 md:mb-6">
+                        <div className="text-3xl md:text-5xl font-black mb-1 md:mb-2">
                           <span className={`text-transparent bg-clip-text ${
-                            isAnnual 
-                              ? 'bg-gradient-to-r from-amber-600 to-orange-600' 
-                              : 'bg-gradient-to-r from-rose-600 to-pink-600'
+                            isPopular 
+                              ? 'bg-gradient-to-r from-rose-600 to-pink-600' 
+                              : 'bg-gradient-to-r from-gray-700 to-gray-600'
                           }`}>
                             {plan.price}
                           </span>
-                          <span className="text-lg md:text-xl font-medium text-gray-600">
+                          <span className="text-base md:text-xl font-medium text-gray-600">
                             {plan.period}
                           </span>
                         </div>
                         
-                        {/* Testo risparmio per piano annuale - solo mobile */}
-                        {isAnnual && (
-                          <div className="md:hidden">
-                            <span className="text-sm font-semibold text-green-600">Risparmia €49</span>
+                        {/* Badge popolare per Premium */}
+                        {isPopular && (
+                          <div className="mb-1 md:mb-2">
+                            <span className="text-xs font-semibold text-rose-600 bg-rose-100 px-3 py-1 rounded-full">
+                              Più Popolare
+                            </span>
                           </div>
                         )}
                         
@@ -2345,21 +2394,21 @@ export default function LandingPage() {
                     </div>
 
                     {/* Lista features ultra-stilizzata */}
-                    <div className="flex-1 flex flex-col justify-center mb-6">
-                      <div className="space-y-3">
+                    <div className="flex-1 flex flex-col justify-center mb-3 md:mb-6">
+                      <div className="space-y-2 md:space-y-3">
                         {plan.features.map((feature: string, i: number) => (
                           <div 
                             key={i} 
                             className="flex items-start group"
                           >
-                            <div className={`flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center mr-3 mt-0.5 shadow-lg ${
-                              isAnnual 
-                                ? 'bg-gradient-to-r from-amber-500 to-orange-600' 
-                                : 'bg-gradient-to-r from-rose-500 to-pink-600'
+                            <div className={`flex-shrink-0 w-4 h-4 md:w-5 md:h-5 rounded-full flex items-center justify-center mr-2 md:mr-3 mt-0.5 shadow-lg ${
+                              isPopular 
+                                ? 'bg-gradient-to-r from-rose-500 to-pink-600' 
+                                : 'bg-gradient-to-r from-gray-500 to-gray-600'
                             }`}>
-                              <Check className="w-3 h-3 text-white font-bold" strokeWidth={3} />
+                              <Check className="w-2 h-2 md:w-3 md:h-3 text-white font-bold" strokeWidth={3} />
                             </div>
-                            <span className="text-gray-700 text-sm font-medium group-hover:text-gray-900 transition-colors duration-200">
+                            <span className="text-gray-700 text-xs md:text-sm font-medium group-hover:text-gray-900 transition-colors duration-200">
                               {feature}
                             </span>
                           </div>
@@ -2367,56 +2416,39 @@ export default function LandingPage() {
                       </div>
                     </div>
 
-                    {/* Bottoni affiancati */}
+                    {/* Bottone CTA principale */}
                     <div className="relative flex-shrink-0">
-                      <div className="flex gap-3">
-                        {/* Free Trial Button */}
-                        {plan.hasFreeTrial && (
-                          <Link
-                            href="/register?free_trial=true"
-                            className="flex-1 group"
-                          >
-                            <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white py-3 px-3 rounded-xl font-bold text-xs shadow-lg overflow-hidden relative">
-                              <span className="relative flex items-center justify-center">
-                                {plan.freeTrialButton}
-                              </span>
+                      <Link
+                        href={`/register?free_trial=false&plan=${plan.priceId}`}
+                        className="block group"
+                      >
+                        <div className={`text-white py-3 px-4 md:py-4 md:px-6 rounded-xl font-bold text-xs md:text-sm text-center shadow-lg overflow-hidden relative ${
+                          isPopular 
+                            ? 'bg-gradient-to-r from-rose-500 via-pink-500 to-rose-600' 
+                            : 'bg-gradient-to-r from-gray-600 via-gray-700 to-gray-800'
+                        }`}>
+                          <span className="relative flex items-center justify-center">
+                            {plan.ctaButton}
+                            <div className="ml-1 md:ml-2">
+                              <ArrowRight className="w-3 h-3 md:w-4 md:h-4" />
                             </div>
-                          </Link>
-                        )}
-                        
-                        {/* Bottone CTA principale */}
-                        <Link
-                          href="/register?free_trial=false"
-                          className="flex-1 group"
-                        >
-                          <div className={`text-white py-3 px-3 rounded-xl font-bold text-xs text-center shadow-lg overflow-hidden relative ${
-                            isAnnual 
-                              ? 'bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600' 
-                              : 'bg-gradient-to-r from-rose-500 via-pink-500 to-rose-600'
-                          }`}>
-                            <span className="relative flex items-center justify-center">
-                              {plan.ctaButton}
-                              <div className="ml-1">
-                                <ArrowRight className="w-3 h-3" />
-                              </div>
-                            </span>
-                          </div>
-                        </Link>
-                      </div>
+                          </span>
+                        </div>
+                      </Link>
                     </div>
 
                     {/* Decorazioni angolari */}
                     <div className={`absolute top-3 left-3 w-4 h-4 border-l-2 border-t-2 rounded-tl-lg ${
-                      isAnnual ? 'border-amber-200' : 'border-rose-200'
+                      isPopular ? 'border-rose-200' : 'border-gray-200'
                     }`}></div>
                     <div className={`absolute top-3 right-3 w-4 h-4 border-r-2 border-t-2 rounded-tr-lg ${
-                      isAnnual ? 'border-amber-200' : 'border-rose-200'
+                      isPopular ? 'border-rose-200' : 'border-gray-200'
                     }`}></div>
                     <div className={`absolute bottom-3 left-3 w-4 h-4 border-l-2 border-b-2 rounded-bl-lg ${
-                      isAnnual ? 'border-amber-200' : 'border-rose-200'
+                      isPopular ? 'border-rose-200' : 'border-gray-200'
                     }`}></div>
                     <div className={`absolute bottom-3 right-3 w-4 h-4 border-r-2 border-b-2 rounded-br-lg ${
-                      isAnnual ? 'border-amber-200' : 'border-rose-200'
+                      isPopular ? 'border-rose-200' : 'border-gray-200'
                     }`}></div>
                   </div>
                 </div>

@@ -34,12 +34,14 @@ function RegisterForm() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [isFreeTrial, setIsFreeTrial] = useState(false)
+  const [desiredPlan, setDesiredPlan] = useState<string | null>(null)
   const { setAuth } = useAuthStore()
   
-  // Check if user comes from landing page for free trial
+  // Check if user comes from landing page for free trial and desired plan
   useEffect(() => {
     if (searchParams) {
       setIsFreeTrial(searchParams.get('free_trial') === 'true')
+      setDesiredPlan(searchParams.get('plan'))
     }
   }, [searchParams])
   
@@ -124,7 +126,8 @@ function RegisterForm() {
         full_name: formData.full_name,
         phone: formData.phone,
         wants_free_trial: isFreeTrial,
-        language: formData.language
+        language: formData.language,
+        desired_plan: desiredPlan
       })
       
       // Dopo la registrazione, mandiamo l'utente alla pagina che spiega di verificare l'email

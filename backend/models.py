@@ -29,12 +29,19 @@ class User(Base):
     messages_used = Column(Integer, default=0)  # Messaggi utilizzati nel mese corrente
     messages_reset_date = Column(DateTime)  # Data ultimo reset dei messaggi
     
+    # Nuovi campi per i limiti delle conversazioni
+    conversations_limit = Column(Integer, default=20)  # Limite mensile di conversazioni
+    conversations_used = Column(Integer, default=0)  # Conversazioni utilizzate nel mese corrente
+    conversations_reset_date = Column(DateTime)  # Data ultimo reset delle conversazioni
+    
     # Free trial fields
     wants_free_trial = Column(Boolean, default=False)  # Se l'utente ha scelto il free trial
     free_trial_start_date = Column(DateTime)  # Data inizio free trial
     free_trial_end_date = Column(DateTime)  # Data fine free trial (14 giorni dopo)
     free_trial_messages_limit = Column(Integer, default=20)  # Limite messaggi free trial
     free_trial_messages_used = Column(Integer, default=0)  # Messaggi usati durante free trial
+    free_trial_conversations_limit = Column(Integer, default=5)  # Limite conversazioni free trial
+    free_trial_conversations_used = Column(Integer, default=0)  # Conversazioni usate durante free trial
     free_trial_converted = Column(Boolean, default=False)  # Se è stato convertito ad abbonamento
     
     # Nuovo servizio Guardian
@@ -48,6 +55,9 @@ class User(Base):
     
     # Language preference for emails and notifications
     language = Column(String(10), default="it", nullable=False)  # 'it' or 'en'
+    
+    # Desired plan for checkout
+    desired_plan = Column(String(50))  # STANDARD_PRICE_ID, PREMIUM_PRICE_ID, etc.
     
     # Chatbot limit management
     max_chatbots = Column(Integer, default=1)  # Default: 1 chatbot per utente

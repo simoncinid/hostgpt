@@ -61,6 +61,24 @@ from email_templates_simple import (
     create_print_order_confirmation_email_simple
 )
 
+def get_conversations_limit_by_price_id(price_id: str) -> int:
+    """Mappa i price_id ai limiti delle conversazioni"""
+    # Mappa dei limiti per i nuovi tier
+    price_limits = {
+        "STANDARD_PRICE_ID": 20,      # Standard
+        "PREMIUM_PRICE_ID": 50,       # Premium  
+        "PRO_PRICE_ID": 150,          # Pro
+        "ENTERPRISE_PRICE_ID": 500,   # Enterprise
+        # Supporto per price_id annuali
+        "ANNUAL_STANDARD_PRICE_ID": 20,
+        "ANNUAL_PREMIUM_PRICE_ID": 50,
+        "ANNUAL_PRO_PRICE_ID": 150,
+        "ANNUAL_ENTERPRISE_PRICE_ID": 500,
+    }
+    
+    # Se non trovato, usa il limite di default (Standard)
+    return price_limits.get(price_id, 20)
+
 async def extract_property_content(url: str) -> str:
     """
     Estrae il contenuto di una pagina di proprietà usando Playwright async con fallback a requests.
@@ -473,6 +491,7 @@ class UserRegister(BaseModel):
     phone: str  # Now required
     wants_free_trial: Optional[bool] = False
     language: Optional[str] = "it"  # 'it' or 'en'
+    desired_plan: Optional[str] = None  # STANDARD_PRICE_ID, PREMIUM_PRICE_ID, etc.
 
 class UserLogin(BaseModel):
     email: EmailStr
@@ -1464,7 +1483,8 @@ async def register(user: UserRegister, background_tasks: BackgroundTasks, db: Se
         is_verified=False,
         verification_token=verification_token,  # Aggiungeremo questo campo al modello
         wants_free_trial=user.wants_free_trial,  # Traccia se vuole il free trial
-        language=user.language or "it"  # Salva la lingua preferita dell'utente
+        language=user.language or "it",  # Salva la lingua preferita dell'utente
+        desired_plan=user.desired_plan  # Salva il piano desiderato
     )
     db.add(db_user)
     db.commit()
@@ -1517,9 +1537,12 @@ async def verify_email(token: str, db: Session = Depends(get_db)):
         user.free_trial_start_date = now
         user.free_trial_end_date = free_trial_end
         user.free_trial_messages_used = 0
+        user.free_trial_conversations_used = 0
         user.free_trial_converted = False
         user.messages_used = 0
         user.messages_reset_date = now
+        user.conversations_used = 0
+        user.conversations_reset_date = now
         
         db.commit()
         
@@ -1798,6 +1821,114 @@ async def get_referral_stats(
         logger.error(f"Errore nel recupero delle statistiche referral: {e}")
         raise HTTPException(status_code=500, detail="Errore interno del server")
 
+# --- Webhook Stripe ---
+
+@app.post("/api/webhooks/stripe")
+async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
+    """Gestisce i webhook di Stripe per eventi di abbonamento"""
+    try:
+        payload = await request.body()
+        sig_header = request.headers.get('stripe-signature')
+        
+        # Verifica la firma del webhook
+        try:
+            event = stripe.Webhook.construct_event(
+                payload, sig_header, settings.STRIPE_WEBHOOK_SECRET
+            )
+        except ValueError:
+            logger.error("Invalid payload")
+            raise HTTPException(status_code=400, detail="Invalid payload")
+        except stripe.error.SignatureVerificationError:
+            logger.error("Invalid signature")
+            raise HTTPException(status_code=400, detail="Invalid signature")
+        
+        # Gestisci l'evento
+        if event['type'] == 'invoice.payment_succeeded':
+            await handle_invoice_payment_succeeded(event, db)
+        elif event['type'] == 'customer.subscription.updated':
+            await handle_subscription_updated(event, db)
+        elif event['type'] == 'customer.subscription.deleted':
+            await handle_subscription_deleted(event, db)
+        
+        return {"status": "success"}
+        
+    except Exception as e:
+        logger.error(f"Webhook error: {e}")
+        raise HTTPException(status_code=500, detail="Webhook processing failed")
+
+async def handle_invoice_payment_succeeded(event, db: Session):
+    """Gestisce il pagamento di una fattura (rinnovo mensile)"""
+    try:
+        invoice = event['data']['object']
+        subscription_id = invoice['subscription']
+        
+        # Trova l'utente
+        user = db.query(User).filter(User.stripe_subscription_id == subscription_id).first()
+        if not user:
+            logger.error(f"User not found for subscription {subscription_id}")
+            return
+        
+        # Reset delle conversazioni al rinnovo
+        user.conversations_used = 0
+        user.conversations_reset_date = datetime.utcnow()
+        user.messages_used = 0
+        user.messages_reset_date = datetime.utcnow()
+        
+        db.commit()
+        logger.info(f"Reset conversations for user {user.id} on invoice payment")
+        
+    except Exception as e:
+        logger.error(f"Error handling invoice payment: {e}")
+
+async def handle_subscription_updated(event, db: Session):
+    """Gestisce l'aggiornamento di un abbonamento (cambio piano)"""
+    try:
+        subscription = event['data']['object']
+        subscription_id = subscription['id']
+        
+        # Trova l'utente
+        user = db.query(User).filter(User.stripe_subscription_id == subscription_id).first()
+        if not user:
+            logger.error(f"User not found for subscription {subscription_id}")
+            return
+        
+        # Aggiorna i limiti in base al nuovo piano
+        if subscription['items']['data']:
+            price_id = subscription['items']['data'][0]['price']['id']
+            new_limit = get_conversations_limit_by_price_id(price_id)
+            
+            user.conversations_limit = new_limit
+            user.conversations_used = 0  # Reset al cambio piano
+            user.conversations_reset_date = datetime.utcnow()
+            
+            db.commit()
+            logger.info(f"Updated limits for user {user.id}: {new_limit} conversations")
+        
+    except Exception as e:
+        logger.error(f"Error handling subscription update: {e}")
+
+async def handle_subscription_deleted(event, db: Session):
+    """Gestisce la cancellazione di un abbonamento"""
+    try:
+        subscription = event['data']['object']
+        subscription_id = subscription['id']
+        
+        # Trova l'utente
+        user = db.query(User).filter(User.stripe_subscription_id == subscription_id).first()
+        if not user:
+            logger.error(f"User not found for subscription {subscription_id}")
+            return
+        
+        # Aggiorna lo stato
+        user.subscription_status = 'cancelled'
+        user.subscription_end_date = datetime.utcnow()
+        
+        db.commit()
+        logger.info(f"Cancelled subscription for user {user.id}")
+        
+    except Exception as e:
+        logger.error(f"Error handling subscription deletion: {e}")
+
 # --- Subscription/Payment ---
 
 @app.post("/api/subscription/create-checkout")
@@ -1939,17 +2070,21 @@ async def create_checkout_session(current_user: User = Depends(get_current_user)
             else:
                 logger.info(f"No subscriptions found for customer {current_user.stripe_customer_id}")
         
+        # Determina il price_id da usare
+        price_id = current_user.desired_plan or settings.STRIPE_PRICE_ID
+        logger.info(f"Using price_id: {price_id} for user {current_user.id}")
+        
         # Crea Payment Intent per checkout personalizzato
         logger.info(f"Creating payment intent for user {current_user.id}")
         
         payment_intent = stripe.PaymentIntent.create(
-            amount=2900,  # 29€ in centesimi
+            amount=2900,  # 29€ in centesimi (verrà aggiornato dal price_id)
             currency='eur',
             customer=current_user.stripe_customer_id,
             metadata={
                 'user_id': str(current_user.id),
                 'subscription_type': 'hostgpt',
-                'price_id': settings.STRIPE_PRICE_ID
+                'price_id': price_id
             },
             automatic_payment_methods={
                 'enabled': True,
@@ -2025,6 +2160,12 @@ async def confirm_payment(
         current_user.subscription_end_date = datetime.utcfromtimestamp(subscription.current_period_end)
         current_user.messages_used = 0
         current_user.messages_reset_date = datetime.utcnow()
+        
+        # Imposta i limiti in base al piano scelto
+        conversations_limit = get_conversations_limit_by_price_id(price_id)
+        current_user.conversations_limit = conversations_limit
+        current_user.conversations_used = 0
+        current_user.conversations_reset_date = datetime.utcnow()
         
         # Applica il bonus dei messaggi se presente
         if bonus_messages > 0:
@@ -4081,6 +4222,22 @@ async def send_message(
         # Al refresh vogliamo sempre usare la conversazione di benvenuto corrente
         
         if not conversation:
+            # Verifica limiti conversazioni prima di crearne una nuova
+            if owner.subscription_status == 'free_trial':
+                # Verifica limite conversazioni free trial
+                if owner.free_trial_conversations_used >= owner.free_trial_conversations_limit:
+                    raise HTTPException(
+                        status_code=429,
+                        detail="Hai raggiunto il limite di 5 conversazioni del periodo di prova gratuito. Sottoscrivi un abbonamento per continuare."
+                    )
+            else:
+                # Verifica limite conversazioni (i reset sono gestiti dai webhook Stripe)
+                if owner.conversations_used >= owner.conversations_limit:
+                    raise HTTPException(
+                        status_code=429, 
+                        detail=f"Limite mensile di {owner.conversations_limit} conversazioni raggiunto. Il limite si resetta automaticamente al rinnovo dell'abbonamento."
+                    )
+            
             # Crea nuova conversazione
             thread = client.beta.threads.create(extra_headers={"OpenAI-Beta": "assistants=v2"})
             thread_id = thread.id
@@ -4100,6 +4257,13 @@ async def send_message(
             db.refresh(conversation)
             is_new_conversation = True
             logger.info(f"🆕 Creata nuova conversazione per ospite {guest.id if guest else 'anonimo'}")
+            
+            # Incrementa il contatore delle conversazioni
+            if owner.subscription_status == 'free_trial':
+                owner.free_trial_conversations_used += 1
+            else:
+                owner.conversations_used += 1
+            db.commit()
         
         # ============= FINE NUOVA LOGICA =============
         
@@ -4337,6 +4501,22 @@ async def send_voice_message(
                 logger.info(f"🎤🔄 Riprendendo conversazione esistente per ospite {guest.id}")
         
         if not conversation:
+            # Verifica limiti conversazioni prima di crearne una nuova (per messaggi vocali)
+            if owner.subscription_status == 'free_trial':
+                # Verifica limite conversazioni free trial
+                if owner.free_trial_conversations_used >= owner.free_trial_conversations_limit:
+                    raise HTTPException(
+                        status_code=429,
+                        detail="Hai raggiunto il limite di 5 conversazioni del periodo di prova gratuito. Sottoscrivi un abbonamento per continuare."
+                    )
+            else:
+                # Verifica limite conversazioni (i reset sono gestiti dai webhook Stripe)
+                if owner.conversations_used >= owner.conversations_limit:
+                    raise HTTPException(
+                        status_code=429, 
+                        detail=f"Limite mensile di {owner.conversations_limit} conversazioni raggiunto. Il limite si resetta automaticamente al rinnovo dell'abbonamento."
+                    )
+            
             # Crea nuova conversazione
             thread = client.beta.threads.create(extra_headers={"OpenAI-Beta": "assistants=v2"})
             thread_id = thread.id
@@ -4356,6 +4536,13 @@ async def send_voice_message(
             db.refresh(conversation)
             is_new_conversation = True
             logger.info(f"🎤🆕 Creata nuova conversazione per ospite {guest.id if guest else 'anonimo'}")
+            
+            # Incrementa il contatore delle conversazioni
+            if owner.subscription_status == 'free_trial':
+                owner.free_trial_conversations_used += 1
+            else:
+                owner.conversations_used += 1
+            db.commit()
         
         # ============= FINE NUOVA LOGICA =============
         
@@ -5643,9 +5830,12 @@ async def start_free_trial(
         current_user.free_trial_start_date = now
         current_user.free_trial_end_date = free_trial_end
         current_user.free_trial_messages_used = 0
+        current_user.free_trial_conversations_used = 0
         current_user.free_trial_converted = False
         current_user.messages_used = 0
         current_user.messages_reset_date = now
+        current_user.conversations_used = 0
+        current_user.conversations_reset_date = now
         
         db.commit()
         

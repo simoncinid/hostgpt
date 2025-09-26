@@ -1251,33 +1251,52 @@ export const translations: Record<Language, Translations> = {
       }
     },
     pricing: {
-      title: "Una Sola Sottoscrizione",
-      subtitle: "Tutto quello che ti serve per trasformare completamente l'esperienza dei tuoi ospiti",
+      title: "Scegli il Piano Perfetto",
+      subtitle: "4 tier progettati per ogni esigenza, dal singolo host alle grandi strutture",
       plans: [
         {
-          name: "Mensile",
-          price: "€29",
+          name: "Standard",
+          price: "€19",
           period: "/mese",
           features: [
-            "1 Chatbot personalizzato",
-            "1000 messaggi/mese",
-            "Supporto 24/7"
+            "20 conversazioni/mese"
           ],
           freeTrialButton: "🎉 14 Giorni Gratis",
-          ctaButton: "Inizia Ora"
+          ctaButton: "Scegli Standard",
+          priceId: "STANDARD_PRICE_ID"
         },
         {
-          name: "Annuale",
-          price: "€299",
-          period: "/anno",
+          name: "Premium",
+          price: "€39",
+          period: "/mese",
           features: [
-            "1 Chatbot personalizzato",
-            "1000 messaggi/mese",
-            "Supporto 24/7"
+            "50 conversazioni/mese"
           ],
           freeTrialButton: "🎉 14 Giorni Gratis",
-          ctaButton: "Inizia Ora",
-          priceId: "price_1S7fOOCez9NYe6irYMiakvrf"
+          ctaButton: "Scegli Premium",
+          priceId: "PREMIUM_PRICE_ID"
+        },
+        {
+          name: "Pro",
+          price: "€79",
+          period: "/mese",
+          features: [
+            "150 conversazioni/mese"
+          ],
+          freeTrialButton: "🎉 14 Giorni Gratis",
+          ctaButton: "Scegli Pro",
+          priceId: "PRO_PRICE_ID"
+        },
+        {
+          name: "Enterprise",
+          price: "€199",
+          period: "/mese",
+          features: [
+            "500 conversazioni/mese"
+          ],
+          freeTrialButton: "🎉 14 Giorni Gratis",
+          ctaButton: "Scegli Enterprise",
+          priceId: "ENTERPRISE_PRICE_ID"
         }
       ]
     },
@@ -2457,33 +2476,52 @@ export const translations: Record<Language, Translations> = {
       }
     },
     pricing: {
-      title: "One Subscription Only",
-      subtitle: "Everything you need to completely transform your guests' experience",
+      title: "Choose the Perfect Plan",
+      subtitle: "4 tiers designed for every need, from single hosts to large properties",
       plans: [
         {
-          name: "Monthly",
-          price: "€29",
+          name: "Standard",
+          price: "€19",
           period: "/month",
           features: [
-            "1 Custom chatbot",
-            "1000 messages/month",
-            "24/7 Support"
+            "20 conversations/month"
           ],
           freeTrialButton: "🎉 14 Days Free",
-          ctaButton: "Start Now"
+          ctaButton: "Choose Standard",
+          priceId: "STANDARD_PRICE_ID"
         },
         {
-          name: "Annual",
-          price: "€299",
-          period: "/year",
+          name: "Premium",
+          price: "€39",
+          period: "/month",
           features: [
-            "1 Custom chatbot",
-            "1000 messages/month",
-            "24/7 Support"
+            "50 conversations/month"
           ],
           freeTrialButton: "🎉 14 Days Free",
-          ctaButton: "Start Now",
-          priceId: "price_1S7fOOCez9NYe6irYMiakvrf"
+          ctaButton: "Choose Premium",
+          priceId: "PREMIUM_PRICE_ID"
+        },
+        {
+          name: "Pro",
+          price: "€79",
+          period: "/month",
+          features: [
+            "150 conversations/month"
+          ],
+          freeTrialButton: "🎉 14 Days Free",
+          ctaButton: "Choose Pro",
+          priceId: "PRO_PRICE_ID"
+        },
+        {
+          name: "Enterprise",
+          price: "€199",
+          period: "/month",
+          features: [
+            "500 conversations/month"
+          ],
+          freeTrialButton: "🎉 14 Days Free",
+          ctaButton: "Choose Enterprise",
+          priceId: "ENTERPRISE_PRICE_ID"
         }
       ]
     },
