@@ -475,9 +475,9 @@ function CheckoutContent() {
           return
         }
         
-        // Redirect alla checkout session di Stripe
+        // Redirect alla checkout session di Stripe in nuova tab
         if (resp.data.checkout_url) {
-          window.location.href = resp.data.checkout_url
+          window.open(resp.data.checkout_url, '_blank')
         } else if (resp.data.client_secret) {
           // Fallback al checkout personalizzato se non abbiamo checkout_url
           setClientSecret(resp.data.client_secret)

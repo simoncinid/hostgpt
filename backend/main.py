@@ -1989,12 +1989,19 @@ async def create_checkout_session(
             billing_param = request.get('billing', 'monthly')
             
             # Determina il price_id corretto basandosi sui parametri
+            logger.info(f"DEBUG: Original requested_price_id: {requested_price_id}, billing_param: {billing_param}")
+            
             if billing_param == 'annual' and not requested_price_id.startswith('ANNUAL_'):
                 # Se è annuale ma il price_id non ha il prefisso ANNUAL_, aggiungilo
                 requested_price_id = f"ANNUAL_{requested_price_id}"
+                logger.info(f"DEBUG: Added ANNUAL_ prefix: {requested_price_id}")
             elif billing_param == 'monthly' and requested_price_id.startswith('ANNUAL_'):
                 # Se è mensile ma il price_id ha il prefisso ANNUAL_, rimuovilo
                 requested_price_id = requested_price_id.replace('ANNUAL_', '')
+                logger.info(f"DEBUG: Removed ANNUAL_ prefix: {requested_price_id}")
+            
+            logger.info(f"DEBUG: Final requested_price_id: {requested_price_id}")
+            logger.info(f"DEBUG: Available price_id_mapping keys: {list(price_id_mapping.keys())}")
             
             if requested_price_id in price_id_mapping:
                 price_id_to_use = price_id_mapping[requested_price_id]
