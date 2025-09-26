@@ -1886,7 +1886,7 @@ async def handle_checkout_session_completed(event, db: Session):
             created={'gte': int((datetime.utcnow() - timedelta(minutes=5)).timestamp())}
         )
         
-        if subscriptions.data:
+        if hasattr(subscriptions, 'data') and subscriptions.data:
             subscription = subscriptions.data[0]
             
             # Aggiorna l'utente
@@ -1919,7 +1919,11 @@ async def handle_invoice_payment_succeeded(event, db: Session):
     """Gestisce il pagamento di una fattura (rinnovo mensile)"""
     try:
         invoice = event['data']['object']
-        subscription_id = invoice['subscription']
+        subscription_id = invoice.get('subscription')
+        
+        if not subscription_id:
+            logger.error("No subscription ID found in invoice")
+            return
         
         # Trova l'utente
         user = db.query(User).filter(User.stripe_subscription_id == subscription_id).first()
