@@ -5991,54 +5991,8 @@ async def send_free_trial_notifications(
         logger.error(f"Error sending free trial notifications: {e}")
         raise HTTPException(status_code=500, detail="Errore nell'invio delle notifiche free trial")
 
-@app.post("/api/free-trial/expire-trials")
-async def expire_free_trials(
-    background_tasks: BackgroundTasks,
-    db: Session = Depends(get_db)
-):
-    """Scade i free trial scaduti (da chiamare via cron job)"""
-    try:
-        now = datetime.utcnow()
-        
-        # Trova utenti con free trial scaduto
-        expired_users = db.query(User).filter(
-            User.subscription_status == 'free_trial',
-            User.free_trial_end_date < now
-        ).all()
-        
-        expired_count = 0
-        
-        for user in expired_users:
-            # Cambia status a inactive
-            user.subscription_status = 'inactive'
-            db.commit()
-            
-            # Invia email di scadenza se non già inviata
-            email_body = create_free_trial_expired_email_simple(
-                user.full_name or user.email,
-                user.free_trial_messages_used,
-                user.free_trial_messages_limit,
-                user.language or "it"
-            )
-            background_tasks.add_task(
-                send_email,
-                user.email,
-"⏰ Your HostGPT free trial has expired" if (user.language or "it") == "en" else "⏰ Il tuo periodo di prova HostGPT è scaduto",
-                email_body
-            )
-            
-            expired_count += 1
-            logger.info(f"Expired free trial for user {user.id}")
-        
-        return {
-            "status": "success",
-            "expired_count": expired_count,
-            "message": f"Scaduti {expired_count} free trial"
-        }
-        
-    except Exception as e:
-        logger.error(f"Error expiring free trials: {e}")
-        raise HTTPException(status_code=500, detail="Errore nella gestione delle scadenze free trial")
+# RIMOSSO: La gestione della scadenza free trial è ora gestita dal database
+# tramite stored procedure e event scheduler MySQL per migliori performance
 
 @app.delete("/api/auth/delete-profile")
 async def delete_profile(

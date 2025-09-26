@@ -7,6 +7,9 @@
 # Notifiche free trial - ogni giorno alle 10:00
 0 10 * * * curl -X POST http://localhost:8000/api/free-trial/send-notifications
 
+# RIMOSSO: La scadenza free trial è ora gestita dal database MySQL
+# tramite stored procedure e event scheduler per migliori performance
+
 # Backup database (esempio) - ogni giorno alle 2:00
 0 2 * * * /path/to/backup_script.sh
 
