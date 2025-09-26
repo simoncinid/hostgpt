@@ -1889,9 +1889,9 @@ async def handle_checkout_session_completed(event, db: Session):
             created={'gte': int((datetime.utcnow() - timedelta(minutes=5)).timestamp())}
         )
         
-        logger.info(f"Found {len(subscriptions.data) if subscriptions else 0} subscriptions for customer {customer_id}")
+        logger.info(f"Found {len(subscriptions.data) if subscriptions and subscriptions.data else 0} subscriptions for customer {customer_id}")
         
-        if subscriptions and hasattr(subscriptions, 'data') and len(subscriptions.data) > 0:
+        if subscriptions and subscriptions.data and len(subscriptions.data) > 0:
             subscription = subscriptions.data[0]
             logger.info(f"Using subscription {subscription.id} for user {user.id}")
             
