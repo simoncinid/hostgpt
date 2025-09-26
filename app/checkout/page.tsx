@@ -31,6 +31,76 @@ import {
 // Inizializza Stripe
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
 
+// Mappa i price_id ai dettagli del piano
+const getPlanDetails = (priceId: string) => {
+  const plans = {
+    'STANDARD_PRICE_ID': {
+      name: 'Standard',
+      price: '19€',
+      period: '/mese',
+      conversations: '20 conversazioni/mese',
+      features: ['20 conversazioni/mese', 'Chatbot illimitati', 'Supporto email']
+    },
+    'PREMIUM_PRICE_ID': {
+      name: 'Premium', 
+      price: '39€',
+      period: '/mese',
+      conversations: '50 conversazioni/mese',
+      features: ['50 conversazioni/mese', 'Chatbot illimitati', 'Supporto prioritario']
+    },
+    'PRO_PRICE_ID': {
+      name: 'Pro',
+      price: '79€', 
+      period: '/mese',
+      conversations: '150 conversazioni/mese',
+      features: ['150 conversazioni/mese', 'Chatbot illimitati', 'Supporto prioritario']
+    },
+    'ENTERPRISE_PRICE_ID': {
+      name: 'Enterprise',
+      price: '199€',
+      period: '/mese', 
+      conversations: '500 conversazioni/mese',
+      features: ['500 conversazioni/mese', 'Chatbot illimitati', 'Supporto dedicato']
+    },
+    'ANNUAL_STANDARD_PRICE_ID': {
+      name: 'Standard',
+      price: '190€',
+      period: '/anno',
+      conversations: '20 conversazioni/mese',
+      features: ['20 conversazioni/mese', 'Chatbot illimitati', 'Supporto email']
+    },
+    'ANNUAL_PREMIUM_PRICE_ID': {
+      name: 'Premium',
+      price: '390€', 
+      period: '/anno',
+      conversations: '50 conversazioni/mese',
+      features: ['50 conversazioni/mese', 'Chatbot illimitati', 'Supporto prioritario']
+    },
+    'ANNUAL_PRO_PRICE_ID': {
+      name: 'Pro',
+      price: '790€',
+      period: '/anno',
+      conversations: '150 conversazioni/mese', 
+      features: ['150 conversazioni/mese', 'Chatbot illimitati', 'Supporto prioritario']
+    },
+    'ANNUAL_ENTERPRISE_PRICE_ID': {
+      name: 'Enterprise',
+      price: '1990€',
+      period: '/anno',
+      conversations: '500 conversazioni/mese',
+      features: ['500 conversazioni/mese', 'Chatbot illimitati', 'Supporto dedicato']
+    }
+  }
+  
+  return plans[priceId as keyof typeof plans] || {
+    name: 'Standard',
+    price: '19€',
+    period: '/mese', 
+    conversations: '20 conversazioni/mese',
+    features: ['20 conversazioni/mese', 'Chatbot illimitati', 'Supporto email', 'API access']
+  }
+}
+
 // Componente per il form di pagamento
 function CheckoutForm({ clientSecret, onSuccess, t }: { clientSecret: string, onSuccess: (referralCode?: string) => void, t: any }) {
   const stripe = useStripe()
@@ -243,6 +313,7 @@ function CheckoutContent() {
   const [errorMessage, setErrorMessage] = useState<string>('')
   const [clientSecret, setClientSecret] = useState<string>('')
   const [paymentIntentId, setPaymentIntentId] = useState<string>('')
+  const [selectedPlan, setSelectedPlan] = useState<any>(null)
 
   useEffect(() => {
     const cancelled = searchParams.get('subscription') === 'cancelled'
@@ -269,14 +340,22 @@ function CheckoutContent() {
           return
         }
 
-        // Ottieni le informazioni dell'utente per impostare la lingua corretta
+        // Ottieni le informazioni dell'utente per impostare la lingua corretta e il piano selezionato
         try {
           const me = await api.get('/auth/me')
           const userLanguage = me.data?.language
+          const desiredPlan = me.data?.desired_plan
+          
           if (userLanguage && (userLanguage === 'en' || userLanguage === 'it')) {
             // Converti la lingua dal backend al formato del frontend
             const frontendLanguage = userLanguage === 'en' ? 'ENG' : 'IT'
             setLanguage(frontendLanguage)
+          }
+          
+          // Imposta il piano selezionato
+          if (desiredPlan) {
+            const planDetails = getPlanDetails(desiredPlan)
+            setSelectedPlan(planDetails)
           }
         } catch (error) {
           console.warn('Could not fetch user language:', error)
@@ -486,19 +565,19 @@ function CheckoutContent() {
                 
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-600">{t.checkout.monthly.planName}</span>
-                    <span className="font-semibold">29€/mese</span>
+                    <span className="text-gray-600">HostGPT {selectedPlan?.name || 'Standard'}</span>
+                    <span className="font-semibold">{selectedPlan?.price || '19€'}{selectedPlan?.period || '/mese'}</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-gray-600">{t.checkout.monthly.billing}</span>
-                    <span className="text-sm text-gray-500">{t.checkout.monthly.billingType}</span>
+                    <span className="text-sm text-gray-500">{selectedPlan?.period === '/anno' ? 'Annuale' : 'Mensile'}</span>
                   </div>
                 </div>
 
                 <div className="border-t pt-4 mt-4">
                   <div className="flex items-center justify-between text-lg font-semibold">
                     <span>{t.checkout.monthly.total}</span>
-                    <span>29€/mese</span>
+                    <span>{selectedPlan?.price || '19€'}{selectedPlan?.period || '/mese'}</span>
                   </div>
                 </div>
               </div>
@@ -508,7 +587,7 @@ function CheckoutContent() {
                 <div className="space-y-3">
                   <div className="flex items-center space-x-3">
                     <MessageSquare className="w-5 h-5 text-primary" />
-                    <span className="text-gray-700">{t.checkout.monthly.features.messages}</span>
+                    <span className="text-gray-700">{selectedPlan?.conversations || '20 conversazioni/mese'}</span>
                   </div>
                   <div className="flex items-center space-x-3">
                     <Users className="w-5 h-5 text-primary" />

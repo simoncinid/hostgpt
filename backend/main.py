@@ -1720,7 +1720,9 @@ async def get_me(current_user: User = Depends(get_current_user)):
         "referral_code_used": current_user.referral_code.code if current_user.referral_code else None,
         "referral_code_used_at": current_user.referral_code_used_at.isoformat() if current_user.referral_code_used_at else None,
         # Language preference
-        "language": current_user.language or "it"
+        "language": current_user.language or "it",
+        # Desired plan for checkout
+        "desired_plan": current_user.desired_plan
     }
 
 # ============= Referral Code Management =============
