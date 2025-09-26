@@ -387,6 +387,18 @@ function CheckoutContent() {
         let billing = 'monthly'
         
         if (planParam) {
+          // Caso 1: Arrivo da selezione servizi con parametri URL
+          // Costruisci il price_id corretto basandosi sui parametri
+          let priceIdToUse = planParam
+          
+          if (billingParam === 'annual' && !planParam.startsWith('ANNUAL_')) {
+            // Se è annuale ma il price_id non ha il prefisso ANNUAL_, aggiungilo
+            priceIdToUse = `ANNUAL_${planParam}`
+          } else if (billingParam === 'monthly' && planParam.startsWith('ANNUAL_')) {
+            // Se è mensile ma il price_id ha il prefisso ANNUAL_, rimuovilo
+            priceIdToUse = planParam.replace('ANNUAL_', '')
+          }
+          
           // Mappa i price_id ai nomi dei piani
           const planMapping: { [key: string]: string } = {
             'STANDARD_PRICE_ID': 'STANDARD',
@@ -399,14 +411,14 @@ function CheckoutContent() {
             'ANNUAL_ENTERPRISE_PRICE_ID': 'ENTERPRISE'
           }
           
-          planName = planMapping[planParam] || 'STANDARD'
+          planName = planMapping[priceIdToUse] || 'STANDARD'
           
-          // Determina se è annuale basandosi sul price_id
-          if (planParam.startsWith('ANNUAL_')) {
+          // Determina se è annuale basandosi sul price_id finale
+          if (priceIdToUse.startsWith('ANNUAL_')) {
             billing = 'annual'
           }
         } else if (userDesiredPlan) {
-          // Se non ci sono parametri URL, usa il desired_plan dell'utente
+          // Caso 2: Arrivo da email di verifica, usa il desired_plan dell'utente
           const planMapping: { [key: string]: string } = {
             'STANDARD_PRICE_ID': 'STANDARD',
             'PREMIUM_PRICE_ID': 'PREMIUM', 
@@ -435,8 +447,22 @@ function CheckoutContent() {
         setSelectedPlan(planDetails)
 
         // Crea il checkout con il price_id corretto
-        // Se non ci sono parametri URL, passa il desired_plan dell'utente
-        const priceIdToSend = planParam || userDesiredPlan || planDetails.priceId
+        let priceIdToSend = planDetails.priceId
+        
+        if (planParam) {
+          // Caso 1: Arrivo da selezione servizi, usa il price_id costruito
+          let constructedPriceId = planParam
+          if (billingParam === 'annual' && !planParam.startsWith('ANNUAL_')) {
+            constructedPriceId = `ANNUAL_${planParam}`
+          } else if (billingParam === 'monthly' && planParam.startsWith('ANNUAL_')) {
+            constructedPriceId = planParam.replace('ANNUAL_', '')
+          }
+          priceIdToSend = constructedPriceId
+        } else if (userDesiredPlan) {
+          // Caso 2: Arrivo da email di verifica, usa il desired_plan dell'utente
+          priceIdToSend = userDesiredPlan
+        }
+        
         const resp = await subscription.createCheckout(priceIdToSend)
         
         // Controlla se l'abbonamento è stato riattivato

@@ -1971,19 +1971,25 @@ async def create_checkout_session(
         }
         
         if request and 'price_id' in request:
+            # Caso 1: Arrivo da selezione servizi con parametri URL
             requested_price_id = request['price_id']
             if requested_price_id in price_id_mapping:
                 price_id_to_use = price_id_mapping[requested_price_id]
-                logger.info(f"Using custom price_id: {requested_price_id} -> {price_id_to_use}")
+                logger.info(f"Using URL price_id: {requested_price_id} -> {price_id_to_use}")
             else:
                 logger.warning(f"Unknown price_id requested: {requested_price_id}, using default")
         elif current_user.desired_plan:
-            # Se non c'è price_id nella richiesta, usa il desired_plan dell'utente
-            if current_user.desired_plan in price_id_mapping:
-                price_id_to_use = price_id_mapping[current_user.desired_plan]
-                logger.info(f"Using user desired_plan: {current_user.desired_plan} -> {price_id_to_use}")
+            # Caso 2: Arrivo da email di verifica, usa il desired_plan dell'utente
+            desired_plan = current_user.desired_plan
+            
+            # Se il desired_plan è già un price_id valido, usalo direttamente
+            if desired_plan in price_id_mapping:
+                price_id_to_use = price_id_mapping[desired_plan]
+                logger.info(f"Using desired_plan directly: {desired_plan} -> {price_id_to_use}")
             else:
-                logger.warning(f"Unknown desired_plan: {current_user.desired_plan}, using default")
+                # Se non è un price_id valido, prova a costruirlo
+                # Esempio: se desired_plan è "ENTERPRISE_PRICE_ID" e billing è "annual", diventa "ANNUAL_ENTERPRISE_PRICE_ID"
+                logger.warning(f"desired_plan {desired_plan} not found in mapping, using default")
         
         # Validazione configurazione price_id
         if not price_id_to_use or not price_id_to_use.startswith("price_") or "your-monthly" in price_id_to_use:
