@@ -1849,7 +1849,9 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
             raise HTTPException(status_code=400, detail="Invalid signature")
         
         # Gestisci l'evento
-        if event['type'] == 'invoice.payment_succeeded':
+        if event['type'] == 'checkout.session.completed':
+            await handle_checkout_session_completed(event, db)
+        elif event['type'] == 'invoice.payment_succeeded':
             await handle_invoice_payment_succeeded(event, db)
         elif event['type'] == 'customer.subscription.updated':
             await handle_subscription_updated(event, db)
@@ -1861,6 +1863,57 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
     except Exception as e:
         logger.error(f"Webhook error: {e}")
         raise HTTPException(status_code=500, detail="Webhook processing failed")
+
+async def handle_checkout_session_completed(event, db: Session):
+    """Gestisce il completamento di una sessione di checkout"""
+    try:
+        session = event['data']['object']
+        customer_id = session['customer']
+        subscription_type = session.get('metadata', {}).get('subscription_type', 'hostgpt')
+        
+        logger.info(f"Processing checkout.session.completed for customer {customer_id}, type: {subscription_type}")
+        
+        # Trova l'utente
+        user = db.query(User).filter(User.stripe_customer_id == customer_id).first()
+        if not user:
+            logger.error(f"User not found for customer {customer_id}")
+            return
+        
+        # Recupera la sottoscrizione creata
+        subscriptions = stripe.Subscription.list(
+            customer=customer_id,
+            limit=1,
+            created={'gte': int((datetime.utcnow() - timedelta(minutes=5)).timestamp())}
+        )
+        
+        if subscriptions.data:
+            subscription = subscriptions.data[0]
+            
+            # Aggiorna l'utente
+            user.stripe_subscription_id = subscription.id
+            user.subscription_status = 'active'
+            user.subscription_end_date = datetime.utcfromtimestamp(subscription.current_period_end)
+            user.free_trial_converted = True
+            
+            # Determina il piano basandosi sul price_id
+            price_id = subscription.items.data[0].price.id
+            if price_id in [settings.STRIPE_STANDARD_PRICE_ID, settings.STRIPE_ANNUAL_STANDARD_PRICE_ID]:
+                user.subscription_plan = 'standard'
+            elif price_id in [settings.STRIPE_PREMIUM_PRICE_ID, settings.STRIPE_ANNUAL_PREMIUM_PRICE_ID]:
+                user.subscription_plan = 'premium'
+            elif price_id in [settings.STRIPE_PRO_PRICE_ID, settings.STRIPE_ANNUAL_PRO_PRICE_ID]:
+                user.subscription_plan = 'pro'
+            elif price_id in [settings.STRIPE_ENTERPRISE_PRICE_ID, settings.STRIPE_ANNUAL_ENTERPRISE_PRICE_ID]:
+                user.subscription_plan = 'enterprise'
+            
+            db.commit()
+            
+            logger.info(f"User {user.id} subscription activated: {subscription.id}, plan: {user.subscription_plan}")
+        else:
+            logger.error(f"No subscription found for customer {customer_id}")
+            
+    except Exception as e:
+        logger.error(f"Error processing checkout.session.completed: {e}")
 
 async def handle_invoice_payment_succeeded(event, db: Session):
     """Gestisce il pagamento di una fattura (rinnovo mensile)"""
