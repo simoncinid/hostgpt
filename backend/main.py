@@ -771,7 +771,8 @@ def generate_monthly_report_data(user_id: int, db: Session, start_date: datetime
             messages_count = db.query(func.count(Message.id)).join(Conversation).filter(
                 Conversation.chatbot_id == chatbot.id,
                 Message.timestamp >= start_date,
-                Message.timestamp <= end_date
+                Message.timestamp <= end_date,
+                Message.role == "user"
             ).scalar() or 0
             
             avg_messages = messages_count / max(conversations_count, 1)
@@ -3273,7 +3274,8 @@ async def get_chatbots(
         ).scalar()
         
         total_messages = db.query(func.count(Message.id)).join(Conversation).filter(
-            Conversation.chatbot_id == bot.id
+            Conversation.chatbot_id == bot.id,
+            Message.role == "user"
         ).scalar()
         
         result.append({
@@ -3470,7 +3472,8 @@ async def get_chatbot(
     ).scalar()
     
     total_messages = db.query(func.count(Message.id)).join(Conversation).filter(
-        Conversation.chatbot_id == chatbot.id
+        Conversation.chatbot_id == chatbot.id,
+        Message.role == "user"
     ).scalar()
     
     # Crea risposta senza dati binari
@@ -4745,7 +4748,8 @@ async def get_analytics(
     
     messages_30d = db.query(func.count(Message.id)).join(Conversation).filter(
         Conversation.chatbot_id == chatbot_id,
-        Message.timestamp >= thirty_days_ago
+        Message.timestamp >= thirty_days_ago,
+        Message.role == "user"
     ).scalar()
     
     # Statistiche per giorno
