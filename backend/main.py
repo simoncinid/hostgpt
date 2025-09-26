@@ -1958,25 +1958,32 @@ async def create_checkout_session(
         # Determina il price_id da usare
         price_id_to_use = settings.STRIPE_PRICE_ID  # Default
         
+        # Mappa i price_id del frontend ai veri price_id di Stripe
+        price_id_mapping = {
+            'STANDARD_PRICE_ID': settings.STRIPE_PRICE_ID,  # 19€/mese
+            'PREMIUM_PRICE_ID': settings.STRIPE_PREMIUM_PRICE_ID,  # 39€/mese
+            'PRO_PRICE_ID': settings.STRIPE_PRO_PRICE_ID,  # 79€/mese
+            'ENTERPRISE_PRICE_ID': settings.STRIPE_ENTERPRISE_PRICE_ID,  # 199€/mese
+            'ANNUAL_STANDARD_PRICE_ID': settings.STRIPE_ANNUAL_STANDARD_PRICE_ID,  # 190€/anno
+            'ANNUAL_PREMIUM_PRICE_ID': settings.STRIPE_ANNUAL_PREMIUM_PRICE_ID,  # 390€/anno
+            'ANNUAL_PRO_PRICE_ID': settings.STRIPE_ANNUAL_PRO_PRICE_ID,  # 790€/anno
+            'ANNUAL_ENTERPRISE_PRICE_ID': settings.STRIPE_ANNUAL_ENTERPRISE_PRICE_ID,  # 1990€/anno
+        }
+        
         if request and 'price_id' in request:
-            # Mappa i price_id del frontend ai veri price_id di Stripe
-            price_id_mapping = {
-                'STANDARD_PRICE_ID': settings.STRIPE_PRICE_ID,  # 19€/mese
-                'PREMIUM_PRICE_ID': settings.STRIPE_PREMIUM_PRICE_ID,  # 39€/mese
-                'PRO_PRICE_ID': settings.STRIPE_PRO_PRICE_ID,  # 79€/mese
-                'ENTERPRISE_PRICE_ID': settings.STRIPE_ENTERPRISE_PRICE_ID,  # 199€/mese
-                'ANNUAL_STANDARD_PRICE_ID': settings.STRIPE_ANNUAL_STANDARD_PRICE_ID,  # 190€/anno
-                'ANNUAL_PREMIUM_PRICE_ID': settings.STRIPE_ANNUAL_PREMIUM_PRICE_ID,  # 390€/anno
-                'ANNUAL_PRO_PRICE_ID': settings.STRIPE_ANNUAL_PRO_PRICE_ID,  # 790€/anno
-                'ANNUAL_ENTERPRISE_PRICE_ID': settings.STRIPE_ANNUAL_ENTERPRISE_PRICE_ID,  # 1990€/anno
-            }
-            
             requested_price_id = request['price_id']
             if requested_price_id in price_id_mapping:
                 price_id_to_use = price_id_mapping[requested_price_id]
                 logger.info(f"Using custom price_id: {requested_price_id} -> {price_id_to_use}")
             else:
                 logger.warning(f"Unknown price_id requested: {requested_price_id}, using default")
+        elif current_user.desired_plan:
+            # Se non c'è price_id nella richiesta, usa il desired_plan dell'utente
+            if current_user.desired_plan in price_id_mapping:
+                price_id_to_use = price_id_mapping[current_user.desired_plan]
+                logger.info(f"Using user desired_plan: {current_user.desired_plan} -> {price_id_to_use}")
+            else:
+                logger.warning(f"Unknown desired_plan: {current_user.desired_plan}, using default")
         
         # Validazione configurazione price_id
         if not price_id_to_use or not price_id_to_use.startswith("price_") or "your-monthly" in price_id_to_use:

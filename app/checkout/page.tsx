@@ -366,10 +366,12 @@ function CheckoutContent() {
           return
         }
 
-        // Ottieni le informazioni dell'utente per impostare la lingua corretta
+        // Ottieni le informazioni dell'utente per impostare la lingua corretta e il piano
+        let userDesiredPlan = null
         try {
           const me = await api.get('/auth/me')
           const userLanguage = me.data?.language
+          userDesiredPlan = me.data?.desired_plan
           
           if (userLanguage && (userLanguage === 'en' || userLanguage === 'it')) {
             // Converti la lingua dal backend al formato del frontend
@@ -403,6 +405,25 @@ function CheckoutContent() {
           if (planParam.startsWith('ANNUAL_')) {
             billing = 'annual'
           }
+        } else if (userDesiredPlan) {
+          // Se non ci sono parametri URL, usa il desired_plan dell'utente
+          const planMapping: { [key: string]: string } = {
+            'STANDARD_PRICE_ID': 'STANDARD',
+            'PREMIUM_PRICE_ID': 'PREMIUM', 
+            'PRO_PRICE_ID': 'PRO',
+            'ENTERPRISE_PRICE_ID': 'ENTERPRISE',
+            'ANNUAL_STANDARD_PRICE_ID': 'STANDARD',
+            'ANNUAL_PREMIUM_PRICE_ID': 'PREMIUM',
+            'ANNUAL_PRO_PRICE_ID': 'PRO',
+            'ANNUAL_ENTERPRISE_PRICE_ID': 'ENTERPRISE'
+          }
+          
+          planName = planMapping[userDesiredPlan] || 'STANDARD'
+          
+          // Determina se è annuale basandosi sul price_id
+          if (userDesiredPlan.startsWith('ANNUAL_')) {
+            billing = 'annual'
+          }
         }
         
         if (billingParam) {
@@ -414,7 +435,9 @@ function CheckoutContent() {
         setSelectedPlan(planDetails)
 
         // Crea il checkout con il price_id corretto
-        const resp = await subscription.createCheckout(planDetails.priceId)
+        // Se non ci sono parametri URL, passa il desired_plan dell'utente
+        const priceIdToSend = planParam || userDesiredPlan || planDetails.priceId
+        const resp = await subscription.createCheckout(priceIdToSend)
         
         // Controlla se l'abbonamento è stato riattivato
         if (resp.data.status === 'reactivated') {
