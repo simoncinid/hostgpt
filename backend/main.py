@@ -1961,7 +1961,7 @@ async def create_checkout_session(
         # Mappa i price_id del frontend ai veri price_id di Stripe
         # Crea sempre una mappatura completa, indipendentemente dalla configurazione
         price_id_mapping = {
-            'STANDARD_PRICE_ID': settings.STRIPE_PRICE_ID,  # 19€/mese
+            'STANDARD_PRICE_ID': settings.STRIPE_STANDARD_PRICE_ID,  # 19€/mese
             'PREMIUM_PRICE_ID': settings.STRIPE_PREMIUM_PRICE_ID,  # 39€/mese
             'PRO_PRICE_ID': settings.STRIPE_PRO_PRICE_ID,  # 79€/mese
             'ENTERPRISE_PRICE_ID': settings.STRIPE_ENTERPRISE_PRICE_ID,  # 199€/mese
@@ -1972,8 +1972,8 @@ async def create_checkout_session(
         }
         
         # Log per debug - mostra i price_id configurati
-        logger.info(f"Configured price_ids: PREMIUM_PRICE_ID={settings.STRIPE_PREMIUM_PRICE_ID}, ANNUAL_PREMIUM_PRICE_ID={settings.STRIPE_ANNUAL_PREMIUM_PRICE_ID}")
-        logger.info(f"All Stripe price_ids: {settings.STRIPE_PRICE_ID}, {settings.STRIPE_PREMIUM_PRICE_ID}, {settings.STRIPE_PRO_PRICE_ID}, {settings.STRIPE_ENTERPRISE_PRICE_ID}")
+        logger.info(f"Configured price_ids: STANDARD_PRICE_ID={settings.STRIPE_STANDARD_PRICE_ID}, PREMIUM_PRICE_ID={settings.STRIPE_PREMIUM_PRICE_ID}, ANNUAL_PREMIUM_PRICE_ID={settings.STRIPE_ANNUAL_PREMIUM_PRICE_ID}")
+        logger.info(f"All Stripe price_ids: {settings.STRIPE_STANDARD_PRICE_ID}, {settings.STRIPE_PREMIUM_PRICE_ID}, {settings.STRIPE_PRO_PRICE_ID}, {settings.STRIPE_ENTERPRISE_PRICE_ID}")
         logger.info(f"All Annual price_ids: {settings.STRIPE_ANNUAL_STANDARD_PRICE_ID}, {settings.STRIPE_ANNUAL_PREMIUM_PRICE_ID}, {settings.STRIPE_ANNUAL_PRO_PRICE_ID}, {settings.STRIPE_ANNUAL_ENTERPRISE_PRICE_ID}")
         
         # Debug delle variabili d'ambiente
