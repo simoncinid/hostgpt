@@ -1891,7 +1891,7 @@ async def handle_checkout_session_completed(event, db: Session):
         
         logger.info(f"Found {len(subscriptions.data) if subscriptions else 0} subscriptions for customer {customer_id}")
         
-        if subscriptions and len(subscriptions.data) > 0:
+        if subscriptions and hasattr(subscriptions, 'data') and len(subscriptions.data) > 0:
             subscription = subscriptions.data[0]
             logger.info(f"Using subscription {subscription.id} for user {user.id}")
             
@@ -1927,7 +1927,12 @@ async def handle_invoice_payment_succeeded(event, db: Session):
         invoice = event['data']['object']
         subscription_id = invoice.get('subscription')
         
-        logger.info(f"Invoice data: {invoice}")
+        # Se non c'è subscription diretto, controlla nel parent
+        if not subscription_id and 'parent' in invoice:
+            parent = invoice['parent']
+            if parent and parent.get('type') == 'subscription_details':
+                subscription_id = parent.get('subscription_details', {}).get('subscription')
+        
         logger.info(f"Subscription ID from invoice: {subscription_id}")
         
         if not subscription_id:
