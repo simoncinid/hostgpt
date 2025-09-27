@@ -913,7 +913,6 @@ class GuardianService:
             # Controlla se generare un alert
             if analysis_result['risk_score'] >= self.risk_threshold:
                 conversation.guardian_alert_triggered = True
-                logger.warning(f"🚨 ALERT GUARDIAN: Conversazione {conversation.id} ha rischio {analysis_result['risk_score']:.3f}")
             else:
                 # Se il rischio è basso, rimuovi il flag di alert (nel caso di ri-analisi)
                 conversation.guardian_alert_triggered = False
@@ -6114,7 +6113,6 @@ async def analyze_conversation_with_guardian(conversation_id: int, db: Session):
         if analysis_result['risk_score'] >= guardian_service.risk_threshold:
             alert = guardian_service.create_alert(conversation, analysis_result, db)
             guardian_service.send_alert_email(alert, db)
-            logger.warning(f"🚨 ALERT GUARDIAN CREATO: Conversazione {conversation_id}, rischio {analysis_result['risk_score']:.3f}")
         
     except Exception as e:
         logger.error(f"Errore nell'analisi Guardian della conversazione {conversation_id}: {e}")
@@ -8272,11 +8270,9 @@ async def create_welcome_conversation(
 ):
     """Crea una nuova conversazione con messaggio di benvenuto - RICHIEDE SEMPRE IDENTIFICAZIONE"""
     
-    logger.warning(f"🚨 [DEBUG] create-welcome-conversation chiamato con guest_id={guest_id}")
     
     # Se guest_id non è fornito, blocca con errore chiaro
     if not guest_id:
-        logger.error(f"🚨 ERRORE: create-welcome-conversation chiamato SENZA guest_id! Il frontend deve passare il guest_id dopo l'identificazione!")
         raise HTTPException(
             status_code=400, 
             detail="guest_id OBBLIGATORIO - Il frontend deve passare il guest_id dopo l'identificazione"
@@ -8288,9 +8284,8 @@ async def create_welcome_conversation(
         raise HTTPException(status_code=404, detail="Chatbot non trovato")
     
     # Guest_id è SEMPRE richiesto - verifica che l'ospite esista
-        guest = db.query(Guest).filter(Guest.id == guest_id).first()
-        if not guest:
-        logger.error(f"🚨 ERRORE: guest_id={guest_id} non trovato nel database!")
+    guest = db.query(Guest).filter(Guest.id == guest_id).first()
+    if not guest:
         raise HTTPException(status_code=404, detail="Ospite non trovato - identificazione richiesta")
     
     # Ottieni il proprietario del chatbot per verificare i limiti
