@@ -307,12 +307,22 @@ export default function ChatWidgetPage() {
     setPhoneNumber('')
     setSelectedCountryCode('+39')
     
-    // NUOVO: Controlla se c'è un guest_id salvato per questo chatbot
+    // CORREZIONE: Distingui tra prima visita e refresh
     const savedGuestId = localStorage.getItem(`guest_id_${uuid}`)
+    const hasBeenHereBefore = sessionStorage.getItem(`visited_${uuid}`)
+    
     console.log('🔄 [DEBUG] useEffect - savedGuestId dal localStorage:', savedGuestId)
+    console.log('🔄 [DEBUG] useEffect - hasBeenHereBefore:', hasBeenHereBefore)
     console.log('🔄 [DEBUG] useEffect - localStorage key:', `guest_id_${uuid}`)
     
-    loadChatInfo(savedGuestId ? parseInt(savedGuestId) : null)
+    // Crea conversazione solo se NON è la prima visita nella sessione E c'è un guest_id salvato
+    const shouldCreateConversation = hasBeenHereBefore && savedGuestId
+    console.log('🔄 [DEBUG] useEffect - shouldCreateConversation:', shouldCreateConversation)
+    
+    // Segna che abbiamo visitato questa chat in questa sessione
+    sessionStorage.setItem(`visited_${uuid}`, 'true')
+    
+    loadChatInfo(shouldCreateConversation ? parseInt(savedGuestId) : null)
   }, [uuid])
 
   useEffect(() => {
