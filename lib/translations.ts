@@ -1619,7 +1619,7 @@ export const translations: Record<Language, Translations> = {
       welcome: "Benvenuto",
       stats: {
         totalChatbots: "Chatbot Totali",
-        totalMessages: "Messaggi Utente",
+        totalMessages: "Conversazioni Totali",
         activeChatbots: "Attivi",
         totalGuests: "Ospiti Totali",
         totalHistorical: "Totale storico",
@@ -2850,7 +2850,7 @@ export const translations: Record<Language, Translations> = {
       welcome: "Welcome",
       stats: {
         totalChatbots: "Total Chatbots",
-        totalMessages: "User Messages",
+        totalMessages: "Total Conversations",
         activeChatbots: "Active",
         totalGuests: "Total Guests",
         totalHistorical: "Total historical",
