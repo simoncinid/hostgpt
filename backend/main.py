@@ -490,15 +490,13 @@ def find_or_create_guest(phone: Optional[str], email: Optional[str],
 
 def get_latest_guest_conversation(chatbot_id: int, guest_id: int, db: Session) -> Optional[Conversation]:
     """Ottiene l'ultima conversazione di un ospite per un chatbot specifico"""
-    # CORREZIONE IMPORTANTE: Cercare per chatbot_id + guest_identifier (che ora è guest.id)
-    # NON per guest_id direttamente
-    guest_identifier = str(guest_id)
+    # Cerca per chatbot_id + guest_id (campo corretto nel database)
     conversation = db.query(Conversation).filter(
         Conversation.chatbot_id == chatbot_id,
-        Conversation.guest_identifier == guest_identifier
+        Conversation.guest_id == guest_id
     ).order_by(Conversation.started_at.desc()).first()
     
-    logger.info(f"🔍 [DEBUG] get_latest_guest_conversation per chatbot {chatbot_id} e guest_identifier {guest_identifier}: {conversation.id if conversation else 'None'}")
+    logger.info(f"🔍 [DEBUG] get_latest_guest_conversation per chatbot {chatbot_id} e guest_id {guest_id}: {conversation.id if conversation else 'None'}")
     return conversation
 
 def is_guest_first_time(guest: Guest, chatbot_id: int, db: Session) -> bool:
@@ -4520,12 +4518,12 @@ async def send_message(
     try:
         client = get_openai_client()
         
-        # ============= NUOVA LOGICA GESTIONE OSPITI =============
+        # ============= GESTIONE OSPITI - IDENTIFICAZIONE OBBLIGATORIA =============
         
-        # Identifica o crea l'ospite
+        # L'identificazione è sempre obbligatoria
         guest = None
         
-        # CORREZIONE: Prima controlla se è già stato fornito guest_id
+        # Prima controlla se è già stato fornito guest_id
         if message.guest_id:
             guest = db.query(Guest).filter(Guest.id == message.guest_id).first()
             if not guest:
@@ -4547,26 +4545,30 @@ async def send_message(
             except ValueError as e:
                 raise HTTPException(status_code=400, detail=str(e))
         else:
-            logger.info(f"🔍 [DEBUG] Nessun guest identificato - messaggio anonimo")
+            # Non sono permessi messaggi anonimi
+            raise HTTPException(
+                status_code=400, 
+                detail="Identificazione richiesta: fornire guest_id, email o numero di telefono"
+            )
         
-        # ============= LOGICA PULITA E PROFESSIONALE =============
+        # ============= LOGICA SEMPLIFICATA - GUEST SEMPRE PRESENTE =============
         
-        logger.info(f"🔍 [DEBUG] Guest: {guest.id if guest else 'None'}, force_new_conversation: {message.force_new_conversation}")
+        logger.info(f"🔍 [DEBUG] Guest: {guest.id}, force_new_conversation: {message.force_new_conversation}")
         
         # STEP 1: Determina se usare conversazione esistente o crearne una nuova
         conversation = None
         
-        if guest and not message.force_new_conversation:
+        if not message.force_new_conversation:
             # Cerca conversazione esistente per questo guest
             existing_conversation = get_latest_guest_conversation(chatbot.id, guest.id, db)
             if existing_conversation:
                 # CARICA conversazione esistente
                 conversation = carica_conversazione_esistente(existing_conversation, message, chatbot, owner, client, db, request)
             else:
-                # CREA nuova conversazione
+                # CREA nuova conversazione (prima conversazione per questo guest-chatbot)
                 conversation = crea_nuova_conversazione(guest, message, chatbot, owner, client, db, request)
         else:
-            # CREA sempre nuova conversazione (guest anonimo o force_new_conversation=True)
+            # CREA sempre nuova conversazione quando force_new_conversation=True
             conversation = crea_nuova_conversazione(guest, message, chatbot, owner, client, db, request)
         
         # Esegui assistant
@@ -4786,29 +4788,18 @@ async def send_voice_message(
             except ValueError as e:
                 raise HTTPException(status_code=400, detail=str(e))
         else:
-            logger.info(f"🎤🔍 [DEBUG] Nessun guest identificato - messaggio vocale anonimo")
+            # Non sono permessi messaggi vocali anonimi
+            raise HTTPException(
+                status_code=400, 
+                detail="Identificazione richiesta: fornire guest_id, email o numero di telefono"
+            )
         
         # Determina se creare una nuova conversazione o riprendere una esistente
         conversation = None
         is_new_conversation = False
         
-        # Prima cerca una conversazione esistente senza thread_id (conversazione di benvenuto)
-        if not conversation:
-            existing_welcome_conversation = db.query(Conversation).filter(
-                Conversation.chatbot_id == chatbot.id,
-                Conversation.thread_id.is_(None),
-                Conversation.guest_id.is_(None)
-            ).first()
-            
-            if existing_welcome_conversation:
-                # Collega l'ospite alla conversazione di benvenuto esistente
-                existing_welcome_conversation.guest_id = guest.id if guest else None
-                existing_welcome_conversation.guest_name = guest_name or (f"{guest.first_name} {guest.last_name}".strip() if guest else None)
-                conversation = existing_welcome_conversation
-                logger.info(f"🎤🔄 Collegando ospite {guest.id if guest else 'anonimo'} alla conversazione di benvenuto esistente")
-        
-        # Se non c'è conversazione di benvenuto, cerca conversazioni esistenti dell'ospite
-        if not conversation and guest and not force_new_conversation:
+        # Cerca conversazioni esistenti dell'ospite (guest sempre presente)
+        if not force_new_conversation:
             existing_conversation = get_latest_guest_conversation(chatbot.id, guest.id, db)
             if existing_conversation:
                 conversation = existing_conversation
@@ -4838,26 +4829,28 @@ async def send_voice_message(
                         detail=error_message
                     )
             
+            # Guest è sempre richiesto per creare conversazioni
+            if not guest:
+                raise HTTPException(status_code=400, detail="Identificazione guest richiesta per inviare messaggi vocali")
+            
             # Crea nuova conversazione
             thread = client.beta.threads.create(extra_headers={"OpenAI-Beta": "assistants=v2"})
             thread_id = thread.id
             
-            # Crea nuova conversazione nel DB
-            # CORREZIONE: Usa guest.id come identificatore quando disponibile, altrimenti IP
-            guest_identifier = str(guest.id) if guest else request.client.host
+            # Crea nuova conversazione nel DB usando sempre guest_id
             conversation = Conversation(
                 chatbot_id=chatbot.id,
-                guest_id=guest.id if guest else None,
+                guest_id=guest.id,  # Sempre il guest_id vero
                 thread_id=thread_id,
-                guest_name=guest_name or (f"{guest.first_name} {guest.last_name}".strip() if guest else None),
-                guest_identifier=guest_identifier,
+                guest_name=f"{guest.first_name} {guest.last_name}".strip() if (guest.first_name or guest.last_name) else None,
+                guest_identifier=None,  # Non usiamo più questo campo per guest identificati
                 is_forced_new=force_new_conversation
             )
             db.add(conversation)
             db.commit()
             db.refresh(conversation)
             is_new_conversation = True
-            logger.info(f"🎤🆕 Creata nuova conversazione per ospite {guest.id if guest else 'anonimo'}")
+            logger.info(f"🎤🆕 Creata nuova conversazione per ospite {guest.id}")
             
             # Incrementa il contatore delle conversazioni
             if owner.subscription_status == 'free_trial':
@@ -7874,7 +7867,11 @@ def carica_conversazione_esistente(conversation: Conversation, message: MessageC
 
 def crea_nuova_conversazione(guest: Guest, message: MessageCreate, chatbot: Chatbot, owner: User, client, db: Session, request):
     """Crea una nuova conversazione per un guest - SOLO creazione"""
-    logger.info(f"🆕 CREANDO nuova conversazione per guest {guest.id if guest else 'anonimo'}")
+    # Guest è sempre richiesto poiché l'identificazione è obbligatoria
+    if not guest:
+        raise HTTPException(status_code=400, detail="Identificazione guest richiesta per creare una conversazione")
+    
+    logger.info(f"🆕 CREANDO nuova conversazione per guest {guest.id}")
     
     # Verifica limiti conversazioni prima di crearne una nuova
     if owner.subscription_status == 'free_trial':
@@ -7894,14 +7891,13 @@ def crea_nuova_conversazione(guest: Guest, message: MessageCreate, chatbot: Chat
     # Crea nuovo thread OpenAI
     thread = client.beta.threads.create(extra_headers={"OpenAI-Beta": "assistants=v2"})
     
-    # Crea nuova conversazione nel DB
-    guest_identifier = str(guest.id) if guest else request.client.host
+    # Crea nuova conversazione nel DB usando sempre guest_id
     conversation = Conversation(
         chatbot_id=chatbot.id,
-        guest_id=guest.id if guest else None,
+        guest_id=guest.id,  # Sempre il guest_id vero
         thread_id=thread.id,
-        guest_name=message.guest_name or (f"{guest.first_name} {guest.last_name}".strip() if guest else None),
-        guest_identifier=guest_identifier,
+        guest_name=f"{guest.first_name} {guest.last_name}".strip() if (guest.first_name or guest.last_name) else None,
+        guest_identifier=None,  # Non usiamo più questo campo per guest identificati
         is_forced_new=message.force_new_conversation
     )
     db.add(conversation)
@@ -8211,13 +8207,13 @@ async def create_new_conversation(
         thread = client.beta.threads.create(extra_headers={"OpenAI-Beta": "assistants=v2"})
         thread_id = thread.id
         
-        # Crea nuova conversazione nel DB
+        # Crea nuova conversazione nel DB usando sempre guest_id
         conversation = Conversation(
             chatbot_id=chatbot.id,
-            guest_id=guest.id,
+            guest_id=guest.id,  # Sempre il guest_id vero
             thread_id=thread_id,
             guest_name=f"{guest.first_name} {guest.last_name}".strip() if guest.first_name or guest.last_name else None,
-            guest_identifier=str(guest.id),  # CORREZIONE: Usa guest.id come identificatore
+            guest_identifier=None,  # Non usiamo più questo campo per guest identificati
             is_forced_new=True  # Marca come nuova conversazione forzata
         )
         db.add(conversation)
