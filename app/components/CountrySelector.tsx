@@ -133,33 +133,33 @@ export default function CountrySelector({
   }
 
   return (
-    <div className={`relative ${className}`} style={{ minWidth: '160px' }}>
+    <div className={`relative ${className}`}>
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className={`w-full px-3 py-2 text-left border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors ${
+        className={`w-full px-2 sm:px-3 py-2 text-left border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors ${
           isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'
         } ${className}`}
         disabled={loading}
       >
         <div className="flex items-center justify-between">
-          <div className="flex items-center">
+          <div className="flex items-center min-w-0">
             {selectedCountry ? (
               <>
-                <span className="mr-2">{selectedCountry.flag}</span>
-                <span className="text-sm">{selectedCountry.name}</span>
-                <span className="ml-2 text-xs text-gray-500">({selectedCountry.code})</span>
+                <span className="mr-1 sm:mr-2 flex-shrink-0">{selectedCountry.flag}</span>
+                <span className="text-xs sm:text-sm truncate">{selectedCountry.name}</span>
+                <span className="ml-1 sm:ml-2 text-xs text-gray-500 flex-shrink-0">({selectedCountry.code})</span>
               </>
             ) : (
-              <span className="text-gray-500">{placeholder || currentTexts.placeholder}</span>
+              <span className="text-gray-500 text-xs sm:text-sm truncate">{placeholder || currentTexts.placeholder}</span>
             )}
           </div>
-          <ChevronDown className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+          <ChevronDown className={`w-3 h-3 sm:w-4 sm:h-4 transition-transform flex-shrink-0 ${isOpen ? 'rotate-180' : ''}`} />
         </div>
       </button>
 
       {isOpen && (
-        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-hidden" style={{ minWidth: '160px' }}>
+        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-hidden min-w-[160px]">
           <div className="p-2 border-b border-gray-200">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
