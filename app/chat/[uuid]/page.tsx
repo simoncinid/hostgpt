@@ -328,9 +328,9 @@ export default function ChatWidgetPage() {
       if (savedGuestId) {
         console.log('🔄 [DEBUG] Refresh con guest_id salvato:', savedGuestId)
         try {
-          // Crea nuova conversazione con il guest_id salvato
-          const welcomeResponse = await chat.createWelcomeConversation(uuid, savedGuestId)
-          console.log('🔄 [DEBUG] Nuova conversazione creata al refresh:', welcomeResponse.data)
+          // Crea SEMPRE una nuova conversazione con il guest_id salvato (per refresh)
+          const welcomeResponse = await chat.createFreshConversation(uuid, savedGuestId)
+          console.log('🔄 [DEBUG] Nuova conversazione FRESCA creata al refresh:', welcomeResponse.data)
           
           // Salva l'ID della nuova conversazione MA NON caricare i messaggi ancora
           setConversationId(welcomeResponse.data.conversation_id)

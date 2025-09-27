@@ -8263,6 +8263,106 @@ async def reset_conversations_counter_admin(
         logger.error(f"Error resetting conversations counter: {e}")
         raise HTTPException(status_code=500, detail="Errore nel reset del contatore")
 
+@app.post("/api/chat/{uuid}/create-fresh-conversation")
+async def create_fresh_conversation(
+    uuid: str,
+    request: Request,
+    guest_id: Optional[int] = None,
+    db: Session = Depends(get_db)
+):
+    """
+    Crea SEMPRE una nuova conversazione - per refresh della pagina.
+    Non controlla conversazioni esistenti, crea sempre una nuova.
+    """
+    
+    # Se guest_id non è fornito, blocca con errore chiaro
+    if not guest_id:
+        raise HTTPException(
+            status_code=400, 
+            detail="guest_id OBBLIGATORIO - Il frontend deve passare il guest_id dopo l'identificazione"
+        )
+    
+    # Verifica chatbot
+    chatbot = db.query(Chatbot).filter(Chatbot.uuid == uuid).first()
+    if not chatbot or not chatbot.is_active:
+        raise HTTPException(status_code=404, detail="Chatbot non trovato")
+    
+    # Guest_id è SEMPRE richiesto - verifica che l'ospite esista
+    guest = db.query(Guest).filter(Guest.id == guest_id).first()
+    if not guest:
+        raise HTTPException(status_code=404, detail="Ospite non trovato - identificazione richiesta")
+    
+    # Ottieni il proprietario del chatbot per verificare i limiti
+    owner = db.query(User).filter(User.id == chatbot.user_id).first()
+    if not owner:
+        raise HTTPException(status_code=404, detail="Proprietario del chatbot non trovato")
+    
+    # Verifica abbonamento attivo
+    if not is_subscription_active(owner.subscription_status):
+        raise HTTPException(
+            status_code=403, 
+            detail="Il proprietario di questo chatbot non ha un abbonamento attivo. Il servizio è temporaneamente non disponibile."
+        )
+    
+    try:
+        # SEMPRE crea una nuova conversazione - NON controllare conversazioni esistenti
+        logger.info(f"🆕 [DEBUG] Creando NUOVA conversazione per guest {guest_id} - REFRESH")
+        
+        # Crea nuova conversazione nel DB - SEMPRE con guest_id vero
+        conversation = Conversation(
+            chatbot_id=chatbot.id,
+            guest_id=guest.id,  # SEMPRE il guest_id vero (guest è sempre presente)
+            thread_id=None,  # Nessun thread OpenAI ancora
+            guest_name=f"{guest.first_name} {guest.last_name}".strip() if (guest.first_name or guest.last_name) else None,
+            guest_identifier=None,  # NON usiamo più questo campo per guest identificati
+            is_forced_new=True  # È una conversazione forzata dal refresh
+        )
+        db.add(conversation)
+        db.commit()
+        db.refresh(conversation)
+        
+        logger.info(f"🆕 [DEBUG] Nuova conversazione creata con ID: {conversation.id}")
+        
+        # Incrementa il contatore delle conversazioni
+        if owner.subscription_status == 'free_trial':
+            owner.free_trial_conversations_used += 1
+            logger.info(f"🔄 [DEBUG] Incrementato free_trial_conversations_used: {owner.free_trial_conversations_used}")
+        else:
+            owner.conversations_used += 1
+            logger.info(f"🔄 [DEBUG] Incrementato conversations_used: {owner.conversations_used}")
+        db.commit()
+        logger.info(f"🔄 [DEBUG] Dopo commit - conversations_used: {owner.conversations_used}, free_trial_conversations_used: {owner.free_trial_conversations_used}")
+        
+        # Salva il messaggio di benvenuto nel DB come messaggio dell'assistente
+        welcome_message = Message(
+            conversation_id=conversation.id,
+            role="assistant",  # IMPORTANTE: è un messaggio dell'assistente
+            content=chatbot.welcome_message or "Ciao! Sono qui per aiutarti con qualsiasi domanda sulla casa e sulla zona. Come posso esserti utile?",
+            timestamp=func.now()
+        )
+        db.add(welcome_message)
+        db.commit()
+        db.refresh(welcome_message)
+        
+        logger.info(f"🆕 [DEBUG] Messaggio di benvenuto creato con ID: {welcome_message.id}")
+        
+        return {
+            "conversation_id": conversation.id,
+            "thread_id": None,  # Nessun thread OpenAI ancora
+            "guest_id": guest_id,  # Guest specifico se fornito
+            "welcome_message": {
+                "id": welcome_message.id,
+                "content": welcome_message.content,
+                "timestamp": welcome_message.timestamp.isoformat()
+            },
+            "message": "NUOVA conversazione creata con successo per refresh"
+        }
+        
+    except Exception as e:
+        logger.error(f"Error creating fresh conversation: {e}")
+        raise HTTPException(status_code=500, detail="Errore nella creazione della nuova conversazione")
+
+
 @app.post("/api/chat/{uuid}/create-welcome-conversation")
 async def create_welcome_conversation(
     uuid: str,
