@@ -4548,49 +4548,44 @@ async def send_message(
         else:
             logger.info(f"🔍 [DEBUG] Nessun guest identificato - messaggio anonimo")
         
-        # Determina se creare una nuova conversazione o riprendere una esistente
+        # LOGICA SEMPLIFICATA E CHIARA PER GESTIRE LE CONVERSAZIONI
         conversation = None
         thread_id = message.thread_id
         is_new_conversation = False
         
-        # CORREZIONE IMPORTANTE: Se il guest è identificato ma non è stato passato un thread_id,
-        # cerchiamo sempre prima se ha una conversazione esistente, indipendentemente da force_new_conversation
-        # (a meno che non sia esplicitamente richiesta una nuova conversazione)
-        if guest and not thread_id and not message.force_new_conversation:
-            existing_conversation = get_latest_guest_conversation(chatbot.id, guest.id, db)
-            if existing_conversation:
-                conversation = existing_conversation
-                thread_id = existing_conversation.thread_id
-                is_new_conversation = False
-                logger.info(f"🔄 [CORREZIONE] Utilizzando conversazione esistente {existing_conversation.id} per guest {guest.id} (thread_id non fornito dal frontend)")
-        
-        # DEBUG: Log informazioni guest e force_new_conversation
+        # DEBUG: Log informazioni ricevute
         logger.info(f"🔍 [DEBUG] Guest: {guest.id if guest else 'None'}, force_new_conversation: {message.force_new_conversation}")
         logger.info(f"🔍 [DEBUG] Thread_id ricevuto dal frontend: {message.thread_id}")
         logger.info(f"🔍 [DEBUG] Parametri ricevuti - guest_id: {message.guest_id}, phone: {message.phone}, email: {message.email}")
         
-        # Se l'ospite esiste e non abbiamo già trovato una conversazione, cerca la sua ultima conversazione
-        if guest and not message.force_new_conversation and not conversation:
-            # Cerca la conversazione esistente dell'ospite (solo se non l'abbiamo già fatto sopra)
+        # LOGICA PRINCIPALE: Se c'è un guest identificato e non si vuole forzare una nuova conversazione
+        if guest and not message.force_new_conversation:
+            # Cerca SEMPRE la conversazione esistente per questo guest
             existing_conversation = get_latest_guest_conversation(chatbot.id, guest.id, db)
-            logger.info(f"🔍 [DEBUG] Conversazione esistente trovata (seconda ricerca): {existing_conversation.id if existing_conversation else 'None'}")
+            logger.info(f"🔍 [DEBUG] Conversazione esistente trovata: {existing_conversation.id if existing_conversation else 'None'}")
             
             if existing_conversation:
+                # USA LA CONVERSAZIONE ESISTENTE - PUNTO!
                 conversation = existing_conversation
                 thread_id = existing_conversation.thread_id
                 is_new_conversation = False
-                logger.info(f"🔄 Riprendendo conversazione esistente {existing_conversation.id} per ospite {guest.id} con thread_id {thread_id}")
+                logger.info(f"🔄 USANDO conversazione esistente {existing_conversation.id} per guest {guest.id} con thread_id {thread_id}")
             else:
-                logger.info(f"🔍 [DEBUG] Nessuna conversazione esistente trovata per guest {guest.id} e chatbot {chatbot.id}")
+                logger.info(f"🔍 [DEBUG] Nessuna conversazione esistente per guest {guest.id} - ne creerà una nuova")
         elif guest and message.force_new_conversation:
             logger.info(f"🔍 [DEBUG] Guest identificato ma force_new_conversation=True - creerà nuova conversazione")
         elif not guest:
             logger.info(f"🔍 [DEBUG] Nessun guest identificato - cercherà conversazione generica")
         
-        # Se non c'è conversazione esistente dell'ospite
-        if not conversation:
+        # CONTROLLO FINALE: Se abbiamo una conversazione, la usiamo. Se non ce l'abbiamo, ne creiamo una nuova.
+        if conversation:
+            # Se abbiamo una conversazione, NON dovremmo creare una nuova!
+            logger.info(f"✅ [SUCCESS] Conversazione esistente {conversation.id} sarà utilizzata - NON creerà una nuova conversazione")
+        else:
+            # Se non c'è conversazione, dobbiamo crearne una nuova
             logger.info(f"🔍 [DEBUG] Nessuna conversazione trovata, conversation è None")
             logger.info(f"🔍 [DEBUG] MOTIVO: guest={guest.id if guest else 'None'}, thread_id={message.thread_id}, force_new={message.force_new_conversation}")
+            
             # Se l'ospite è identificato, crea una nuova conversazione per lui
             if guest:
                 # Per guest identificato senza conversazioni, crea nuova conversazione
