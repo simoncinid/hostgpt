@@ -8188,6 +8188,10 @@ async def create_new_conversation(
             "thread_id": thread_id,
             "message": "Nuova conversazione creata con successo"
         }
+        
+    except Exception as e:
+        logger.error(f"Error creating new conversation: {e}")
+        raise HTTPException(status_code=500, detail="Errore nella creazione della conversazione")
 
 @app.post("/api/admin/reset-conversations-counter")
 async def reset_conversations_counter_admin(
