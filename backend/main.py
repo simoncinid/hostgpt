@@ -8304,6 +8304,38 @@ async def create_fresh_conversation(
             detail="Il proprietario di questo chatbot non ha un abbonamento attivo. Il servizio è temporaneamente non disponibile."
         )
     
+    # IMPORTANTE: Verifica limiti conversazioni PRIMA di creare la nuova conversazione
+    if owner.subscription_status == 'free_trial':
+        # Verifica se il free trial è ancora attivo
+        if not is_free_trial_active(owner):
+            raise HTTPException(
+                status_code=403,
+                detail="Il periodo di prova gratuito è scaduto. Sottoscrivi un abbonamento per continuare a utilizzare il servizio."
+            )
+        
+        # Verifica limite conversazioni free trial
+        if owner.free_trial_conversations_used >= owner.free_trial_conversations_limit:
+            if (owner.language or 'it') == 'en':
+                error_detail = f"You have reached the limit of 5 conversations for the free trial period. Subscribe to a plan to continue. For assistance contact: {owner.phone}"
+            else:
+                error_detail = f"Hai raggiunto il limite di 5 conversazioni del periodo di prova gratuito. Sottoscrivi un abbonamento per continuare. Per assistenza contatta il numero: {owner.phone}"
+            raise HTTPException(
+                status_code=429,
+                detail=error_detail
+            )
+    else:
+        # Verifica limite conversazioni (i reset sono gestiti dai webhook Stripe)
+        if owner.conversations_used >= owner.conversations_limit:
+            # Messaggio di errore multilingue con numero host
+            if (owner.language or 'it') == 'en':
+                error_message = f"Monthly limit of {owner.conversations_limit} conversations reached. The limit resets automatically on subscription renewal. For assistance contact: {owner.phone}"
+            else:
+                error_message = f"Limite mensile di {owner.conversations_limit} conversazioni raggiunto. Il limite si resetta automaticamente al rinnovo dell'abbonamento. Per assistenza contatta il numero: {owner.phone}"
+            raise HTTPException(
+                status_code=429, 
+                detail=error_message
+            )
+    
     try:
         # SEMPRE crea una nuova conversazione - NON controllare conversazioni esistenti
         logger.info(f"🆕 [DEBUG] Creando NUOVA conversazione per guest {guest_id} - REFRESH")

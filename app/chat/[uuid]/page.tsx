@@ -352,11 +352,20 @@ export default function ChatWidgetPage() {
           
           console.log('🔄 [DEBUG] Conversazione creata, ID salvato, messaggi nascosti per identificazione')
           toast.success(language === 'IT' ? 'Nuova conversazione creata al refresh' : 'New conversation created on refresh')
-        } catch (error) {
+        } catch (error: any) {
           console.error('Errore nel creare conversazione al refresh:', error)
-          // Se fallisce, rimuovi il guest_id salvato e procedi normalmente
-          localStorage.removeItem(`guest_id_${uuid}`)
-          setMessages([])
+          
+          // Gestisci errore limite conversazioni
+          if (error.response?.status === 429) {
+            const errorDetail = error.response?.data?.detail || ''
+            toast.error(errorDetail || (language === 'IT' ? 'Limite conversazioni raggiunto' : 'Conversation limit reached'))
+            // NON rimuovere il guest_id, l'utente può ancora identificarsi per vedere conversazioni esistenti
+            setMessages([])
+          } else {
+            // Altri errori - rimuovi il guest_id salvato e procedi normalmente
+            localStorage.removeItem(`guest_id_${uuid}`)
+            setMessages([])
+          }
         }
       } else {
         // Nessun guest salvato, inizializza normalmente
@@ -760,8 +769,16 @@ export default function ChatWidgetPage() {
             }))
             setMessages(formattedMessages || [])
           }
-        } catch (error) {
+        } catch (error: any) {
           console.error('Errore nel caricamento del messaggio di benvenuto:', error)
+          
+          // Gestisci errore limite conversazioni
+          if (error.response?.status === 429) {
+            const errorDetail = error.response?.data?.detail || ''
+            toast.error(errorDetail || (language === 'IT' ? 'Limite conversazioni raggiunto' : 'Conversation limit reached'))
+            // NON procedere con setShowWelcome(false) - mantieni la schermata di identificazione
+            return
+          }
         }
         
         toast.success(language === 'IT' ? 'Nuova conversazione iniziata' : 'New conversation started')
