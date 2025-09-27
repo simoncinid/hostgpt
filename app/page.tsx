@@ -1538,7 +1538,7 @@ export default function LandingPage() {
                           demoIsDarkMode ? 'bg-gray-700 text-white' : 'bg-gray-100 text-gray-900'
                         }`}>
                           <div className="text-sm">
-                            {demoChatInfo?.welcome_message || currentDemoTexts.welcomeMessage}
+                            {demoChatInfo?.welcome_message || currentDemoTexts.welcomeSubtitle}
                           </div>
                         </div>
                       </div>
