@@ -307,23 +307,57 @@ export default function ChatWidgetPage() {
     setPhoneNumber('')
     setSelectedCountryCode('+39')
     
-    loadChatInfo()
+    // NUOVO: Controlla se c'è un guest_id salvato per questo chatbot
+    const savedGuestId = localStorage.getItem(`guest_id_${uuid}`)
+    
+    loadChatInfo(savedGuestId ? parseInt(savedGuestId) : null)
   }, [uuid])
 
   useEffect(() => {
     scrollToBottom()
   }, [messages])
 
-  const loadChatInfo = async () => {
+  const loadChatInfo = async (savedGuestId?: number | null) => {
     try {
       const response = await chat.getInfo(uuid)
       setChatInfo(response.data)
       
-      // NON creiamo più conversazioni prima dell'identificazione del guest!
-      // La conversazione verrà creata DOPO l'identificazione con il guest_id corretto
+      // NUOVO FLUSSO: Se c'è un guest_id salvato, crea immediatamente una nuova conversazione
+      if (savedGuestId) {
+        console.log('🔄 [DEBUG] Refresh con guest_id salvato:', savedGuestId)
+        try {
+          // Crea nuova conversazione con il guest_id salvato
+          const welcomeResponse = await chat.createWelcomeConversation(uuid, savedGuestId)
+          console.log('🔄 [DEBUG] Nuova conversazione creata al refresh:', welcomeResponse.data)
+          
+          // Salva l'ID della nuova conversazione
+          setConversationId(welcomeResponse.data.conversation_id)
+          setThreadId(null) // Nessun thread ancora
+          
+          // Carica i messaggi della nuova conversazione (dovrebbe esserci solo il benvenuto)
+          const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+          const messagesResponse = await fetch(`${API_URL}/api/chat/${uuid}/conversation/${welcomeResponse.data.conversation_id}/messages`)
+          if (messagesResponse.ok) {
+            const messagesData = await messagesResponse.json()
+            const formattedMessages = messagesData.messages.map((msg: any) => ({
+              ...msg,
+              timestamp: msg.timestamp ? new Date(msg.timestamp) : new Date(),
+              id: msg.id || Date.now() + Math.random(),
+              role: (msg.role || 'assistant') as 'assistant' | 'user',
+              content: msg.content || ''
+            }))
+            setMessages(formattedMessages || [])
+          }
+          
+          toast.success(language === 'IT' ? 'Nuova conversazione creata al refresh' : 'New conversation created on refresh')
+        } catch (error) {
+          console.error('Errore nel creare conversazione al refresh:', error)
+          // Se fallisce, rimuovi il guest_id salvato e procedi normalmente
+          localStorage.removeItem(`guest_id_${uuid}`)
+        }
+      }
       
-      // Inizializza con lista messaggi vuota e mostra la schermata di identificazione
-      setMessages([])
+      // Mostra sempre la schermata di identificazione dopo il refresh
       setShowWelcome(true)
       
     } catch (error: any) {
@@ -635,12 +669,20 @@ export default function ChatWidgetPage() {
         last_name: guestInfo.last_name
       })
       
+      // NUOVO: Salva il guest_id nel localStorage per i refresh futuri
+      localStorage.setItem(`guest_id_${uuid}`, guestInfo.guest_id.toString())
+      
       // Controlla se esiste una conversazione esistente
       console.log('🔍 [DEBUG] guestInfo:', guestInfo)
       console.log('🔍 [DEBUG] has_existing_conversation:', guestInfo.has_existing_conversation)
       console.log('🔍 [DEBUG] existing_conversation_id:', guestInfo.existing_conversation_id)
       
-      if (guestInfo.has_existing_conversation && guestInfo.existing_conversation_id && guestInfo.existing_thread_id) {
+      // Controlla se abbiamo già una conversazione creata al refresh
+      if (conversationId) {
+        // Abbiamo già una conversazione creata al refresh, mantienila
+        console.log('🔄 [DEBUG] Usando conversazione creata al refresh:', conversationId)
+        toast.success(language === 'IT' ? 'Conversazione corrente confermata' : 'Current conversation confirmed')
+      } else if (guestInfo.has_existing_conversation && guestInfo.existing_conversation_id && guestInfo.existing_thread_id) {
         // Riutilizza la conversazione esistente
         setConversationId(guestInfo.existing_conversation_id)
         setThreadId(guestInfo.existing_thread_id)
@@ -728,8 +770,11 @@ export default function ChatWidgetPage() {
     setSelectedCountryCode('+39')
     setShowWelcome(true)
     
-    // SEMPRE crea una nuova conversazione con messaggio di benvenuto
-    await loadChatInfo()
+    // NUOVO: Controlla se c'è un guest_id salvato per creare nuova conversazione
+    const savedGuestId = localStorage.getItem(`guest_id_${uuid}`)
+    
+    // Se c'è un guest salvato, crea una nuova conversazione con quel guest_id
+    await loadChatInfo(savedGuestId ? parseInt(savedGuestId) : null)
     
     toast.success(language === 'IT' ? 'Nuova conversazione creata' : 'New conversation created')
   }
