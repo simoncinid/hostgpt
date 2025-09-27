@@ -1619,7 +1619,7 @@ export const translations: Record<Language, Translations> = {
       welcome: "Benvenuto",
       stats: {
         totalChatbots: "Chatbot Totali",
-        totalMessages: "Conversazioni Totali",
+        totalMessages: "Messaggi totali",
         activeChatbots: "Attivi",
         totalGuests: "Ospiti Totali",
         totalHistorical: "Totale storico",
@@ -1650,7 +1650,7 @@ export const translations: Record<Language, Translations> = {
       },
       moreStructures: {
         title: "Hai più proprietà?",
-        description: "Gestisci hotel, villaggi turistici, B&B, alloggi per studenti o altre strutture ricettive? Ogni account può avere un solo chatbot. Se ti servono più chatbot perché gestisci più strutture, contattami al 3391797616.",
+        description: "Ogni account può avere un solo chatbot. Per più chatbot contattami.",
         whatsappButton: "Scrivimi su WhatsApp"
       },
       qrModal: {
@@ -2850,7 +2850,7 @@ export const translations: Record<Language, Translations> = {
       welcome: "Welcome",
       stats: {
         totalChatbots: "Total Chatbots",
-        totalMessages: "Total Conversations",
+        totalMessages: "Total messages",
         activeChatbots: "Active",
         totalGuests: "Total Guests",
         totalHistorical: "Total historical",
@@ -2881,7 +2881,7 @@ export const translations: Record<Language, Translations> = {
       },
       moreStructures: {
         title: "Managing multiple accommodations?",
-        description: "Do you manage hotels, tourist villages, B&Bs, student housing, or other accommodation facilities? Each account can have only one chatbot. If you need more chatbots because you manage multiple properties, contact me at 3391797616.",
+        description: "Each account can have only one chatbot. For more chatbots contact me.",
         whatsappButton: "Write me on WhatsApp"
       },
       qrModal: {

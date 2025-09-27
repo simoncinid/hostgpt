@@ -309,6 +309,8 @@ export default function ChatWidgetPage() {
     
     // NUOVO: Controlla se c'è un guest_id salvato per questo chatbot
     const savedGuestId = localStorage.getItem(`guest_id_${uuid}`)
+    console.log('🔄 [DEBUG] useEffect - savedGuestId dal localStorage:', savedGuestId)
+    console.log('🔄 [DEBUG] useEffect - localStorage key:', `guest_id_${uuid}`)
     
     loadChatInfo(savedGuestId ? parseInt(savedGuestId) : null)
   }, [uuid])
@@ -330,31 +332,25 @@ export default function ChatWidgetPage() {
           const welcomeResponse = await chat.createWelcomeConversation(uuid, savedGuestId)
           console.log('🔄 [DEBUG] Nuova conversazione creata al refresh:', welcomeResponse.data)
           
-          // Salva l'ID della nuova conversazione
+          // Salva l'ID della nuova conversazione MA NON caricare i messaggi ancora
           setConversationId(welcomeResponse.data.conversation_id)
           setThreadId(null) // Nessun thread ancora
           
-          // Carica i messaggi della nuova conversazione (dovrebbe esserci solo il benvenuto)
-          const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
-          const messagesResponse = await fetch(`${API_URL}/api/chat/${uuid}/conversation/${welcomeResponse.data.conversation_id}/messages`)
-          if (messagesResponse.ok) {
-            const messagesData = await messagesResponse.json()
-            const formattedMessages = messagesData.messages.map((msg: any) => ({
-              ...msg,
-              timestamp: msg.timestamp ? new Date(msg.timestamp) : new Date(),
-              id: msg.id || Date.now() + Math.random(),
-              role: (msg.role || 'assistant') as 'assistant' | 'user',
-              content: msg.content || ''
-            }))
-            setMessages(formattedMessages || [])
-          }
+          // NON caricare i messaggi ora - li caricheremo dopo l'identificazione
+          // Mantieni la lista messaggi vuota per mostrare solo la schermata di identificazione
+          setMessages([])
           
+          console.log('🔄 [DEBUG] Conversazione creata, ID salvato, messaggi nascosti per identificazione')
           toast.success(language === 'IT' ? 'Nuova conversazione creata al refresh' : 'New conversation created on refresh')
         } catch (error) {
           console.error('Errore nel creare conversazione al refresh:', error)
           // Se fallisce, rimuovi il guest_id salvato e procedi normalmente
           localStorage.removeItem(`guest_id_${uuid}`)
+          setMessages([])
         }
+      } else {
+        // Nessun guest salvato, inizializza normalmente
+        setMessages([])
       }
       
       // Mostra sempre la schermata di identificazione dopo il refresh
@@ -670,7 +666,9 @@ export default function ChatWidgetPage() {
       })
       
       // NUOVO: Salva il guest_id nel localStorage per i refresh futuri
+      console.log('💾 [DEBUG] Salvando guest_id nel localStorage:', guestInfo.guest_id, 'key:', `guest_id_${uuid}`)
       localStorage.setItem(`guest_id_${uuid}`, guestInfo.guest_id.toString())
+      console.log('💾 [DEBUG] Verifico salvataggio localStorage:', localStorage.getItem(`guest_id_${uuid}`))
       
       // Controlla se esiste una conversazione esistente
       console.log('🔍 [DEBUG] guestInfo:', guestInfo)
@@ -679,8 +677,29 @@ export default function ChatWidgetPage() {
       
       // Controlla se abbiamo già una conversazione creata al refresh
       if (conversationId) {
-        // Abbiamo già una conversazione creata al refresh, mantienila
+        // Abbiamo già una conversazione creata al refresh, mantienila e carica i messaggi
         console.log('🔄 [DEBUG] Usando conversazione creata al refresh:', conversationId)
+        
+        // Ora carica i messaggi della conversazione creata al refresh
+        try {
+          const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+          const messagesResponse = await fetch(`${API_URL}/api/chat/${uuid}/conversation/${conversationId}/messages`)
+          if (messagesResponse.ok) {
+            const messagesData = await messagesResponse.json()
+            const formattedMessages = messagesData.messages.map((msg: any) => ({
+              ...msg,
+              timestamp: msg.timestamp ? new Date(msg.timestamp) : new Date(),
+              id: msg.id || Date.now() + Math.random(),
+              role: (msg.role || 'assistant') as 'assistant' | 'user',
+              content: msg.content || ''
+            }))
+            setMessages(formattedMessages || [])
+            console.log('🔄 [DEBUG] Messaggi caricati per conversazione refresh:', formattedMessages.length)
+          }
+        } catch (error) {
+          console.error('Errore nel caricamento messaggi conversazione refresh:', error)
+        }
+        
         toast.success(language === 'IT' ? 'Conversazione corrente confermata' : 'Current conversation confirmed')
       } else if (guestInfo.has_existing_conversation && guestInfo.existing_conversation_id && guestInfo.existing_thread_id) {
         // Riutilizza la conversazione esistente
