@@ -215,8 +215,8 @@ export const chat = {
   createNewConversation: (uuid: string, guestId: number) =>
     api.post(`/chat/${uuid}/guest/${guestId}/new-conversation`),
   
-  createWelcomeConversation: (uuid: string) =>
-    api.post(`/chat/${uuid}/create-welcome-conversation`),
+  createWelcomeConversation: (uuid: string, guestId: number) =>
+    api.post(`/chat/${uuid}/create-welcome-conversation?guest_id=${guestId}`),
   
   validatePhone: (phone: string) =>
     api.post('/validate-phone', { phone }),
