@@ -518,6 +518,91 @@ def is_guest_first_time(guest: Guest, chatbot_id: int, db: Session) -> bool:
     existing_conversation = get_latest_guest_conversation(chatbot_id, guest.id, db)
     return existing_conversation is None
 
+def carica_conversazione_esistente(conversation: Conversation, message: MessageCreate, chatbot: Chatbot, owner: User, client, db: Session, request):
+    """Carica e continua una conversazione esistente - SOLO caricamento messaggi"""
+    logger.info(f"✅ CARICANDO conversazione esistente {conversation.id} per guest {conversation.guest_id}")
+    
+    # Se la conversazione non ha thread_id, crealo
+    if not conversation.thread_id:
+        thread = client.beta.threads.create(extra_headers={"OpenAI-Beta": "assistants=v2"})
+        conversation.thread_id = thread.id
+        db.commit()
+        logger.info(f"🆕 Creato thread OpenAI per conversazione esistente: {conversation.thread_id}")
+    
+    # Invia il messaggio a OpenAI
+    client.beta.threads.messages.create(
+        thread_id=conversation.thread_id,
+        role="user",
+        content=message.content,
+        extra_headers={"OpenAI-Beta": "assistants=v2"}
+    )
+    
+    return conversation
+
+def crea_nuova_conversazione(guest: Guest, message: MessageCreate, chatbot: Chatbot, owner: User, client, db: Session, request):
+    """Crea una nuova conversazione per un guest - SOLO creazione"""
+    logger.info(f"🆕 CREANDO nuova conversazione per guest {guest.id if guest else 'anonimo'}")
+    
+    # Verifica limiti conversazioni prima di crearne una nuova
+    if owner.subscription_status == 'free_trial':
+        if owner.free_trial_conversations_used >= owner.free_trial_conversations_limit:
+            raise HTTPException(
+                status_code=429,
+                detail=f"{'You have reached the limit of 5 conversations for the free trial period. Subscribe to a plan to continue. For assistance contact: ' if (owner.language or 'it') == 'en' else 'Hai raggiunto il limite di 5 conversazioni del periodo di prova gratuito. Sottoscrivi un abbonamento per continuare. Per assistenza contatta il numero: '}{owner.phone}"
+            )
+    else:
+        if owner.conversations_used >= owner.conversations_limit:
+            if (owner.language or 'it') == 'en':
+                error_message = f"Monthly limit of {owner.conversations_limit} conversations reached. The limit resets automatically on subscription renewal. For assistance contact: {owner.phone}"
+            else:
+                error_message = f"Limite mensile di {owner.conversations_limit} conversazioni raggiunto. Il limite si resetta automaticamente al rinnovo dell'abbonamento. Per assistenza contatta il numero: {owner.phone}"
+            raise HTTPException(status_code=429, detail=error_message)
+    
+    # Crea nuovo thread OpenAI
+    thread = client.beta.threads.create(extra_headers={"OpenAI-Beta": "assistants=v2"})
+    
+    # Crea nuova conversazione nel DB
+    guest_identifier = str(guest.id) if guest else request.client.host
+    conversation = Conversation(
+        chatbot_id=chatbot.id,
+        guest_id=guest.id if guest else None,
+        thread_id=thread.id,
+        guest_name=message.guest_name or (f"{guest.first_name} {guest.last_name}".strip() if guest else None),
+        guest_identifier=guest_identifier,
+        is_forced_new=message.force_new_conversation
+    )
+    db.add(conversation)
+    db.commit()
+    db.refresh(conversation)
+    
+    # Incrementa contatore conversazioni
+    if owner.subscription_status == 'free_trial':
+        owner.free_trial_conversations_used += 1
+    else:
+        owner.conversations_used += 1
+    db.commit()
+    
+    # Invia messaggio a OpenAI
+    client.beta.threads.messages.create(
+        thread_id=conversation.thread_id,
+        role="user",
+        content=message.content,
+        extra_headers={"OpenAI-Beta": "assistants=v2"}
+    )
+    
+    # Se è una nuova conversazione per un guest identificato, salva messaggio di benvenuto
+    if guest:
+        welcome_message = Message(
+            conversation_id=conversation.id,
+            role="assistant",
+            content=chatbot.welcome_message or "Ciao! Sono qui per aiutarti con qualsiasi domanda sulla casa e sulla zona. Come posso esserti utile?",
+            timestamp=func.now()
+        )
+        db.add(welcome_message)
+        db.commit()
+    
+    return conversation
+
 
 
 # OAuth2 bearer per estrarre il token dall'header Authorization
@@ -4548,147 +4633,29 @@ async def send_message(
         else:
             logger.info(f"🔍 [DEBUG] Nessun guest identificato - messaggio anonimo")
         
-        # LOGICA SEMPLIFICATA E CHIARA PER GESTIRE LE CONVERSAZIONI
-        conversation = None
-        thread_id = message.thread_id
-        is_new_conversation = False
+        # ============= LOGICA PULITA E PROFESSIONALE =============
         
-        # DEBUG: Log informazioni ricevute
         logger.info(f"🔍 [DEBUG] Guest: {guest.id if guest else 'None'}, force_new_conversation: {message.force_new_conversation}")
-        logger.info(f"🔍 [DEBUG] Thread_id ricevuto dal frontend: {message.thread_id}")
-        logger.info(f"🔍 [DEBUG] Parametri ricevuti - guest_id: {message.guest_id}, phone: {message.phone}, email: {message.email}")
         
-        # LOGICA PRINCIPALE: Se c'è un guest identificato e non si vuole forzare una nuova conversazione
+        # STEP 1: Determina se usare conversazione esistente o crearne una nuova
+        conversation = None
+        
         if guest and not message.force_new_conversation:
-            # Cerca SEMPRE la conversazione esistente per questo guest
+            # Cerca conversazione esistente per questo guest
             existing_conversation = get_latest_guest_conversation(chatbot.id, guest.id, db)
-            logger.info(f"🔍 [DEBUG] Conversazione esistente trovata: {existing_conversation.id if existing_conversation else 'None'}")
-            
             if existing_conversation:
-                # USA LA CONVERSAZIONE ESISTENTE - PUNTO!
-                conversation = existing_conversation
-                thread_id = existing_conversation.thread_id
-                is_new_conversation = False
-                logger.info(f"🔄 USANDO conversazione esistente {existing_conversation.id} per guest {guest.id} con thread_id {thread_id}")
+                # CARICA conversazione esistente
+                conversation = carica_conversazione_esistente(existing_conversation, message, chatbot, owner, client, db, request)
             else:
-                logger.info(f"🔍 [DEBUG] Nessuna conversazione esistente per guest {guest.id} - ne creerà una nuova")
-        elif guest and message.force_new_conversation:
-            logger.info(f"🔍 [DEBUG] Guest identificato ma force_new_conversation=True - creerà nuova conversazione")
-        elif not guest:
-            logger.info(f"🔍 [DEBUG] Nessun guest identificato - cercherà conversazione generica")
-        
-        # CONTROLLO FINALE: Se abbiamo una conversazione, la usiamo. Se non ce l'abbiamo, ne creiamo una nuova.
-        if conversation:
-            # Se abbiamo una conversazione, NON dovremmo creare una nuova!
-            logger.info(f"✅ [SUCCESS] Conversazione esistente {conversation.id} sarà utilizzata - NON creerà una nuova conversazione")
+                # CREA nuova conversazione
+                conversation = crea_nuova_conversazione(guest, message, chatbot, owner, client, db, request)
         else:
-            # Se non c'è conversazione, dobbiamo crearne una nuova
-            logger.info(f"🔍 [DEBUG] Nessuna conversazione trovata, conversation è None")
-            logger.info(f"🔍 [DEBUG] MOTIVO: guest={guest.id if guest else 'None'}, thread_id={message.thread_id}, force_new={message.force_new_conversation}")
-            
-            # Se l'ospite è identificato, crea una nuova conversazione per lui
-            if guest:
-                # Per guest identificato senza conversazioni, crea nuova conversazione
-                # Non cerchiamo conversazioni di benvenuto generiche
-                logger.info(f"🆕 Guest {guest.id} identificato ma senza conversazioni, creerà nuova conversazione")
-            else:
-                # Solo se non c'è guest identificato, cerca conversazione di benvenuto generica
-                existing_welcome_conversation = db.query(Conversation).filter(
-                    Conversation.chatbot_id == chatbot.id,
-                    Conversation.thread_id.is_(None),
-                    Conversation.guest_id.is_(None)  # Solo conversazioni generiche
-                ).order_by(Conversation.started_at.desc()).first()
-                
-                if existing_welcome_conversation:
-                    conversation = existing_welcome_conversation
-                    logger.info(f"🔄 Usando conversazione di benvenuto generica")
-        
-        if not conversation:
-            # Verifica limiti conversazioni prima di crearne una nuova
-            if owner.subscription_status == 'free_trial':
-                # Verifica limite conversazioni free trial
-                if owner.free_trial_conversations_used >= owner.free_trial_conversations_limit:
-                    raise HTTPException(
-                        status_code=429,
-                        detail=f"{'You have reached the limit of 5 conversations for the free trial period. Subscribe to a plan to continue. For assistance contact: ' if (owner.language or 'it') == 'en' else 'Hai raggiunto il limite di 5 conversazioni del periodo di prova gratuito. Sottoscrivi un abbonamento per continuare. Per assistenza contatta il numero: '}{owner.phone}"
-                    )
-            else:
-                # Verifica limite conversazioni (i reset sono gestiti dai webhook Stripe)
-                if owner.conversations_used >= owner.conversations_limit:
-                    # Messaggio di errore multilingue con numero host
-                    if (owner.language or 'it') == 'en':
-                        error_message = f"Monthly limit of {owner.conversations_limit} conversations reached. The limit resets automatically on subscription renewal. For assistance contact: {owner.phone}"
-                    else:
-                        error_message = f"Limite mensile di {owner.conversations_limit} conversazioni raggiunto. Il limite si resetta automaticamente al rinnovo dell'abbonamento. Per assistenza contatta il numero: {owner.phone}"
-                    raise HTTPException(
-                        status_code=429, 
-                        detail=error_message
-                    )
-            
-            # Crea nuova conversazione
-            thread = client.beta.threads.create(extra_headers={"OpenAI-Beta": "assistants=v2"})
-            thread_id = thread.id
-            
-            # Crea nuova conversazione nel DB
-            # CORREZIONE: Usa guest.id come identificatore quando disponibile, altrimenti IP
-            guest_identifier = str(guest.id) if guest else request.client.host
-            conversation = Conversation(
-                chatbot_id=chatbot.id,
-                guest_id=guest.id if guest else None,
-                thread_id=thread_id,
-                guest_name=message.guest_name or (f"{guest.first_name} {guest.last_name}".strip() if guest else None),
-                guest_identifier=guest_identifier,
-                is_forced_new=message.force_new_conversation
-            )
-            db.add(conversation)
-            db.commit()
-            db.refresh(conversation)
-            is_new_conversation = True
-            logger.info(f"🆕 Creata nuova conversazione per ospite {guest.id if guest else 'anonimo'}")
-            
-            # Incrementa il contatore delle conversazioni
-            if owner.subscription_status == 'free_trial':
-                owner.free_trial_conversations_used += 1
-                logger.info(f"🔄 [DEBUG] Incrementato free_trial_conversations_used: {owner.free_trial_conversations_used}")
-            else:
-                owner.conversations_used += 1
-                logger.info(f"🔄 [DEBUG] Incrementato conversations_used: {owner.conversations_used}")
-            db.commit()
-            logger.info(f"🔄 [DEBUG] Dopo commit - conversations_used: {owner.conversations_used}, free_trial_conversations_used: {owner.free_trial_conversations_used}")
-            
-            # Se è una nuova conversazione per un guest identificato, salva il messaggio di benvenuto
-            if guest and is_new_conversation:
-                welcome_message = Message(
-                    conversation_id=conversation.id,
-                    role="assistant",
-                    content=chatbot.welcome_message or "Ciao! Sono qui per aiutarti con qualsiasi domanda sulla casa e sulla zona. Come posso esserti utile?",
-                    timestamp=func.now()
-                )
-                db.add(welcome_message)
-                db.commit()
-                logger.info(f"🆕 Salvato messaggio di benvenuto per guest {guest.id}")
-        
-        # ============= FINE NUOVA LOGICA =============
-        
-        # Se la conversazione non ha ancora un thread_id, crealo ora
-        if not conversation.thread_id:
-            thread = client.beta.threads.create(extra_headers={"OpenAI-Beta": "assistants=v2"})
-            thread_id = thread.id
-            conversation.thread_id = thread_id
-            db.commit()
-            logger.info(f"🆕 Creato thread OpenAI per conversazione esistente: {thread_id}")
-        
-        # Invia messaggio a OpenAI
-        client.beta.threads.messages.create(
-            thread_id=thread_id,
-            role="user",
-            content=message.content,
-            extra_headers={"OpenAI-Beta": "assistants=v2"}
-        )
+            # CREA sempre nuova conversazione (guest anonimo o force_new_conversation=True)
+            conversation = crea_nuova_conversazione(guest, message, chatbot, owner, client, db, request)
         
         # Esegui assistant
         run = client.beta.threads.runs.create(
-            thread_id=thread_id,
+            thread_id=conversation.thread_id,
             assistant_id=chatbot.assistant_id,
             extra_headers={"OpenAI-Beta": "assistants=v2"}
         )
@@ -4698,13 +4665,13 @@ async def send_message(
         while run.status in ["queued", "in_progress"]:
             time.sleep(1)
             run = client.beta.threads.runs.retrieve(
-                thread_id=thread_id,
+                thread_id=conversation.thread_id,
                 run_id=run.id,
                 extra_headers={"OpenAI-Beta": "assistants=v2"}
             )
         
         # Ottieni risposta
-        messages = client.beta.threads.messages.list(thread_id=thread_id, extra_headers={"OpenAI-Beta": "assistants=v2"})
+        messages = client.beta.threads.messages.list(thread_id=conversation.thread_id, extra_headers={"OpenAI-Beta": "assistants=v2"})
         assistant_message = messages.data[0].content[0].text.value
         
         # Salva messaggi nel DB
@@ -4725,10 +4692,6 @@ async def send_message(
         conversation.message_count += 2
         chatbot.total_messages += 2
         
-        # Incrementa il contatore conversazioni se è una nuova conversazione
-        if is_new_conversation:
-            chatbot.total_conversations += 1
-        
         # Incrementa il contatore messaggi dell'utente
         if owner.subscription_status == 'free_trial':
             owner.free_trial_messages_used += 1
@@ -4748,7 +4711,7 @@ async def send_message(
             messages_remaining = owner.messages_limit - owner.messages_used
         
         return {
-            "thread_id": thread_id,
+            "thread_id": conversation.thread_id,
             "message": assistant_message,
             "messages_remaining": messages_remaining,
             "id": assistant_msg.id,
