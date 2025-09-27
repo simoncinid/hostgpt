@@ -673,7 +673,10 @@ class ChatbotCreate(BaseModel):
     faq: List[dict]
     welcome_message: str
     reviews_link: Optional[str] = None
-    wifi_qr_code: Optional[str] = None
+    wifi_qr_code_data: Optional[bytes] = None
+    wifi_qr_code_filename: Optional[str] = None
+    wifi_qr_code_content_type: Optional[str] = None
+    has_wifi_qr_code: Optional[bool] = None
 
 class ChatbotUpdate(BaseModel):
     name: Optional[str] = None
@@ -702,7 +705,10 @@ class ChatbotUpdate(BaseModel):
     faq: Optional[List[dict]] = None
     welcome_message: Optional[str] = None
     reviews_link: Optional[str] = None
-    wifi_qr_code: Optional[str] = None
+    wifi_qr_code_data: Optional[bytes] = None
+    wifi_qr_code_filename: Optional[str] = None
+    wifi_qr_code_content_type: Optional[str] = None
+    has_wifi_qr_code: Optional[bool] = None
 
 class ChatbotResponse(BaseModel):
     id: int
@@ -735,7 +741,10 @@ class ChatbotResponse(BaseModel):
     faq: Optional[dict]
     welcome_message: Optional[str]
     reviews_link: Optional[str]
-    wifi_qr_code: Optional[str]
+    wifi_qr_code_data: Optional[bytes]
+    wifi_qr_code_filename: Optional[str]
+    wifi_qr_code_content_type: Optional[str]
+    has_wifi_qr_code: Optional[bool]
     icon_filename: Optional[str]
     icon_content_type: Optional[str]
     total_conversations: int
@@ -3553,7 +3562,6 @@ async def create_chatbot(
     faq: str = Form(default="[]"),
     property_url: str = Form(default=""),
     reviews_link: str = Form(default=""),
-    wifi_qr_code: str = Form(default=""),
     # File upload
     icon: Optional[UploadFile] = File(None)
 ):
@@ -3716,7 +3724,6 @@ async def create_chatbot(
         faq=faq_list,
         welcome_message=welcome_message,
         reviews_link=reviews_link if reviews_link else None,
-        wifi_qr_code=wifi_qr_code if wifi_qr_code else None,
         icon_data=icon_data,
         icon_filename=icon_filename,
         icon_content_type=icon_content_type,
@@ -4037,7 +4044,10 @@ async def get_chatbot(
         "faq": chatbot.faq,
         "welcome_message": chatbot.welcome_message,
         "reviews_link": chatbot.reviews_link,
-        "wifi_qr_code": chatbot.wifi_qr_code,
+        "wifi_qr_code_data": chatbot.wifi_qr_code_data,
+        "wifi_qr_code_filename": chatbot.wifi_qr_code_filename,
+        "wifi_qr_code_content_type": chatbot.wifi_qr_code_content_type,
+        "has_wifi_qr_code": chatbot.has_wifi_qr_code,
         "icon_filename": chatbot.icon_filename,
         "icon_content_type": chatbot.icon_content_type,
         "total_conversations": total_conversations,
