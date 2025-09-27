@@ -4626,7 +4626,8 @@ async def send_message(
         else:
             messages_remaining = owner.messages_limit - owner.messages_used
         
-        return {
+        # Se è una conversazione esistente, includi tutti i messaggi esistenti
+        response = {
             "thread_id": conversation.thread_id,
             "message": assistant_message,
             "messages_remaining": messages_remaining,
@@ -4635,6 +4636,26 @@ async def send_message(
             "content": assistant_message,
             "timestamp": assistant_msg.timestamp.isoformat() if assistant_msg.timestamp else datetime.now().isoformat()
         }
+        
+        # IMPORTANTE: Se è una conversazione esistente, includi i messaggi esistenti
+        if hasattr(conversation, 'is_existing_conversation') and conversation.is_existing_conversation:
+            existing_messages = db.query(Message).filter(
+                Message.conversation_id == conversation.id
+            ).order_by(Message.timestamp.asc()).all()
+            
+            response["existing_messages"] = [
+                {
+                    "id": msg.id,
+                    "role": msg.role,
+                    "content": msg.content,
+                    "timestamp": msg.timestamp.isoformat() if msg.timestamp else None
+                }
+                for msg in existing_messages[:-2]  # Esclude gli ultimi 2 messaggi (appena aggiunti)
+            ]
+            response["is_existing_conversation"] = True
+            logger.info(f"🔄 Inclusi {len(response['existing_messages'])} messaggi esistenti nella risposta")
+        
+        return response
         
     except Exception as e:
         logger.error(f"Error in chat: {e}")
@@ -7845,6 +7866,9 @@ def carica_conversazione_esistente(conversation: Conversation, message: MessageC
         content=message.content,
         extra_headers={"OpenAI-Beta": "assistants=v2"}
     )
+    
+    # IMPORTANTE: Marca che questa è una conversazione esistente
+    conversation.is_existing_conversation = True
     
     return conversation
 
