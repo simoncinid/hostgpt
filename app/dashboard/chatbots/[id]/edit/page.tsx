@@ -36,7 +36,7 @@ interface FormValues {
   faq?: { question: string; answer: string }[]
   welcome_message?: string
   reviews_link?: string
-  wifi_qr_code?: string
+  wifi_qr_code?: File | null
 }
 
 export default function EditChatbotPage() {
@@ -113,7 +113,6 @@ export default function EditChatbotPage() {
           faq: res.data.faq || [],
           welcome_message: res.data.welcome_message,
           reviews_link: res.data.reviews_link,
-          wifi_qr_code: res.data.wifi_qr_code,
 
         })
       } catch (e: any) {
@@ -240,7 +239,6 @@ export default function EditChatbotPage() {
         faq: data.faq,
         welcome_message: data.welcome_message,
         reviews_link: data.reviews_link,
-        wifi_qr_code: data.wifi_qr_code,
         ...(iconUpdated && { has_icon: true })
       }
       updateChatbot(id, validUpdateData)
@@ -795,14 +793,18 @@ export default function EditChatbotPage() {
                 <div>
                   <label className="label">{language === 'IT' ? 'Codice QR WiFi (opzionale)' : 'WiFi QR Code (optional)'}</label>
                   <input
-                    {...register('wifi_qr_code')}
+                    type="file"
+                    accept="image/png,image/jpeg,image/jpg"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0] || null
+                      setValue('wifi_qr_code', file)
+                    }}
                     className="input-field"
-                    placeholder={language === 'IT' ? "Es. WIFI:T:WPA;S:NomeRete;P:Password;;" : "E.g. WIFI:T:WPA;S:NetworkName;P:Password;;"}
                   />
                   <p className="text-sm text-gray-600 mt-1">
-                    {language === 'IT' 
-                      ? 'Codice QR per la connessione automatica al WiFi. Formato: WIFI:T:WPA;S:NomeRete;P:Password;;'
-                      : 'QR code for automatic WiFi connection. Format: WIFI:T:WPA;S:NetworkName;P:Password;;'
+                    {language === 'IT'
+                      ? 'Carica un\'immagine del QR code WiFi (PNG, JPG)'
+                      : 'Upload a WiFi QR code image (PNG, JPG)'
                     }
                   </p>
                 </div>

@@ -1540,16 +1540,23 @@ async def create_openai_assistant(chatbot_data: dict) -> str:
         LINK RECENSIONI:
         {f"- Link recensioni: {chatbot_data['reviews_link']}" if chatbot_data.get('reviews_link') else "- Nessun link recensioni fornito"}
         
+        IMPORTANTE: Se è presente un link recensioni, quando prevedi di usarlo usa SEMPRE quel link specifico nelle tue risposte, non usare mai link generici.
+        
         IMPORTANTE: Rispondi sempre nella stessa lingua in cui l'utente ti scrive. Se l'utente scrive in italiano, rispondi in italiano. Se scrive in inglese, rispondi in inglese. Se scrive in spagnolo, rispondi in spagnolo, e così via per qualsiasi lingua.
         Sii cordiale, utile e fornisci informazioni accurate basate sui dati forniti.
         Se non hai informazioni su qualcosa o non sei sicuro della risposta, devi dire di contattare l'host. Se nei contatti di emergenza c'è un numero dell'host, includilo nel messaggio.
         
         ISTRUZIONI SPECIALI PER LE RECENSIONI:
-        Se è stato fornito un link alle recensioni, durante la conversazione (ogni tanto, non in ogni messaggio) proponi gentilmente all'ospite di lasciare una recensione al link fornito. Usa frasi come:
-        - "Se hai apprezzato il soggiorno, ti sarei grato se potessi lasciare una recensione qui: [link]"
-        - "La tua opinione è importante per me! Se vuoi, puoi lasciare una recensione qui: [link]"
-        - "Sarei felice se potessi condividere la tua esperienza qui: [link]"
-        Non essere insistente, proponi solo occasionalmente e in modo naturale.
+        Se è stato fornito un link alle recensioni, OGNI TANTO durante la conversazione mostra questo URL per lasciare una recensione. 
+        REGOLE OBBLIGATORIE E FONDAMENTALI:
+        1. NON mettere NESSUN carattere accanto all'URL (niente parentesi "(", ")", quadre "[", "]", apici, doppi apici, punti, virgole, due punti, trattini, ecc.)
+        2. Il link deve essere DISTACCATO da ogni altro carattere
+        3. Deve avere a SINISTRA uno spazio " " e a DESTRA un altro spazio " "
+        4. Esempio CORRETTO: " Se hai apprezzato il soggiorno, lascia una recensione qui https://ospiterai.it grazie!"
+        5. Esempio SBAGLIATO: "Lascia una recensione qui:(https://ospiterai.it) grazie!"
+        6. Esempio SBAGLIATO: "Lascia una recensione qui: https://ospiterai.it, grazie!"
+        7. Esempio SBAGLIATO: "Lascia una recensione qui:https://ospiterai.it grazie!"
+        QUESTO È FONDAMENTALE E OBBLIGATORIO. RISPETTA SEMPRE QUESTE REGOLE.
         """
         
         # Crea l'assistant (Assistants v2)
@@ -1613,17 +1620,24 @@ def build_assistant_instructions_from_model(chatbot: Chatbot) -> str:
 
         LINK RECENSIONI:
         {f"- Link recensioni: {chatbot.reviews_link}" if chatbot.reviews_link else "- Nessun link recensioni fornito"}
+        
+        IMPORTANTE: Se è presente un link recensioni, usa SEMPRE quel link specifico nelle tue risposte, non usare mai link generici.
 
         IMPORTANTE: Rispondi sempre nella stessa lingua in cui l'utente ti scrive. Se l'utente scrive in italiano, rispondi in italiano. Se scrive in inglese, rispondi in inglese. Se scrive in spagnolo, rispondi in spagnolo, e così via per qualsiasi lingua.
         Sii cordiale, utile e fornisci informazioni accurate basate sui dati forniti.
         Se non hai informazioni su qualcosa o non sei sicuro della risposta, devi dire di contattare l'host. Se nei contatti di emergenza c'è un numero dell'host, includilo nel messaggio.
         
         ISTRUZIONI SPECIALI PER LE RECENSIONI:
-        Se è stato fornito un link alle recensioni, durante la conversazione (ogni tanto, non in ogni messaggio) proponi gentilmente all'ospite di lasciare una recensione al link fornito. Usa frasi come:
-        - "Se hai apprezzato il soggiorno, ti sarei grato se potessi lasciare una recensione qui: [link]"
-        - "La tua opinione è importante per me! Se vuoi, puoi lasciare una recensione qui: [link]"
-        - "Sarei felice se potessi condividere la tua esperienza qui: [link]"
-        Non essere insistente, proponi solo occasionalmente e in modo naturale.
+        Se è stato fornito un link alle recensioni, OGNI TANTO durante la conversazione mostra questo URL per lasciare una recensione. 
+        REGOLE OBBLIGATORIE E FONDAMENTALI:
+        1. NON mettere NESSUN carattere accanto all'URL (niente parentesi "(", ")", quadre "[", "]", apici, doppi apici, punti, virgole, due punti, trattini, ecc.)
+        2. Il link deve essere DISTACCATO da ogni altro carattere
+        3. Deve avere a SINISTRA uno spazio " " e a DESTRA un altro spazio " "
+        4. Esempio CORRETTO: " Se hai apprezzato il soggiorno, lascia una recensione qui https://ospiterai.it grazie!"
+        5. Esempio SBAGLIATO: "Lascia una recensione qui:(https://ospiterai.it) grazie!"
+        6. Esempio SBAGLIATO: "Lascia una recensione qui: https://ospiterai.it, grazie!"
+        7. Esempio SBAGLIATO: "Lascia una recensione qui:https://ospiterai.it grazie!"
+        QUESTO È FONDAMENTALE E OBBLIGATORIO. RISPETTA SEMPRE QUESTE REGOLE.
         """
     except Exception as e:
         logger.error(f"Error building instructions: {e}")
