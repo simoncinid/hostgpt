@@ -327,9 +327,6 @@ export const guardian = {
   createCheckout: () =>
     api.post('/guardian/create-checkout'),
   
-  confirmPayment: (payment_intent_id: string, data?: any) =>
-    api.post('/guardian/confirm-payment', { payment_intent_id, ...data }),
-  
   cancel: () =>
     api.post('/guardian/cancel'),
   

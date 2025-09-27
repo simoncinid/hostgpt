@@ -175,11 +175,8 @@ function GuardianContent() {
         return
       }
       
-      // Se abbiamo un client_secret, reindirizza al checkout Guardian personalizzato
-      if (response.data.client_secret) {
-        router.push('/checkout/guardian')
-      } else if (response.data.checkout_url) {
-        // Fallback per checkout Stripe tradizionale
+      // Reindirizza a Stripe Checkout
+      if (response.data.checkout_url) {
         window.location.href = response.data.checkout_url
       } else {
         throw new Error('URL di checkout non ricevuto')

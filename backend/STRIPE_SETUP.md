@@ -37,12 +37,14 @@ STRIPE_SECRET_KEY=sk_live_tuachiave
 STRIPE_PUBLISHABLE_KEY=pk_live_tuachiave
 STRIPE_WEBHOOK_SECRET=whsec_tuosecret
 STRIPE_PRICE_ID=price_iddelprezzo29euro
+STRIPE_GUARDIAN_PRICE_ID=price_1S7fDjCez9NYe6irthMTRaXg
 
 # Per TEST usa le chiavi test
 # STRIPE_SECRET_KEY=sk_test_tuachiave
 # STRIPE_PUBLISHABLE_KEY=pk_test_tuachiave
 # STRIPE_WEBHOOK_SECRET=whsec_tuosecrettest
 # STRIPE_PRICE_ID=price_iddelprezzo29eurotest
+# STRIPE_GUARDIAN_PRICE_ID=price_test_guardian_price_id
 ```
 
 ### 4. Verifica Configurazione

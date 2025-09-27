@@ -46,6 +46,9 @@ class Settings(BaseSettings):
     STRIPE_ANNUAL_PRO_PRICE_ID: str = os.getenv("STRIPE_ANNUAL_PRO_PRICE_ID", "price_your-annual-790eur-price-id")  # Pro: 790€/anno
     STRIPE_ANNUAL_ENTERPRISE_PRICE_ID: str = os.getenv("STRIPE_ANNUAL_ENTERPRISE_PRICE_ID", "price_your-annual-1990eur-price-id")  # Enterprise: 1990€/anno
     
+    # Guardian Price ID
+    STRIPE_GUARDIAN_PRICE_ID: str = os.getenv("STRIPE_GUARDIAN_PRICE_ID", "price_1S7fDjCez9NYe6irthMTRaXg")  # Guardian: 9€/mese
+    
     # Printful - Servizio di stampa on-demand
     PRINTFUL_API_KEY: str = os.getenv("PRINTFUL_API_KEY", "your-printful-api-key")
     PRINTFUL_STORE_ID: str = os.getenv("PRINTFUL_STORE_ID", "your-store-id")

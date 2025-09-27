@@ -1953,46 +1953,57 @@ async def handle_checkout_session_completed(event, db: Session):
         logger.info(f"🔍 [DEBUG] - Status: {subscription.status}")
         logger.info(f"🔍 [DEBUG] - Current period end: {subscription.current_period_end}")
         
-        # Aggiorna l'utente
-        logger.info(f"🔍 [DEBUG] Updating user {user.id}")
-        user.stripe_subscription_id = subscription.id
-        user.subscription_status = 'active'
-        user.subscription_end_date = datetime.utcfromtimestamp(subscription.current_period_end)
-        user.free_trial_converted = True
+        # Aggiorna l'utente in base al tipo di sottoscrizione
+        logger.info(f"🔍 [DEBUG] Updating user {user.id} for subscription type: {subscription_type}")
         
-        # DEBUG: Determina il piano in base all'amount dalla sessione
-        # Usa l'amount dalla sessione che è più affidabile
-        try:
-            amount = session.get('amount_total', 0)  # Amount in centesimi dalla sessione
-            logger.info(f"🔍 [DEBUG] Found amount from session: {amount} cents")
+        if subscription_type == 'guardian':
+            # Aggiorna solo i campi Guardian
+            user.guardian_stripe_subscription_id = subscription.id
+            user.guardian_subscription_status = 'active'
+            user.guardian_subscription_end_date = datetime.utcfromtimestamp(subscription.current_period_end)
+            logger.info(f"🔍 [DEBUG] Guardian subscription activated for user {user.id}: {subscription.id}")
+        else:
+            # Aggiorna i campi HostGPT (comportamento esistente)
+            user.stripe_subscription_id = subscription.id
+            user.subscription_status = 'active'
+            user.subscription_end_date = datetime.utcfromtimestamp(subscription.current_period_end)
+            user.free_trial_converted = True
+            logger.info(f"🔍 [DEBUG] HostGPT subscription activated for user {user.id}: {subscription.id}")
+        
+        # DEBUG: Determina il piano in base all'amount dalla sessione (solo per HostGPT)
+        if subscription_type != 'guardian':
+            # Usa l'amount dalla sessione che è più affidabile
+            try:
+                amount = session.get('amount_total', 0)  # Amount in centesimi dalla sessione
+                logger.info(f"🔍 [DEBUG] Found amount from session: {amount} cents")
+                
+                # Determina il piano in base all'amount (in centesimi)
+                if amount == 1:  # 1 centesimo per test
+                    user.conversations_limit = 20
+                    logger.info(f"🔍 [DEBUG] Test amount (1 cent), using STANDARD plan - conversations_limit: 20")
+                elif amount in [1900, 19000]:  # 19€ o 190€
+                    user.conversations_limit = 20
+                    logger.info(f"🔍 [DEBUG] Amount {amount} (19€/190€), using STANDARD plan - conversations_limit: 20")
+                elif amount in [3900, 39000]:  # 39€ o 390€
+                    user.conversations_limit = 50
+                    logger.info(f"🔍 [DEBUG] Amount {amount} (39€/390€), using PREMIUM plan - conversations_limit: 50")
+                elif amount in [7900, 79000]:  # 79€ o 790€
+                    user.conversations_limit = 150
+                    logger.info(f"🔍 [DEBUG] Amount {amount} (79€/790€), using PRO plan - conversations_limit: 150")
+                elif amount in [19900, 199000]:  # 199€ o 1990€
+                    user.conversations_limit = 500
+                    logger.info(f"🔍 [DEBUG] Amount {amount} (199€/1990€), using ENTERPRISE plan - conversations_limit: 500")
+                else:
+                    user.conversations_limit = 20
+                    logger.warning(f"⚠️ [DEBUG] Unknown amount {amount}, using default STANDARD plan - conversations_limit: 20")
+            except Exception as e:
+                logger.error(f"❌ [DEBUG] Error determining plan from session amount: {e}")
+                user.conversations_limit = 20  # Fallback
+                logger.info(f"🔍 [DEBUG] Using fallback STANDARD plan - conversations_limit: 20")
             
-            # Determina il piano in base all'amount (in centesimi)
-            if amount == 1:  # 1 centesimo per test
-                user.conversations_limit = 20
-                logger.info(f"🔍 [DEBUG] Test amount (1 cent), using STANDARD plan - conversations_limit: 20")
-            elif amount in [1900, 19000]:  # 19€ o 190€
-                user.conversations_limit = 20
-                logger.info(f"🔍 [DEBUG] Amount {amount} (19€/190€), using STANDARD plan - conversations_limit: 20")
-            elif amount in [3900, 39000]:  # 39€ o 390€
-                user.conversations_limit = 50
-                logger.info(f"🔍 [DEBUG] Amount {amount} (39€/390€), using PREMIUM plan - conversations_limit: 50")
-            elif amount in [7900, 79000]:  # 79€ o 790€
-                user.conversations_limit = 150
-                logger.info(f"🔍 [DEBUG] Amount {amount} (79€/790€), using PRO plan - conversations_limit: 150")
-            elif amount in [19900, 199000]:  # 199€ o 1990€
-                user.conversations_limit = 500
-                logger.info(f"🔍 [DEBUG] Amount {amount} (199€/1990€), using ENTERPRISE plan - conversations_limit: 500")
-            else:
-                user.conversations_limit = 20
-                logger.warning(f"⚠️ [DEBUG] Unknown amount {amount}, using default STANDARD plan - conversations_limit: 20")
-        except Exception as e:
-            logger.error(f"❌ [DEBUG] Error determining plan from session amount: {e}")
-            user.conversations_limit = 20  # Fallback
-            logger.info(f"🔍 [DEBUG] Using fallback STANDARD plan - conversations_limit: 20")
-        
-        # Reset solo se necessario (primo abbonamento o rinnovo mensile)
-        reset_conversations_counter_if_needed(user, db)
-        user.max_chatbots = 100
+            # Reset solo se necessario (primo abbonamento o rinnovo mensile)
+            reset_conversations_counter_if_needed(user, db)
+            user.max_chatbots = 100
         
         logger.info(f"🔍 [DEBUG] Final user state before commit:")
         logger.info(f"🔍 [DEBUG] - conversations_limit: {user.conversations_limit}")
@@ -2450,71 +2461,6 @@ async def confirm_payment(
         logger.error(f"Error confirming payment: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.post("/api/guardian/confirm-payment")
-async def confirm_guardian_payment(
-    request: ConfirmPaymentRequest,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    payment_intent_id = request.payment_intent_id
-    """Conferma il pagamento Guardian e crea la sottoscrizione"""
-    try:
-        logger.info(f"Confirming Guardian payment for user {current_user.id}, payment_intent_id: {payment_intent_id}")
-        
-        # Recupera il Payment Intent
-        payment_intent = stripe.PaymentIntent.retrieve(payment_intent_id)
-        
-        if payment_intent.status != 'succeeded':
-            raise HTTPException(status_code=400, detail="Il pagamento non è stato completato con successo")
-        
-        # Verifica che il Payment Intent appartenga all'utente
-        if payment_intent.customer != current_user.stripe_customer_id:
-            raise HTTPException(status_code=400, detail="Payment Intent non valido")
-        
-        # Crea la sottoscrizione usando il price_id dal metadata
-        price_id = payment_intent.metadata.get('price_id')
-        if not price_id:
-            raise HTTPException(status_code=400, detail="Price ID non trovato nel Payment Intent")
-        
-        subscription = stripe.Subscription.create(
-            customer=current_user.stripe_customer_id,
-            items=[{'price': price_id}],
-            payment_behavior='default_incomplete',
-            payment_settings={'save_default_payment_method': 'on_subscription'},
-            expand=['latest_invoice.payment_intent'],
-        )
-        
-        # Aggiorna il database
-        current_user.guardian_stripe_subscription_id = subscription.id
-        current_user.guardian_subscription_status = 'active'
-        current_user.guardian_subscription_end_date = datetime.utcfromtimestamp(subscription.current_period_end)
-        db.commit()
-        
-        logger.info(f"Guardian subscription created successfully for user {current_user.id}: {subscription.id}")
-        
-        # Invia email di conferma abbonamento Guardian
-        try:
-            email_body = create_guardian_subscription_confirmation_email_simple(current_user.full_name or current_user.email, current_user.language or "it")
-            background_tasks = BackgroundTasks()
-            background_tasks.add_task(
-                send_email, 
-                current_user.email, 
-    "🛡️ Guardian Subscription activated successfully!" if (current_user.language or "it") == "en" else "🛡️ Abbonamento Guardian attivato con successo!", 
-                email_body
-            )
-            logger.info(f"Guardian subscription confirmation email sent to {current_user.email}")
-        except Exception as e:
-            logger.error(f"Failed to send Guardian subscription confirmation email: {e}")
-        
-        return {
-            "status": "success",
-            "subscription_id": subscription.id,
-            "message": "Abbonamento Guardian attivato con successo"
-        }
-        
-    except Exception as e:
-        logger.error(f"Error confirming Guardian payment: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/subscription/confirm-combined-payment")
 async def confirm_combined_payment(
@@ -2714,7 +2660,7 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
                             price_id = sub.items.data[0].price.id
                             if price_id == settings.STRIPE_PRICE_ID or price_id == settings.STRIPE_ANNUAL_PRICE_ID:
                                 hostgpt_subscription = sub
-                            elif price_id == "price_1S7fDjCez9NYe6irthMTRaXg":
+                            elif price_id == settings.STRIPE_GUARDIAN_PRICE_ID:
                                 guardian_subscription = sub
                     
                     # Aggiorna HostGPT subscription
@@ -5204,30 +5150,32 @@ async def create_guardian_checkout_session(current_user: User = Depends(get_curr
             current_user.stripe_customer_id = customer.id
             db.commit()
         
-        # Crea Payment Intent per checkout personalizzato Guardian
-        logger.info(f"Creating Guardian payment intent for user {current_user.id}")
+        # Crea Checkout Session per Guardian - 9€/mese
+        logger.info(f"Creating Guardian checkout session for user {current_user.id}")
         
         # Price ID per Guardian - 9€/mese
-        guardian_price_id = "price_1S7fDjCez9NYe6irthMTRaXg"
+        guardian_price_id = settings.STRIPE_GUARDIAN_PRICE_ID
         
-        payment_intent = stripe.PaymentIntent.create(
-            amount=900,  # 9€ in centesimi
-            currency='eur',
+        checkout_session = stripe.checkout.Session.create(
             customer=current_user.stripe_customer_id,
+            payment_method_types=['card'],
+            line_items=[{
+                'price': guardian_price_id,
+                'quantity': 1,
+            }],
+            mode='subscription',
+            success_url=f"{settings.FRONTEND_URL}/dashboard/guardian?subscription=success&session_id={{CHECKOUT_SESSION_ID}}",
+            cancel_url=f"{settings.FRONTEND_URL}/dashboard/guardian?subscription=cancelled",
             metadata={
                 'user_id': str(current_user.id),
                 'subscription_type': 'guardian',
-                'price_id': guardian_price_id
-            },
-            automatic_payment_methods={
-                'enabled': True,
-            },
+            }
         )
         
-        logger.info(f"Guardian payment intent created successfully: {payment_intent.id}")
+        logger.info(f"Guardian checkout session created successfully: {checkout_session.id}")
         return {
-            "client_secret": payment_intent.client_secret,
-            "payment_intent_id": payment_intent.id
+            "checkout_url": checkout_session.url,
+            "session_id": checkout_session.id
         }
         
     except Exception as e:
@@ -5250,7 +5198,7 @@ async def create_combined_checkout_session(current_user: User, db: Session):
         
         # Price IDs per HostGPT e Guardian
         hostgpt_price_id = settings.STRIPE_PRICE_ID  # 19€/mese
-        guardian_price_id = "price_1S7fDjCez9NYe6irthMTRaXg"  # 9€/mese
+        guardian_price_id = settings.STRIPE_GUARDIAN_PRICE_ID  # 9€/mese
         
         # Crea sessione checkout con entrambi i prodotti
         checkout_session = stripe.checkout.Session.create(
@@ -5353,7 +5301,7 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
                         price_id = sub.items.data[0].price.id
                         if price_id == settings.STRIPE_PRICE_ID or price_id == settings.STRIPE_ANNUAL_PRICE_ID:
                             hostgpt_subscription = sub
-                        elif price_id == "price_1S7fDjCez9NYe6irthMTRaXg":
+                        elif price_id == settings.STRIPE_GUARDIAN_PRICE_ID:
                             guardian_subscription = sub
                 
                 # Aggiorna HostGPT subscription

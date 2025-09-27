@@ -55,6 +55,7 @@ STRIPE_SECRET_KEY=sk_live_xxxxx
 STRIPE_PUBLISHABLE_KEY=pk_live_xxxxx
 STRIPE_WEBHOOK_SECRET=whsec_xxxxx
 STRIPE_PRICE_ID=price_xxxxx  # DEVE essere il price ID per 29€/mese!
+STRIPE_GUARDIAN_PRICE_ID=price_1S7fDjCez9NYe6irthMTRaXg  # Guardian: 9€/mese
 ```
 
 ### 5. Riavvia il Backend
