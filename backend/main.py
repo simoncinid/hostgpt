@@ -79,6 +79,33 @@ def get_conversations_limit_by_price_id(price_id: str) -> int:
     # Se non trovato, usa il limite di default (Standard)
     return price_limits.get(price_id, 20)
 
+def reset_conversations_counter_if_needed(user: User, db: Session) -> bool:
+    """
+    Resetta il contatore delle conversazioni solo se necessario:
+    - Se è il primo abbonamento (conversations_reset_date è None)
+    - Se è passato almeno un mese dall'ultimo reset
+    - Se è un cambio di piano significativo
+    """
+    now = datetime.utcnow()
+    
+    # Reset se è il primo abbonamento
+    if not user.conversations_reset_date:
+        user.conversations_used = 0
+        user.conversations_reset_date = now
+        logger.info(f"🔄 [DEBUG] Reset conversations_used per primo abbonamento: {user.conversations_used}")
+        return True
+    
+    # Reset se è passato almeno un mese
+    if (now - user.conversations_reset_date).days >= 30:
+        user.conversations_used = 0
+        user.conversations_reset_date = now
+        logger.info(f"🔄 [DEBUG] Reset conversations_used per rinnovo mensile: {user.conversations_used}")
+        return True
+    
+    # Non resettare in altri casi
+    logger.info(f"🔄 [DEBUG] Mantenuto conversations_used esistente: {user.conversations_used}")
+    return False
+
 async def extract_property_content(url: str) -> str:
     """
     Estrae il contenuto di una pagina di proprietà usando Playwright async con fallback a requests.
@@ -477,7 +504,14 @@ def is_guest_first_time(guest: Guest, chatbot_id: int, db: Session) -> bool:
         ChatbotGuest.guest_id == guest.id
     ).first()
     
-    return chatbot_guest is None
+    # Se non c'è associazione, è sicuramente la prima volta
+    if chatbot_guest is None:
+        return True
+    
+    # Se c'è associazione, controlla se ha conversazioni
+    # Se ha conversazioni, non è la prima volta
+    existing_conversation = get_latest_guest_conversation(chatbot_id, guest.id, db)
+    return existing_conversation is None
 
 # OAuth2 bearer per estrarre il token dall'header Authorization
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
@@ -1941,11 +1975,8 @@ async def handle_checkout_session_completed(event, db: Session):
             user.conversations_limit = 20  # Fallback
             logger.info(f"🔍 [DEBUG] Using fallback STANDARD plan - conversations_limit: 20")
         
-        # Reset dei contatori solo se è un nuovo abbonamento o rinnovo
-        # Non resettare ad ogni webhook per evitare di perdere il conteggio
-        if not user.conversations_reset_date or (datetime.utcnow() - user.conversations_reset_date).days >= 30:
-            user.conversations_used = 0
-            user.conversations_reset_date = datetime.utcnow()
+        # Reset solo se necessario (primo abbonamento o rinnovo mensile)
+        reset_conversations_counter_if_needed(user, db)
         user.max_chatbots = 100
         
         logger.info(f"🔍 [DEBUG] Final user state before commit:")
@@ -1986,10 +2017,8 @@ async def handle_invoice_payment_succeeded(event, db: Session):
             logger.error(f"User not found for subscription {subscription_id}")
             return
         
-        # Reset delle conversazioni al rinnovo solo se è passato almeno un mese
-        if not user.conversations_reset_date or (datetime.utcnow() - user.conversations_reset_date).days >= 30:
-            user.conversations_used = 0
-            user.conversations_reset_date = datetime.utcnow()
+        # NON resettare conversations_used automaticamente - preserva il conteggio
+        # Solo resetta i messaggi se necessario
         if not user.messages_reset_date or (datetime.utcnow() - user.messages_reset_date).days >= 30:
             user.messages_used = 0
             user.messages_reset_date = datetime.utcnow()
@@ -2020,12 +2049,8 @@ async def handle_subscription_updated(event, db: Session):
             price_id = subscription['items']['data'][0]['price']['id']
             new_limit = get_conversations_limit_by_price_id(price_id)
             
-            # Reset al cambio piano solo se il nuovo limite è diverso dal precedente
-            old_limit = user.conversations_limit
+            # Aggiorna solo il limite, NON resettare il conteggio
             user.conversations_limit = new_limit
-            if old_limit != new_limit:
-                user.conversations_used = 0
-                user.conversations_reset_date = datetime.utcnow()
             
             # Assicura che il limite di chatbot sia sempre 100 per abbonamenti attivi
             user.max_chatbots = 100
@@ -2366,10 +2391,8 @@ async def confirm_payment(
         # Imposta i limiti in base al piano scelto
         conversations_limit = get_conversations_limit_by_price_id(price_id)
         current_user.conversations_limit = conversations_limit
-        # Reset solo se è un nuovo abbonamento (non se è un rinnovo)
-        if not current_user.conversations_reset_date:
-            current_user.conversations_used = 0
-            current_user.conversations_reset_date = datetime.utcnow()
+        # Reset solo se necessario (primo abbonamento o rinnovo mensile)
+        reset_conversations_counter_if_needed(current_user, db)
         
         # Imposta il limite di chatbot a 100 per tutti gli abbonamenti
         current_user.max_chatbots = 100
@@ -2937,11 +2960,8 @@ async def confirm_subscription(
                     current_user.conversations_limit = 20  # Fallback
                     logger.info(f"🔍 [DEBUG] Using fallback STANDARD plan - conversations_limit: 20")
                 
-                # Reset dei contatori solo se è un nuovo abbonamento o rinnovo
-                # Non resettare ad ogni webhook per evitare di perdere il conteggio
-                if not current_user.conversations_reset_date or (datetime.utcnow() - current_user.conversations_reset_date).days >= 30:
-                    current_user.conversations_used = 0
-                    current_user.conversations_reset_date = datetime.utcnow()
+                # Reset solo se necessario (primo abbonamento o rinnovo mensile)
+                reset_conversations_counter_if_needed(current_user, db)
                 current_user.max_chatbots = 100
                 
                 logger.info(f"🔍 [DEBUG] Final user state before commit:")
@@ -8168,10 +8188,29 @@ async def create_new_conversation(
             "thread_id": thread_id,
             "message": "Nuova conversazione creata con successo"
         }
+
+@app.post("/api/admin/reset-conversations-counter")
+async def reset_conversations_counter_admin(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Endpoint di amministrazione per resettare manualmente il contatore delle conversazioni"""
+    try:
+        # Reset forzato del contatore
+        current_user.conversations_used = 0
+        current_user.conversations_reset_date = datetime.utcnow()
+        db.commit()
         
+        logger.info(f"🔄 [ADMIN] Reset manuale conversations_used per utente {current_user.id}")
+        
+        return {
+            "message": "Contatore delle conversazioni resettato con successo",
+            "conversations_used": current_user.conversations_used,
+            "conversations_limit": current_user.conversations_limit
+        }
     except Exception as e:
-        logger.error(f"Error creating new conversation: {e}")
-        raise HTTPException(status_code=500, detail="Errore nella creazione della conversazione")
+        logger.error(f"Error resetting conversations counter: {e}")
+        raise HTTPException(status_code=500, detail="Errore nel reset del contatore")
 
 @app.post("/api/chat/{uuid}/create-welcome-conversation")
 async def create_welcome_conversation(
