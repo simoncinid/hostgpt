@@ -94,6 +94,11 @@ export default function LandingPage() {
 
   // Controlla se il chatbot demo ha un'icona e ottieni le info
   useEffect(() => {
+    // Reset della demo ad ogni caricamento
+    setDemoMessages([])
+    setDemoThreadId(null)
+    setDemoInput('')
+    
     chat.getDemoInfo()
       .then(response => {
         setDemoHasIcon(response.data.has_icon)
@@ -125,7 +130,7 @@ export default function LandingPage() {
           timestamp: new Date()
         }])
       })
-  }, [])
+  }, [t.demo.welcomeSubtitle])
 
   const features = t.features.items.map((feature: any, index: number) => ({
     icon: [
@@ -371,6 +376,25 @@ export default function LandingPage() {
     setDemoMessages([])
     setDemoThreadId(null)
     setDemoInput('')
+    
+    // Aggiungi di nuovo il messaggio di benvenuto
+    setTimeout(() => {
+      if (demoChatInfo?.welcome_message) {
+        setDemoMessages([{
+          id: 'welcome-new',
+          role: 'assistant',
+          content: demoChatInfo.welcome_message,
+          timestamp: new Date()
+        }])
+      } else {
+        setDemoMessages([{
+          id: 'welcome-new-fallback',
+          role: 'assistant',
+          content: t.demo.welcomeSubtitle,
+          timestamp: new Date()
+        }])
+      }
+    }, 100)
   }
 
   const downloadDemoPropertyPDF = async () => {
