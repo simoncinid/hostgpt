@@ -229,8 +229,8 @@ function DashboardContent() {
               <span className="text-sm md:text-3xl font-bold">{totalStats.totalConversations}</span>
             </div>
             <p className="text-gray-600 text-xs md:text-base">
-              <span className="md:hidden">{t.dashboard.stats.totalMessages}</span>
-              <span className="hidden md:inline">{t.dashboard.stats.totalMessages}</span>
+              <span className="md:hidden">{t.dashboard.stats.totalConversations}</span>
+              <span className="hidden md:inline">{t.dashboard.stats.totalConversations}</span>
             </p>
             <p className="text-xs md:text-sm text-gray-500 mt-1">
               <span className="hidden md:inline">{t.dashboard.stats.totalHistorical}</span>
@@ -467,9 +467,9 @@ function DashboardContent() {
         <div className="bg-gradient-to-r from-primary to-accent rounded-xl p-4 md:p-6 mb-8 text-white">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-lg font-semibold mb-1">{t.dashboard.moreStructures.title}</h3>
+              <h3 className="text-lg font-semibold mb-1">{t.dashboard.support.title}</h3>
               <p className="text-sm text-white/90">
-                {t.dashboard.moreStructures.description}
+                {t.dashboard.support.description}
               </p>
             </div>
             <a
@@ -479,7 +479,7 @@ function DashboardContent() {
               className="inline-flex items-center bg-white text-primary px-4 py-2 rounded-lg font-semibold hover:shadow-lg transition text-sm"
             >
               <Plus className="w-4 h-4 mr-2" />
-              {t.dashboard.moreStructures.whatsappButton}
+              {t.dashboard.support.whatsappButton}
             </a>
           </div>
         </div>

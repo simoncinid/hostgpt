@@ -132,8 +132,8 @@ export default function ChatWidgetPage() {
       welcomeMessage: "Ciao! Sono qui per aiutarti con qualsiasi domanda sulla casa e sulla zona. Come posso esserti utile?",
       checkinButton: "Check-in Automatico",
       checkinTitle: "Check-in Automatico",
-      checkinDescription: "Carica fino a 10 documenti per il check-in automatico",
-      checkinUploadLabel: "Seleziona file o scatta foto",
+      checkinDescription: "Carica fino a 10 immagini (JPEG/PNG) per il check-in automatico",
+      checkinUploadLabel: "Seleziona immagini JPEG/PNG o scatta foto",
       checkinConsentText: "Acconsento all'invio di questi documenti via email alla struttura ricettiva per il check-in. I dati non verranno salvati da HostGPT.",
       checkinSubmit: "Invia Documenti",
       checkinSuccess: "Documenti inviati con successo!",
@@ -174,8 +174,8 @@ export default function ChatWidgetPage() {
       welcomeMessage: "Hello! I'm here to help you with any questions about the house and the area. How can I be useful?",
       checkinButton: "Automatic Check-in",
       checkinTitle: "Automatic Check-in",
-      checkinDescription: "Upload up to 10 documents for automatic check-in",
-      checkinUploadLabel: "Select files or take photos",
+      checkinDescription: "Upload up to 10 images (JPEG/PNG) for automatic check-in",
+      checkinUploadLabel: "Select JPEG/PNG images or take photos",
       checkinConsentText: "I consent to sending these documents via email to the accommodation for check-in purposes. Data will not be saved by HostGPT.",
       checkinSubmit: "Send Documents",
       checkinSuccess: "Documents sent successfully!",
@@ -859,6 +859,15 @@ export default function ChatWidgetPage() {
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || [])
     
+    // Controlla che tutti i file siano JPEG o PNG
+    const allowedTypes = ['image/jpeg', 'image/png']
+    const invalidFiles = files.filter(file => !allowedTypes.includes(file.type))
+    
+    if (invalidFiles.length > 0) {
+      toast.error(language === 'IT' ? 'Solo file JPEG e PNG sono consentiti' : 'Only JPEG and PNG files are allowed')
+      return
+    }
+    
     if (checkinFiles.length + files.length > 10) {
       toast.error(currentTexts.checkinMaxFiles)
       return
@@ -1010,7 +1019,9 @@ export default function ChatWidgetPage() {
                 </div>
               )}
               <div>
-                <h1 className={`font-semibold text-lg transition-colors duration-300 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{chatInfo?.name}</h1>
+                <h1 className={`font-semibold text-lg transition-colors duration-300 ${isDarkMode ? 'text-white' : 'text-gray-900'}`} title={chatInfo?.name}>
+                  {chatInfo?.name && chatInfo.name.length > 10 ? `${chatInfo.name.substring(0, 10)}...` : chatInfo?.name}
+                </h1>
                 <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-500'} transition-colors duration-300`}>{currentTexts.assistant}</p>
               </div>
             </div>
@@ -1178,13 +1189,13 @@ export default function ChatWidgetPage() {
                     {language === 'IT' ? 'Numero di telefono' : 'Phone number'}
                   </label>
                   <div className="flex gap-2">
-                    <div className="w-40">
+                    <div className="w-32 md:w-40">
                       <CountrySelector
                         value={selectedCountryCode}
                         onChange={setSelectedCountryCode}
                         isDarkMode={isDarkMode}
                         language={language}
-                        className="text-sm"
+                        className="text-sm h-10"
                       />
                     </div>
                     <div className="flex-1">
@@ -1192,8 +1203,8 @@ export default function ChatWidgetPage() {
                         type="tel"
                         value={phoneNumber}
                         onChange={(e) => handlePhoneChange(e.target.value)}
-                        placeholder={language === 'IT' ? 'Inserisci il numero' : 'Enter phone number'}
-                        className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors ${
+                        placeholder={language === 'IT' ? 'Numero telefono' : 'Phone number'}
+                        className={`w-full px-3 py-2 h-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors ${
                           isDarkMode 
                             ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
                             : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
@@ -1457,12 +1468,12 @@ export default function ChatWidgetPage() {
                     <label className="flex-1 flex items-center justify-center gap-2 p-4 border-2 border-dashed border-blue-300 rounded-lg cursor-pointer hover:border-blue-400 transition-colors">
                       <Upload className="w-5 h-5 text-blue-500" />
                       <span className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                        {language === 'IT' ? 'Seleziona file' : 'Select files'}
+                        {language === 'IT' ? 'Seleziona immagini' : 'Select images'}
                       </span>
                       <input
                         type="file"
                         multiple
-                        accept="image/*,.pdf,.doc,.docx"
+                        accept="image/jpeg,image/png,.jpg,.jpeg,.png"
                         onChange={handleFileUpload}
                         className="hidden"
                       />

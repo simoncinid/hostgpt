@@ -35,6 +35,8 @@ interface FormValues {
   special_instructions?: string
   faq?: { question: string; answer: string }[]
   welcome_message?: string
+  reviews_link?: string
+  wifi_qr_code?: string
 }
 
 export default function EditChatbotPage() {
@@ -110,6 +112,8 @@ export default function EditChatbotPage() {
           special_instructions: res.data.special_instructions,
           faq: res.data.faq || [],
           welcome_message: res.data.welcome_message,
+          reviews_link: res.data.reviews_link,
+          wifi_qr_code: res.data.wifi_qr_code,
 
         })
       } catch (e: any) {
@@ -235,6 +239,8 @@ export default function EditChatbotPage() {
         special_instructions: data.special_instructions,
         faq: data.faq,
         welcome_message: data.welcome_message,
+        reviews_link: data.reviews_link,
+        wifi_qr_code: data.wifi_qr_code,
         ...(iconUpdated && { has_icon: true })
       }
       updateChatbot(id, validUpdateData)
@@ -765,7 +771,43 @@ export default function EditChatbotPage() {
               </div>
             </div>
 
+            {/* Campi Opzionali Aggiuntivi */}
+            <div className="border-b pb-6">
+              <h2 className="text-lg font-semibold mb-4">{language === 'IT' ? 'Campi Opzionali' : 'Optional Fields'}</h2>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="label">{language === 'IT' ? 'Link per recensioni (opzionale)' : 'Reviews Link (optional)'}</label>
+                  <input
+                    {...register('reviews_link')}
+                    className="input-field"
+                    placeholder={language === 'IT' ? "Es. https://www.google.com/maps/place/..." : "E.g. https://www.google.com/maps/place/..."}
+                    type="url"
+                  />
+                  <p className="text-sm text-gray-600 mt-1">
+                    {language === 'IT' 
+                      ? 'Link dove gli ospiti possono lasciare recensioni (Google Maps, TripAdvisor, ecc.)'
+                      : 'Link where guests can leave reviews (Google Maps, TripAdvisor, etc.)'
+                    }
+                  </p>
+                </div>
 
+                <div>
+                  <label className="label">{language === 'IT' ? 'Codice QR WiFi (opzionale)' : 'WiFi QR Code (optional)'}</label>
+                  <input
+                    {...register('wifi_qr_code')}
+                    className="input-field"
+                    placeholder={language === 'IT' ? "Es. WIFI:T:WPA;S:NomeRete;P:Password;;" : "E.g. WIFI:T:WPA;S:NetworkName;P:Password;;"}
+                  />
+                  <p className="text-sm text-gray-600 mt-1">
+                    {language === 'IT' 
+                      ? 'Codice QR per la connessione automatica al WiFi. Formato: WIFI:T:WPA;S:NomeRete;P:Password;;'
+                      : 'QR code for automatic WiFi connection. Format: WIFI:T:WPA;S:NetworkName;P:Password;;'
+                    }
+                  </p>
+                </div>
+              </div>
+            </div>
 
             {/* Submit Button */}
             <div className="pt-2">

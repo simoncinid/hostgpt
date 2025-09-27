@@ -147,6 +147,7 @@ export interface Translations {
     delete: string
     confirm: string
     back: string
+    phoneNumber: string
     next: string
     previous: string
     submit: string
@@ -554,15 +555,16 @@ export interface Translations {
   dashboard: {
     title: string
     welcome: string
-    stats: {
-      totalChatbots: string
-      totalMessages: string
-      activeChatbots: string
-      totalGuests: string
+      stats: {
+        totalChatbots: string
+        totalMessages: string
+        totalConversations: string
+        activeChatbots: string
+        totalGuests: string
         totalHistorical: string
         allChatbots: string
         alwaysOnline: string
-    }
+      }
     quickActions: {
       createChatbot: string
       viewAnalytics: string
@@ -585,7 +587,7 @@ export interface Translations {
         noChatbots: string
         createFirst: string
       }
-      moreStructures: {
+      support: {
         title: string
         description: string
         whatsappButton: string
@@ -605,7 +607,13 @@ export interface Translations {
         guardianActive: string
         guardianCancelling: string
         guardianInactive: string
-    }
+      }
+      subscriptionTypes: {
+        standard: string
+        premium: string
+        pro: string
+        enterprise: string
+      }
   }
 
   // Select Service
@@ -1361,6 +1369,7 @@ export const translations: Record<Language, Translations> = {
       delete: "Elimina",
       confirm: "Conferma",
       back: "Indietro",
+      phoneNumber: "Numero telefono",
       next: "Avanti",
       previous: "Precedente",
       submit: "Invia",
@@ -1620,6 +1629,7 @@ export const translations: Record<Language, Translations> = {
       stats: {
         totalChatbots: "Chatbot Totali",
         totalMessages: "Messaggi totali",
+        totalConversations: "Conversazioni totali",
         activeChatbots: "Attivi",
         totalGuests: "Ospiti Totali",
         totalHistorical: "Totale storico",
@@ -1648,10 +1658,10 @@ export const translations: Record<Language, Translations> = {
         noChatbots: "Non hai ancora creato nessun chatbot",
         createFirst: "Crea il tuo primo chatbot"
       },
-      moreStructures: {
-        title: "Hai più proprietà?",
-        description: "Ogni account può avere un solo chatbot. Per più chatbot contattami.",
-        whatsappButton: "Scrivimi su WhatsApp"
+      support: {
+        title: "Hai bisogno di assistenza?",
+        description: "Il nostro team è qui per aiutarti con qualsiasi domanda o problema.",
+        whatsappButton: "Contattaci su WhatsApp"
       },
       qrModal: {
         title: "QR Code Chatbot",
@@ -1668,6 +1678,12 @@ export const translations: Record<Language, Translations> = {
         guardianActive: "Guardian Attivo",
         guardianCancelling: "Guardian In Annullamento",
         guardianInactive: "Guardian Inattivo"
+      },
+      subscriptionTypes: {
+        standard: "Standard",
+        premium: "Premium",
+        pro: "Pro",
+        enterprise: "Enterprise"
       }
     },
     chatbots: {
@@ -2592,6 +2608,7 @@ export const translations: Record<Language, Translations> = {
       delete: "Delete",
       confirm: "Confirm",
       back: "Back",
+      phoneNumber: "Phone number",
       next: "Next",
       previous: "Previous",
       submit: "Submit",
@@ -2851,6 +2868,7 @@ export const translations: Record<Language, Translations> = {
       stats: {
         totalChatbots: "Total Chatbots",
         totalMessages: "Total messages",
+        totalConversations: "Total conversations",
         activeChatbots: "Active",
         totalGuests: "Total Guests",
         totalHistorical: "Total historical",
@@ -2879,10 +2897,10 @@ export const translations: Record<Language, Translations> = {
         noChatbots: "You haven't created any chatbots yet",
         createFirst: "Create your first chatbot"
       },
-      moreStructures: {
-        title: "Managing multiple accommodations?",
-        description: "Each account can have only one chatbot. For more chatbots contact me.",
-        whatsappButton: "Write me on WhatsApp"
+      support: {
+        title: "Need assistance?",
+        description: "Our team is here to help you with any questions or issues.",
+        whatsappButton: "Contact us on WhatsApp"
       },
       qrModal: {
         title: "Chatbot QR Code",
@@ -2899,6 +2917,12 @@ export const translations: Record<Language, Translations> = {
         guardianActive: "Guardian Active",
         guardianCancelling: "Guardian Cancelling",
         guardianInactive: "Guardian Inactive"
+      },
+      subscriptionTypes: {
+        standard: "Standard",
+        premium: "Premium",
+        pro: "Pro",
+        enterprise: "Enterprise"
       }
     },
     chatbots: {

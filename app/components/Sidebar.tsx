@@ -26,6 +26,19 @@ interface SidebarProps {
   setIsSidebarCollapsed?: (collapsed: boolean) => void
 }
 
+// Funzione per determinare il tipo di abbonamento basato su conversation_limit
+const getSubscriptionType = (conversationLimit: number | undefined, isFreeTrial: boolean | undefined): string => {
+  if (isFreeTrial) return 'free_trial'
+  
+  switch (conversationLimit) {
+    case 20: return 'standard'
+    case 50: return 'premium'
+    case 150: return 'pro'
+    case 500: return 'enterprise'
+    default: return 'standard'
+  }
+}
+
 export default function Sidebar({ currentPath, onLogout, isSidebarCollapsed: externalIsCollapsed, setIsSidebarCollapsed: externalSetCollapsed }: SidebarProps) {
   const { user } = useAuthStore()
   const { t } = useLanguage()
@@ -115,10 +128,24 @@ export default function Sidebar({ currentPath, onLogout, isSidebarCollapsed: ext
                   user?.subscription_status === 'cancelling' ? 'text-orange-600' : 
                   'text-red-600'
                 }`}>
-                  {user?.is_free_trial_active ? t.dashboard.status.hostgptFreeTrial : 
-                   user?.subscription_status === 'active' ? t.dashboard.status.hostgptActive : 
-                   user?.subscription_status === 'cancelling' ? t.dashboard.status.hostgptCancelling : 
-                   t.dashboard.status.hostgptCancelled}
+                  {(() => {
+                    const subscriptionType = getSubscriptionType((user as any)?.conversation_limit, user?.is_free_trial_active)
+                    
+                    if (user?.is_free_trial_active) {
+                      return t.dashboard.status.hostgptFreeTrial
+                    }
+                    
+                    if (user?.subscription_status === 'active') {
+                      const typeText = subscriptionType !== 'standard' ? ` ${t.dashboard.subscriptionTypes[subscriptionType as keyof typeof t.dashboard.subscriptionTypes]}` : ''
+                      return `${t.dashboard.status.hostgptActive}${typeText}`
+                    }
+                    
+                    if (user?.subscription_status === 'cancelling') {
+                      return t.dashboard.status.hostgptCancelling
+                    }
+                    
+                    return t.dashboard.status.hostgptCancelled
+                  })()}
                 </p>
                 <Link 
                   href="/dashboard/guardian"

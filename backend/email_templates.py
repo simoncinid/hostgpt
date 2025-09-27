@@ -885,18 +885,18 @@ def create_checkin_notification_email(
                 <li><strong>Nome:</strong> {guest_name}</li>
                 <li><strong>Email:</strong> {guest_email}</li>
                 <li><strong>Telefono:</strong> {guest_phone}</li>
-                <li><strong>Documenti allegati:</strong> {file_count} file</li>
+                <li><strong>Immagini allegate:</strong> {file_count} immagini (JPEG/PNG)</li>
             </ul>
         </div>
         
         <div class="info-box">
-            <strong>📎 Documenti Allegati</strong><br>
-            I documenti del check-in sono allegati a questa email. Puoi scaricarli e procedere con la verifica per completare il processo di check-in dell'ospite.
+            <strong>📎 Immagini Allegate</strong><br>
+            Le immagini del check-in sono allegate a questa email. Puoi scaricarle e procedere con la verifica per completare il processo di check-in dell'ospite.
         </div>
         
         <div class="info-box">
             <strong>🔒 Privacy e Sicurezza</strong><br>
-            I documenti sono stati inviati direttamente via email e non sono stati salvati sui server di HostGPT, garantendo la massima privacy e sicurezza dei dati dell'ospite.
+            Le immagini sono state inviate direttamente via email e non sono state salvate sui server di HostGPT, garantendo la massima privacy e sicurezza dei dati dell'ospite.
         </div>
         
         <div class="footer-note">

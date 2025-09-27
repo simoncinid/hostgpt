@@ -54,6 +54,8 @@ interface ChatbotFormData {
   faq: { question: string; answer: string }[]
   welcome_message: string
   property_url: string
+  reviews_link: string
+  wifi_qr_code: string
 }
 
 // Steps will be created dynamically from translations
@@ -660,7 +662,9 @@ export default function CreateChatbotPage() {
         shopping_info: data.shopping_info || '',
         parking_info: data.parking_info || '',
         special_instructions: data.special_instructions || '',
-        property_url: data.property_url || ''
+        property_url: data.property_url || '',
+        reviews_link: data.reviews_link || '',
+        wifi_qr_code: data.wifi_qr_code || ''
       }
       
       console.log('🚀 Invio dati chatbot:', cleanData)
@@ -1590,6 +1594,37 @@ export default function CreateChatbotPage() {
               {(errors.welcome_message || formErrors.welcome_message) && (
                 <p className="error-text">{errors.welcome_message?.message || formErrors.welcome_message}</p>
               )}
+            </div>
+
+            <div>
+              <label className="label">{language === 'IT' ? 'Link per recensioni (opzionale)' : 'Reviews Link (optional)'}</label>
+              <input
+                {...register('reviews_link')}
+                className="input-field"
+                placeholder={language === 'IT' ? "Es. https://www.google.com/maps/place/..." : "E.g. https://www.google.com/maps/place/..."}
+                type="url"
+              />
+              <p className="text-sm text-gray-600 mt-1">
+                {language === 'IT' 
+                  ? 'Link dove gli ospiti possono lasciare recensioni (Google Maps, TripAdvisor, ecc.)'
+                  : 'Link where guests can leave reviews (Google Maps, TripAdvisor, etc.)'
+                }
+              </p>
+            </div>
+
+            <div>
+              <label className="label">{language === 'IT' ? 'Codice QR WiFi (opzionale)' : 'WiFi QR Code (optional)'}</label>
+              <input
+                {...register('wifi_qr_code')}
+                className="input-field"
+                placeholder={language === 'IT' ? "Es. WIFI:T:WPA;S:NomeRete;P:Password;;" : "E.g. WIFI:T:WPA;S:NetworkName;P:Password;;"}
+              />
+              <p className="text-sm text-gray-600 mt-1">
+                {language === 'IT' 
+                  ? 'Codice QR per la connessione automatica al WiFi. Formato: WIFI:T:WPA;S:NomeRete;P:Password;;'
+                  : 'QR code for automatic WiFi connection. Format: WIFI:T:WPA;S:NetworkName;P:Password;;'
+                }
+              </p>
             </div>
 
             <div className="bg-green-50 border border-green-200 rounded-lg p-6">

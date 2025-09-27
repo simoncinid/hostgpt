@@ -111,6 +111,8 @@ class Chatbot(Base):
     
     # Configurazione chatbot
     welcome_message = Column(Text)
+    reviews_link = Column(String(500))  # Link per le recensioni (opzionale)
+    wifi_qr_code = Column(String(500))  # Codice QR del WiFi (opzionale)
     icon_data = Column(LargeBinary)  # Dati dell'icona come BLOB
     icon_filename = Column(String(255))  # Nome file originale
     icon_content_type = Column(String(100))  # MIME type (image/png, image/jpeg)

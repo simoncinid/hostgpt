@@ -139,7 +139,7 @@ export default function CountrySelector({
         onClick={() => setIsOpen(!isOpen)}
         className={`w-full px-3 py-2 text-left border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors ${
           isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'
-        }`}
+        } ${className}`}
         disabled={loading}
       >
         <div className="flex items-center justify-between">

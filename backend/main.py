@@ -569,6 +569,8 @@ class ChatbotCreate(BaseModel):
     special_instructions: str
     faq: List[dict]
     welcome_message: str
+    reviews_link: Optional[str] = None
+    wifi_qr_code: Optional[str] = None
 
 class ChatbotUpdate(BaseModel):
     name: Optional[str] = None
@@ -596,6 +598,8 @@ class ChatbotUpdate(BaseModel):
     special_instructions: Optional[str] = None
     faq: Optional[List[dict]] = None
     welcome_message: Optional[str] = None
+    reviews_link: Optional[str] = None
+    wifi_qr_code: Optional[str] = None
 
 class ChatbotResponse(BaseModel):
     id: int
@@ -627,6 +631,8 @@ class ChatbotResponse(BaseModel):
     special_instructions: Optional[str]
     faq: Optional[dict]
     welcome_message: Optional[str]
+    reviews_link: Optional[str]
+    wifi_qr_code: Optional[str]
     icon_filename: Optional[str]
     icon_content_type: Optional[str]
     total_conversations: int
@@ -3346,6 +3352,8 @@ async def create_chatbot(
     special_instructions: str = Form(default=""),
     faq: str = Form(default="[]"),
     property_url: str = Form(default=""),
+    reviews_link: str = Form(default=""),
+    wifi_qr_code: str = Form(default=""),
     # File upload
     icon: Optional[UploadFile] = File(None)
 ):
@@ -3505,6 +3513,8 @@ async def create_chatbot(
         special_instructions=special_instructions,
         faq=faq_list,
         welcome_message=welcome_message,
+        reviews_link=reviews_link if reviews_link else None,
+        wifi_qr_code=wifi_qr_code if wifi_qr_code else None,
         icon_data=icon_data,
         icon_filename=icon_filename,
         icon_content_type=icon_content_type,
@@ -3824,6 +3834,8 @@ async def get_chatbot(
         "special_instructions": chatbot.special_instructions,
         "faq": chatbot.faq,
         "welcome_message": chatbot.welcome_message,
+        "reviews_link": chatbot.reviews_link,
+        "wifi_qr_code": chatbot.wifi_qr_code,
         "icon_filename": chatbot.icon_filename,
         "icon_content_type": chatbot.icon_content_type,
         "total_conversations": total_conversations,
@@ -8687,6 +8699,15 @@ async def submit_checkin_documents(
         # Limita il numero di file
         if len(files) > 10:
             raise HTTPException(status_code=400, detail="Massimo 10 file consentiti")
+        
+        # Controlla che tutti i file siano JPEG o PNG
+        allowed_types = ['image/jpeg', 'image/png']
+        for file in files:
+            if file.content_type not in allowed_types:
+                raise HTTPException(
+                    status_code=400, 
+                    detail=f"Tipo file non supportato: {file.content_type}. Solo JPEG e PNG sono consentiti."
+                )
         
         # Ottieni il proprietario del chatbot per l'email
         owner = db.query(User).filter(User.id == chatbot.user_id).first()
