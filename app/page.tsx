@@ -70,7 +70,7 @@ export default function LandingPage() {
   const [demoChatInfo, setDemoChatInfo] = useState<{name: string, property_name: string, welcome_message: string} | null>(null)
   
   // UUID del chatbot demo reale
-  const DEMO_CHATBOT_UUID = "e413257a-f165-41f2-9f9d-2f244d11d3b4"
+  const DEMO_CHATBOT_UUID = "9713e4f9-dd6c-4f03-a3ba-12f7c53fa200"
 
   useEffect(() => {
     setDemoVisible([])
@@ -102,10 +102,28 @@ export default function LandingPage() {
           property_name: response.data.property_name,
           welcome_message: response.data.welcome_message
         })
+        
+        // Aggiungi il messaggio di benvenuto dell'assistente all'inizio
+        if (response.data.welcome_message) {
+          setDemoMessages([{
+            id: 'welcome',
+            role: 'assistant',
+            content: response.data.welcome_message,
+            timestamp: new Date()
+          }])
+        }
       })
       .catch(() => {
         setDemoHasIcon(false)
         setDemoChatInfo(null)
+        
+        // Messaggio di benvenuto di fallback
+        setDemoMessages([{
+          id: 'welcome-fallback',
+          role: 'assistant',
+          content: t.demo.welcomeSubtitle,
+          timestamp: new Date()
+        }])
       })
   }, [])
 
@@ -1519,31 +1537,6 @@ export default function LandingPage() {
               {/* Main Chat Area - FISSA */}
               <div className="flex-1 flex flex-col w-full md:max-w-4xl md:mx-auto px-2 md:px-4 py-4 md:py-6 overflow-hidden">
                 <div className={`${demoIsDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl shadow-xl overflow-hidden flex flex-col h-full transition-colors duration-300`}>
-                  {/* Messaggio di benvenuto iniziale senza form */}
-                  {demoMessages.length === 0 && (
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.95 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      className="p-4 md:p-6 flex-1 flex flex-col justify-center"
-                    >
-                      <div className="flex items-start max-w-[85%] md:max-w-[70%]">
-                        <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-gray-200 text-gray-600 mr-3">
-                          {demoHasIcon ? (
-                            <DemoChatbotIcon size="sm" className="w-4 h-4" />
-                          ) : (
-                            <Bot className="w-4 h-4" />
-                          )}
-                        </div>
-                        <div className={`px-4 py-3 rounded-2xl shadow-sm transition-colors duration-300 ${
-                          demoIsDarkMode ? 'bg-gray-700 text-white' : 'bg-gray-100 text-gray-900'
-                        }`}>
-                          <div className="text-sm">
-                            {demoChatInfo?.welcome_message || currentDemoTexts.welcomeSubtitle}
-                          </div>
-                        </div>
-                      </div>
-                    </motion.div>
-                  )}
 
                   {/* Messages Area - FISSA */}
                   {demoMessages.length > 0 && (
@@ -1609,50 +1602,50 @@ export default function LandingPage() {
                         
                       </div>
 
-                      {/* Messaggi Suggeriti - SU UNA RIGA SOLA - Disabilitati durante il caricamento */}
-                      <div className={`border-t px-2 py-2 transition-colors duration-300 ${
-                        demoIsDarkMode ? 'border-gray-700' : 'border-gray-100'
-                      }`}>
-                        <div className="flex justify-center gap-2 md:gap-3 overflow-x-auto chat-scrollbar">
-                          {/* Bottone download PDF */}
-                          <motion.button
-                            initial={{ opacity: 0, scale: 0.9 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            transition={{ delay: 0 }}
-                            onClick={downloadDemoPropertyPDF}
-                            disabled={isDemoLoading || isDownloadingPDF}
-                            className={`p-2 rounded-full transition-all duration-200 hover:scale-105 active:scale-95 flex-shrink-0 ${
-                              isDemoLoading || isDownloadingPDF
-                                ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
-                                : 'bg-blue-50 text-blue-600 hover:bg-blue-100'
-                            }`}
-                            title={demoLanguage === 'IT' ? 'Scarica informazioni proprietà' : 'Download property information'}
-                          >
-                            <FileText className="w-4 h-4" />
-                          </motion.button>
-                          {currentDemoTexts.suggestedMessages.slice(0, 2).map((message: string, index: number) => (
-                  <motion.button
-                              key={index}
-                              initial={{ opacity: 0, scale: 0.9 }}
-                              animate={{ opacity: 1, scale: 1 }}
-                              transition={{ delay: (index + 1) * 0.1 }}
-                              onClick={() => !isDemoLoading && handleDemoSuggestedMessage(message)}
-                              disabled={isDemoLoading}
-                              className={`px-3 py-2 md:px-4 md:py-2 rounded-full text-xs md:text-sm font-medium transition-all duration-200 hover:scale-105 active:scale-95 whitespace-nowrap flex-shrink-0 ${
-                                isDemoLoading 
-                                  ? 'bg-gray-100 text-gray-400 border border-gray-200 cursor-not-allowed' 
-                                  : 'bg-gradient-to-r from-primary/10 to-accent/10 text-primary border border-primary/20 hover:from-primary/20 hover:to-accent/20 hover:border-primary/40'
-                              }`}
-                            >
-                              {message}
-                  </motion.button>
-                          ))}
-                          
-                        </div>
-            </div>
-
                     </>
                   )}
+
+                  {/* Messaggi Suggeriti - SEMPRE VISIBILI */}
+                  <div className={`border-t px-2 py-2 transition-colors duration-300 ${
+                    demoIsDarkMode ? 'border-gray-700' : 'border-gray-100'
+                  }`}>
+                    <div className="flex justify-center gap-2 md:gap-3 overflow-x-auto chat-scrollbar">
+                      {/* Bottone download PDF */}
+                      <motion.button
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: 0 }}
+                        onClick={downloadDemoPropertyPDF}
+                        disabled={isDemoLoading || isDownloadingPDF}
+                        className={`p-2 rounded-full transition-all duration-200 hover:scale-105 active:scale-95 flex-shrink-0 ${
+                          isDemoLoading || isDownloadingPDF
+                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                            : 'bg-blue-50 text-blue-600 hover:bg-blue-100'
+                        }`}
+                        title={demoLanguage === 'IT' ? 'Scarica informazioni proprietà' : 'Download property information'}
+                      >
+                        <FileText className="w-4 h-4" />
+                      </motion.button>
+                      {currentDemoTexts.suggestedMessages.slice(0, 2).map((message: string, index: number) => (
+              <motion.button
+                          key={index}
+                          initial={{ opacity: 0, scale: 0.9 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ delay: (index + 1) * 0.1 }}
+                          onClick={() => !isDemoLoading && handleDemoSuggestedMessage(message)}
+                          disabled={isDemoLoading}
+                          className={`px-3 py-2 md:px-4 md:py-2 rounded-full text-xs md:text-sm font-medium transition-all duration-200 hover:scale-105 active:scale-95 whitespace-nowrap flex-shrink-0 ${
+                            isDemoLoading 
+                              ? 'bg-gray-100 text-gray-400 border border-gray-200 cursor-not-allowed' 
+                              : 'bg-gradient-to-r from-primary/10 to-accent/10 text-primary border border-primary/20 hover:from-primary/20 hover:to-accent/20 hover:border-primary/40'
+                          }`}
+                        >
+                          {message}
+              </motion.button>
+                      ))}
+                      
+                    </div>
+        </div>
 
                   {/* Input Area - SEMPRE VISIBILE */}
                   <div className={`border-t p-3 md:p-4 pb-6 md:pb-2 flex-shrink-0 transition-colors duration-300 ${

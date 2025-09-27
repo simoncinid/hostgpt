@@ -4588,7 +4588,7 @@ async def download_house_rules_pdf(uuid: str, lang: str = "IT", db: Session = De
 async def get_demo_info(db: Session = Depends(get_db)):
     """Ottieni informazioni del chatbot demo per la landing page"""
     # UUID fisso del chatbot demo
-    demo_uuid = "5e2665c8-e243-4df3-a9fd-8e0d1e4fedcc"
+    demo_uuid = "9713e4f9-dd6c-4f03-a3ba-12f7c53fa200"
     chatbot = db.query(Chatbot).filter(Chatbot.uuid == demo_uuid).first()
     
     if not chatbot:
