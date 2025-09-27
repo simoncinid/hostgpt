@@ -388,6 +388,42 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Middleware personalizzato per debug CORS
+@app.middleware("http")
+async def cors_debug_middleware(request: Request, call_next):
+    origin = request.headers.get("origin")
+    print(f"🌐 CORS Debug - Origin: {origin}")
+    print(f"🌐 CORS Debug - Method: {request.method}")
+    print(f"🌐 CORS Debug - Path: {request.url.path}")
+    
+    # Gestisci richieste OPTIONS (preflight)
+    if request.method == "OPTIONS":
+        return JSONResponse(
+            status_code=200,
+            headers={
+                "Access-Control-Allow-Origin": origin or "*",
+                "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+                "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With",
+                "Access-Control-Allow-Credentials": "true"
+            }
+        )
+    
+    response = await call_next(request)
+    
+    # Aggiungi header CORS personalizzati se necessario
+    if origin and origin in [
+        "https://ospiterai.it",
+        "https://www.ospiterai.it", 
+        "https://ospiterai.vercel.app",
+        "https://hostgpt.ospiterai.it"
+    ]:
+        response.headers["Access-Control-Allow-Origin"] = origin
+        response.headers["Access-Control-Allow-Credentials"] = "true"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+        response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-Requested-With"
+    
+    return response
+
 # Eventi di startup e shutdown
 @app.on_event("startup")
 async def startup_event():
