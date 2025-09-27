@@ -94,7 +94,7 @@ export default function LandingPage() {
 
   // Controlla se il chatbot demo ha un'icona e ottieni le info
   useEffect(() => {
-    chat.getInfoPublic(DEMO_CHATBOT_UUID)
+    chat.getDemoInfo()
       .then(response => {
         setDemoHasIcon(response.data.has_icon)
         setDemoChatInfo({
@@ -184,7 +184,6 @@ export default function LandingPage() {
   const [isDemoLoading, setIsDemoLoading] = useState(false)
   const [demoThreadId, setDemoThreadId] = useState<string | null>(null)
   const [demoGuestName, setDemoGuestName] = useState('')
-  const [demoShowWelcome, setDemoShowWelcome] = useState(true)
   const [demoShowInfo, setDemoShowInfo] = useState(false)
   const [demoLanguage, setDemoLanguage] = useState<'IT' | 'ENG'>('IT')
   const [demoIsDarkMode, setDemoIsDarkMode] = useState(false)
@@ -273,10 +272,9 @@ export default function LandingPage() {
     setIsDemoLoading(true)
 
     try {
-      const response = await chat.sendMessagePublic(DEMO_CHATBOT_UUID, {
+      const response = await chat.sendDemoMessage({
         content: fullMessage,
-        thread_id: demoThreadId,
-        guest_name: demoGuestName || undefined
+        thread_id: demoThreadId || undefined
       })
 
       if (!demoThreadId) {
@@ -321,10 +319,9 @@ export default function LandingPage() {
     setIsDemoLoading(true)
 
     try {
-      const response = await chat.sendMessagePublic(DEMO_CHATBOT_UUID, {
+      const response = await chat.sendDemoMessage({
         content: demoInput,
-        thread_id: demoThreadId,
-        guest_name: demoGuestName || undefined
+        thread_id: demoThreadId || undefined
       })
 
       if (!demoThreadId) {
@@ -352,35 +349,10 @@ export default function LandingPage() {
     }
   }
 
-  const handleDemoStartChat = () => {
-    setDemoShowWelcome(false)
-    
-    // Aggiungi messaggio di benvenuto dell'host se disponibile
-    if (demoChatInfo?.welcome_message) {
-      setDemoMessages([{
-        id: 'welcome',
-        role: 'assistant',
-        content: demoChatInfo.welcome_message,
-        timestamp: new Date()
-      }])
-    }
-  }
-
   const handleDemoNewConversation = () => {
     setDemoMessages([])
     setDemoThreadId(null)
     setDemoInput('')
-    setDemoShowWelcome(true)
-    
-    // Ricarica il messaggio di benvenuto
-    if (demoChatInfo?.welcome_message) {
-      setDemoMessages([{
-        id: 'welcome',
-        role: 'assistant',
-        content: demoChatInfo.welcome_message,
-        timestamp: new Date()
-      }])
-    }
   }
 
   const downloadDemoPropertyPDF = async () => {
@@ -1547,44 +1519,34 @@ export default function LandingPage() {
               {/* Main Chat Area - FISSA */}
               <div className="flex-1 flex flex-col w-full md:max-w-4xl md:mx-auto px-2 md:px-4 py-4 md:py-6 overflow-hidden">
                 <div className={`${demoIsDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl shadow-xl overflow-hidden flex flex-col h-full transition-colors duration-300`}>
-                  {/* Welcome Screen */}
-                  {demoShowWelcome && demoMessages.length <= 1 && (
+                  {/* Messaggio di benvenuto iniziale senza form */}
+                  {demoMessages.length === 0 && (
                     <motion.div
                       initial={{ opacity: 0, scale: 0.95 }}
                       animate={{ opacity: 1, scale: 1 }}
-                      className="p-8 text-center flex-1 flex flex-col justify-center"
+                      className="p-4 md:p-6 flex-1 flex flex-col justify-center"
                     >
-                      <div className="w-20 h-20 bg-rose-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <DemoChatbotIcon size="lg" className="w-10 h-10" />
-                </div>
-                      <h2 className={`text-2xl font-bold mb-2 ${demoIsDarkMode ? 'text-white' : 'text-gray-900'} transition-colors duration-300`}>{currentDemoTexts.welcome}</h2>
-                      <p className={`mb-6 max-w-md mx-auto transition-colors duration-300 ${demoIsDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                        {currentDemoTexts.welcomeSubtitle}
-                      </p>
-                      <div className="mb-6">
-                        <input
-                          type="text"
-                          value={demoGuestName}
-                          onChange={(e) => setDemoGuestName(e.target.value)}
-                          placeholder={currentDemoTexts.namePlaceholder}
-                          className={`max-w-xs mx-auto px-4 py-3 rounded-lg border transition-all duration-200 ${
-                            demoIsDarkMode 
-                              ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-primary focus:ring-2 focus:ring-primary/20' 
-                              : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-primary focus:ring-2 focus:ring-primary/20'
-                          } outline-none`}
-                        />
-              </div>
-                      <button
-                        onClick={handleDemoStartChat}
-                        className="px-6 py-3 bg-gradient-to-r from-primary to-secondary text-white rounded-2xl font-semibold hover:from-secondary hover:to-accent transition-all duration-200"
-                      >
-                        {currentDemoTexts.startChat}
-                      </button>
+                      <div className="flex items-start max-w-[85%] md:max-w-[70%]">
+                        <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-gray-200 text-gray-600 mr-3">
+                          {demoHasIcon ? (
+                            <DemoChatbotIcon size="sm" className="w-4 h-4" />
+                          ) : (
+                            <Bot className="w-4 h-4" />
+                          )}
+                        </div>
+                        <div className={`px-4 py-3 rounded-2xl shadow-sm transition-colors duration-300 ${
+                          demoIsDarkMode ? 'bg-gray-700 text-white' : 'bg-gray-100 text-gray-900'
+                        }`}>
+                          <div className="text-sm">
+                            {demoChatInfo?.welcome_message || currentDemoTexts.welcomeMessage}
+                          </div>
+                        </div>
+                      </div>
                     </motion.div>
                   )}
 
                   {/* Messages Area - FISSA */}
-                  {(!demoShowWelcome || demoMessages.length > 1) && (
+                  {demoMessages.length > 0 && (
                     <>
                       <div className="flex-1 overflow-y-auto chat-scrollbar p-4 md:p-6 space-y-4">
                         {demoMessages.map((message, index) => (
@@ -1689,35 +1651,36 @@ export default function LandingPage() {
                         </div>
             </div>
 
-                      {/* Input Area - FISSA */}
-                      <div className={`border-t p-3 md:p-4 pb-6 md:pb-2 flex-shrink-0 transition-colors duration-300 ${
-                        demoIsDarkMode ? 'border-gray-700' : 'border-gray-200'
-                      }`}>
-                        <form onSubmit={handleDemoSendMessage} className="flex items-center gap-2 md:gap-3">
-                          <input
-                            ref={demoInputRef}
-                            type="text"
-                            value={demoInput}
-                            onChange={(e) => setDemoInput(e.target.value)}
-                            placeholder={currentDemoTexts.placeholder}
-                            disabled={isDemoLoading}
-                            className={`flex-1 px-4 py-2.5 rounded-full border outline-none transition text-sm md:text-base ${
-                              demoIsDarkMode 
-                                ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-primary focus:ring-2 focus:ring-primary/20' 
-                                : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-primary focus:ring-2 focus:ring-primary/20'
-                            }`}
-                          />
-                          <button
-                            type="submit"
-                            disabled={isDemoLoading || !demoInput.trim()}
-                            className="w-10 h-10 md:w-11 md:h-11 bg-gradient-to-r from-primary to-secondary text-white rounded-full flex items-center justify-center hover:from-secondary hover:to-accent transition disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            <Send className="w-4 h-4 md:w-5 md:h-5" />
-                          </button>
-                        </form>
-                      </div>
                     </>
                   )}
+
+                  {/* Input Area - SEMPRE VISIBILE */}
+                  <div className={`border-t p-3 md:p-4 pb-6 md:pb-2 flex-shrink-0 transition-colors duration-300 ${
+                    demoIsDarkMode ? 'border-gray-700' : 'border-gray-200'
+                  }`}>
+                    <form onSubmit={handleDemoSendMessage} className="flex items-center gap-2 md:gap-3">
+                      <input
+                        ref={demoInputRef}
+                        type="text"
+                        value={demoInput}
+                        onChange={(e) => setDemoInput(e.target.value)}
+                        placeholder={currentDemoTexts.placeholder}
+                        disabled={isDemoLoading}
+                        className={`flex-1 px-4 py-2.5 rounded-full border outline-none transition text-sm md:text-base ${
+                          demoIsDarkMode 
+                            ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-primary focus:ring-2 focus:ring-primary/20' 
+                            : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-primary focus:ring-2 focus:ring-primary/20'
+                        }`}
+                      />
+                      <button
+                        type="submit"
+                        disabled={isDemoLoading || !demoInput.trim()}
+                        className="w-10 h-10 md:w-11 md:h-11 bg-gradient-to-r from-primary to-secondary text-white rounded-full flex items-center justify-center hover:from-secondary hover:to-accent transition disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <Send className="w-4 h-4 md:w-5 md:h-5" />
+                      </button>
+                    </form>
+                  </div>
                 </div>
               </div>
             </div>

@@ -215,6 +215,13 @@ export const chat = {
   sendMessagePublic: (uuid: string, data: any) =>
     publicApi.post(`/chat/${uuid}/message`, data),
   
+  // Endpoint demo specifico (senza autenticazione e identificazione ospite)
+  sendDemoMessage: (data: { content: string; thread_id?: string }) =>
+    publicApi.post(`/demochat`, data),
+  
+  getDemoInfo: () =>
+    publicApi.get(`/demo/info`),
+  
   // Nuove funzioni per gestione ospiti
   identifyGuest: (uuid: string, data: {
     phone?: string
