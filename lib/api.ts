@@ -305,9 +305,6 @@ export const chat = {
   downloadHouseRulesPDF: (uuid: string, lang: string = 'IT') =>
     api.get(`/chat/${uuid}/house-rules-pdf?lang=${lang}`, { responseType: 'blob' }),
   
-  getDemoInfo: () =>
-    api.get('/demo/info'),
-  
   getDemoIcon: () =>
     api.get('/demo/icon', { responseType: 'blob' }),
   
