@@ -74,7 +74,7 @@ export default function PrivacyPage() {
 
                 <p className="text-gray-600 mb-6">
                   on the collection, use and disclosure of your information that we collect
-                  when you use our website ( https://www.hostgpt.it ).
+                  when you use our website ( https://www.ospiterai.it ).
                   (the "Service"). By accessing or using
                   the Service, you are consenting to the collection, use and
                   disclosure of your information in accordance with this
@@ -238,7 +238,7 @@ export default function PrivacyPage() {
                       To learn more about how we use these
                       and your choices in relation to these tracking
                       technologies, please refer to our
-                      <a href="https://www.hostgpt.it/cookiepolicy" className="text-primary hover:underline ml-1">Cookie Policy.</a>
+                      <a href="https://www.ospiterai.it/cookiepolicy" className="text-primary hover:underline ml-1">Cookie Policy.</a>
                     </p>
                   </li>
 

@@ -18,7 +18,7 @@ export const socialSEOConfig = {
 }
 
 export const generateSocialMetaTags = (page: string, language: 'it' | 'en' = 'it') => {
-  const baseUrl = 'https://hostgpt.it'
+  const baseUrl = 'https://ospiterai.it'
   const imageUrl = `${baseUrl}/icons/logohostgpt.png`
   
   const titles = {

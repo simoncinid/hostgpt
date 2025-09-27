@@ -607,7 +607,7 @@ export default function LandingPage() {
               <div className="w-1.5 h-1.5 bg-yellow-400 rounded-full"></div>
               <div className="w-1.5 h-1.5 bg-green-400 rounded-full"></div>
             </div>
-            <div className="text-xs text-gray-600">hostgpt.it/register</div>
+            <div className="text-xs text-gray-600">ospiterai.it/register</div>
           </div>
           <div className="flex-1 flex flex-col justify-start space-y-2 p-2 min-h-0">
             <div className="text-center mb-4">
@@ -761,7 +761,7 @@ export default function LandingPage() {
                 transition={{ delay: 2.5, duration: 1 }}
                 className="bg-gray-100 rounded px-2 py-1 text-xs text-primary font-mono"
               >
-                hostgpt.it/register
+                ospiterai.it/register
               </motion.div>
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -839,7 +839,7 @@ export default function LandingPage() {
               <div className="w-1.5 h-1.5 bg-yellow-400 rounded-full"></div>
               <div className="w-1.5 h-1.5 bg-green-400 rounded-full"></div>
             </div>
-            <div className="text-xs text-gray-600">hostgpt.it/register</div>
+            <div className="text-xs text-gray-600">ospiterai.it/register</div>
           </div>
           <div className="flex-1 flex flex-col justify-start space-y-2 p-2 min-h-0">
             <div className="text-center mb-4">

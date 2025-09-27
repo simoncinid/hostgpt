@@ -61,7 +61,7 @@ Posizionare HostGPT ai primi posti per le ricerche di:
 ### 2. Verifiche Search Console
 1. Aggiungere il sito a Google Search Console
 2. Verificare la proprietà con il codice fornito
-3. Inviare la sitemap: `https://hostgpt.it/sitemap.xml`
+3. Inviare la sitemap: `https://ospiterai.it/sitemap.xml`
 4. Configurare Bing Webmaster Tools
 
 ### 3. Social Media

@@ -46,7 +46,7 @@ const nextConfig = {
   trailingSlash: false,
   // Optimize images
   images: {
-    domains: ['localhost', 'api.hostgpt.it'],
+    domains: ['localhost', 'api.ospiterai.it'],
     formats: ['image/webp', 'image/avif'],
   },
 }

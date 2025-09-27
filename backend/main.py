@@ -59,13 +59,15 @@ from email_templates_simple import (
     create_subscription_reactivation_email_simple,
     create_guardian_subscription_reactivation_email_simple,
     create_monthly_report_email_simple,
-    create_print_order_confirmation_email_simple
+    create_print_order_confirmation_email_simple,
+    create_conversations_limit_warning_email_simple,
+    create_plan_upgrade_confirmation_email_simple
 )
 from email_templates import create_checkin_notification_email
 
 def get_conversations_limit_by_price_id(price_id: str) -> int:
     """Mappa i price_id ai limiti delle conversazioni"""
-    # Mappa dei limiti per i nuovi tier
+    # Mappa dei limiti per i nuovi tier (nomi dei price_id)
     price_limits = {
         "STANDARD_PRICE_ID": 20,      # Standard
         "PREMIUM_PRICE_ID": 50,       # Premium  
@@ -78,8 +80,73 @@ def get_conversations_limit_by_price_id(price_id: str) -> int:
         "ANNUAL_ENTERPRISE_PRICE_ID": 500,
     }
     
-    # Se non trovato, usa il limite di default (Standard)
-    return price_limits.get(price_id, 20)
+    # Mappa dei veri price_id di Stripe ai limiti
+    stripe_price_limits = {
+        settings.STRIPE_STANDARD_PRICE_ID: 20,
+        settings.STRIPE_PREMIUM_PRICE_ID: 50,
+        settings.STRIPE_PRO_PRICE_ID: 150,
+        settings.STRIPE_ENTERPRISE_PRICE_ID: 500,
+        settings.STRIPE_ANNUAL_STANDARD_PRICE_ID: 20,
+        settings.STRIPE_ANNUAL_PREMIUM_PRICE_ID: 50,
+        settings.STRIPE_ANNUAL_PRO_PRICE_ID: 150,
+        settings.STRIPE_ANNUAL_ENTERPRISE_PRICE_ID: 500,
+    }
+    
+    # Prima controlla i nomi dei price_id, poi i veri price_id di Stripe
+    if price_id in price_limits:
+        return price_limits[price_id]
+    elif price_id in stripe_price_limits:
+        return stripe_price_limits[price_id]
+    else:
+        # Se non trovato, usa il limite di default (Standard)
+        logger.warning(f"Unknown price_id: {price_id}, using default limit of 20")
+        return 20
+
+def get_plan_name_by_price_id(price_id: str) -> str:
+    """Mappa i price_id ai nomi dei piani"""
+    # Mappa dei nomi per i nuovi tier (nomi dei price_id)
+    price_names = {
+        "STANDARD_PRICE_ID": "Standard",
+        "PREMIUM_PRICE_ID": "Premium",  
+        "PRO_PRICE_ID": "Pro",
+        "ENTERPRISE_PRICE_ID": "Enterprise",
+        # Supporto per price_id annuali
+        "ANNUAL_STANDARD_PRICE_ID": "Standard",
+        "ANNUAL_PREMIUM_PRICE_ID": "Premium",
+        "ANNUAL_PRO_PRICE_ID": "Pro",
+        "ANNUAL_ENTERPRISE_PRICE_ID": "Enterprise",
+    }
+    
+    # Mappa dei veri price_id di Stripe ai nomi
+    stripe_price_names = {
+        settings.STRIPE_STANDARD_PRICE_ID: "Standard",
+        settings.STRIPE_PREMIUM_PRICE_ID: "Premium",
+        settings.STRIPE_PRO_PRICE_ID: "Pro",
+        settings.STRIPE_ENTERPRISE_PRICE_ID: "Enterprise",
+        settings.STRIPE_ANNUAL_STANDARD_PRICE_ID: "Standard",
+        settings.STRIPE_ANNUAL_PREMIUM_PRICE_ID: "Premium",
+        settings.STRIPE_ANNUAL_PRO_PRICE_ID: "Pro",
+        settings.STRIPE_ANNUAL_ENTERPRISE_PRICE_ID: "Enterprise",
+    }
+    
+    # Prima controlla i nomi dei price_id, poi i veri price_id di Stripe
+    if price_id in price_names:
+        return price_names[price_id]
+    elif price_id in stripe_price_names:
+        return stripe_price_names[price_id]
+    else:
+        # Se non trovato, usa il nome di default (Standard)
+        return "Standard"
+
+def get_plan_name_by_limit(limit: int) -> str:
+    """Mappa i limiti ai nomi dei piani"""
+    limit_names = {
+        20: "Standard",
+        50: "Premium",
+        150: "Pro",
+        500: "Enterprise"
+    }
+    return limit_names.get(limit, "Standard")
 
 def reset_conversations_counter_if_needed(user: User, db: Session) -> bool:
     """
@@ -313,8 +380,8 @@ app.add_middleware(
         "https://*.vercel.app",  # Permette richieste da Vercel
         "https://hostgpt-docker.onrender.com",  # Dominio specifico Render
         "https://hostgpt.vercel.app",  # Dominio specifico Vercel
-        "https://www.hostgpt.it",  # Dominio di produzione
-        "https://hostgpt.it"  # Dominio di produzione senza www
+        "https://ospiterai.it",  # Dominio di produzione
+        "https://www.ospiterai.it"  # Dominio di produzione con www
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -790,6 +857,53 @@ def send_email_background(to_email: str, subject: str, body: str, attachments: O
         logger.info(f"Email queued for {to_email}")
     except Exception as e:
         logger.error(f"Failed to queue email for {to_email}: {e}")
+
+def check_and_send_conversations_limit_warning(user: User, db: Session):
+    """Controlla se rimangono meno del 10% delle conversazioni e invia avviso se necessario"""
+    try:
+        # Determina i limiti e l'utilizzo in base al tipo di abbonamento
+        if user.subscription_status == 'free_trial':
+            conversations_limit = user.free_trial_conversations_limit
+            conversations_used = user.free_trial_conversations_used
+        else:
+            conversations_limit = user.conversations_limit
+            conversations_used = user.conversations_used
+        
+        # Calcola le conversazioni rimanenti
+        conversations_remaining = conversations_limit - conversations_used
+        
+        # Calcola la percentuale rimanente
+        percentage_remaining = (conversations_remaining / conversations_limit) * 100 if conversations_limit > 0 else 0
+        
+        # Se rimangono meno del 10% delle conversazioni, invia l'avviso
+        if percentage_remaining <= 10 and conversations_remaining > 0:
+            logger.info(f"⚠️ Inviando avviso limite conversazioni per utente {user.id}: {conversations_remaining}/{conversations_limit} rimanenti ({percentage_remaining:.1f}%)")
+            
+            # Crea il contenuto dell'email
+            email_body = create_conversations_limit_warning_email_simple(
+                user_name=user.full_name,
+                conversations_remaining=conversations_remaining,
+                conversations_limit=conversations_limit,
+                language=user.language or "it"
+            )
+            
+            # Invia l'email
+            email_subject = "⚠️ Conversations limit warning" if (user.language or "it") == "en" else "⚠️ Avviso limite conversazioni"
+            send_email_background(
+                to_email=user.email,
+                subject=email_subject,
+                body=email_body
+            )
+            
+            logger.info(f"Email di avviso limite conversazioni inviata a {user.email}")
+            return True
+        else:
+            logger.debug(f"Utente {user.id}: {conversations_remaining}/{conversations_limit} conversazioni rimanenti ({percentage_remaining:.1f}%) - nessun avviso necessario")
+            return False
+            
+    except Exception as e:
+        logger.error(f"Errore nel controllo limite conversazioni per utente {user.id}: {e}")
+        return False
 
 # ============= Monthly Report Service =============
 
@@ -1423,9 +1537,19 @@ async def create_openai_assistant(chatbot_data: dict) -> str:
         
         Messaggio di benvenuto: {chatbot_data['welcome_message']}
         
+        LINK RECENSIONI:
+        {f"- Link recensioni: {chatbot_data['reviews_link']}" if chatbot_data.get('reviews_link') else "- Nessun link recensioni fornito"}
+        
         IMPORTANTE: Rispondi sempre nella stessa lingua in cui l'utente ti scrive. Se l'utente scrive in italiano, rispondi in italiano. Se scrive in inglese, rispondi in inglese. Se scrive in spagnolo, rispondi in spagnolo, e così via per qualsiasi lingua.
         Sii cordiale, utile e fornisci informazioni accurate basate sui dati forniti.
         Se non hai informazioni su qualcosa o non sei sicuro della risposta, devi dire di contattare l'host. Se nei contatti di emergenza c'è un numero dell'host, includilo nel messaggio.
+        
+        ISTRUZIONI SPECIALI PER LE RECENSIONI:
+        Se è stato fornito un link alle recensioni, durante la conversazione (ogni tanto, non in ogni messaggio) proponi gentilmente all'ospite di lasciare una recensione al link fornito. Usa frasi come:
+        - "Se hai apprezzato il soggiorno, ti sarei grato se potessi lasciare una recensione qui: [link]"
+        - "La tua opinione è importante per me! Se vuoi, puoi lasciare una recensione qui: [link]"
+        - "Sarei felice se potessi condividere la tua esperienza qui: [link]"
+        Non essere insistente, proponi solo occasionalmente e in modo naturale.
         """
         
         # Crea l'assistant (Assistants v2)
@@ -1487,9 +1611,19 @@ def build_assistant_instructions_from_model(chatbot: Chatbot) -> str:
 
         Messaggio di benvenuto: {chatbot.welcome_message}
 
+        LINK RECENSIONI:
+        {f"- Link recensioni: {chatbot.reviews_link}" if chatbot.reviews_link else "- Nessun link recensioni fornito"}
+
         IMPORTANTE: Rispondi sempre nella stessa lingua in cui l'utente ti scrive. Se l'utente scrive in italiano, rispondi in italiano. Se scrive in inglese, rispondi in inglese. Se scrive in spagnolo, rispondi in spagnolo, e così via per qualsiasi lingua.
         Sii cordiale, utile e fornisci informazioni accurate basate sui dati forniti.
         Se non hai informazioni su qualcosa o non sei sicuro della risposta, devi dire di contattare l'host. Se nei contatti di emergenza c'è un numero dell'host, includilo nel messaggio.
+        
+        ISTRUZIONI SPECIALI PER LE RECENSIONI:
+        Se è stato fornito un link alle recensioni, durante la conversazione (ogni tanto, non in ogni messaggio) proponi gentilmente all'ospite di lasciare una recensione al link fornito. Usa frasi come:
+        - "Se hai apprezzato il soggiorno, ti sarei grato se potessi lasciare una recensione qui: [link]"
+        - "La tua opinione è importante per me! Se vuoi, puoi lasciare una recensione qui: [link]"
+        - "Sarei felice se potessi condividere la tua esperienza qui: [link]"
+        Non essere insistente, proponi solo occasionalmente e in modo naturale.
         """
     except Exception as e:
         logger.error(f"Error building instructions: {e}")
@@ -2074,6 +2208,7 @@ async def handle_subscription_updated(event, db: Session):
         if subscription['items']['data']:
             price_id = subscription['items']['data'][0]['price']['id']
             new_limit = get_conversations_limit_by_price_id(price_id)
+            old_limit = user.conversations_limit
             
             # Aggiorna solo il limite, NON resettare il conteggio
             user.conversations_limit = new_limit
@@ -2082,7 +2217,36 @@ async def handle_subscription_updated(event, db: Session):
             user.max_chatbots = 100
             
             db.commit()
-            logger.info(f"Updated limits for user {user.id}: {new_limit} conversations")
+            logger.info(f"Updated limits for user {user.id}: {old_limit} -> {new_limit} conversations")
+            
+            # Invia email di conferma upgrade solo se il limite è cambiato
+            if old_limit != new_limit:
+                try:
+                    old_plan = get_plan_name_by_limit(old_limit)
+                    new_plan = get_plan_name_by_limit(new_limit)
+                    
+                    email_body = create_plan_upgrade_confirmation_email_simple(
+                        user_name=user.full_name or user.email,
+                        old_plan=old_plan,
+                        new_plan=new_plan,
+                        new_limit=new_limit,
+                        language=user.language or "it"
+                    )
+                    
+                    email_subject = f"Plan upgraded to {new_plan} - HostGPT" if (user.language or "it") == "en" else f"Piano aggiornato a {new_plan} - HostGPT"
+                    
+                    # Invia email in background
+                    from email_service import send_email_background
+                    send_email_background(
+                        to_email=user.email,
+                        subject=email_subject,
+                        body=email_body
+                    )
+                    
+                    logger.info(f"Plan upgrade confirmation email sent to {user.email}: {old_plan} -> {new_plan}")
+                    
+                except Exception as e:
+                    logger.error(f"Failed to send plan upgrade confirmation email: {e}")
         
     except Exception as e:
         logger.error(f"Error handling subscription update: {e}")
@@ -2831,6 +2995,46 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
             
             if user_hostgpt:
                 logger.info(f"WEBHOOK HOSTGPT: User {user_hostgpt.id} HostGPT subscription updated - status: {subscription['status']}, cancel_at_period_end: {subscription.get('cancel_at_period_end', False)}")
+                
+                # Gestisci upgrade del piano se ci sono items nella subscription
+                if subscription['status'] == 'active' and 'items' in subscription and subscription['items']['data']:
+                    price_id = subscription['items']['data'][0]['price']['id']
+                    new_limit = get_conversations_limit_by_price_id(price_id)
+                    old_limit = user_hostgpt.conversations_limit
+                    
+                    # Aggiorna il limite se è cambiato
+                    if old_limit != new_limit:
+                        user_hostgpt.conversations_limit = new_limit
+                        user_hostgpt.max_chatbots = 100  # Assicura che il limite di chatbot sia sempre 100
+                        
+                        logger.info(f"WEBHOOK HOSTGPT: User {user_hostgpt.id} plan upgraded: {old_limit} -> {new_limit} conversations")
+                        
+                        # Invia email di conferma upgrade
+                        try:
+                            old_plan = get_plan_name_by_limit(old_limit)
+                            new_plan = get_plan_name_by_limit(new_limit)
+                            
+                            email_body = create_plan_upgrade_confirmation_email_simple(
+                                user_name=user_hostgpt.full_name or user_hostgpt.email,
+                                old_plan=old_plan,
+                                new_plan=new_plan,
+                                new_limit=new_limit,
+                                language=user_hostgpt.language or "it"
+                            )
+                            
+                            email_subject = f"Plan upgraded to {new_plan} - HostGPT" if (user_hostgpt.language or "it") == "en" else f"Piano aggiornato a {new_plan} - HostGPT"
+                            
+                            send_email_background(
+                                to_email=user_hostgpt.email,
+                                subject=email_subject,
+                                body=email_body
+                            )
+                            
+                            logger.info(f"WEBHOOK HOSTGPT: Plan upgrade confirmation email sent to {user_hostgpt.email}: {old_plan} -> {new_plan}")
+                            
+                        except Exception as e:
+                            logger.error(f"WEBHOOK HOSTGPT: Failed to send plan upgrade confirmation email: {e}")
+                
                 # Aggiorna lo stato dell'abbonamento HostGPT nel database
                 if subscription['status'] == 'active':
                     # Se l'abbonamento è attivo ma ha cancel_at_period_end=True, è in fase di cancellazione
@@ -3332,6 +3536,7 @@ async def create_chatbot(
     print(f"  special_instructions: {special_instructions}")
     print(f"  faq: {faq}")
     print(f"  property_url: {property_url}")
+    print(f"  reviews_link: {reviews_link}")
     print(f"  icon: {icon}")
     
     # Verifica abbonamento attivo
@@ -3424,7 +3629,8 @@ async def create_chatbot(
         "parking_info": parking_info,
         "special_instructions": special_instructions,
         "faq": faq_list,
-        "welcome_message": welcome_message
+        "welcome_message": welcome_message,
+        "reviews_link": reviews_link if reviews_link else ""
     }
     
     # Crea assistant OpenAI
@@ -3952,7 +4158,8 @@ async def get_chat_info(uuid: str, db: Session = Depends(get_db)):
         "welcome_message": chatbot.welcome_message,
         "has_icon": chatbot.has_icon,
         "id": chatbot.id,
-        "house_rules": chatbot.house_rules
+        "house_rules": chatbot.house_rules,
+        "reviews_link": chatbot.reviews_link
     }
 
 @app.get("/api/chat/{uuid}/house-rules-pdf")
@@ -4821,6 +5028,9 @@ async def send_voice_message(
                 logger.info(f"🔄 [DEBUG] Incrementato conversations_used: {owner.conversations_used}")
             db.commit()
             logger.info(f"🔄 [DEBUG] Dopo commit - conversations_used: {owner.conversations_used}, free_trial_conversations_used: {owner.free_trial_conversations_used}")
+            
+            # Controlla e invia avviso se rimangono meno del 10% delle conversazioni
+            check_and_send_conversations_limit_warning(owner, db)
         
         # ============= FINE NUOVA LOGICA =============
         
@@ -7873,6 +8083,9 @@ def crea_nuova_conversazione(guest: Guest, message: MessageCreate, chatbot: Chat
         owner.conversations_used += 1
     db.commit()
     
+    # Controlla e invia avviso se rimangono meno del 10% delle conversazioni
+    check_and_send_conversations_limit_warning(owner, db)
+    
     # Invia messaggio a OpenAI
     client.beta.threads.messages.create(
         thread_id=conversation.thread_id,
@@ -8199,6 +8412,9 @@ async def create_new_conversation(
         db.commit()
         logger.info(f"🔄 [DEBUG] Dopo commit - conversations_used: {owner.conversations_used}, free_trial_conversations_used: {owner.free_trial_conversations_used}")
         
+        # Controlla e invia avviso se rimangono meno del 10% delle conversazioni
+        check_and_send_conversations_limit_warning(owner, db)
+        
         return {
             "conversation_id": conversation.id,
             "thread_id": thread_id,
@@ -8334,6 +8550,9 @@ async def create_fresh_conversation(
         db.commit()
         logger.info(f"🔄 [DEBUG] Dopo commit - conversations_used: {owner.conversations_used}, free_trial_conversations_used: {owner.free_trial_conversations_used}")
         
+        # Controlla e invia avviso se rimangono meno del 10% delle conversazioni
+        check_and_send_conversations_limit_warning(owner, db)
+        
         # Salva il messaggio di benvenuto nel DB come messaggio dell'assistente
         welcome_message = Message(
             conversation_id=conversation.id,
@@ -8346,6 +8565,9 @@ async def create_fresh_conversation(
         db.refresh(welcome_message)
         
         logger.info(f"🆕 [DEBUG] Messaggio di benvenuto creato con ID: {welcome_message.id}")
+        
+        # Controlla e invia avviso se rimangono meno del 10% delle conversazioni
+        check_and_send_conversations_limit_warning(owner, db)
         
         return {
             "conversation_id": conversation.id,
@@ -8682,7 +8904,8 @@ async def submit_checkin_documents(
             guest_first_name=guest_first_name,
             guest_last_name=guest_last_name,
             property_name=chatbot.property_name,
-            file_count=len(files)
+            file_count=len(files),
+            language="it"  # Default italiano, può essere personalizzato in base all'utente
         )
         
         # Invia email con allegati

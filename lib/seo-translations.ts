@@ -10,7 +10,7 @@ export const seoTranslations = {
       "@type": "SoftwareApplication",
       "name": "HostGPT",
       "description": "Assistente AI per gestire le proprietà in affitto breve e gli ospiti Airbnb",
-      "url": "https://hostgpt.it",
+      "url": "https://ospiterai.it",
       "applicationCategory": "BusinessApplication",
       "operatingSystem": "Web",
       "offers": {
@@ -38,7 +38,7 @@ export const seoTranslations = {
       "@type": "SoftwareApplication",
       "name": "HostGPT",
       "description": "AI assistant for managing short-term rental properties and Airbnb guests",
-      "url": "https://hostgpt.it",
+      "url": "https://ospiterai.it",
       "applicationCategory": "BusinessApplication",
       "operatingSystem": "Web",
       "offers": {

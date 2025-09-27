@@ -3,7 +3,7 @@
   
   <!-- Homepage - Italian -->
   <url>
-    <loc>https://hostgpt.it/</loc>
+    <loc>https://ospiterai.it/</loc>
     <lastmod>2025-09-10</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
@@ -11,7 +11,7 @@
 
   <!-- Homepage - English -->
   <url>
-    <loc>https://hostgpt.it/en</loc>
+    <loc>https://ospiterai.it/en</loc>
     <lastmod>2025-09-10</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
@@ -19,7 +19,7 @@
 
   <!-- Chatbots page -->
   <url>
-    <loc>https://hostgpt.it/chatbots</loc>
+    <loc>https://ospiterai.it/chatbots</loc>
     <lastmod>2025-09-10</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
@@ -27,7 +27,7 @@
 
   <!-- Conversations page -->
   <url>
-    <loc>https://hostgpt.it/conversations</loc>
+    <loc>https://ospiterai.it/conversations</loc>
     <lastmod>2025-09-10</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.7</priority>
@@ -35,7 +35,7 @@
 
   <!-- Login page -->
   <url>
-    <loc>https://hostgpt.it/login</loc>
+    <loc>https://ospiterai.it/login</loc>
     <lastmod>2025-09-10</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
@@ -43,7 +43,7 @@
 
   <!-- Register page -->
   <url>
-    <loc>https://hostgpt.it/register</loc>
+    <loc>https://ospiterai.it/register</loc>
     <lastmod>2025-09-10</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
@@ -51,7 +51,7 @@
 
   <!-- Privacy Policy -->
   <url>
-    <loc>https://hostgpt.it/privacy</loc>
+    <loc>https://ospiterai.it/privacy</loc>
     <lastmod>2025-09-10</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.3</priority>
@@ -59,7 +59,7 @@
 
   <!-- Terms of Service -->
   <url>
-    <loc>https://hostgpt.it/terms</loc>
+    <loc>https://ospiterai.it/terms</loc>
     <lastmod>2025-09-10</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.3</priority>
@@ -67,7 +67,7 @@
 
   <!-- Cookie Policy -->
   <url>
-    <loc>https://hostgpt.it/cookiepolicy</loc>
+    <loc>https://ospiterai.it/cookiepolicy</loc>
     <lastmod>2025-09-10</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.3</priority>

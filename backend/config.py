@@ -66,7 +66,7 @@ class Settings(BaseSettings):
     SMTP_PORT: int = int(os.getenv("SMTP_PORT", "587"))
     SMTP_USERNAME: str = os.getenv("SMTP_USERNAME", "your-email@gmail.com")
     SMTP_PASSWORD: str = os.getenv("SMTP_PASSWORD", "your-app-password")
-    FROM_EMAIL: str = os.getenv("FROM_EMAIL", "noreply@hostgpt.it")
+    FROM_EMAIL: str = os.getenv("FROM_EMAIL", "noreply@ospiterai.it")
     
     # URLs
     FRONTEND_URL: str = os.getenv("FRONTEND_URL", "http://localhost:3000")

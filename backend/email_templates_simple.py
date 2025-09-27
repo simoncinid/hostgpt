@@ -839,6 +839,48 @@ def create_guardian_subscription_cancellation_email_simple(user_name: str, end_d
     
     return get_simple_email_template(content, language)
 
+def create_plan_upgrade_confirmation_email_simple(user_name: str, old_plan: str, new_plan: str, new_limit: int, language: str = "it") -> str:
+    """Template email per confermare l'upgrade del piano"""
+    
+    if language == "en":
+        greeting = "Plan upgraded successfully! 🚀"
+        message = f"Hi <strong>{user_name}</strong>, your HostGPT plan has been successfully upgraded from {old_plan} to {new_plan}!"
+        new_features = f"Your new plan includes: {new_limit} monthly conversations, unlimited chatbots, instant responses 24/7, advanced statistics, priority support."
+        cta_text = "Go to Dashboard"
+        next_steps = "You can now enjoy all the benefits of your upgraded plan. Create more chatbots and manage more conversations!"
+    else:  # it
+        greeting = "Piano aggiornato con successo! 🚀"
+        message = f"Ciao <strong>{user_name}</strong>, il tuo piano HostGPT è stato aggiornato con successo da {old_plan} a {new_plan}!"
+        new_features = f"Il tuo nuovo piano include: {new_limit} conversazioni mensili, chatbot illimitati, risposte istantanee 24/7, statistiche avanzate, supporto prioritario."
+        cta_text = "Vai alla Dashboard"
+        next_steps = "Ora puoi godere di tutti i benefici del tuo piano aggiornato. Crea più chatbot e gestisci più conversazioni!"
+    
+    content = f"""
+        <div class="greeting">{greeting}</div>
+        
+        <div class="message">
+            {message}
+        </div>
+        
+        <div style="background-color: {HOSTGPT_SIMPLE_COLORS['light_gray']}; padding: 15px; border-radius: 8px; margin: 15px 0;">
+            <h3 style="color: {HOSTGPT_SIMPLE_COLORS['primary']}; margin-bottom: 10px;">✨ Nuove funzionalità disponibili:</h3>
+            <p style="margin: 0;">{new_features}</p>
+        </div>
+        
+        <div style="text-align: center;">
+            <a href="https://hostgpt-docker.onrender.com/dashboard" class="cta-button">
+                {cta_text}
+            </a>
+        </div>
+        
+        <div class="message">
+            <strong>Prossimi passi:</strong><br>
+            {next_steps}
+        </div>
+    """
+    
+    return get_simple_email_template(content, language)
+
 def create_purchase_confirmation_email_simple(user_name: str, subscription_type: str, amount: str, language: str = "it") -> str:
     """Template email per confermare l'acquisto avvenuto semplificato"""
     
@@ -888,6 +930,120 @@ def create_purchase_confirmation_email_simple(user_name: str, subscription_type:
         
         <div class="message" style="font-size: 14px;">
             <strong>Fatturazione:</strong> Il tuo abbonamento si rinnoverà automaticamente ogni mese. Puoi gestire le impostazioni di fatturazione dalla tua dashboard in qualsiasi momento.
+        </div>
+    """
+    
+    return get_simple_email_template(content, language)
+
+def create_conversations_limit_warning_email_simple(user_name: str, conversations_remaining: int, conversations_limit: int, language: str = "it") -> str:
+    """Template email per avviso limite conversazioni semplificato"""
+    
+    if language == "en":
+        greeting = "⚠️ Conversations limit warning"
+        message = f"Hi <strong>{user_name}</strong>, you have only <strong>{conversations_remaining} conversations</strong> remaining out of your monthly limit of {conversations_limit}."
+        cta_text = "Upgrade Your Plan"
+        warning_info = f"You have used {conversations_limit - conversations_remaining} out of {conversations_limit} monthly conversations. Upgrade your plan to continue without interruptions and get more conversations for your guests."
+        important_note = "Don't wait until the last moment! Upgrade now to ensure your guests can always reach your chatbot."
+    else:  # it
+        greeting = "⚠️ Avviso limite conversazioni"
+        message = f"Ciao <strong>{user_name}</strong>, ti rimangono solo <strong>{conversations_remaining} conversazioni</strong> del tuo limite mensile di {conversations_limit}."
+        cta_text = "Aggiorna il tuo Piano"
+        warning_info = f"Hai utilizzato {conversations_limit - conversations_remaining} conversazioni su {conversations_limit} mensili. Aggiorna il tuo piano per continuare senza interruzioni e ottenere più conversazioni per i tuoi ospiti."
+        important_note = "Non aspettare l'ultimo momento! Aggiorna ora per assicurarti che i tuoi ospiti possano sempre raggiungere il tuo chatbot."
+    
+    content = f"""
+        <div class="greeting">{greeting}</div>
+        
+        <div class="message">
+            {message}
+        </div>
+        
+        <div style="background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; border-radius: 8px; margin: 15px 0;">
+            <strong>⚠️ {warning_info}</strong>
+        </div>
+        
+        <div style="text-align: center;">
+            <a href="https://hostgpt-docker.onrender.com/settings" class="cta-button">
+                {cta_text}
+            </a>
+        </div>
+        
+        <div class="message" style="font-size: 14px;">
+            <strong>{important_note}</strong>
+        </div>
+    """
+    
+    return get_simple_email_template(content, language)
+
+def create_checkin_notification_email_simple(
+    guest_email: str, 
+    guest_phone: str, 
+    guest_first_name: str = None, 
+    guest_last_name: str = None,
+    property_name: str = None,
+    file_count: int = 0,
+    language: str = "it"
+) -> str:
+    """Template email per notifica check-in automatico semplificato"""
+    
+    guest_name = f"{guest_first_name or ''} {guest_last_name or ''}".strip()
+    if not guest_name:
+        guest_name = "Ospite" if language == "it" else "Guest"
+    
+    property_text = f" per {property_name}" if property_name else ""
+    if language == "en":
+        property_text = f" for {property_name}" if property_name else ""
+    
+    if language == "en":
+        greeting = "📋 Automatic Check-in Request"
+        message = f"A guest has sent documents for automatic check-in{property_text}."
+        details_text = "Guest Details:"
+        name_text = "Name:"
+        email_text = "Email:"
+        phone_text = "Phone:"
+        images_text = "Attached images:"
+        privacy_text = "Privacy and Security"
+        privacy_info = "Images have been sent directly via email and have not been saved on HostGPT servers, ensuring maximum privacy and security of guest data."
+        footer_note = "This email was automatically generated by the HostGPT system following the guest's automatic check-in request."
+    else:  # it
+        greeting = "📋 Richiesta Check-in Automatico"
+        message = f"Un ospite ha inviato i documenti per il check-in automatico{property_text}."
+        details_text = "Dettagli Ospite:"
+        name_text = "Nome:"
+        email_text = "Email:"
+        phone_text = "Telefono:"
+        images_text = "Immagini allegate:"
+        privacy_text = "Privacy e Sicurezza"
+        privacy_info = "Le immagini sono state inviate direttamente via email e non sono state salvate sui server di HostGPT, garantendo la massima privacy e sicurezza dei dati dell'ospite."
+        footer_note = "Questa email è stata generata automaticamente dal sistema HostGPT in seguito alla richiesta di check-in automatico dell'ospite."
+    
+    content = f"""
+        <div class="greeting">{greeting}</div>
+        
+        <div class="message">
+            {message}
+        </div>
+        
+        <div style="background-color: {HOSTGPT_SIMPLE_COLORS['light_gray']}; padding: 15px; border-radius: 8px; margin: 15px 0;">
+            <strong>{details_text}</strong><br>
+            <strong>{name_text}</strong> {guest_name}<br>
+            <strong>{email_text}</strong> {guest_email}<br>
+            <strong>{phone_text}</strong> {guest_phone}<br>
+            <strong>{images_text}</strong> {file_count} immagini (JPEG/PNG)
+        </div>
+        
+        <div style="background-color: {HOSTGPT_SIMPLE_COLORS['secondary']}; padding: 15px; border-radius: 8px; margin: 15px 0;">
+            <strong>📎 {images_text}</strong><br>
+            {f"Le immagini del check-in sono allegate a questa email. Puoi scaricarle e procedere con la verifica per completare il processo di check-in dell'ospite." if language == "it" else "Check-in images are attached to this email. You can download them and proceed with verification to complete the guest's check-in process."}
+        </div>
+        
+        <div style="background-color: {HOSTGPT_SIMPLE_COLORS['light_gray']}; padding: 15px; border-radius: 8px; margin: 15px 0;">
+            <strong>🔒 {privacy_text}</strong><br>
+            {privacy_info}
+        </div>
+        
+        <div class="message" style="font-size: 12px; color: {HOSTGPT_SIMPLE_COLORS['text_gray']};">
+            {footer_note}
         </div>
     """
     

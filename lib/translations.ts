@@ -1261,7 +1261,7 @@ export const translations: Record<Language, Translations> = {
         share: {
           title: "Chatbot Pronto!",
           qrCode: "QR Code",
-          link: "hostgpt.it/register",
+          link: "ospiterai.it/register",
           success: "Condivisione attiva!"
         }
       }
@@ -2500,7 +2500,7 @@ export const translations: Record<Language, Translations> = {
         share: {
           title: "Chatbot Ready!",
           qrCode: "QR Code",
-          link: "hostgpt.it/register",
+          link: "ospiterai.it/register",
           success: "Sharing active!"
         }
       }

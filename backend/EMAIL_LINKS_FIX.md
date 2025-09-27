@@ -2,7 +2,7 @@
 
 ## Problema Risolto
 
-Tutti i link nelle email puntavano a `hostgpt.com` invece del dominio corretto `hostgpt.it`.
+Tutti i link nelle email puntavano a `hostgpt.com` invece del dominio corretto `ospiterai.it`.
 
 ## ✅ Correzioni Applicate
 
@@ -21,8 +21,8 @@ Tutti i link nelle email puntavano a `hostgpt.com` invece del dominio corretto `
 | **Dashboard Guardian** | `https://hostgpt-docker.onrender.com/dashboard/guardian` |
 | **Settings** | `https://hostgpt-docker.onrender.com/dashboard/settings` |
 | **Checkout** | `https://hostgpt-docker.onrender.com/checkout` |
-| **Support** | `support@hostgpt.it` |
-| **From Email** | `noreply@hostgpt.it` |
+| **Support** | `support@ospiterai.it` |
+| **From Email** | `noreply@ospiterai.it` |
 
 ## 📧 Email con Link Corretti
 
@@ -73,4 +73,4 @@ Per verificare le correzioni:
 3. **Annulla abbonamento** → Clicca il link per riattivare
 4. **Simula alert Guardian** → Clicca il link per gestire
 
-Tutti i link ora portano al tuo dominio `hostgpt.it`! 🎉
+Tutti i link ora portano al tuo dominio `ospiterai.it`! 🎉

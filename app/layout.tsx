@@ -5,7 +5,7 @@ import { LanguageProvider } from '../lib/languageContext'
 import { Analytics } from '@vercel/analytics/next'
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://hostgpt.it'),
+  metadataBase: new URL('https://ospiterai.it'),
   title: 'HostGPT - Assistente AI per Proprietà in Affitto Breve | Gestione Ospiti Airbnb',
   description: 'HostGPT è il miglior assistente AI per gestire le proprietà in affitto breve e gli ospiti Airbnb. Chatbot intelligenti 24/7 per host, risposte automatiche, gestione prenotazioni e supporto multilingue.',
   keywords: 'hostgpt, assistente AI, proprietà affitto breve, gestione ospiti airbnb, chatbot host, AI airbnb, assistente virtuale proprietà, gestione affitti vacanza, chatbot intelligente, AI ospitalità, host assistant, airbnb management, short term rental AI, property management AI, guest management, automated responses, 24/7 support, multilingue, italiano, inglese',
@@ -27,7 +27,7 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'it_IT',
     alternateLocale: ['en_US'],
-    url: 'https://hostgpt.it',
+    url: 'https://ospiterai.it',
     siteName: 'HostGPT',
     title: 'HostGPT - Assistente AI per Proprietà in Affitto Breve',
     description: 'Il miglior assistente AI per gestire le proprietà in affitto breve e gli ospiti Airbnb. Chatbot intelligenti 24/7 per host.',
@@ -61,8 +61,8 @@ export const metadata: Metadata = {
   alternates: {
     canonical: 'https://hostgpt.com',
       languages: {
-        'it-IT': 'https://hostgpt.it',
-        'en-US': 'https://hostgpt.it/en',
+        'it-IT': 'https://ospiterai.it',
+        'en-US': 'https://ospiterai.it/en',
       },
   },
   category: 'technology',
@@ -88,7 +88,7 @@ export default function RootLayout({
   return (
     <html lang="it">
       <head>
-        <link rel="canonical" href="https://hostgpt.it" />
+        <link rel="canonical" href="https://ospiterai.it" />
         <meta name="google-site-verification" content="your-google-verification-code" />
         <meta name="msvalidate.01" content="your-bing-verification-code" />
         <meta name="theme-color" content="#3B82F6" />
@@ -103,7 +103,7 @@ export default function RootLayout({
               "@type": "SoftwareApplication",
               "name": "HostGPT",
               "description": "Assistente AI per gestire le proprietà in affitto breve e gli ospiti Airbnb",
-              "url": "https://hostgpt.it",
+              "url": "https://ospiterai.it",
               "applicationCategory": "BusinessApplication",
               "operatingSystem": "Web",
               "offers": {
@@ -114,7 +114,7 @@ export default function RootLayout({
               "creator": {
                 "@type": "Organization",
                 "name": "HostGPT",
-                "url": "https://hostgpt.it"
+                "url": "https://ospiterai.it"
               },
               "keywords": "hostgpt, assistente AI, proprietà affitto breve, gestione ospiti airbnb, chatbot host, AI airbnb",
               "inLanguage": ["it", "en"]

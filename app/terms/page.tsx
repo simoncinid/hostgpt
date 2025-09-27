@@ -309,11 +309,11 @@ export default function TermsPage() {
               <div className="grid md:grid-cols-2 gap-6 text-gray-600">
                 <div>
                   <h4 className="font-semibold text-dark mb-2">Supporto Generale</h4>
-                  <p className="text-sm">support@hostgpt.it</p>
+                  <p className="text-sm">support@ospiterai.it</p>
                 </div>
                 <div>
                   <h4 className="font-semibold text-dark mb-2">Questioni Legali</h4>
-                  <p className="text-sm">legal@hostgpt.it</p>
+                  <p className="text-sm">legal@ospiterai.it</p>
                 </div>
                 <div>
                   <h4 className="font-semibold text-dark mb-2">Indirizzo</h4>

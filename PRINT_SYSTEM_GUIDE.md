@@ -225,7 +225,7 @@ grep "Printful" backend/logs/app.log
 ## Supporto
 
 Per problemi o domande:
-- Email: support@hostgpt.it
+- Email: support@ospiterai.it
 - Documentazione: Questo file
 - Log: `backend/logs/app.log`
 

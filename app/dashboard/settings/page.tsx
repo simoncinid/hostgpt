@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { ArrowLeft, CreditCard, Mail, User, Loader2, LogOut, AlertTriangle } from 'lucide-react'
+import { ArrowLeft, CreditCard, Mail, User, Loader2, LogOut, AlertTriangle, ChevronDown, Check } from 'lucide-react'
 import { auth, subscription } from '@/lib/api'
 import { useAuthStore } from '@/lib/store'
 import { useLanguage } from '@/lib/languageContext'
@@ -23,6 +23,9 @@ export default function SettingsPage() {
   const [showDeleteProfileModal, setShowDeleteProfileModal] = useState(false)
   const [deleteConfirmationText, setDeleteConfirmationText] = useState('')
   const [isDeletingProfile, setIsDeletingProfile] = useState(false)
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false)
+  const [selectedPlan, setSelectedPlan] = useState('')
+  const [isUpgrading, setIsUpgrading] = useState(false)
 
   useEffect(() => {
     const load = async () => {
@@ -138,6 +141,90 @@ export default function SettingsPage() {
       setIsDeletingProfile(false)
       setShowDeleteProfileModal(false)
       setDeleteConfirmationText('')
+    }
+  }
+
+  // Piani disponibili per l'upgrade
+  const availablePlans = [
+    {
+      id: 'STANDARD',
+      name: 'Standard',
+      price: '19€',
+      period: '/mese',
+      conversations: 20,
+      features: ['20 conversazioni/mese', 'Chatbot illimitati', 'Supporto email']
+    },
+    {
+      id: 'PREMIUM',
+      name: 'Premium',
+      price: '39€',
+      period: '/mese',
+      conversations: 50,
+      features: ['50 conversazioni/mese', 'Chatbot illimitati', 'Supporto prioritario']
+    },
+    {
+      id: 'PRO',
+      name: 'Pro',
+      price: '79€',
+      period: '/mese',
+      conversations: 150,
+      features: ['150 conversazioni/mese', 'Chatbot illimitati', 'Supporto prioritario']
+    },
+    {
+      id: 'ENTERPRISE',
+      name: 'Enterprise',
+      price: '199€',
+      period: '/mese',
+      conversations: 500,
+      features: ['500 conversazioni/mese', 'Chatbot illimitati', 'Supporto dedicato']
+    }
+  ]
+
+  // Ottieni il piano attuale
+  const getCurrentPlan = () => {
+    // Usa conversations_limit se disponibile, altrimenti conversation_limit
+    const limit = (user as any)?.conversations_limit || user?.conversation_limit
+    if (!limit) return null
+    return availablePlans.find(plan => plan.conversations === limit) || availablePlans[0]
+  }
+
+  const currentPlan = getCurrentPlan()
+
+  const handleUpgrade = async () => {
+    if (!selectedPlan) {
+      toast.error('Seleziona un piano per continuare')
+      return
+    }
+
+    setIsUpgrading(true)
+    try {
+      // Mappa i piani ai price_id (questi sono i veri price_id di Stripe)
+      const priceIdMap: { [key: string]: string } = {
+        'STANDARD': 'STANDARD_PRICE_ID',
+        'PREMIUM': 'PREMIUM_PRICE_ID', 
+        'PRO': 'PRO_PRICE_ID',
+        'ENTERPRISE': 'ENTERPRISE_PRICE_ID'
+      }
+
+      const priceId = priceIdMap[selectedPlan]
+      if (!priceId) {
+        throw new Error('Piano non valido')
+      }
+
+      const res = await subscription.createCheckout(priceId, 'monthly')
+      
+      if (res.data.client_secret) {
+        router.push('/checkout')
+      } else if (res.data.checkout_url) {
+        window.location.href = res.data.checkout_url
+      } else {
+        throw new Error('URL di checkout non ricevuto')
+      }
+    } catch (e: any) {
+      toast.error(e.response?.data?.detail || 'Errore nell\'avvio dell\'upgrade')
+    } finally {
+      setIsUpgrading(false)
+      setShowUpgradeModal(false)
     }
   }
 
@@ -282,6 +369,70 @@ export default function SettingsPage() {
               </div>
             </div>
 
+            {/* Sezione Upgrade Piano */}
+            <div className="bg-white rounded-2xl shadow p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold">Upgrade Piano</h2>
+                <CreditCard className="w-5 h-5 text-gray-600" />
+              </div>
+              
+              <div className="space-y-4">
+                {/* Piano Attuale */}
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h3 className="font-medium text-gray-900 mb-2">Piano Attuale</h3>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-lg font-semibold text-gray-900">
+                        {currentPlan?.name || 'Standard'}
+                      </p>
+                      <p className="text-sm text-gray-600">
+                        {(user as any)?.conversations_used || 0} / {(user as any)?.conversations_limit || 20} conversazioni usate
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm text-gray-600">Limite mensile</p>
+                      <p className="font-medium">{(user as any)?.conversations_limit || 20} conversazioni</p>
+                    </div>
+                  </div>
+                  
+                  {/* Barra di progresso */}
+                  <div className="mt-3">
+                    <div className="flex justify-between text-sm text-gray-600 mb-1">
+                      <span>Utilizzo</span>
+                      <span>{Math.round((((user as any)?.conversations_used || 0) / ((user as any)?.conversations_limit || 20)) * 100)}%</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div 
+                        className={`h-2 rounded-full transition-all duration-300 ${
+                          ((user as any)?.conversations_used || 0) >= ((user as any)?.conversations_limit || 20)
+                            ? 'bg-red-500' 
+                            : ((user as any)?.conversations_used || 0) >= ((user as any)?.conversations_limit || 20) * 0.8
+                            ? 'bg-yellow-500'
+                            : 'bg-blue-600'
+                        }`}
+                        style={{ 
+                          width: `${Math.min((((user as any)?.conversations_used || 0) / ((user as any)?.conversations_limit || 20)) * 100, 100)}%` 
+                        }}
+                      ></div>
+                    </div>
+                    {((user as any)?.conversations_used || 0) >= ((user as any)?.conversations_limit || 20) && (
+                      <p className="text-sm text-red-600 mt-2 font-medium">
+                        ⚠️ Hai raggiunto il limite mensile. Considera un upgrade!
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Pulsante Upgrade */}
+                <button 
+                  onClick={() => setShowUpgradeModal(true)}
+                  className="w-full bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                >
+                  Cambia Piano
+                </button>
+              </div>
+            </div>
+
             <div className="bg-white rounded-2xl shadow p-6">
               <h2 className="text-lg font-semibold mb-4">{t.common.security || 'Sicurezza'}</h2>
               <div className="space-y-4">
@@ -422,6 +573,117 @@ export default function SettingsPage() {
                   (t.settings as any).deleteProfileModal.button
                 )}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Upgrade Piano */}
+      {showUpgradeModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-semibold text-gray-900">Scegli il tuo piano</h3>
+                <button
+                  onClick={() => {
+                    setShowUpgradeModal(false)
+                    setSelectedPlan('')
+                  }}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                {availablePlans.map((plan) => {
+                  const isCurrentPlan = currentPlan?.id === plan.id
+                  const isSelected = selectedPlan === plan.id
+                  
+                  return (
+                    <div
+                      key={plan.id}
+                      className={`relative border rounded-lg p-4 cursor-pointer transition-all ${
+                        isCurrentPlan 
+                          ? 'border-green-300 bg-green-50' 
+                          : isSelected 
+                            ? 'border-blue-500 bg-blue-50' 
+                            : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                      onClick={() => !isCurrentPlan && setSelectedPlan(plan.id)}
+                    >
+                      {isCurrentPlan && (
+                        <div className="absolute top-2 right-2">
+                          <span className="bg-green-100 text-green-800 text-xs font-medium px-2 py-1 rounded-full">
+                            Piano Attuale
+                          </span>
+                        </div>
+                      )}
+                      
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3">
+                            <h4 className="text-lg font-semibold text-gray-900">{plan.name}</h4>
+                            <span className="text-2xl font-bold text-gray-900">{plan.price}</span>
+                            <span className="text-gray-600">{plan.period}</span>
+                          </div>
+                          <p className="text-sm text-gray-600 mt-1">
+                            {plan.conversations} conversazioni al mese
+                          </p>
+                          <ul className="mt-2 space-y-1">
+                            {plan.features.map((feature, index) => (
+                              <li key={index} className="flex items-center text-sm text-gray-600">
+                                <Check className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" />
+                                {feature}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                        
+                        {!isCurrentPlan && (
+                          <div className="ml-4">
+                            <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
+                              isSelected 
+                                ? 'border-blue-500 bg-blue-500' 
+                                : 'border-gray-300'
+                            }`}>
+                              {isSelected && <Check className="w-4 h-4 text-white" />}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+
+              <div className="mt-6 flex gap-3 justify-end">
+                <button
+                  onClick={() => {
+                    setShowUpgradeModal(false)
+                    setSelectedPlan('')
+                  }}
+                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                  disabled={isUpgrading}
+                >
+                  Annulla
+                </button>
+                <button
+                  onClick={handleUpgrade}
+                  disabled={!selectedPlan || isUpgrading}
+                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center"
+                >
+                  {isUpgrading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Elaborazione...
+                    </>
+                  ) : (
+                    'Procedi al Pagamento'
+                  )}
+                </button>
+              </div>
             </div>
           </div>
         </div>

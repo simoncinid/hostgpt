@@ -98,7 +98,7 @@ OPENAI_API_KEY=sk-...
 SMTP_HOST=smtp.gmail.com
 SMTP_USERNAME=your-email@gmail.com
 SMTP_PASSWORD=your-app-password
-FROM_EMAIL=noreply@hostgpt.it
+FROM_EMAIL=noreply@ospiterai.it
 FRONTEND_URL=https://your-frontend.onrender.com
 BACKEND_URL=https://your-backend.onrender.com
 ```

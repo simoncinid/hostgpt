@@ -46,6 +46,7 @@ interface ChatInfo {
   has_icon: boolean
   id: number
   house_rules: string
+  reviews_link?: string
 }
 
 export default function ChatWidgetPage() {

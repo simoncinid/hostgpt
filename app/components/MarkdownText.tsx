@@ -15,6 +15,21 @@ export default function MarkdownText({ content, className = '' }: MarkdownTextPr
     
     // Regex per catturare grassetto, italic e link
     const patterns = [
+      // URL diretti: http://... o https://...
+      {
+        regex: /(https?:\/\/[^\s]+)/g,
+        render: (match: string, ...groups: string[]) => (
+          <a
+            key={`url-${Math.random()}`}
+            href={match}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-rose-600 hover:text-rose-700 underline font-medium"
+          >
+            {match}
+          </a>
+        )
+      },
       // Link: [text](url)
       {
         regex: /\[([^\]]+)\]\(([^)]+)\)/g,

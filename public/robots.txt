@@ -2,7 +2,7 @@ User-agent: *
 Allow: /
 
 # Sitemap
-Sitemap: https://hostgpt.it/sitemap.xml
+Sitemap: https://ospiterai.it/sitemap.xml
 
 # HostGPT specific keywords for better indexing
 # hostgpt, assistente AI, proprietà affitto breve, gestione ospiti airbnb, chatbot host, AI airbnb

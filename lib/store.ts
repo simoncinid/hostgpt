@@ -10,6 +10,9 @@ interface User {
   guardian_subscription_status: string
   guardian_subscription_end_date: string | null
   conversation_limit: number
+  conversations_limit: number
+  conversations_used: number
+  conversations_reset_date: string | null
   // Free trial fields
   wants_free_trial: boolean
   messages_limit: number

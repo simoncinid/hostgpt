@@ -214,7 +214,7 @@ function SuccessContent() {
               {t.stampe.success.supportQuestion}
             </p>
             <a
-              href="mailto:support@hostgpt.it"
+              href="mailto:support@ospiterai.it"
               className="text-primary hover:text-primary/80 font-medium"
             >
               {t.stampe.success.contactSupport}
