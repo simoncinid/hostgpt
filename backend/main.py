@@ -8203,7 +8203,7 @@ async def create_new_conversation(
             guest_id=guest.id,
             thread_id=thread_id,
             guest_name=f"{guest.first_name} {guest.last_name}".strip() if guest.first_name or guest.last_name else None,
-            guest_identifier=None,  # Non più necessario con il nuovo sistema
+            guest_identifier=str(guest.id),  # CORREZIONE: Usa guest.id come identificatore
             is_forced_new=True  # Marca come nuova conversazione forzata
         )
         db.add(conversation)
@@ -8274,6 +8274,50 @@ async def create_welcome_conversation(
         if not guest:
             raise HTTPException(status_code=404, detail="Ospite non trovato")
     
+    # Ottieni il proprietario del chatbot per verificare i limiti
+    owner = db.query(User).filter(User.id == chatbot.user_id).first()
+    if not owner:
+        raise HTTPException(status_code=404, detail="Proprietario del chatbot non trovato")
+    
+    # Verifica abbonamento attivo
+    if not is_subscription_active(owner.subscription_status):
+        raise HTTPException(
+            status_code=403, 
+            detail="Il proprietario di questo chatbot non ha un abbonamento attivo. Il servizio è temporaneamente non disponibile."
+        )
+    
+    # Verifica limiti conversazioni prima di crearne una nuova
+    if owner.subscription_status == 'free_trial':
+        # Verifica se il free trial è ancora attivo
+        if not is_free_trial_active(owner):
+            raise HTTPException(
+                status_code=403,
+                detail="Il periodo di prova gratuito è scaduto. Sottoscrivi un abbonamento per continuare a utilizzare il servizio."
+            )
+        
+        # Verifica limite conversazioni free trial
+        if owner.free_trial_conversations_used >= owner.free_trial_conversations_limit:
+            if (owner.language or 'it') == 'en':
+                error_detail = f"You have reached the limit of 5 conversations for the free trial period. Subscribe to a plan to continue. For assistance contact: {owner.phone}"
+            else:
+                error_detail = f"Hai raggiunto il limite di 5 conversazioni del periodo di prova gratuito. Sottoscrivi un abbonamento per continuare. Per assistenza contatta il numero: {owner.phone}"
+            raise HTTPException(
+                status_code=429,
+                detail=error_detail
+            )
+    else:
+        # Verifica limite conversazioni (i reset sono gestiti dai webhook Stripe)
+        if owner.conversations_used >= owner.conversations_limit:
+            # Messaggio di errore multilingue con numero host
+            if (owner.language or 'it') == 'en':
+                error_message = f"Monthly limit of {owner.conversations_limit} conversations reached. The limit resets automatically on subscription renewal. For assistance contact: {owner.phone}"
+            else:
+                error_message = f"Limite mensile di {owner.conversations_limit} conversazioni raggiunto. Il limite si resetta automaticamente al rinnovo dell'abbonamento. Per assistenza contatta il numero: {owner.phone}"
+            raise HTTPException(
+                status_code=429, 
+                detail=error_message
+            )
+    
     try:
         # NON creiamo un thread OpenAI per il messaggio di benvenuto
         # Il thread verrà creato solo quando l'utente invierà il primo messaggio
@@ -8292,6 +8336,16 @@ async def create_welcome_conversation(
         db.add(conversation)
         db.commit()
         db.refresh(conversation)
+        
+        # Incrementa il contatore delle conversazioni
+        if owner.subscription_status == 'free_trial':
+            owner.free_trial_conversations_used += 1
+            logger.info(f"🔄 [DEBUG] Incrementato free_trial_conversations_used: {owner.free_trial_conversations_used}")
+        else:
+            owner.conversations_used += 1
+            logger.info(f"🔄 [DEBUG] Incrementato conversations_used: {owner.conversations_used}")
+        db.commit()
+        logger.info(f"🔄 [DEBUG] Dopo commit - conversations_used: {owner.conversations_used}, free_trial_conversations_used: {owner.free_trial_conversations_used}")
         
         # Salva il messaggio di benvenuto nel DB come messaggio dell'assistente
         # NON chiamiamo OpenAI, è un messaggio diretto dell'assistente
