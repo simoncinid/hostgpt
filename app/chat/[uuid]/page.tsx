@@ -190,7 +190,8 @@ export default function ChatWidgetPage() {
         content: fullMessage,
         thread_id: threadId,
         guest_name: guestName || undefined,
-        // Nuovi parametri per identificazione ospite
+        // IMPORTANTE: Passa sempre il guest_id!
+        guest_id: guestData?.id,
         phone: guestData?.phone,
         email: guestData?.email,
         first_name: guestData?.first_name,
@@ -318,30 +319,12 @@ export default function ChatWidgetPage() {
       const response = await chat.getInfo(uuid)
       setChatInfo(response.data)
       
-      // SEMPRE crea una nuova conversazione con messaggio di benvenuto
-      try {
-        const welcomeResponse = await chat.createWelcomeConversation(uuid)
-        
-        // Salva l'ID della conversazione
-        setConversationId(welcomeResponse.data.conversation_id)
-        
-        // NON impostiamo thread_id qui perché non esiste ancora
-        // Il thread_id verrà creato solo quando l'utente invierà il primo messaggio
-        setThreadId(null)
-        
-        // NON mostrare ancora il messaggio di benvenuto
-        // L'utente deve prima identificarsi
-        setMessages([])
-        
-        // Mostra la schermata di identificazione
-        setShowWelcome(true)
-        
-      } catch (welcomeError) {
-        console.error('Errore creazione conversazione di benvenuto:', welcomeError)
-        // Fallback: non mostrare messaggio di benvenuto, l'utente deve identificarsi
-        setMessages([])
-        setShowWelcome(true)
-      }
+      // NON creiamo più conversazioni prima dell'identificazione del guest!
+      // La conversazione verrà creata DOPO l'identificazione con il guest_id corretto
+      
+      // Inizializza con lista messaggi vuota e mostra la schermata di identificazione
+      setMessages([])
+      setShowWelcome(true)
       
     } catch (error: any) {
       if (error.response?.status === 403) {
@@ -377,7 +360,8 @@ export default function ChatWidgetPage() {
         content: inputMessage,
         thread_id: threadId,
         guest_name: guestName || undefined,
-        // Nuovi parametri per identificazione ospite
+        // IMPORTANTE: Passa sempre il guest_id!
+        guest_id: guestData?.id,
         phone: guestData?.phone,
         email: guestData?.email,
         first_name: guestData?.first_name,
@@ -651,27 +635,66 @@ export default function ChatWidgetPage() {
         last_name: guestInfo.last_name
       })
       
-      // SEMPRE usa la conversazione corrente (quella con il messaggio di benvenuto)
-      // Al refresh vogliamo sempre una nuova conversazione vuota con solo il messaggio di benvenuto
-      try {
-        const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
-        const messagesResponse = await fetch(`${API_URL}/api/chat/${uuid}/conversation/${conversationId}/messages`)
-        if (messagesResponse.ok) {
-          const messagesData = await messagesResponse.json()
-          const formattedMessages = messagesData.messages.map((msg: any) => ({
-            ...msg,
-            timestamp: msg.timestamp ? new Date(msg.timestamp) : new Date(),
-            id: msg.id || Date.now() + Math.random(),
-            role: (msg.role || 'assistant') as 'assistant' | 'user',
-            content: msg.content || ''
-          }))
-          setMessages(formattedMessages || [])
-        }
-      } catch (error) {
-        console.error('Errore nel caricamento del messaggio di benvenuto:', error)
-      }
+      // Controlla se esiste una conversazione esistente
+      console.log('🔍 [DEBUG] guestInfo:', guestInfo)
+      console.log('🔍 [DEBUG] has_existing_conversation:', guestInfo.has_existing_conversation)
+      console.log('🔍 [DEBUG] existing_conversation_id:', guestInfo.existing_conversation_id)
       
-      toast.success(language === 'IT' ? 'Nuova conversazione iniziata' : 'New conversation started')
+      if (guestInfo.has_existing_conversation && guestInfo.existing_conversation_id && guestInfo.existing_thread_id) {
+        // Riutilizza la conversazione esistente
+        setConversationId(guestInfo.existing_conversation_id)
+        setThreadId(guestInfo.existing_thread_id)
+        
+        try {
+          const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+          const messagesResponse = await fetch(`${API_URL}/api/chat/${uuid}/conversation/${guestInfo.existing_conversation_id}/messages`)
+          if (messagesResponse.ok) {
+            const messagesData = await messagesResponse.json()
+            const formattedMessages = messagesData.messages.map((msg: any) => ({
+              ...msg,
+              timestamp: msg.timestamp ? new Date(msg.timestamp) : new Date(),
+              id: msg.id || Date.now() + Math.random(),
+              role: (msg.role || 'assistant') as 'assistant' | 'user',
+              content: msg.content || ''
+            }))
+            setMessages(formattedMessages || [])
+          }
+        } catch (error) {
+          console.error('Errore nel caricamento della conversazione esistente:', error)
+        }
+        
+        toast.success(language === 'IT' ? 'Conversazione esistente ripristinata' : 'Existing conversation restored')
+      } else {
+        // Nessuna conversazione esistente, CREA una nuova con il guest_id
+        console.log('🆕 [DEBUG] Creando nuova conversazione per guest_id:', guestInfo.guest_id)
+        try {
+          const welcomeResponse = await chat.createWelcomeConversation(uuid, guestInfo.guest_id)
+          console.log('🆕 [DEBUG] welcomeResponse:', welcomeResponse.data)
+          
+          // Salva l'ID della nuova conversazione
+          setConversationId(welcomeResponse.data.conversation_id)
+          setThreadId(null) // Nessun thread ancora
+          
+          // Carica i messaggi della nuova conversazione
+          const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+          const messagesResponse = await fetch(`${API_URL}/api/chat/${uuid}/conversation/${welcomeResponse.data.conversation_id}/messages`)
+          if (messagesResponse.ok) {
+            const messagesData = await messagesResponse.json()
+            const formattedMessages = messagesData.messages.map((msg: any) => ({
+              ...msg,
+              timestamp: msg.timestamp ? new Date(msg.timestamp) : new Date(),
+              id: msg.id || Date.now() + Math.random(),
+              role: (msg.role || 'assistant') as 'assistant' | 'user',
+              content: msg.content || ''
+            }))
+            setMessages(formattedMessages || [])
+          }
+        } catch (error) {
+          console.error('Errore nel caricamento del messaggio di benvenuto:', error)
+        }
+        
+        toast.success(language === 'IT' ? 'Nuova conversazione iniziata' : 'New conversation started')
+      }
       
       setShowWelcome(false)
       setTimeout(() => inputRef.current?.focus(), 100)
