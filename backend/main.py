@@ -8288,8 +8288,8 @@ async def create_welcome_conversation(
         raise HTTPException(status_code=404, detail="Chatbot non trovato")
     
     # Guest_id è SEMPRE richiesto - verifica che l'ospite esista
-    guest = db.query(Guest).filter(Guest.id == guest_id).first()
-    if not guest:
+        guest = db.query(Guest).filter(Guest.id == guest_id).first()
+        if not guest:
         logger.error(f"🚨 ERRORE: guest_id={guest_id} non trovato nel database!")
         raise HTTPException(status_code=404, detail="Ospite non trovato - identificazione richiesta")
     
