@@ -3886,7 +3886,7 @@ async def demo_chat(message: DemoMessageCreate):
         client = get_openai_client()
         
         # Usa l'assistant ID fisso per la demo
-        demo_assistant_id = "asst_L285y7tLbfulOmLXNh6mlUEE"
+        demo_assistant_id = "asst_IF4YbsqCuO2RNbqMd8nReyBU"
         
         # Crea o usa thread esistente
         if not message.thread_id:
