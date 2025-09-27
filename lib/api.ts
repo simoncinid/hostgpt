@@ -291,6 +291,33 @@ export const chat = {
   
   getIcon: (uuid: string) =>
     api.get(`/chat/${uuid}/icon`, { responseType: 'blob' }),
+  
+  submitCheckin: async (uuid: string, formData: FormData) => {
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
+    
+    const response = await fetch(`${API_URL}/api/chat/${uuid}/checkin`, {
+      method: 'POST',
+      headers: {
+        'Authorization': token ? `Bearer ${token}` : '',
+      },
+      body: formData
+    })
+    
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}))
+      throw {
+        response: {
+          status: response.status,
+          data: errorData
+        }
+      }
+    }
+    
+    return {
+      data: await response.json()
+    }
+  },
 }
 
 export const guardian = {

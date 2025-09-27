@@ -855,3 +855,53 @@ def create_guardian_subscription_confirmation_email(user_name: str) -> str:
     """
     
     return get_base_email_template(content)
+
+def create_checkin_notification_email(
+    guest_email: str, 
+    guest_phone: str, 
+    guest_first_name: str = None, 
+    guest_last_name: str = None,
+    property_name: str = None,
+    file_count: int = 0
+) -> str:
+    """Template email per notifica check-in automatico"""
+    
+    guest_name = f"{guest_first_name or ''} {guest_last_name or ''}".strip()
+    if not guest_name:
+        guest_name = "Ospite"
+    
+    property_text = f" per {property_name}" if property_name else ""
+    
+    content = f"""
+        <div class="greeting">📋 Richiesta Check-in Automatico</div>
+        
+        <div class="message">
+            Un ospite ha inviato i documenti per il check-in automatico{property_text}.
+        </div>
+        
+        <div class="highlight-box">
+            <h3 style="color: {HOSTGPT_COLORS['primary']}; margin-bottom: 15px;">📝 Dettagli Ospite:</h3>
+            <ul class="feature-list">
+                <li><strong>Nome:</strong> {guest_name}</li>
+                <li><strong>Email:</strong> {guest_email}</li>
+                <li><strong>Telefono:</strong> {guest_phone}</li>
+                <li><strong>Documenti allegati:</strong> {file_count} file</li>
+            </ul>
+        </div>
+        
+        <div class="info-box">
+            <strong>📎 Documenti Allegati</strong><br>
+            I documenti del check-in sono allegati a questa email. Puoi scaricarli e procedere con la verifica per completare il processo di check-in dell'ospite.
+        </div>
+        
+        <div class="info-box">
+            <strong>🔒 Privacy e Sicurezza</strong><br>
+            I documenti sono stati inviati direttamente via email e non sono stati salvati sui server di HostGPT, garantendo la massima privacy e sicurezza dei dati dell'ospite.
+        </div>
+        
+        <div class="footer-note">
+            Questa email è stata generata automaticamente dal sistema HostGPT in seguito alla richiesta di check-in automatico dell'ospite.
+        </div>
+    """
+    
+    return get_base_email_template(content)

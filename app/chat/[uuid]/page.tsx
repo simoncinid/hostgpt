@@ -19,7 +19,11 @@ import {
   FileText,
   Mic,
   MicOff,
-  Square
+  Square,
+  Upload,
+  Camera,
+  Check,
+  AlertCircle
 } from 'lucide-react'
 import { chat } from '@/lib/api'
 import toast from 'react-hot-toast'
@@ -68,6 +72,7 @@ export default function ChatWidgetPage() {
     email?: string
     first_name?: string
     last_name?: string
+    is_first_time_guest?: boolean
   } | null>(null)
   const [showInfo, setShowInfo] = useState(false)
   const [subscriptionCancelled, setSubscriptionCancelled] = useState(false)
@@ -81,6 +86,12 @@ export default function ChatWidgetPage() {
   const [isRecording, setIsRecording] = useState(false)
   const [isProcessingAudio, setIsProcessingAudio] = useState(false)
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null)
+  
+  // Stati per check-in automatico
+  const [showCheckinPopup, setShowCheckinPopup] = useState(false)
+  const [checkinFiles, setCheckinFiles] = useState<File[]>([])
+  const [checkinConsent, setCheckinConsent] = useState(false)
+  const [isSubmittingCheckin, setIsSubmittingCheckin] = useState(false)
   
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -118,7 +129,16 @@ export default function ChatWidgetPage() {
       freeTrialLimitReachedDesc: "L'host ha raggiunto il limite di messaggi del periodo di prova gratuito. Il servizio sarà ripristinato con l'abbonamento completo.",
       freeTrialExpired: "Periodo di prova scaduto",
       freeTrialExpiredDesc: "Il periodo di prova gratuito dell'host è scaduto. Il servizio sarà ripristinato con l'abbonamento completo.",
-      welcomeMessage: "Ciao! Sono qui per aiutarti con qualsiasi domanda sulla casa e sulla zona. Come posso esserti utile?"
+      welcomeMessage: "Ciao! Sono qui per aiutarti con qualsiasi domanda sulla casa e sulla zona. Come posso esserti utile?",
+      checkinButton: "Check-in Automatico",
+      checkinTitle: "Check-in Automatico",
+      checkinDescription: "Carica fino a 10 documenti per il check-in automatico",
+      checkinUploadLabel: "Seleziona file o scatta foto",
+      checkinConsentText: "Acconsento all'invio di questi documenti via email alla struttura ricettiva per il check-in. I dati non verranno salvati da HostGPT.",
+      checkinSubmit: "Invia Documenti",
+      checkinSuccess: "Documenti inviati con successo!",
+      checkinError: "Errore nell'invio dei documenti",
+      checkinMaxFiles: "Massimo 10 file consentiti"
     },
     ENG: {
       assistant: 'Virtual Assistant',
@@ -151,7 +171,16 @@ export default function ChatWidgetPage() {
       freeTrialLimitReachedDesc: "The host has reached the free trial message limit. Service will be restored with a complete subscription.",
       freeTrialExpired: "Free trial expired",
       freeTrialExpiredDesc: "The host's free trial period has expired. Service will be restored with a complete subscription.",
-      welcomeMessage: "Hello! I'm here to help you with any questions about the house and the area. How can I be useful?"
+      welcomeMessage: "Hello! I'm here to help you with any questions about the house and the area. How can I be useful?",
+      checkinButton: "Automatic Check-in",
+      checkinTitle: "Automatic Check-in",
+      checkinDescription: "Upload up to 10 documents for automatic check-in",
+      checkinUploadLabel: "Select files or take photos",
+      checkinConsentText: "I consent to sending these documents via email to the accommodation for check-in purposes. Data will not be saved by HostGPT.",
+      checkinSubmit: "Send Documents",
+      checkinSuccess: "Documents sent successfully!",
+      checkinError: "Error sending documents",
+      checkinMaxFiles: "Maximum 10 files allowed"
     }
   }
 
@@ -681,7 +710,8 @@ export default function ChatWidgetPage() {
         phone: fullPhoneNumber,
         email: guestInfo.email,
         first_name: guestInfo.first_name,
-        last_name: guestInfo.last_name
+        last_name: guestInfo.last_name,
+        is_first_time_guest: guestInfo.is_first_time_guest
       })
       
       // NUOVO: Salva il guest_id nel localStorage per i refresh futuri
@@ -823,6 +853,102 @@ export default function ChatWidgetPage() {
     await loadChatInfo(savedGuestId ? parseInt(savedGuestId) : null)
     
     toast.success(language === 'IT' ? 'Nuova conversazione creata' : 'New conversation created')
+  }
+
+  // Funzioni per check-in automatico
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || [])
+    
+    if (checkinFiles.length + files.length > 10) {
+      toast.error(currentTexts.checkinMaxFiles)
+      return
+    }
+    
+    setCheckinFiles(prev => [...prev, ...files])
+  }
+
+  const removeFile = (index: number) => {
+    setCheckinFiles(prev => prev.filter((_, i) => i !== index))
+  }
+
+  const handleCameraCapture = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true })
+      
+      // Crea un elemento video temporaneo per catturare l'immagine
+      const video = document.createElement('video')
+      video.srcObject = stream
+      video.play()
+      
+      video.addEventListener('loadedmetadata', () => {
+        const canvas = document.createElement('canvas')
+        canvas.width = video.videoWidth
+        canvas.height = video.videoHeight
+        const ctx = canvas.getContext('2d')
+        
+        if (ctx) {
+          ctx.drawImage(video, 0, 0)
+          canvas.toBlob((blob) => {
+            if (blob) {
+              const file = new File([blob], `photo-${Date.now()}.jpg`, { type: 'image/jpeg' })
+              
+              if (checkinFiles.length >= 10) {
+                toast.error(currentTexts.checkinMaxFiles)
+                return
+              }
+              
+              setCheckinFiles(prev => [...prev, file])
+            }
+          }, 'image/jpeg')
+        }
+        
+        // Ferma lo stream
+        stream.getTracks().forEach(track => track.stop())
+      })
+    } catch (error) {
+      console.error('Errore accesso fotocamera:', error)
+      toast.error('Errore nell\'accesso alla fotocamera')
+    }
+  }
+
+  const handleCheckinSubmit = async () => {
+    if (checkinFiles.length === 0) {
+      toast.error(language === 'IT' ? 'Seleziona almeno un file' : 'Select at least one file')
+      return
+    }
+    
+    if (!checkinConsent) {
+      toast.error(language === 'IT' ? 'Devi accettare il consenso' : 'You must accept the consent')
+      return
+    }
+    
+    setIsSubmittingCheckin(true)
+    
+    try {
+      // Prepara i dati per l'API
+      const formData = new FormData()
+      checkinFiles.forEach((file) => {
+        formData.append('files', file)
+      })
+      formData.append('guest_id', guestData?.id?.toString() || '')
+      formData.append('guest_email', guestData?.email || '')
+      formData.append('guest_phone', guestData?.phone || '')
+      formData.append('guest_first_name', guestData?.first_name || '')
+      formData.append('guest_last_name', guestData?.last_name || '')
+      
+      // Chiama l'API per inviare i documenti
+      await chat.submitCheckin(uuid, formData)
+      
+      toast.success(currentTexts.checkinSuccess)
+      setShowCheckinPopup(false)
+      setCheckinFiles([])
+      setCheckinConsent(false)
+    } catch (error) {
+      console.error('Errore invio check-in:', error)
+      toast.error(currentTexts.checkinError)
+    } finally {
+      setIsSubmittingCheckin(false)
+    }
   }
 
   if (!chatInfo && !subscriptionCancelled) {
@@ -1160,6 +1286,21 @@ export default function ChatWidgetPage() {
                             minute: '2-digit'
                           })}
                         </p>
+                        
+                        {/* Bottone check-in automatico - solo per il primo messaggio dell'assistente se è la prima volta */}
+                        {message.role === 'assistant' && 
+                         index === 0 && 
+                         guestData?.is_first_time_guest && (
+                          <div className="mt-3 pt-3 border-t border-gray-200">
+                            <button
+                              onClick={() => setShowCheckinPopup(true)}
+                              className="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white text-sm rounded-lg transition-colors duration-200"
+                            >
+                              <Upload className="w-4 h-4" />
+                              {currentTexts.checkinButton}
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </motion.div>
@@ -1274,6 +1415,127 @@ export default function ChatWidgetPage() {
           )}
         </div>
 
+        {/* Popup Check-in Automatico */}
+        {showCheckinPopup && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className={`w-full max-w-md rounded-2xl shadow-xl max-h-[90vh] overflow-y-auto ${
+                isDarkMode ? 'bg-gray-800' : 'bg-white'
+              }`}
+            >
+              {/* Header */}
+              <div className={`p-6 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+                <div className="flex items-center justify-between">
+                  <h2 className={`text-xl font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                    {currentTexts.checkinTitle}
+                  </h2>
+                  <button
+                    onClick={() => setShowCheckinPopup(false)}
+                    className={`p-2 rounded-lg transition-colors ${
+                      isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
+                    }`}
+                  >
+                    <X className={`w-5 h-5 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`} />
+                  </button>
+                </div>
+                <p className={`text-sm mt-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                  {currentTexts.checkinDescription}
+                </p>
+              </div>
+
+              {/* Content */}
+              <div className="p-6 space-y-4">
+                {/* File Upload */}
+                <div>
+                  <label className={`block text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    {currentTexts.checkinUploadLabel}
+                  </label>
+                  <div className="flex gap-2 mb-4">
+                    <label className="flex-1 flex items-center justify-center gap-2 p-4 border-2 border-dashed border-blue-300 rounded-lg cursor-pointer hover:border-blue-400 transition-colors">
+                      <Upload className="w-5 h-5 text-blue-500" />
+                      <span className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                        {language === 'IT' ? 'Seleziona file' : 'Select files'}
+                      </span>
+                      <input
+                        type="file"
+                        multiple
+                        accept="image/*,.pdf,.doc,.docx"
+                        onChange={handleFileUpload}
+                        className="hidden"
+                      />
+                    </label>
+                    <button
+                      onClick={handleCameraCapture}
+                      className="flex items-center justify-center p-4 border-2 border-dashed border-green-300 rounded-lg hover:border-green-400 transition-colors"
+                    >
+                      <Camera className="w-5 h-5 text-green-500" />
+                    </button>
+                  </div>
+
+                  {/* File List */}
+                  {checkinFiles.length > 0 && (
+                    <div className="space-y-2">
+                      <p className={`text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                        {language === 'IT' ? `File selezionati (${checkinFiles.length}/10):` : `Selected files (${checkinFiles.length}/10):`}
+                      </p>
+                      {checkinFiles.map((file, index) => (
+                        <div key={index} className={`flex items-center justify-between p-2 rounded-lg ${
+                          isDarkMode ? 'bg-gray-700' : 'bg-gray-50'
+                        }`}>
+                          <span className={`text-sm truncate ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                            {file.name}
+                          </span>
+                          <button
+                            onClick={() => removeFile(index)}
+                            className="text-red-500 hover:text-red-700 transition-colors"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Consent Checkbox */}
+                <div className="flex items-start gap-3">
+                  <input
+                    type="checkbox"
+                    id="checkinConsent"
+                    checked={checkinConsent}
+                    onChange={(e) => setCheckinConsent(e.target.checked)}
+                    className="mt-1 w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <label htmlFor="checkinConsent" className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    {currentTexts.checkinConsentText}
+                  </label>
+                </div>
+
+                {/* Submit Button */}
+                <button
+                  onClick={handleCheckinSubmit}
+                  disabled={checkinFiles.length === 0 || !checkinConsent || isSubmittingCheckin}
+                  className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed text-white rounded-lg transition-colors duration-200"
+                >
+                  {isSubmittingCheckin ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      {language === 'IT' ? 'Invio in corso...' : 'Sending...'}
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-4 h-4" />
+                      {currentTexts.checkinSubmit}
+                    </>
+                  )}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
 
       </div>
     </div>

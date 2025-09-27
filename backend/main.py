@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Depends, HTTPException, status, BackgroundTasks, Request, File, UploadFile, Form
+from typing import List
 from fastapi.responses import StreamingResponse
 from fastapi.security import OAuth2PasswordBearer
 from fastapi.middleware.cors import CORSMiddleware
@@ -60,6 +61,7 @@ from email_templates_simple import (
     create_monthly_report_email_simple,
     create_print_order_confirmation_email_simple
 )
+from email_templates import create_checkin_notification_email
 
 def get_conversations_limit_by_price_id(price_id: str) -> int:
     """Mappa i price_id ai limiti delle conversazioni"""
@@ -7947,6 +7949,7 @@ class GuestIdentificationResponse(BaseModel):
     first_name: Optional[str]
     last_name: Optional[str]
     is_first_time: bool
+    is_first_time_guest: bool  # Nuovo campo per identificare se è la prima volta per questo chatbot
     has_existing_conversation: bool
     existing_conversation_id: Optional[int]
     existing_thread_id: Optional[str]
@@ -7997,6 +8000,9 @@ async def identify_guest(
         # Se non ci sono conflitti, usa il guest trovato
         guest = guest_by_phone or guest_by_email
         
+        # Flag per identificare se è la prima volta per questo chatbot
+        is_first_time_guest = False
+        
         # Se l'ospite ESISTE globalmente
         if guest:
             # Controlla se è già associato a questo chatbot
@@ -8005,8 +8011,9 @@ async def identify_guest(
                 ChatbotGuest.guest_id == guest.id
             ).first()
             
-            # Se non è associato, crea l'associazione
+            # Se non è associato, crea l'associazione (PRIMA VOLTA per questo chatbot)
             if not chatbot_guest:
+                is_first_time_guest = True
                 chatbot_guest = ChatbotGuest(
                     chatbot_id=chatbot.id,
                     guest_id=guest.id
@@ -8029,6 +8036,9 @@ async def identify_guest(
         
         # Se l'ospite NON ESISTE globalmente
         else:
+            # Nuovo guest = sempre prima volta per questo chatbot
+            is_first_time_guest = True
+            
             # Per nuovi ospiti, richiedi entrambi i campi
             if not request.phone or not request.email:
                 raise HTTPException(
@@ -8057,8 +8067,6 @@ async def identify_guest(
             db.add(chatbot_guest)
             db.commit()
         
-        # Verifica se è la prima volta
-        is_first_time = is_guest_first_time(guest, chatbot.id, db)
         
         # Per guest esistenti, cerca l'ultima conversazione
         has_existing_conversation = False
@@ -8084,7 +8092,8 @@ async def identify_guest(
             email=guest.email,
             first_name=guest.first_name,
             last_name=guest.last_name,
-            is_first_time=is_first_time,
+            is_first_time=is_first_time_guest,  # Per ora usiamo la stessa logica
+            is_first_time_guest=is_first_time_guest,
             has_existing_conversation=has_existing_conversation,
             existing_conversation_id=existing_conversation_id,
             existing_thread_id=existing_thread_id
@@ -8641,6 +8650,104 @@ async def get_conversation_messages(
     except Exception as e:
         logger.error(f"Error getting conversation messages: {e}")
         raise HTTPException(status_code=500, detail="Errore nel recupero dei messaggi")
+
+@app.post("/api/chat/{uuid}/checkin")
+async def submit_checkin_documents(
+    uuid: str,
+    request: Request,
+    guest_id: int = Form(...),
+    guest_email: str = Form(...),
+    guest_phone: str = Form(...),
+    guest_first_name: Optional[str] = Form(None),
+    guest_last_name: Optional[str] = Form(None),
+    files: List[UploadFile] = File(...),
+    db: Session = Depends(get_db)
+):
+    """Endpoint per l'invio dei documenti di check-in automatico"""
+    try:
+        # Verifica chatbot
+        chatbot = db.query(Chatbot).filter(Chatbot.uuid == uuid).first()
+        if not chatbot or not chatbot.is_active:
+            raise HTTPException(status_code=404, detail="Chatbot non trovato")
+        
+        # Verifica guest
+        guest = db.query(Guest).filter(Guest.id == guest_id).first()
+        if not guest:
+            raise HTTPException(status_code=404, detail="Guest non trovato")
+        
+        # Verifica che sia un guest che interagisce per la prima volta con questo chatbot
+        chatbot_guest = db.query(ChatbotGuest).filter(
+            ChatbotGuest.chatbot_id == chatbot.id,
+            ChatbotGuest.guest_id == guest.id
+        ).first()
+        
+        if not chatbot_guest:
+            raise HTTPException(status_code=403, detail="Accesso negato: guest non associato a questo chatbot")
+        
+        # Limita il numero di file
+        if len(files) > 10:
+            raise HTTPException(status_code=400, detail="Massimo 10 file consentiti")
+        
+        # Ottieni il proprietario del chatbot per l'email
+        owner = db.query(User).filter(User.id == chatbot.user_id).first()
+        if not owner:
+            raise HTTPException(status_code=404, detail="Proprietario chatbot non trovato")
+        
+        # Prepara gli allegati email
+        attachments = []
+        for file in files:
+            # Leggi il contenuto del file
+            content = await file.read()
+            
+            # Aggiungi all'elenco allegati
+            attachments.append({
+                'filename': file.filename,
+                'content': content,
+                'content_type': file.content_type
+            })
+        
+        # Crea il template email
+        email_body = create_checkin_notification_email(
+            guest_email=guest_email,
+            guest_phone=guest_phone,
+            guest_first_name=guest_first_name,
+            guest_last_name=guest_last_name,
+            property_name=chatbot.property_name,
+            file_count=len(files)
+        )
+        
+        # Invia email con allegati
+        try:
+            # Converte gli allegati nel formato richiesto dalla funzione send_email
+            email_attachments = []
+            for attachment in attachments:
+                email_attachments.append((
+                    attachment['filename'],
+                    attachment['content'],
+                    attachment['content_type']
+                ))
+            
+            await send_email(
+                to_email=owner.email,
+                subject=f"Check-in Automatico - {chatbot.property_name or 'Proprietà'}",
+                body=email_body,
+                attachments=email_attachments
+            )
+        except Exception as e:
+            logger.error(f"Error sending checkin email: {e}")
+            raise HTTPException(status_code=500, detail="Errore nell'invio dell'email")
+        
+        return {
+            "success": True,
+            "message": "Documenti inviati con successo",
+            "files_count": len(files)
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error in checkin submission: {e}")
+        raise HTTPException(status_code=500, detail="Errore nell'invio dei documenti")
 
 if __name__ == "__main__":
     import uvicorn
