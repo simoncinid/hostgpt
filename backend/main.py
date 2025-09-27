@@ -8267,22 +8267,31 @@ async def reset_conversations_counter_admin(
 async def create_welcome_conversation(
     uuid: str,
     request: Request,
-    guest_id: Optional[int] = None,
+    guest_id: Optional[int] = None,  # Temporaneamente Optional per debug
     db: Session = Depends(get_db)
 ):
-    """Crea una nuova conversazione con messaggio di benvenuto al refresh"""
+    """Crea una nuova conversazione con messaggio di benvenuto - RICHIEDE SEMPRE IDENTIFICAZIONE"""
+    
+    logger.warning(f"🚨 [DEBUG] create-welcome-conversation chiamato con guest_id={guest_id}")
+    
+    # Se guest_id non è fornito, blocca con errore chiaro
+    if not guest_id:
+        logger.error(f"🚨 ERRORE: create-welcome-conversation chiamato SENZA guest_id! Il frontend deve passare il guest_id dopo l'identificazione!")
+        raise HTTPException(
+            status_code=400, 
+            detail="guest_id OBBLIGATORIO - Il frontend deve passare il guest_id dopo l'identificazione"
+        )
     
     # Verifica chatbot
     chatbot = db.query(Chatbot).filter(Chatbot.uuid == uuid).first()
     if not chatbot or not chatbot.is_active:
         raise HTTPException(status_code=404, detail="Chatbot non trovato")
     
-    # Se guest_id è fornito, verifica che l'ospite esista
-    guest = None
-    if guest_id:
-        guest = db.query(Guest).filter(Guest.id == guest_id).first()
-        if not guest:
-            raise HTTPException(status_code=404, detail="Ospite non trovato")
+    # Guest_id è SEMPRE richiesto - verifica che l'ospite esista
+    guest = db.query(Guest).filter(Guest.id == guest_id).first()
+    if not guest:
+        logger.error(f"🚨 ERRORE: guest_id={guest_id} non trovato nel database!")
+        raise HTTPException(status_code=404, detail="Ospite non trovato - identificazione richiesta")
     
     # Ottieni il proprietario del chatbot per verificare i limiti
     owner = db.query(User).filter(User.id == chatbot.user_id).first()
@@ -8357,15 +8366,13 @@ async def create_welcome_conversation(
         # NON creiamo un thread OpenAI per il messaggio di benvenuto
         # Il thread verrà creato solo quando l'utente invierà il primo messaggio
         
-        # Crea nuova conversazione nel DB SOLO se non ne esiste una
-        # CORREZIONE: Usa guest.id come identificatore quando disponibile, altrimenti IP
-        guest_identifier = str(guest.id) if guest else request.client.host
+        # Crea nuova conversazione nel DB - SEMPRE con guest_id vero
         conversation = Conversation(
             chatbot_id=chatbot.id,
-            guest_id=guest_id,  # Guest specifico se fornito
+            guest_id=guest.id,  # SEMPRE il guest_id vero (guest è sempre presente)
             thread_id=None,  # Nessun thread OpenAI ancora
-            guest_name=f"{guest.first_name} {guest.last_name}".strip() if guest and (guest.first_name or guest.last_name) else None,
-            guest_identifier=guest_identifier,
+            guest_name=f"{guest.first_name} {guest.last_name}".strip() if (guest.first_name or guest.last_name) else None,
+            guest_identifier=None,  # NON usiamo più questo campo per guest identificati
             is_forced_new=False  # Non è una conversazione forzata, è un refresh
         )
         db.add(conversation)
