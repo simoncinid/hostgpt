@@ -490,11 +490,16 @@ def find_or_create_guest(phone: Optional[str], email: Optional[str],
 
 def get_latest_guest_conversation(chatbot_id: int, guest_id: int, db: Session) -> Optional[Conversation]:
     """Ottiene l'ultima conversazione di un ospite per un chatbot specifico"""
-    return db.query(Conversation).filter(
+    # CORREZIONE IMPORTANTE: Cercare per chatbot_id + guest_identifier (che ora è guest.id)
+    # NON per guest_id direttamente
+    guest_identifier = str(guest_id)
+    conversation = db.query(Conversation).filter(
         Conversation.chatbot_id == chatbot_id,
-        Conversation.guest_id == guest_id,
-        Conversation.is_forced_new == False
+        Conversation.guest_identifier == guest_identifier
     ).order_by(Conversation.started_at.desc()).first()
+    
+    logger.info(f"🔍 [DEBUG] get_latest_guest_conversation per chatbot {chatbot_id} e guest_identifier {guest_identifier}: {conversation.id if conversation else 'None'}")
+    return conversation
 
 def is_guest_first_time(guest: Guest, chatbot_id: int, db: Session) -> bool:
     """Verifica se è la prima volta che l'ospite interagisce con questo chatbot"""
@@ -512,6 +517,8 @@ def is_guest_first_time(guest: Guest, chatbot_id: int, db: Session) -> bool:
     # Se ha conversazioni, non è la prima volta
     existing_conversation = get_latest_guest_conversation(chatbot_id, guest.id, db)
     return existing_conversation is None
+
+
 
 # OAuth2 bearer per estrarre il token dall'header Authorization
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
@@ -4533,18 +4540,41 @@ async def send_message(
         thread_id = message.thread_id
         is_new_conversation = False
         
-        # Se l'ospite esiste, cerca la sua ultima conversazione
-        if guest and not message.force_new_conversation:
-            # Cerca la conversazione esistente dell'ospite
+        # CORREZIONE IMPORTANTE: Se il guest è identificato ma non è stato passato un thread_id,
+        # cerchiamo sempre prima se ha una conversazione esistente, indipendentemente da force_new_conversation
+        # (a meno che non sia esplicitamente richiesta una nuova conversazione)
+        if guest and not thread_id and not message.force_new_conversation:
             existing_conversation = get_latest_guest_conversation(chatbot.id, guest.id, db)
             if existing_conversation:
                 conversation = existing_conversation
                 thread_id = existing_conversation.thread_id
                 is_new_conversation = False
-                logger.info(f"🔄 Riprendendo conversazione esistente per ospite {guest.id}")
+                logger.info(f"🔄 [CORREZIONE] Utilizzando conversazione esistente {existing_conversation.id} per guest {guest.id} (thread_id non fornito dal frontend)")
+        
+        # DEBUG: Log informazioni guest e force_new_conversation
+        logger.info(f"🔍 [DEBUG] Guest: {guest.id if guest else 'None'}, force_new_conversation: {message.force_new_conversation}")
+        
+        # Se l'ospite esiste e non abbiamo già trovato una conversazione, cerca la sua ultima conversazione
+        if guest and not message.force_new_conversation and not conversation:
+            # Cerca la conversazione esistente dell'ospite (solo se non l'abbiamo già fatto sopra)
+            existing_conversation = get_latest_guest_conversation(chatbot.id, guest.id, db)
+            logger.info(f"🔍 [DEBUG] Conversazione esistente trovata (seconda ricerca): {existing_conversation.id if existing_conversation else 'None'}")
+            
+            if existing_conversation:
+                conversation = existing_conversation
+                thread_id = existing_conversation.thread_id
+                is_new_conversation = False
+                logger.info(f"🔄 Riprendendo conversazione esistente {existing_conversation.id} per ospite {guest.id} con thread_id {thread_id}")
+            else:
+                logger.info(f"🔍 [DEBUG] Nessuna conversazione esistente trovata per guest {guest.id} e chatbot {chatbot.id}")
+        elif guest and message.force_new_conversation:
+            logger.info(f"🔍 [DEBUG] Guest identificato ma force_new_conversation=True - creerà nuova conversazione")
+        elif not guest:
+            logger.info(f"🔍 [DEBUG] Nessun guest identificato - cercherà conversazione generica")
         
         # Se non c'è conversazione esistente dell'ospite
         if not conversation:
+            logger.info(f"🔍 [DEBUG] Nessuna conversazione trovata, conversation è None")
             # Se l'ospite è identificato, crea una nuova conversazione per lui
             if guest:
                 # Per guest identificato senza conversazioni, crea nuova conversazione
@@ -4589,7 +4619,8 @@ async def send_message(
             thread_id = thread.id
             
             # Crea nuova conversazione nel DB
-            guest_identifier = request.client.host
+            # CORREZIONE: Usa guest.id come identificatore quando disponibile, altrimenti IP
+            guest_identifier = str(guest.id) if guest else request.client.host
             conversation = Conversation(
                 chatbot_id=chatbot.id,
                 guest_id=guest.id if guest else None,
@@ -4888,7 +4919,8 @@ async def send_voice_message(
             thread_id = thread.id
             
             # Crea nuova conversazione nel DB
-            guest_identifier = request.client.host
+            # CORREZIONE: Usa guest.id come identificatore quando disponibile, altrimenti IP
+            guest_identifier = str(guest.id) if guest else request.client.host
             conversation = Conversation(
                 chatbot_id=chatbot.id,
                 guest_id=guest.id if guest else None,
@@ -8023,13 +8055,18 @@ async def identify_guest(
         existing_conversation_id = None
         existing_thread_id = None
         
-        if not is_first_time:
-            # Cerca l'ultima conversazione dell'ospite per questo chatbot
-            latest_conversation = get_latest_guest_conversation(chatbot.id, guest.id, db)
-            if latest_conversation:
-                has_existing_conversation = True
-                existing_conversation_id = latest_conversation.id
-                existing_thread_id = latest_conversation.thread_id
+        # CORREZIONE: Cerca sempre l'ultima conversazione, anche se è la prima volta per questo chatbot
+        # perché il guest potrebbe essere già stato identificato in precedenza
+        latest_conversation = get_latest_guest_conversation(chatbot.id, guest.id, db)
+        logger.info(f"🔍 [DEBUG] identify_guest - latest_conversation: {latest_conversation.id if latest_conversation else 'None'}")
+        
+        if latest_conversation:
+            has_existing_conversation = True
+            existing_conversation_id = latest_conversation.id
+            existing_thread_id = latest_conversation.thread_id
+            logger.info(f"🔍 [DEBUG] identify_guest - Trovata conversazione esistente {existing_conversation_id} con thread_id {existing_thread_id}")
+        else:
+            logger.info(f"🔍 [DEBUG] identify_guest - Nessuna conversazione esistente per guest {guest.id} e chatbot {chatbot.id}")
         
         return GuestIdentificationResponse(
             guest_id=guest.id,
@@ -8242,7 +8279,8 @@ async def create_welcome_conversation(
         # Il thread verrà creato solo quando l'utente invierà il primo messaggio
         
         # Crea nuova conversazione nel DB
-        guest_identifier = request.client.host
+        # CORREZIONE: Usa guest.id come identificatore quando disponibile, altrimenti IP
+        guest_identifier = str(guest.id) if guest else request.client.host
         conversation = Conversation(
             chatbot_id=chatbot.id,
             guest_id=guest_id,  # Guest specifico se fornito
