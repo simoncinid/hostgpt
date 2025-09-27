@@ -642,6 +642,7 @@ class MessageCreate(BaseModel):
     thread_id: Optional[str] = None
     guest_name: Optional[str] = None  # Mantenuto per compatibilità
     # Nuovi campi per identificazione ospite
+    guest_id: Optional[int] = None  # ID del guest se già identificato
     phone: Optional[str] = None
     email: Optional[str] = None
     first_name: Optional[str] = None
@@ -4522,7 +4523,16 @@ async def send_message(
         
         # Identifica o crea l'ospite
         guest = None
-        if message.phone or message.email:
+        
+        # CORREZIONE: Prima controlla se è già stato fornito guest_id
+        if message.guest_id:
+            guest = db.query(Guest).filter(Guest.id == message.guest_id).first()
+            if not guest:
+                raise HTTPException(status_code=400, detail="Guest ID non valido")
+            logger.info(f"🔍 [DEBUG] Guest identificato tramite guest_id: {guest.id}")
+        
+        # Se non c'è guest_id, prova con phone/email
+        elif message.phone or message.email:
             try:
                 guest = find_or_create_guest(
                     phone=message.phone,
@@ -4532,8 +4542,11 @@ async def send_message(
                     last_name=message.last_name,
                     db=db
                 )
+                logger.info(f"🔍 [DEBUG] Guest identificato tramite phone/email: {guest.id}")
             except ValueError as e:
                 raise HTTPException(status_code=400, detail=str(e))
+        else:
+            logger.info(f"🔍 [DEBUG] Nessun guest identificato - messaggio anonimo")
         
         # Determina se creare una nuova conversazione o riprendere una esistente
         conversation = None
@@ -4553,6 +4566,8 @@ async def send_message(
         
         # DEBUG: Log informazioni guest e force_new_conversation
         logger.info(f"🔍 [DEBUG] Guest: {guest.id if guest else 'None'}, force_new_conversation: {message.force_new_conversation}")
+        logger.info(f"🔍 [DEBUG] Thread_id ricevuto dal frontend: {message.thread_id}")
+        logger.info(f"🔍 [DEBUG] Parametri ricevuti - guest_id: {message.guest_id}, phone: {message.phone}, email: {message.email}")
         
         # Se l'ospite esiste e non abbiamo già trovato una conversazione, cerca la sua ultima conversazione
         if guest and not message.force_new_conversation and not conversation:
@@ -4575,6 +4590,7 @@ async def send_message(
         # Se non c'è conversazione esistente dell'ospite
         if not conversation:
             logger.info(f"🔍 [DEBUG] Nessuna conversazione trovata, conversation è None")
+            logger.info(f"🔍 [DEBUG] MOTIVO: guest={guest.id if guest else 'None'}, thread_id={message.thread_id}, force_new={message.force_new_conversation}")
             # Se l'ospite è identificato, crea una nuova conversazione per lui
             if guest:
                 # Per guest identificato senza conversazioni, crea nuova conversazione
@@ -4757,6 +4773,7 @@ async def send_voice_message(
     thread_id: Optional[str] = Form(None),
     guest_name: Optional[str] = Form(None),  # Mantenuto per compatibilità
     # Nuovi parametri per identificazione ospite
+    guest_id: Optional[int] = Form(None),  # ID del guest se già identificato
     phone: Optional[str] = Form(None),
     email: Optional[str] = Form(None),
     first_name: Optional[str] = Form(None),
@@ -4851,7 +4868,16 @@ async def send_voice_message(
         
         # Identifica o crea l'ospite
         guest = None
-        if phone or email:
+        
+        # CORREZIONE: Prima controlla se è già stato fornito guest_id
+        if guest_id:
+            guest = db.query(Guest).filter(Guest.id == guest_id).first()
+            if not guest:
+                raise HTTPException(status_code=400, detail="Guest ID non valido")
+            logger.info(f"🎤🔍 [DEBUG] Guest identificato tramite guest_id: {guest.id}")
+        
+        # Se non c'è guest_id, prova con phone/email
+        elif phone or email:
             try:
                 guest = find_or_create_guest(
                     phone=phone,
@@ -4861,8 +4887,11 @@ async def send_voice_message(
                     last_name=last_name,
                     db=db
                 )
+                logger.info(f"🎤🔍 [DEBUG] Guest identificato tramite phone/email: {guest.id}")
             except ValueError as e:
                 raise HTTPException(status_code=400, detail=str(e))
+        else:
+            logger.info(f"🎤🔍 [DEBUG] Nessun guest identificato - messaggio vocale anonimo")
         
         # Determina se creare una nuova conversazione o riprendere una esistente
         conversation = None
@@ -8319,10 +8348,35 @@ async def create_welcome_conversation(
             )
     
     try:
+        # CORREZIONE IMPORTANTE: Se il guest è identificato, controlla se ha già una conversazione
+        if guest:
+            existing_conversation = get_latest_guest_conversation(chatbot.id, guest.id, db)
+            if existing_conversation:
+                logger.info(f"🔄 [CORREZIONE] Guest {guest.id} ha già una conversazione {existing_conversation.id}, la restituisco invece di crearne una nuova")
+                
+                # Restituisci la conversazione esistente
+                # Cerca il messaggio di benvenuto esistente
+                welcome_message = db.query(Message).filter(
+                    Message.conversation_id == existing_conversation.id,
+                    Message.role == "assistant"
+                ).order_by(Message.timestamp.asc()).first()
+                
+                return {
+                    "conversation_id": existing_conversation.id,
+                    "thread_id": existing_conversation.thread_id,
+                    "guest_id": guest.id,
+                    "welcome_message": {
+                        "id": welcome_message.id if welcome_message else None,
+                        "content": welcome_message.content if welcome_message else chatbot.welcome_message,
+                        "timestamp": welcome_message.timestamp.isoformat() if welcome_message else None
+                    },
+                    "message": "Conversazione esistente caricata con successo"
+                }
+        
         # NON creiamo un thread OpenAI per il messaggio di benvenuto
         # Il thread verrà creato solo quando l'utente invierà il primo messaggio
         
-        # Crea nuova conversazione nel DB
+        # Crea nuova conversazione nel DB SOLO se non ne esiste una
         # CORREZIONE: Usa guest.id come identificatore quando disponibile, altrimenti IP
         guest_identifier = str(guest.id) if guest else request.client.host
         conversation = Conversation(
