@@ -94,7 +94,7 @@ export default function LandingPage() {
 
   // Controlla se il chatbot demo ha un'icona e ottieni le info
   useEffect(() => {
-    chat.getInfo(DEMO_CHATBOT_UUID)
+    chat.getInfoPublic(DEMO_CHATBOT_UUID)
       .then(response => {
         setDemoHasIcon(response.data.has_icon)
         setDemoChatInfo({
@@ -273,7 +273,7 @@ export default function LandingPage() {
     setIsDemoLoading(true)
 
     try {
-      const response = await chat.sendMessage(DEMO_CHATBOT_UUID, {
+      const response = await chat.sendMessagePublic(DEMO_CHATBOT_UUID, {
         content: fullMessage,
         thread_id: demoThreadId,
         guest_name: demoGuestName || undefined
@@ -321,7 +321,7 @@ export default function LandingPage() {
     setIsDemoLoading(true)
 
     try {
-      const response = await chat.sendMessage(DEMO_CHATBOT_UUID, {
+      const response = await chat.sendMessagePublic(DEMO_CHATBOT_UUID, {
         content: demoInput,
         thread_id: demoThreadId,
         guest_name: demoGuestName || undefined

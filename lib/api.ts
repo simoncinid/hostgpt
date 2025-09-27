@@ -193,12 +193,27 @@ export const conversations = {
     api.get(`/conversations/${id}/messages`),
 }
 
+// Client API senza autenticazione per demo pubbliche
+const publicApi = axios.create({
+  baseURL: `${API_URL}/api`,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+})
+
 export const chat = {
   getInfo: (uuid: string) =>
     api.get(`/chat/${uuid}/info`),
   
   sendMessage: (uuid: string, data: any) =>
     api.post(`/chat/${uuid}/message`, data),
+  
+  // Versioni pubbliche per demo (senza autenticazione)
+  getInfoPublic: (uuid: string) =>
+    publicApi.get(`/chat/${uuid}/info`),
+  
+  sendMessagePublic: (uuid: string, data: any) =>
+    publicApi.post(`/chat/${uuid}/message`, data),
   
   // Nuove funzioni per gestione ospiti
   identifyGuest: (uuid: string, data: {

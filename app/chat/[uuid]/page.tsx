@@ -1190,7 +1190,7 @@ export default function ChatWidgetPage() {
                     {language === 'IT' ? 'Numero di telefono' : 'Phone number'}
                   </label>
                   <div className="flex gap-2">
-                    <div className="w-32 md:w-40">
+                    <div className="w-[90px] md:w-40">
                       <CountrySelector
                         value={selectedCountryCode}
                         onChange={setSelectedCountryCode}
