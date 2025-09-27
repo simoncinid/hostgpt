@@ -399,6 +399,7 @@ async def cors_debug_middleware(request: Request, call_next):
     # Gestisci richieste OPTIONS (preflight)
     if request.method == "OPTIONS":
         return JSONResponse(
+            content={"message": "CORS preflight successful"},
             status_code=200,
             headers={
                 "Access-Control-Allow-Origin": origin or "*",
