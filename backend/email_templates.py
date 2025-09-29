@@ -249,10 +249,10 @@ def get_base_email_template(content: str):
 def create_welcome_email(user_name: str, verification_link: str) -> str:
     """Template email di benvenuto con verifica"""
     content = f"""
-        <div class="greeting">🎉 Benvenuto su HostGPT, {user_name}!</div>
+        <div class="greeting">🎉 Benvenuto su OspiterAI, {user_name}!</div>
         
         <div class="message">
-            Grazie per aver scelto HostGPT! Siamo entusiasti di averti nella nostra community di host innovativi.
+            Grazie per aver scelto OspiterAI! Siamo entusiasti di averti nella nostra community di host innovativi.
         </div>
         
         <div class="highlight-box">
@@ -267,7 +267,7 @@ def create_welcome_email(user_name: str, verification_link: str) -> str:
         </div>
         
         <div class="message">
-            Per iniziare la tua esperienza con HostGPT, devi prima verificare il tuo indirizzo email e attivare il tuo abbonamento premium.
+            Per iniziare la tua esperienza con OspiterAI, devi prima verificare il tuo indirizzo email e attivare il tuo abbonamento premium.
         </div>
         
         <div style="text-align: center;">
@@ -563,7 +563,7 @@ def create_free_trial_ending_email(user_name: str, days_remaining: int, messages
         engagement_message = """
             <div style="background: #d1ecf1; border-left: 4px solid #17a2b8; padding: 15px; border-radius: 8px; margin: 15px 0;">
                 <h3 style="color: #0c5460; margin-bottom: 10px;">🔥 Utilizzo eccellente!</h3>
-                <p style="margin: 0; color: #0c5460;">Hai sfruttato al massimo il periodo di prova. È chiaro che HostGPT sta già migliorando l'esperienza dei tuoi ospiti. Continua con l'abbonamento completo!</p>
+                <p style="margin: 0; color: #0c5460;">Hai sfruttato al massimo il periodo di prova. È chiaro che OspiterAI sta già migliorando l'esperienza dei tuoi ospiti. Continua con l'abbonamento completo!</p>
             </div>
         """
     
@@ -753,14 +753,14 @@ def create_combined_subscription_confirmation_email(user_name: str) -> str:
         </div>
         
         <div style="background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); margin-bottom: 20px;">
-            <h2 style="color: #333; margin-bottom: 20px;">Il tuo pacchetto HostGPT Pro + Guardian è ora attivo!</h2>
+            <h2 style="color: #333; margin-bottom: 20px;">Il tuo pacchetto OspiterAI Pro + Guardian è ora attivo!</h2>
             
             <div style="display: flex; justify-content: space-around; margin: 30px 0; flex-wrap: wrap;">
                 <div style="text-align: center; margin: 10px; flex: 1; min-width: 200px;">
                     <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px;">
                         <span style="color: white; font-size: 24px;">🤖</span>
                     </div>
-                    <h3 style="color: #333; margin: 10px 0;">HostGPT Pro</h3>
+                    <h3 style="color: #333; margin: 10px 0;">OspiterAI Pro</h3>
                     <p style="color: #666; margin: 5px 0;">• 1000 messaggi/mese</p>
                     <p style="color: #666; margin: 5px 0;">• Chatbot illimitati</p>
                     <p style="color: #666; margin: 5px 0;">• Risposte istantanee</p>
@@ -778,7 +778,7 @@ def create_combined_subscription_confirmation_email(user_name: str) -> str:
             </div>
             
             <p style="color: #666; line-height: 1.6; margin: 20px 0;">
-                Ora hai accesso completo a tutte le funzionalità di HostGPT Pro e Guardian. 
+                Ora hai accesso completo a tutte le funzionalità di OspiterAI Pro e Guardian. 
                 Inizia subito a creare chatbot intelligenti e monitora la soddisfazione dei tuoi ospiti!
             </p>
         </div>

@@ -35,12 +35,12 @@ export default function SEOImage({
   )
 }
 
-// Componente specifico per il logo HostGPT
+// Componente specifico per il logo OspiterAI
 export function HostGPTLogo({ className = '', priority = true }: { className?: string, priority?: boolean }) {
   return (
     <SEOImage
       src="/icons/logohostgpt.png"
-      alt="HostGPT - Assistente AI per Proprietà in Affitto Breve"
+      alt="OspiterAI - Assistente AI per Proprietà in Affitto Breve"
       width={200}
       height={60}
       priority={priority}

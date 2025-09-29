@@ -1,13 +1,13 @@
 export const pageSEOConfig = {
   chatbots: {
     it: {
-      title: 'Chatbot per Host - Crea il Tuo Assistente AI | HostGPT',
+      title: 'Chatbot per Host - Crea il Tuo Assistente AI | OspiterAI',
       description: 'Crea chatbot personalizzati per i tuoi affitti vacanza. Automatizza le risposte agli ospiti con AI intelligente. Supporto 24/7 multilingue per host Airbnb.',
       keywords: 'chatbot host, crea chatbot, assistente AI host, chatbot airbnb, automazione ospiti, risposte automatiche, AI ospitalità, chatbot proprietario, gestione ospiti automatica',
       canonical: 'https://ospiterai.it/chatbots'
     },
     en: {
-      title: 'Host Chatbots - Create Your AI Assistant | HostGPT',
+      title: 'Host Chatbots - Create Your AI Assistant | OspiterAI',
       description: 'Create personalized chatbots for your vacation rentals. Automate guest responses with intelligent AI. 24/7 multilingual support for Airbnb hosts.',
       keywords: 'host chatbot, create chatbot, AI host assistant, airbnb chatbot, guest automation, automated responses, AI hospitality, owner chatbot, automatic guest management',
       canonical: 'https://ospiterai.it/chatbots'
@@ -15,13 +15,13 @@ export const pageSEOConfig = {
   },
   conversations: {
     it: {
-      title: 'Conversazioni Chatbot - Monitora le Interazioni | HostGPT',
+      title: 'Conversazioni Chatbot - Monitora le Interazioni | OspiterAI',
       description: 'Monitora tutte le conversazioni dei tuoi chatbot con gli ospiti. Analizza le domande più frequenti e migliora il servizio offerto.',
       keywords: 'conversazioni chatbot, monitoraggio ospiti, analisi conversazioni, chatbot analytics, gestione ospiti, statistiche chatbot',
       canonical: 'https://ospiterai.it/conversations'
     },
     en: {
-      title: 'Chatbot Conversations - Monitor Interactions | HostGPT',
+      title: 'Chatbot Conversations - Monitor Interactions | OspiterAI',
       description: 'Monitor all your chatbot conversations with guests. Analyze the most frequent questions and improve the service offered.',
       keywords: 'chatbot conversations, guest monitoring, conversation analysis, chatbot analytics, guest management, chatbot statistics',
       canonical: 'https://ospiterai.it/conversations'
@@ -29,13 +29,13 @@ export const pageSEOConfig = {
   },
   dashboard: {
     it: {
-      title: 'Dashboard HostGPT - Gestisci i Tuoi Chatbot | HostGPT',
+      title: 'Dashboard OspiterAI - Gestisci i Tuoi Chatbot | OspiterAI',
       description: 'Dashboard completa per gestire i tuoi chatbot, monitorare le conversazioni e ottimizzare l\'esperienza degli ospiti nelle tue proprietà.',
       keywords: 'dashboard hostgpt, gestione chatbot, monitoraggio ospiti, analytics host, gestione proprietà, ottimizzazione ospitalità',
       canonical: 'https://ospiterai.it/dashboard'
     },
     en: {
-      title: 'HostGPT Dashboard - Manage Your Chatbots | HostGPT',
+      title: 'OspiterAI Dashboard - Manage Your Chatbots | OspiterAI',
       description: 'Complete dashboard to manage your chatbots, monitor conversations and optimize guest experience in your properties.',
       keywords: 'hostgpt dashboard, chatbot management, guest monitoring, host analytics, property management, hospitality optimization',
       canonical: 'https://ospiterai.it/dashboard'

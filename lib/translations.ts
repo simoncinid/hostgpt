@@ -1225,7 +1225,7 @@ export const translations: Record<Language, Translations> = {
     },
     howItWorks: {
       title: "Come Funziona",
-      subtitle: "Ogni giorno perdi <span class='text-pink-600 font-bold'>ore preziose</span> a rispondere alle stesse domande dei tuoi ospiti.<br><br>Con <span class='text-pink-600 font-bold'>HostGPT</span> risparmi tutto quel tempo per <span class='text-pink-600 font-bold'>meno di un caffè al giorno</span>.<br><br>Il tuo assistente virtuale risponde <span class='text-pink-600 font-bold'>automaticamente 24/7</span>, mentre tu ti concentri su ciò che conta davvero.",
+      subtitle: "Ogni giorno perdi <span class='text-pink-600 font-bold'>ore preziose</span> a rispondere alle stesse domande dei tuoi ospiti.<br><br>Con <span class='text-pink-600 font-bold'>OspiterAI</span> risparmi tutto quel tempo per <span class='text-pink-600 font-bold'>meno di un caffè al giorno</span>.<br><br>Il tuo assistente virtuale risponde <span class='text-pink-600 font-bold'>automaticamente 24/7</span>, mentre tu ti concentri su ciò che conta davvero.",
       steps: [
         {
           title: "Registrati",
@@ -1328,7 +1328,7 @@ export const translations: Record<Language, Translations> = {
     ],
     demoChatStatic: {
       title: "Demo Chat Live",
-      subtitle: "Vedi HostGPT in azione!",
+      subtitle: "Vedi OspiterAI in azione!",
       messages: {
         user1: "Ciao! A che ora è il check-in?",
         assistant1: "Il check-in è dalle 15:00 alle 20:00. Ti invio il codice!",
@@ -1339,7 +1339,7 @@ export const translations: Record<Language, Translations> = {
       {
         name: "Marco Rossi",
         role: "Host in Rome",
-        content: "HostGPT ha rivoluzionato il modo in cui gestisco gli ospiti. Risparmio ore ogni settimana!",
+        content: "OspiterAI ha rivoluzionato il modo in cui gestisco gli ospiti. Risparmio ore ogni settimana!",
         rating: 5,
         avatar: "MR"
       },
@@ -1459,10 +1459,10 @@ export const translations: Record<Language, Translations> = {
       monthly: {
         title: "Completa l'abbonamento",
         subtitle: "Inizia subito a creare chatbot intelligenti",
-        headerTitle: "HostGPT",
+        headerTitle: "OspiterAI",
         paymentTitle: "Pagamento",
         summaryTitle: "Riepilogo",
-        planName: "HostGPT Pro",
+        planName: "OspiterAI Pro",
         billing: "Fatturazione",
         billingType: "Mensile",
         total: "Totale",
@@ -1502,11 +1502,11 @@ export const translations: Record<Language, Translations> = {
       },
       combined: {
         title: "Pacchetto Completo",
-        subtitle: "HostGPT Pro + Guardian per la massima efficienza",
-        headerTitle: "HostGPT Pro + Guardian",
+        subtitle: "OspiterAI Pro + Guardian per la massima efficienza",
+        headerTitle: "OspiterAI Pro + Guardian",
         paymentTitle: "Pagamento",
         summaryTitle: "Riepilogo",
-        hostgptPro: "HostGPT Pro",
+        hostgptPro: "OspiterAI Pro",
         guardian: "Guardian",
         billing: "Fatturazione",
         billingType: "Mensile",
@@ -1555,10 +1555,10 @@ export const translations: Record<Language, Translations> = {
       guardian: {
         title: "Attiva Guardian",
         subtitle: "Proteggi la soddisfazione dei tuoi ospiti",
-        headerTitle: "HostGPT Guardian",
+        headerTitle: "OspiterAI Guardian",
         paymentTitle: "Pagamento",
         summaryTitle: "Riepilogo",
-        planName: "HostGPT Guardian",
+        planName: "OspiterAI Guardian",
         billing: "Fatturazione",
         billingType: "Mensile",
         total: "Totale",
@@ -1600,7 +1600,7 @@ export const translations: Record<Language, Translations> = {
     auth: {
       login: {
         title: "Accedi",
-        subtitle: "Accedi al tuo account HostGPT",
+        subtitle: "Accedi al tuo account OspiterAI",
         email: "Email",
         password: "Password",
         rememberMe: "Ricordami",
@@ -1611,7 +1611,7 @@ export const translations: Record<Language, Translations> = {
       },
       register: {
         title: "Registrati",
-        subtitle: "Crea il tuo account HostGPT",
+        subtitle: "Crea il tuo account OspiterAI",
         name: "Nome",
         email: "Email",
         password: "Password",
@@ -1671,10 +1671,10 @@ export const translations: Record<Language, Translations> = {
         closeButton: "Chiudi"
       },
       status: {
-        hostgptActive: "HostGPT Attivo",
-        hostgptCancelling: "HostGPT In Annullamento",
-        hostgptCancelled: "HostGPT Annullato",
-        hostgptFreeTrial: "HostGPT Prova Gratuita",
+        hostgptActive: "OspiterAI Attivo",
+        hostgptCancelling: "OspiterAI In Annullamento",
+        hostgptCancelled: "OspiterAI Annullato",
+        hostgptFreeTrial: "OspiterAI Prova Gratuita",
         guardianActive: "Guardian Attivo",
         guardianCancelling: "Guardian In Annullamento",
         guardianInactive: "Guardian Inattivo"
@@ -2122,13 +2122,13 @@ export const translations: Record<Language, Translations> = {
           cookies: "Cookie"
         }
       },
-      copyright: "© 2025 HostGPT. Tutti i diritti riservati."
+      copyright: "© 2025 OspiterAI. Tutti i diritti riservati."
     },
     register: {
       title: "Crea il tuo Account",
-      subtitle: "Inizia subito con HostGPT",
+      subtitle: "Inizia subito con OspiterAI",
       freeTrialSubtitle: "Inizia la prova gratuita di 14 giorni",
-      paidSubtitle: "Inizia subito con HostGPT",
+      paidSubtitle: "Inizia subito con OspiterAI",
       freeTrialBanner: "🎉 Hai selezionato la prova gratuita! Dopo la registrazione potrai iniziare subito a creare il tuo chatbot.",
       paidBanner: "💳 Dopo la registrazione completerai il pagamento per attivare il tuo abbonamento.",
       fullName: "Nome Completo",
@@ -2380,7 +2380,7 @@ export const translations: Record<Language, Translations> = {
     selectService: {
       freeTrialStatus: "Periodo di prova gratuito attivo",
       title: "Scegli il tuo piano",
-      subtitle: "Seleziona il piano che vuoi attivare per continuare a utilizzare HostGPT",
+      subtitle: "Seleziona il piano che vuoi attivare per continuare a utilizzare OspiterAI",
       backToDashboard: "Torna alla Dashboard"
     }
   },
@@ -2464,7 +2464,7 @@ export const translations: Record<Language, Translations> = {
     },
     howItWorks: {
       title: "How It Works",
-      subtitle: "Every day you lose <span class='text-pink-600 font-bold'>precious hours</span> answering the same questions from your guests.<br><br>With <span class='text-pink-600 font-bold'>HostGPT</span> you save all that time for <span class='text-pink-600 font-bold'>less than a coffee a day</span>.<br><br>Your virtual assistant responds <span class='text-pink-600 font-bold'>automatically 24/7</span>, while you focus on what really matters.",
+      subtitle: "Every day you lose <span class='text-pink-600 font-bold'>precious hours</span> answering the same questions from your guests.<br><br>With <span class='text-pink-600 font-bold'>OspiterAI</span> you save all that time for <span class='text-pink-600 font-bold'>less than a coffee a day</span>.<br><br>Your virtual assistant responds <span class='text-pink-600 font-bold'>automatically 24/7</span>, while you focus on what really matters.",
       steps: [
         {
           title: "Sign Up",
@@ -2567,7 +2567,7 @@ export const translations: Record<Language, Translations> = {
     ],
     demoChatStatic: {
       title: "Demo Chat Live",
-      subtitle: "See HostGPT in action!",
+      subtitle: "See OspiterAI in action!",
       messages: {
         user1: "Hi! What time is check-in?",
         assistant1: "Check-in is from 3:00 PM to 8:00 PM. I'll send you the code!",
@@ -2578,7 +2578,7 @@ export const translations: Record<Language, Translations> = {
       {
         name: "Marco Rossi",
         role: "Host in Rome",
-        content: "HostGPT has revolutionized the way I manage guests. I save hours every week!",
+        content: "OspiterAI has revolutionized the way I manage guests. I save hours every week!",
         rating: 5,
         avatar: "MR"
       },
@@ -2698,10 +2698,10 @@ export const translations: Record<Language, Translations> = {
       monthly: {
         title: "Complete Subscription",
         subtitle: "Start creating intelligent chatbots right away",
-        headerTitle: "HostGPT",
+        headerTitle: "OspiterAI",
         paymentTitle: "Payment",
         summaryTitle: "Summary",
-        planName: "HostGPT Pro",
+        planName: "OspiterAI Pro",
         billing: "Billing",
         billingType: "Monthly",
         total: "Total",
@@ -2741,11 +2741,11 @@ export const translations: Record<Language, Translations> = {
       },
       combined: {
         title: "Complete Package",
-        subtitle: "HostGPT Pro + Guardian for maximum efficiency",
-        headerTitle: "HostGPT Pro + Guardian",
+        subtitle: "OspiterAI Pro + Guardian for maximum efficiency",
+        headerTitle: "OspiterAI Pro + Guardian",
         paymentTitle: "Payment",
         summaryTitle: "Summary",
-        hostgptPro: "HostGPT Pro",
+        hostgptPro: "OspiterAI Pro",
         guardian: "Guardian",
         billing: "Billing",
         billingType: "Monthly",
@@ -2794,10 +2794,10 @@ export const translations: Record<Language, Translations> = {
       guardian: {
         title: "Activate Guardian",
         subtitle: "Protect your guests' satisfaction",
-        headerTitle: "HostGPT Guardian",
+        headerTitle: "OspiterAI Guardian",
         paymentTitle: "Payment",
         summaryTitle: "Summary",
-        planName: "HostGPT Guardian",
+        planName: "OspiterAI Guardian",
         billing: "Billing",
         billingType: "Monthly",
         total: "Total",
@@ -2839,7 +2839,7 @@ export const translations: Record<Language, Translations> = {
     auth: {
       login: {
         title: "Login",
-        subtitle: "Login to your HostGPT account",
+        subtitle: "Login to your OspiterAI account",
         email: "Email",
         password: "Password",
         rememberMe: "Remember me",
@@ -2850,7 +2850,7 @@ export const translations: Record<Language, Translations> = {
       },
       register: {
         title: "Sign Up",
-        subtitle: "Create your HostGPT account",
+        subtitle: "Create your OspiterAI account",
         name: "Name",
         email: "Email",
         password: "Password",
@@ -2910,10 +2910,10 @@ export const translations: Record<Language, Translations> = {
         closeButton: "Close"
       },
       status: {
-        hostgptActive: "HostGPT Active",
-        hostgptCancelling: "HostGPT Cancelling",
-        hostgptCancelled: "HostGPT Cancelled",
-        hostgptFreeTrial: "HostGPT Free Trial",
+        hostgptActive: "OspiterAI Active",
+        hostgptCancelling: "OspiterAI Cancelling",
+        hostgptCancelled: "OspiterAI Cancelled",
+        hostgptFreeTrial: "OspiterAI Free Trial",
         guardianActive: "Guardian Active",
         guardianCancelling: "Guardian Cancelling",
         guardianInactive: "Guardian Inactive"
@@ -3361,13 +3361,13 @@ export const translations: Record<Language, Translations> = {
           cookies: "Cookies"
         }
       },
-      copyright: "© 2025 HostGPT. All rights reserved."
+      copyright: "© 2025 OspiterAI. All rights reserved."
     },
     register: {
       title: "Create your Account",
-      subtitle: "Start with HostGPT",
+      subtitle: "Start with OspiterAI",
       freeTrialSubtitle: "Start your 14-day free trial",
-      paidSubtitle: "Start with HostGPT",
+      paidSubtitle: "Start with OspiterAI",
       freeTrialBanner: "🎉 You selected the free trial! After registration you can start creating your chatbot immediately.",
       paidBanner: "💳 After registration you will complete the payment to activate your subscription.",
       fullName: "Full Name",
@@ -3619,7 +3619,7 @@ export const translations: Record<Language, Translations> = {
     selectService: {
       freeTrialStatus: "Free trial period active",
       title: "Choose your plan",
-      subtitle: "Select the plan you want to activate to continue using HostGPT",
+      subtitle: "Select the plan you want to activate to continue using OspiterAI",
       backToDashboard: "Back to Dashboard"
     }
   }

@@ -1,6 +1,6 @@
 {
-  "name": "HostGPT - Assistente AI per Proprietà in Affitto Breve",
-  "short_name": "HostGPT",
+  "name": "OspiterAI - Assistente AI per Proprietà in Affitto Breve",
+  "short_name": "OspiterAI",
   "description": "Il miglior assistente AI per gestire le proprietà in affitto breve e gli ospiti Airbnb",
   "start_url": "/",
   "display": "standalone",

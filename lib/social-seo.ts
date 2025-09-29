@@ -9,7 +9,7 @@ export const socialSEOConfig = {
     card: 'summary_large_image'
   },
   linkedin: {
-    company: 'HostGPT',
+    company: 'OspiterAI',
     product: 'AI Assistant for Short-term Rental Management'
   },
   instagram: {
@@ -23,16 +23,16 @@ export const generateSocialMetaTags = (page: string, language: 'it' | 'en' = 'it
   
   const titles = {
     it: {
-      home: 'HostGPT - Assistente AI per Proprietà in Affitto Breve',
+      home: 'OspiterAI - Assistente AI per Proprietà in Affitto Breve',
       chatbots: 'Chatbot per Host - Crea il Tuo Assistente AI',
       conversations: 'Conversazioni Chatbot - Monitora le Interazioni',
-      dashboard: 'Dashboard HostGPT - Gestisci i Tuoi Chatbot'
+      dashboard: 'Dashboard OspiterAI - Gestisci i Tuoi Chatbot'
     },
     en: {
-      home: 'HostGPT - AI Assistant for Short-term Rental Properties',
+      home: 'OspiterAI - AI Assistant for Short-term Rental Properties',
       chatbots: 'Host Chatbots - Create Your AI Assistant',
       conversations: 'Chatbot Conversations - Monitor Interactions',
-      dashboard: 'HostGPT Dashboard - Manage Your Chatbots'
+      dashboard: 'OspiterAI Dashboard - Manage Your Chatbots'
     }
   }
 
@@ -61,7 +61,7 @@ export const generateSocialMetaTags = (page: string, language: 'it' | 'en' = 'it
     'og:image': imageUrl,
     'og:url': `${baseUrl}/${page}`,
     'og:type': 'website',
-    'og:site_name': 'HostGPT',
+    'og:site_name': 'OspiterAI',
     'og:locale': language === 'it' ? 'it_IT' : 'en_US',
     'og:locale:alternate': language === 'it' ? 'en_US' : 'it_IT',
     
@@ -74,7 +74,7 @@ export const generateSocialMetaTags = (page: string, language: 'it' | 'en' = 'it
     'twitter:image': imageUrl,
     
     // Additional meta
-    'article:author': 'HostGPT Team',
+    'article:author': 'OspiterAI Team',
     'article:publisher': 'https://www.facebook.com/hostgpt',
     'article:section': 'Technology',
     'article:tag': language === 'it' ? 'AI, Chatbot, Ospitalità, Airbnb' : 'AI, Chatbot, Hospitality, Airbnb'

@@ -9,8 +9,8 @@ interface SEOHeadProps {
 }
 
 export default function SEOHead({
-  title = 'HostGPT - Assistente AI per Proprietà in Affitto Breve | Gestione Ospiti Airbnb',
-  description = 'HostGPT è il miglior assistente AI per gestire le proprietà in affitto breve e gli ospiti Airbnb. Chatbot intelligenti 24/7 per host, risposte automatiche, gestione prenotazioni e supporto multilingue.',
+  title = 'OspiterAI - Assistente AI per Proprietà in Affitto Breve | Gestione Ospiti Airbnb',
+  description = 'OspiterAI è il miglior assistente AI per gestire le proprietà in affitto breve e gli ospiti Airbnb. Chatbot intelligenti 24/7 per host, risposte automatiche, gestione prenotazioni e supporto multilingue.',
   keywords = 'hostgpt, assistente AI, proprietà affitto breve, gestione ospiti airbnb, chatbot host, AI airbnb, assistente virtuale proprietà, gestione affitti vacanza, chatbot intelligente, AI ospitalità, host assistant, airbnb management, short term rental AI, property management AI, guest management, automated responses, 24/7 support, multilingue, italiano, inglese',
   canonical = 'https://ospiterai.it',
   ogImage = '/icons/logohostgpt.png',
@@ -30,7 +30,7 @@ export default function SEOHead({
       <meta property="og:image" content={ogImage} />
       <meta property="og:url" content={canonical} />
       <meta property="og:type" content={ogType} />
-      <meta property="og:site_name" content="HostGPT" />
+      <meta property="og:site_name" content="OspiterAI" />
       <meta property="og:locale" content="it_IT" />
       <meta property="og:locale:alternate" content="en_US" />
       
@@ -51,7 +51,7 @@ export default function SEOHead({
       <meta name="theme-color" content="#3B82F6" />
       <meta name="apple-mobile-web-app-capable" content="yes" />
       <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-      <meta name="apple-mobile-web-app-title" content="HostGPT" />
+      <meta name="apple-mobile-web-app-title" content="OspiterAI" />
       
       {/* Favicon */}
       <link rel="icon" type="image/png" sizes="32x32" href="/icons/logohostgpt.png" />

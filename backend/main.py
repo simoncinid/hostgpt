@@ -338,7 +338,7 @@ async def send_monthly_reports_job():
                         language=user.language or "it"
                     )
                     
-                    email_subject = "Your Monthly HostGPT Report 📊" if (user.language or "it") == "en" else "Il tuo Report Mensile HostGPT 📊"
+                    email_subject = "Your Monthly OspiterAI Report 📊" if (user.language or "it") == "en" else "Il tuo Report Mensile OspiterAI 📊"
                     
                     # Invia l'email
                     await send_email(
@@ -1742,10 +1742,10 @@ async def register(user: UserRegister, background_tasks: BackgroundTasks, db: Se
     user_language = user.language or "it"
     if user.wants_free_trial:
         email_body = create_free_trial_welcome_email_simple(user.full_name, verification_link, user_language)
-        email_subject = "Welcome to your free trial - HostGPT" if user_language == "en" else "Benvenuto nel tuo periodo di prova gratuito - HostGPT"
+        email_subject = "Welcome to your free trial - OspiterAI" if user_language == "en" else "Benvenuto nel tuo periodo di prova gratuito - OspiterAI"
     else:
         email_body = create_welcome_email_simple(user.full_name, verification_link, user_language)
-        email_subject = "Confirm your email - HostGPT" if user_language == "en" else "Conferma la tua email - HostGPT"
+        email_subject = "Confirm your email - OspiterAI" if user_language == "en" else "Conferma la tua email - OspiterAI"
     
     background_tasks.add_task(send_email, user.email, email_subject, email_body)
     
@@ -2293,7 +2293,7 @@ async def handle_subscription_updated(event, db: Session):
                         language=user.language or "it"
                     )
                     
-                    email_subject = f"Plan upgraded to {new_plan} - HostGPT" if (user.language or "it") == "en" else f"Piano aggiornato a {new_plan} - HostGPT"
+                    email_subject = f"Plan upgraded to {new_plan} - OspiterAI" if (user.language or "it") == "en" else f"Piano aggiornato a {new_plan} - OspiterAI"
                     
                     # Invia email in background
                     from email_service import send_email_background
@@ -2663,7 +2663,7 @@ async def confirm_payment(
             background_tasks.add_task(
                 send_email, 
                 current_user.email, 
-    "🎉 HostGPT Subscription activated successfully!" if (current_user.language or "it") == "en" else "🎉 Abbonamento HostGPT attivato con successo!", 
+    "🎉 OspiterAI Subscription activated successfully!" if (current_user.language or "it") == "en" else "🎉 Abbonamento OspiterAI attivato con successo!", 
                 email_body
             )
             logger.info(f"Subscription confirmation email sent to {current_user.email}")
@@ -2912,7 +2912,7 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
                         amount="38€",
                         language=user.language or "it"
                     )
-                    email_subject = "Purchase completed successfully - HostGPT" if (user.language or "it") == "en" else "Acquisto completato con successo - HostGPT"
+                    email_subject = "Purchase completed successfully - OspiterAI" if (user.language or "it") == "en" else "Acquisto completato con successo - OspiterAI"
                     
                     send_email_background(
                         to_email=user.email,
@@ -2942,7 +2942,7 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
                             amount="9€",
                             language=user.language or "it"
                         )
-                        email_subject = "Purchase completed successfully - HostGPT" if (user.language or "it") == "en" else "Acquisto completato con successo - HostGPT"
+                        email_subject = "Purchase completed successfully - OspiterAI" if (user.language or "it") == "en" else "Acquisto completato con successo - OspiterAI"
                         
                         send_email_background(
                             to_email=user.email,
@@ -2973,7 +2973,7 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
                             amount="19€",
                             language=user.language or "it"
                         )
-                        email_subject = "Purchase completed successfully - HostGPT" if (user.language or "it") == "en" else "Acquisto completato con successo - HostGPT"
+                        email_subject = "Purchase completed successfully - OspiterAI" if (user.language or "it") == "en" else "Acquisto completato con successo - OspiterAI"
                         
                         send_email_background(
                             to_email=user.email,
@@ -3082,7 +3082,7 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
                                 language=user_hostgpt.language or "it"
                             )
                             
-                            email_subject = f"Plan upgraded to {new_plan} - HostGPT" if (user_hostgpt.language or "it") == "en" else f"Piano aggiornato a {new_plan} - HostGPT"
+                            email_subject = f"Plan upgraded to {new_plan} - OspiterAI" if (user_hostgpt.language or "it") == "en" else f"Piano aggiornato a {new_plan} - OspiterAI"
                             
                             send_email_background(
                                 to_email=user_hostgpt.email,

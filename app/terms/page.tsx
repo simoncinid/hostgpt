@@ -14,7 +14,7 @@ export default function TermsPage() {
           <div className="flex justify-between items-center py-3 px-4 bg-white/60 backdrop-blur-lg border border-white/30 shadow-lg rounded-2xl mx-2">
             <Link href="/" className="flex items-center space-x-2">
               <HostGPTLogo size="lg" className="text-primary" />
-              <span className="text-2xl font-bold text-dark">HostGPT</span>
+              <span className="text-2xl font-bold text-dark">OspiterAI</span>
             </Link>
             <Link href="/" className="flex items-center space-x-2 text-gray-600 hover:text-primary transition">
               <ArrowLeft className="w-5 h-5" />
@@ -40,7 +40,7 @@ export default function TermsPage() {
               Termini e Condizioni
             </h1>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              I termini e condizioni che regolano l'utilizzo del servizio HostGPT e definiscono i diritti e doveri di entrambe le parti.
+              I termini e condizioni che regolano l'utilizzo del servizio OspiterAI e definiscono i diritti e doveri di entrambe le parti.
             </p>
             <p className="text-sm text-gray-500 mt-4">
               Ultimo aggiornamento: 15 Novembre 2024
@@ -68,12 +68,12 @@ export default function TermsPage() {
               </div>
               <div className="prose prose-lg max-w-none text-gray-600">
                 <p>
-                  Utilizzando HostGPT, accetti integralmente questi termini e condizioni. Se non accetti anche solo una parte di questi termini, non potrai utilizzare il servizio.
+                  Utilizzando OspiterAI, accetti integralmente questi termini e condizioni. Se non accetti anche solo una parte di questi termini, non potrai utilizzare il servizio.
                 </p>
                 <div className="bg-blue-50 rounded-lg p-4 mt-6">
                   <h4 className="font-semibold text-dark mb-2">Definizioni:</h4>
                   <ul className="space-y-2 text-sm">
-                    <li><strong>"Servizio":</strong> La piattaforma HostGPT e tutti i suoi componenti</li>
+                    <li><strong>"Servizio":</strong> La piattaforma OspiterAI e tutti i suoi componenti</li>
                     <li><strong>"Utente":</strong> La persona fisica o giuridica che utilizza il servizio</li>
                     <li><strong>"Chatbot":</strong> L'assistente virtuale creato tramite la piattaforma</li>
                     <li><strong>"Contenuti":</strong> Tutti i dati, testi e informazioni inseriti dall'utente</li>
@@ -92,7 +92,7 @@ export default function TermsPage() {
               </div>
               <div className="prose prose-lg max-w-none text-gray-600">
                 <p>
-                  HostGPT fornisce:
+                  OspiterAI fornisce:
                 </p>
                 <div className="grid md:grid-cols-2 gap-6 mt-6">
                   <div className="bg-green-50 rounded-lg p-4">
@@ -218,7 +218,7 @@ export default function TermsPage() {
               <h2 className="text-2xl font-bold text-dark mb-6">Limitazioni di Responsabilità</h2>
               <div className="prose prose-lg max-w-none text-gray-600">
                 <p>
-                  HostGPT fornisce il servizio "così com'è" senza garanzie esplicite o implicite:
+                  OspiterAI fornisce il servizio "così com'è" senza garanzie esplicite o implicite:
                 </p>
                 
                 <div className="grid md:grid-cols-2 gap-6 mt-6">
@@ -334,9 +334,9 @@ export default function TermsPage() {
         <div className="container-max px-4 text-center">
           <div className="flex items-center justify-center space-x-2 mb-4">
             <HostGPTLogo size="md" className="text-primary" />
-            <span className="text-xl font-bold">HostGPT</span>
+            <span className="text-xl font-bold">OspiterAI</span>
           </div>
-          <p className="text-gray-400 text-sm">&copy; 2025 HostGPT. Tutti i diritti riservati.</p>
+          <p className="text-gray-400 text-sm">&copy; 2025 OspiterAI. Tutti i diritti riservati.</p>
         </div>
       </footer>
     </div>

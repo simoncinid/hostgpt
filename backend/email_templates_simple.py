@@ -171,13 +171,13 @@ def create_welcome_email_simple(user_name: str, verification_link: str, language
     """Template email di benvenuto semplificato"""
     
     if language == "en":
-        greeting = f"Welcome to HostGPT, {user_name}! 🎉"
-        message = "Thank you for choosing HostGPT! We're excited to have you in our community of innovative hosts."
+        greeting = f"Welcome to OspiterAI, {user_name}! 🎉"
+        message = "Thank you for choosing OspiterAI! We're excited to have you in our community of innovative hosts."
         cta_text = "Verify Email & Activate Subscription"
         important_note = "Important: After verification, you'll be redirected to the payment page to activate your subscription."
     else:  # it
-        greeting = f"Benvenuto su HostGPT, {user_name}! 🎉"
-        message = "Grazie per aver scelto HostGPT! Siamo entusiasti di averti nella nostra community di host innovativi."
+        greeting = f"Benvenuto su OspiterAI, {user_name}! 🎉"
+        message = "Grazie per aver scelto OspiterAI! Siamo entusiasti di averti nella nostra community di host innovativi."
         cta_text = "Verifica Email e Attiva Abbonamento"
         important_note = "Importante: Dopo la verifica, verrai reindirizzato alla pagina di pagamento per attivare il tuo abbonamento."
     

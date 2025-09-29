@@ -974,7 +974,7 @@ export default function LandingPage() {
                   >
                     <HostGPTLogo size="lg" className="h-10" />
                   </motion.div>
-                  <span className="text-2xl font-black text-gray-900 tracking-tight">HostGPT</span>
+                  <span className="text-2xl font-black text-gray-900 tracking-tight">OspiterAI</span>
                 </Link>
               </motion.div>
 
@@ -1332,7 +1332,7 @@ export default function LandingPage() {
             >
               <span className="text-gray-900 block text-4xl sm:text-6xl md:text-6xl">{t.hero.titlePrefix}</span>
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-600 via-pink-600 to-rose-700 block relative text-5xl sm:text-7xl md:text-8xl">
-                HostGPT
+                OspiterAI
                 {/* Effetto shimmer */}
                 <motion.div
                   className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -skew-x-12"
@@ -2525,7 +2525,7 @@ export default function LandingPage() {
                 viewport={{ once: true }}
                 className="text-xl md:text-2xl text-gray-300 max-w-4xl mx-auto leading-relaxed"
               >
-                Condividi la tua esperienza e aiutaci a rendere HostGPT ancora più straordinario.
+                Condividi la tua esperienza e aiutaci a rendere OspiterAI ancora più straordinario.
                 <br className="hidden md:block" />
                 <span className="text-purple-300 font-semibold">Ogni opinione conta per costruire il futuro insieme.</span>
               </motion.p>
@@ -2571,7 +2571,7 @@ export default function LandingPage() {
                       </div>
 
                       <p className="text-gray-300 text-xs mt-3">
-                        Guarda come i nostri host utilizzano HostGPT
+                        Guarda come i nostri host utilizzano OspiterAI
                       </p>
                     </div>
                   </div>
@@ -2614,7 +2614,7 @@ export default function LandingPage() {
                       viewport={{ once: true }}
                       className="text-center"
                     >
-                      <label className="block text-white font-semibold mb-3 text-sm md:text-lg">Come valuti HostGPT?</label>
+                      <label className="block text-white font-semibold mb-3 text-sm md:text-lg">Come valuti OspiterAI?</label>
                       <div className="flex justify-center space-x-1 md:space-x-2">
                         {[1, 2, 3, 4, 5].map((star) => (
                           <motion.button
@@ -2717,7 +2717,7 @@ export default function LandingPage() {
                           rows={4}
                           value={feedbackMessage}
                           onChange={(e) => setFeedbackMessage(e.target.value.slice(0, 500))}
-                          placeholder="Condividi i tuoi pensieri, suggerimenti o esperienze con HostGPT..."
+                          placeholder="Condividi i tuoi pensieri, suggerimenti o esperienze con OspiterAI..."
                           className="w-full px-4 py-3 md:px-6 md:py-4 bg-white/10 border border-white/20 rounded-xl md:rounded-2xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-500/50 focus:border-pink-400/50 backdrop-blur-sm transition-all duration-300 group-hover:bg-white/15 resize-none text-sm md:text-base"
                           required
                         />
@@ -2857,7 +2857,7 @@ export default function LandingPage() {
                       </div>
 
                       <p className="text-gray-300 text-sm mt-4">
-                        Guarda come i nostri host utilizzano HostGPT nella vita reale
+                        Guarda come i nostri host utilizzano OspiterAI nella vita reale
                       </p>
                     </div>
                   </div>
@@ -3330,7 +3330,7 @@ export default function LandingPage() {
                 viewport={{ once: true }}
                 className="text-base md:text-2xl text-gray-700 mb-8 md:mb-12 max-w-3xl mx-auto leading-relaxed font-light"
               >
-                {t.cta.subtitle} <span className="font-bold text-transparent bg-clip-text bg-gradient-to-r from-rose-600 to-pink-600">{t.cta.subtitleHighlight}</span> che hanno già migliorato il loro servizio con HostGPT
+                {t.cta.subtitle} <span className="font-bold text-transparent bg-clip-text bg-gradient-to-r from-rose-600 to-pink-600">{t.cta.subtitleHighlight}</span> che hanno già migliorato il loro servizio con OspiterAI
               </motion.p>
 
               {/* Bottone CTA finale spettacolare */}
@@ -3405,7 +3405,7 @@ export default function LandingPage() {
               <div className="hidden md:block text-left mb-8">
                 <div className="flex items-center space-x-2 mb-3">
                 <HostGPTLogo size="md" className="text-primary" />
-                <span className="text-xl font-bold">HostGPT</span>
+                <span className="text-xl font-bold">OspiterAI</span>
               </div>
               <p className="text-gray-400 text-sm">
                 {t.footer.description}
@@ -3416,7 +3416,7 @@ export default function LandingPage() {
               <div className="md:hidden text-center mb-6">
                 <div className="flex items-center justify-center space-x-2 mb-2">
                   <HostGPTLogo size="md" className="text-primary" />
-                  <span className="text-lg font-bold">HostGPT</span>
+                  <span className="text-lg font-bold">OspiterAI</span>
                 </div>
                 <p className="text-gray-400 text-xs">
                   {t.footer.description}
