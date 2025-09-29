@@ -1,7 +1,7 @@
 import Image from 'next/image'
 import { cn } from '../../lib/utils'
 
-interface HostGPTLogoProps {
+interface OspiterAILogoProps {
   size?: 'sm' | 'md' | 'lg' | 'xl'
   className?: string
   showText?: boolean
@@ -15,17 +15,17 @@ const sizeClasses = {
   xl: 'w-12 h-12'
 }
 
-export default function HostGPTLogo({ 
+export default function OspiterAILogo({ 
   size = 'md', 
   className = '', 
   showText = false,
   textClassName = ''
-}: HostGPTLogoProps) {
+}: OspiterAILogoProps) {
   return (
     <div className={cn('flex items-center space-x-2', className)}>
       <Image
         src="/icons/logohostgpt.png"
-        alt="HostGPT Logo"
+        alt="OspiterAI Logo"
         width={size === 'sm' ? 24 : size === 'md' ? 32 : size === 'lg' ? 40 : 48}
         height={size === 'sm' ? 24 : size === 'md' ? 32 : size === 'lg' ? 40 : 48}
         className={cn(sizeClasses[size], 'object-contain')}
@@ -33,7 +33,7 @@ export default function HostGPTLogo({
       />
       {showText && (
         <span className={cn('font-bold text-gray-900', textClassName)}>
-          HostGPT
+          OspiterAI
         </span>
       )}
     </div>

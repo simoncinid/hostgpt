@@ -6,15 +6,15 @@ Template Email HTML di livello Enterprise per HostGPT
 HOSTGPT_COLORS = {
     'primary': '#667eea',
     'secondary': '#764ba2', 
-    'accent': '#f093fb',
+    'accent': '#533887',
     'success': '#4facfe',
-    'warning': '#f093fb',
+    'warning': '#533887',
     'error': '#ff6b6b',
     'dark': '#2d3748',
     'light': '#f7fafc',
     'white': '#ffffff',
     'gradient_primary': 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    'gradient_accent': 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+    'gradient_accent': 'linear-gradient(135deg, #533887 0%, #6b46c1 100%)',
     'gradient_success': 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)'
 }
 
@@ -400,7 +400,7 @@ def create_guardian_alert_email(user_name: str, alert, conversation_summary: str
     severity_colors = {
         'critical': HOSTGPT_COLORS['error'],
         'high': '#ff6b6b',
-        'medium': '#f093fb',
+        'medium': '#533887',
         'low': '#4facfe'
     }
     

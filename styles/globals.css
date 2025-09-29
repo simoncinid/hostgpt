@@ -372,30 +372,30 @@
   @apply bg-gray-500;
 }
 
-/* Custom scrollbar per chat - più fine con colori rosa */
+/* Custom scrollbar per chat - più fine con colori viola */
 .chat-scrollbar::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
 .chat-scrollbar::-webkit-scrollbar-track {
-  background-color: #fce7f3; /* rosa chiaro */
+  background-color: #f3e8ff; /* viola chiaro */
   border-radius: 3px;
 }
 
 .chat-scrollbar::-webkit-scrollbar-thumb {
-  background-color: #ec4899; /* rosa più scuro */
+  background-color: #8b5cf6; /* viola */
   border-radius: 3px;
 }
 
 .chat-scrollbar::-webkit-scrollbar-thumb:hover {
-  background-color: #db2777; /* rosa ancora più scuro al hover */
+  background-color: #7c3aed; /* viola più scuro al hover */
 }
 
 /* Per Firefox */
 .chat-scrollbar {
   scrollbar-width: thin;
-  scrollbar-color: #ec4899 #fce7f3;
+  scrollbar-color: #8b5cf6 #f3e8ff;
 }
 
 /* Animations */
@@ -432,10 +432,10 @@
 
 @keyframes timelineGlow {
   0%, 100% {
-    box-shadow: 0 0 20px rgba(255, 90, 95, 0.3);
+    box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
   }
   50% {
-    box-shadow: 0 0 30px rgba(255, 90, 95, 0.6);
+    box-shadow: 0 0 30px rgba(139, 92, 246, 0.6);
   }
 }
 

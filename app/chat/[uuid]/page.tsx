@@ -29,7 +29,7 @@ import { chat } from '@/lib/api'
 import toast from 'react-hot-toast'
 import ChatbotIcon from '@/app/components/ChatbotIcon'
 import MarkdownText from '@/app/components/MarkdownText'
-import HostGPTLogo from '@/app/components/HostGPTLogo'
+import OspiterAILogo from '@/app/components/OspiterAILogo'
 import CountrySelector from '@/app/components/CountrySelector'
 
 interface Message {
@@ -1016,7 +1016,7 @@ export default function ChatWidgetPage() {
                 />
               ) : (
                 <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center mr-3">
-                  <HostGPTLogo size="sm" className="text-white" />
+                  <OspiterAILogo size="sm" className="text-white" />
                 </div>
               )}
               <div>
@@ -1174,8 +1174,8 @@ export default function ChatWidgetPage() {
               animate={{ opacity: 1, scale: 1 }}
               className="p-8 text-center flex-1 flex flex-col justify-center"
             >
-              <div className="w-20 h-20 bg-rose-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
-                <MessageSquare className="w-10 h-10 text-rose-500" />
+              <div className="w-20 h-20 bg-purple-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                <MessageSquare className="w-10 h-10 text-purple-500" />
               </div>
               <h2 className={`text-2xl font-bold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'} transition-colors duration-300`}>{currentTexts.welcome}</h2>
               <p className={`mb-6 max-w-2xl mx-auto transition-colors duration-300 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
@@ -1260,7 +1260,7 @@ export default function ChatWidgetPage() {
                     }`}>
                       <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
                         message.role === 'user' 
-                          ? 'bg-gradient-to-r from-rose-500 to-pink-600 text-white ml-3' 
+                          ? 'bg-gradient-to-r from-purple-600 to-purple-700 text-white ml-3' 
                           : chatInfo && chatInfo.has_icon 
                             ? 'bg-transparent text-gray-600 mr-3' 
                             : 'bg-gray-200 text-gray-600 mr-3'
@@ -1283,7 +1283,7 @@ export default function ChatWidgetPage() {
                       </div>
                       <div className={`rounded-2xl px-4 py-3 ${
                         message.role === 'user'
-                          ? 'bg-gradient-to-r from-rose-500 to-pink-600 text-white rounded-br-sm'
+                          ? 'bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-br-sm'
                           : 'bg-gray-100 text-gray-900 rounded-bl-sm'
                       }`}>
                         <MarkdownText content={message.content} />

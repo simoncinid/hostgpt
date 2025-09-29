@@ -511,7 +511,7 @@ export default function EditChatbotPage() {
                 <button
                   type="button"
                   onClick={openServicesModal}
-                  className="w-full py-3 px-4 border-2 border-rose-500 text-rose-500 rounded-lg hover:bg-rose-50 transition-colors font-medium"
+                  className="w-full py-3 px-4 border-2 border-purple-500 text-purple-500 rounded-lg hover:bg-purple-50 transition-colors font-medium"
                 >
                   <Plus className="w-4 h-4 mr-2 inline" />
                   {t.chatbots.edit.form.amenities}
@@ -618,7 +618,7 @@ export default function EditChatbotPage() {
                 <button
                   type="button"
                   onClick={openAttractionsModal}
-                  className="w-full py-3 px-4 border-2 border-rose-500 text-rose-500 rounded-lg hover:bg-rose-50 transition-colors font-medium"
+                  className="w-full py-3 px-4 border-2 border-purple-500 text-purple-500 rounded-lg hover:bg-purple-50 transition-colors font-medium"
                 >
                   <Plus className="w-4 h-4 mr-2 inline" />
                   {t.chatbots.edit.form.nearbyAttractions}
@@ -664,7 +664,7 @@ export default function EditChatbotPage() {
                 <button
                   type="button"
                   onClick={openRestaurantsModal}
-                  className="w-full py-3 px-4 border-2 border-rose-500 text-rose-500 rounded-lg hover:bg-rose-50 transition-colors font-medium"
+                  className="w-full py-3 px-4 border-2 border-purple-500 text-purple-500 rounded-lg hover:bg-purple-50 transition-colors font-medium"
                 >
                   <Plus className="w-4 h-4 mr-2 inline" />
                   {t.chatbots.edit.form.manageRestaurants || 'Gestisci Ristoranti/Bar'}
@@ -716,7 +716,7 @@ export default function EditChatbotPage() {
                 <button
                   type="button"
                   onClick={addContact}
-                  className="w-full py-3 px-4 border-2 border-rose-500 text-rose-500 rounded-lg hover:bg-rose-50 transition-colors font-medium"
+                  className="w-full py-3 px-4 border-2 border-purple-500 text-purple-500 rounded-lg hover:bg-purple-50 transition-colors font-medium"
                 >
                   <Plus className="w-4 h-4 mr-2 inline" />
                   Aggiungi Contatto
@@ -752,7 +752,7 @@ export default function EditChatbotPage() {
                 <button
                   type="button"
                   onClick={openFaqModal}
-                  className="w-full py-3 px-4 border-2 border-rose-500 text-rose-500 rounded-lg hover:bg-rose-50 transition-colors font-medium"
+                  className="w-full py-3 px-4 border-2 border-purple-500 text-purple-500 rounded-lg hover:bg-purple-50 transition-colors font-medium"
                 >
                   <Plus className="w-4 h-4 mr-2 inline" />
                   {t.chatbots.edit.form.manageFaq || 'Gestisci FAQ'}
@@ -854,7 +854,7 @@ export default function EditChatbotPage() {
                       onClick={() => toggleAmenity(amenity)}
                       className={`p-3 rounded-lg border-2 transition ${
                         selectedAmenities?.includes(amenity)
-                          ? 'border-rose-500 bg-rose-50 text-rose-600'
+                          ? 'border-purple-500 bg-purple-50 text-purple-600'
                           : 'border-gray-200 hover:border-gray-300'
                       }`}
                     >
@@ -916,7 +916,7 @@ export default function EditChatbotPage() {
                   <button
                     type="button"
                     onClick={addAttraction}
-                    className="w-full py-3 px-4 border-2 border-rose-500 text-rose-500 rounded-lg hover:bg-rose-50 transition-colors font-medium"
+                    className="w-full py-3 px-4 border-2 border-purple-500 text-purple-500 rounded-lg hover:bg-purple-50 transition-colors font-medium"
                   >
                     <Plus className="w-4 h-4 mr-2 inline" />
                     Aggiungi Attrazione
@@ -973,7 +973,7 @@ export default function EditChatbotPage() {
                   <button
                     type="button"
                     onClick={addRestaurant}
-                    className="w-full py-3 px-4 border-2 border-rose-500 text-rose-500 rounded-lg hover:bg-rose-50 transition-colors font-medium"
+                    className="w-full py-3 px-4 border-2 border-purple-500 text-purple-500 rounded-lg hover:bg-purple-50 transition-colors font-medium"
                   >
                     <Plus className="w-4 h-4 mr-2 inline" />
                     Aggiungi Ristorante/Bar
@@ -1021,7 +1021,7 @@ export default function EditChatbotPage() {
                   <button
                     type="button"
                     onClick={addFaq}
-                    className="w-full py-3 px-4 border-2 border-rose-500 text-rose-500 rounded-lg hover:bg-rose-50 transition-colors font-medium"
+                    className="w-full py-3 px-4 border-2 border-purple-500 text-purple-500 rounded-lg hover:bg-purple-50 transition-colors font-medium"
                   >
                     <Plus className="w-4 h-4 mr-2 inline" />
                     Aggiungi FAQ

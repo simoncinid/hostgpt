@@ -9,7 +9,7 @@ import {
   ArrowRight,
   Gift
 } from 'lucide-react'
-import HostGPTLogo from '../components/HostGPTLogo'
+import OspiterAILogo from '../components/OspiterAILogo'
 import { useAuthStore } from '@/lib/store'
 import { useLanguage } from '@/lib/languageContext'
 import api from '@/lib/api'
@@ -82,7 +82,7 @@ function SelectServiceContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white via-rose-50/30 to-pink-50/40">
+    <div className="min-h-screen bg-gradient-to-br from-white via-purple-50/30 to-purple-100/40">
       {/* Background effects */}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(251,207,232,0.15),transparent_50%)] opacity-80"></div>
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,rgba(244,63,94,0.08),transparent_60%)] opacity-70"></div>
@@ -91,7 +91,7 @@ function SelectServiceContent() {
       {/* Particelle fluttuanti eleganti */}
       <div className="absolute inset-0 overflow-hidden">
         <motion.div
-          className="absolute top-[15%] left-[10%] w-4 h-4 bg-rose-200/40 rounded-full"
+          className="absolute top-[15%] left-[10%] w-4 h-4 bg-purple-200/40 rounded-full"
           animate={{
             y: [0, -60, 0],
             x: [0, 30, 0],
@@ -105,7 +105,7 @@ function SelectServiceContent() {
           }}
         />
         <motion.div 
-          className="absolute top-[25%] right-[15%] w-3 h-3 bg-pink-300/35 rounded-full"
+          className="absolute top-[25%] right-[15%] w-3 h-3 bg-purple-300/35 rounded-full"
           animate={{
             y: [0, -45, 0],
             x: [0, -25, 0],
@@ -120,7 +120,7 @@ function SelectServiceContent() {
           }}
         />
         <motion.div 
-          className="absolute top-[70%] left-[80%] w-2 h-2 bg-rose-400/30 rounded-full"
+          className="absolute top-[70%] left-[80%] w-2 h-2 bg-purple-400/30 rounded-full"
           animate={{
             y: [0, -35, 0],
             opacity: [0.3, 0.6, 0.3],
@@ -137,7 +137,7 @@ function SelectServiceContent() {
 
       {/* Pattern geometrici sottili */}
       <div className="absolute inset-0 opacity-20">
-        <svg className="absolute top-10 left-10 w-32 h-32 text-rose-300" viewBox="0 0 100 100">
+        <svg className="absolute top-10 left-10 w-32 h-32 text-purple-300" viewBox="0 0 100 100">
           <motion.circle
             cx="50" cy="50" r="20" fill="none" stroke="currentColor" strokeWidth="0.5"
             animate={{ rotate: 360 }}
@@ -149,7 +149,7 @@ function SelectServiceContent() {
             transition={{ duration: 45, repeat: Infinity, ease: "linear" }}
           />
         </svg>
-        <svg className="absolute bottom-20 right-20 w-24 h-24 text-pink-200" viewBox="0 0 100 100">
+        <svg className="absolute bottom-20 right-20 w-24 h-24 text-purple-200" viewBox="0 0 100 100">
           <motion.polygon
             points="50,15 85,85 15,85" fill="none" stroke="currentColor" strokeWidth="0.5"
             animate={{ rotate: 360 }}
@@ -163,7 +163,7 @@ function SelectServiceContent() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <Link href="/dashboard" className="flex items-center space-x-2">
-              <HostGPTLogo className="h-8 w-8" />
+              <OspiterAILogo className="h-8 w-8" />
               <span className="text-xl font-bold text-gray-900">HostGPT</span>
             </Link>
             <div className="flex items-center space-x-4">
@@ -219,8 +219,8 @@ function SelectServiceContent() {
               </span>
               <button
                 onClick={() => setIsAnnualBilling(!isAnnualBilling)}
-                className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 ${
-                  isAnnualBilling ? 'bg-rose-600' : 'bg-gray-300'
+                className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 ${
+                  isAnnualBilling ? 'bg-purple-600' : 'bg-gray-300'
                 }`}
               >
                 <span
@@ -259,7 +259,7 @@ function SelectServiceContent() {
                   <div 
                     className={`relative rounded-[2rem] p-4 md:p-8 overflow-hidden shadow-2xl flex flex-col ${
                       isPopular 
-                        ? 'bg-gradient-to-br from-rose-50 to-pink-50 border-2 border-rose-200/60 aspect-[3/2] md:aspect-[4/5]' 
+                        ? 'bg-gradient-to-br from-purple-50 to-purple-100 border-2 border-purple-200/60 aspect-[3/2] md:aspect-[4/5]' 
                         : 'bg-white border border-gray-100/50 aspect-[3/2] md:aspect-[4/5]'
                     }`}
                     style={{ 
@@ -272,17 +272,17 @@ function SelectServiceContent() {
                     {/* Background pattern interno */}
                     <div className={`absolute inset-0 ${
                       isPopular 
-                        ? 'bg-gradient-to-br from-rose-50/40 via-transparent to-pink-50/30' 
+                        ? 'bg-gradient-to-br from-purple-50/40 via-transparent to-purple-100/30' 
                         : 'bg-gradient-to-br from-gray-50/20 via-transparent to-gray-50/10'
                     }`}></div>
                     <div className={`absolute top-0 right-0 w-32 h-32 rounded-full blur-3xl ${
                       isPopular 
-                        ? 'bg-gradient-to-br from-rose-100/50 to-transparent' 
+                        ? 'bg-gradient-to-br from-purple-100/50 to-transparent' 
                         : 'bg-gradient-to-br from-gray-100/30 to-transparent'
                     }`}></div>
                     <div className={`absolute bottom-0 left-0 w-24 h-24 rounded-full blur-2xl ${
                       isPopular 
-                        ? 'bg-gradient-to-tr from-pink-100/40 to-transparent' 
+                        ? 'bg-gradient-to-tr from-purple-200/40 to-transparent' 
                         : 'bg-gradient-to-tr from-gray-100/20 to-transparent'
                     }`}></div>
 
@@ -296,7 +296,7 @@ function SelectServiceContent() {
                         <div className="text-3xl md:text-5xl font-black mb-1 md:mb-2">
                           <span className={`text-transparent bg-clip-text ${
                             isPopular 
-                              ? 'bg-gradient-to-r from-rose-600 to-pink-600' 
+                              ? 'bg-gradient-to-r from-purple-600 to-purple-700' 
                               : 'bg-gradient-to-r from-gray-700 to-gray-600'
                           }`}>
                             {plan.price}
@@ -309,7 +309,7 @@ function SelectServiceContent() {
                         {/* Badge popolare per Premium */}
                         {isPopular && (
                           <div className="mb-1 md:mb-2">
-                            <span className="text-xs font-semibold text-rose-600 bg-rose-100 px-3 py-1 rounded-full">
+                            <span className="text-xs font-semibold text-purple-600 bg-purple-100 px-3 py-1 rounded-full">
                               Più Popolare
                             </span>
                           </div>
@@ -327,7 +327,7 @@ function SelectServiceContent() {
                           >
                             <div className={`flex-shrink-0 w-4 h-4 md:w-5 md:h-5 rounded-full flex items-center justify-center mr-2 md:mr-3 mt-0.5 shadow-lg ${
                               isPopular 
-                                ? 'bg-gradient-to-r from-rose-500 to-pink-600' 
+                                ? 'bg-gradient-to-r from-purple-600 to-purple-700' 
                                 : 'bg-gradient-to-r from-gray-500 to-gray-600'
                             }`}>
                               <Check className="w-2 h-2 md:w-3 md:h-3 text-white font-bold" strokeWidth={3} />
@@ -348,7 +348,7 @@ function SelectServiceContent() {
                       >
                         <div className={`text-white py-3 px-4 md:py-4 md:px-6 rounded-xl font-bold text-xs md:text-sm text-center shadow-lg overflow-hidden relative ${
                           isPopular 
-                            ? 'bg-gradient-to-r from-rose-500 via-pink-500 to-rose-600' 
+                            ? 'bg-gradient-to-r from-purple-600 via-purple-500 to-purple-700' 
                             : 'bg-gradient-to-r from-gray-600 via-gray-700 to-gray-800'
                         }`}>
                           <span className="relative flex items-center justify-center">
@@ -363,16 +363,16 @@ function SelectServiceContent() {
 
                     {/* Decorazioni angolari */}
                     <div className={`absolute top-3 left-3 w-4 h-4 border-l-2 border-t-2 rounded-tl-lg ${
-                      isPopular ? 'border-rose-200' : 'border-gray-200'
+                      isPopular ? 'border-purple-200' : 'border-gray-200'
                     }`}></div>
                     <div className={`absolute top-3 right-3 w-4 h-4 border-r-2 border-t-2 rounded-tr-lg ${
-                      isPopular ? 'border-rose-200' : 'border-gray-200'
+                      isPopular ? 'border-purple-200' : 'border-gray-200'
                     }`}></div>
                     <div className={`absolute bottom-3 left-3 w-4 h-4 border-l-2 border-b-2 rounded-bl-lg ${
-                      isPopular ? 'border-rose-200' : 'border-gray-200'
+                      isPopular ? 'border-purple-200' : 'border-gray-200'
                     }`}></div>
                     <div className={`absolute bottom-3 right-3 w-4 h-4 border-r-2 border-b-2 rounded-br-lg ${
-                      isPopular ? 'border-rose-200' : 'border-gray-200'
+                      isPopular ? 'border-purple-200' : 'border-gray-200'
                     }`}></div>
                   </div>
                 </div>

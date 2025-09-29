@@ -13,7 +13,7 @@ import {
   Zap,
   Star
 } from 'lucide-react'
-import HostGPTLogo from '../../components/HostGPTLogo'
+import OspiterAILogo from '../../components/OspiterAILogo'
 import { guardian } from '@/lib/api'
 import { useAuthStore } from '@/lib/store'
 import { useLanguage } from '@/lib/languageContext'
@@ -90,7 +90,7 @@ function CheckoutContent() {
       <div className="bg-white shadow-sm border-b px-6 py-4">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <Link href="/" className="flex items-center space-x-3">
-            <HostGPTLogo size="lg" className="text-purple-600" />
+            <OspiterAILogo size="lg" className="text-purple-600" />
             <span className="text-xl font-bold text-dark">Guardian Checkout</span>
           </Link>
           <div className="flex items-center space-x-3 text-sm text-gray-600">

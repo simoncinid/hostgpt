@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { ArrowLeft, FileText, Scale, CreditCard, AlertTriangle, CheckCircle, XCircle } from 'lucide-react'
-import HostGPTLogo from '../components/HostGPTLogo'
+import OspiterAILogo from '../components/OspiterAILogo'
 
 export default function TermsPage() {
   return (
@@ -13,7 +13,7 @@ export default function TermsPage() {
         <div className="px-4">
           <div className="flex justify-between items-center py-3 px-4 bg-white/60 backdrop-blur-lg border border-white/30 shadow-lg rounded-2xl mx-2">
             <Link href="/" className="flex items-center space-x-2">
-              <HostGPTLogo size="lg" className="text-primary" />
+              <OspiterAILogo size="lg" className="text-primary" />
               <span className="text-2xl font-bold text-dark">OspiterAI</span>
             </Link>
             <Link href="/" className="flex items-center space-x-2 text-gray-600 hover:text-primary transition">
@@ -333,7 +333,7 @@ export default function TermsPage() {
       <footer className="bg-dark text-white py-8">
         <div className="container-max px-4 text-center">
           <div className="flex items-center justify-center space-x-2 mb-4">
-            <HostGPTLogo size="md" className="text-primary" />
+            <OspiterAILogo size="md" className="text-primary" />
             <span className="text-xl font-bold">OspiterAI</span>
           </div>
           <p className="text-gray-400 text-sm">&copy; 2025 OspiterAI. Tutti i diritti riservati.</p>

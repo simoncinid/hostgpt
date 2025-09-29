@@ -6,7 +6,7 @@ import Image from 'next/image'
 import { motion } from 'framer-motion'
 import LanguageSelector from '../components/LanguageSelector'
 import DemoChatbotIcon from './components/DemoChatbotIcon'
-import HostGPTLogo from './components/HostGPTLogo'
+import OspiterAILogo from './components/OspiterAILogo'
 import MarkdownText from './components/MarkdownText'
 import { useLanguage } from '../lib/languageContext'
 import api from '../lib/api'
@@ -631,7 +631,7 @@ export default function LandingPage() {
                 transition={{ delay: 0.5, type: "spring" }}
                 className="w-6 h-6 bg-primary rounded mx-auto mb-2 flex items-center justify-center"
               >
-                <HostGPTLogo size="sm" className="text-white" />
+                <OspiterAILogo size="sm" className="text-white" />
               </motion.div>
               <h3 className="text-xs font-bold">{t.howItWorks.animations.register.title}</h3>
             </div>
@@ -682,7 +682,7 @@ export default function LandingPage() {
         <div className="bg-white rounded-lg shadow-lg p-3 h-full flex flex-col overflow-hidden">
           <div className="flex items-center justify-between px-2 py-1 bg-gray-900 rounded-t-lg text-white">
             <div className="flex items-center space-x-1">
-              <HostGPTLogo size="sm" className="text-primary" />
+              <OspiterAILogo size="sm" className="text-primary" />
               <span className="text-xs font-bold">Dashboard</span>
             </div>
           </div>
@@ -755,7 +755,7 @@ export default function LandingPage() {
                 </div>
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="w-3 h-3 bg-primary rounded flex items-center justify-center">
-                    <HostGPTLogo size="sm" className="text-white" />
+                    <OspiterAILogo size="sm" className="text-white" />
                   </div>
                 </div>
               </div>
@@ -858,7 +858,7 @@ export default function LandingPage() {
           <div className="flex-1 flex flex-col justify-start space-y-2 p-2 min-h-0">
             <div className="text-center mb-4">
               <div className="w-6 h-6 bg-primary rounded mx-auto mb-2 flex items-center justify-center">
-                <HostGPTLogo size="sm" className="text-white" />
+                <OspiterAILogo size="sm" className="text-white" />
               </div>
               <h3 className="text-xs font-bold">{t.howItWorks.animations.register.title}</h3>
             </div>
@@ -889,7 +889,7 @@ export default function LandingPage() {
         <div className="bg-white rounded-lg shadow-lg p-3 h-full flex flex-col overflow-hidden">
           <div className="flex items-center justify-between px-2 py-1 bg-gray-900 rounded-t-lg text-white">
             <div className="flex items-center space-x-1">
-              <HostGPTLogo size="sm" className="text-primary" />
+              <OspiterAILogo size="sm" className="text-primary" />
               <span className="text-xs font-bold">Dashboard</span>
             </div>
           </div>
@@ -951,14 +951,14 @@ export default function LandingPage() {
             className="relative"
           >
             {/* Glow esterno sottile */}
-            <div className="absolute -inset-1 bg-gradient-to-r from-rose-200/20 via-pink-200/30 to-rose-200/20 rounded-3xl blur-xl opacity-60"></div>
+            <div className="absolute -inset-1 bg-gradient-to-r from-purple-200/20 via-purple-300/30 to-purple-200/20 rounded-3xl blur-xl opacity-60"></div>
             
             {/* Container principale con liquid glass premium */}
             <div className="relative flex justify-between items-center py-4 px-6 bg-white/40 backdrop-blur-2xl border border-white/50 shadow-2xl rounded-3xl mx-2">
               {/* Pattern decorativo interno */}
               <div className="absolute inset-0 rounded-3xl overflow-hidden pointer-events-none">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-rose-100/20 to-transparent rounded-full blur-2xl"></div>
-                <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-pink-100/30 to-transparent rounded-full blur-xl"></div>
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-purple-100/20 to-transparent rounded-full blur-2xl"></div>
+                <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-purple-200/30 to-transparent rounded-full blur-xl"></div>
               </div>
 
               {/* Logo premium */}
@@ -972,7 +972,7 @@ export default function LandingPage() {
                     whileHover={{ scale: 1.05 }}
                     transition={{ type: "spring", stiffness: 300 }}
                   >
-                    <HostGPTLogo size="lg" className="h-10" />
+                    <OspiterAILogo size="lg" className="h-10" />
                   </motion.div>
                   <span className="text-2xl font-black text-gray-900 tracking-tight">OspiterAI</span>
                 </Link>
@@ -1000,7 +1000,7 @@ export default function LandingPage() {
                     >
                       <span className="relative z-10">{item.label}</span>
                       <motion.div
-                        className="absolute inset-0 bg-gradient-to-r from-rose-100/50 to-pink-100/50 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                        className="absolute inset-0 bg-gradient-to-r from-purple-100/50 to-purple-200/50 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"
                         layoutId="navbar-hover"
                       />
                     </Link>
@@ -1064,12 +1064,12 @@ export default function LandingPage() {
                 >
                   <div className="relative group">
                     <motion.div
-                      className="absolute -inset-1 bg-gradient-to-r from-rose-400 to-pink-500 rounded-xl blur opacity-0 group-hover:opacity-40 transition-opacity duration-300"
+                      className="absolute -inset-1 bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl blur opacity-0 group-hover:opacity-40 transition-opacity duration-300"
                       whileHover={{ scale: 1.1 }}
                     />
                     <Link
                       href="#pricing"
-                      className="relative inline-flex items-center gap-2 px-4 py-2 text-white font-semibold bg-gradient-to-r from-rose-500 to-pink-600 rounded-xl shadow-lg transition-all duration-300 group-hover:shadow-xl overflow-hidden text-sm"
+                      className="relative inline-flex items-center gap-2 px-4 py-2 text-white font-semibold bg-gradient-to-r from-purple-600 to-purple-700 rounded-xl shadow-lg transition-all duration-300 group-hover:shadow-xl overflow-hidden text-sm"
                     >
                       {/* Effetto shimmer */}
                       <motion.div
@@ -1140,14 +1140,14 @@ export default function LandingPage() {
           >
             <div className="relative">
               {/* Glow esterno mobile */}
-              <div className="absolute -inset-1 bg-gradient-to-r from-rose-200/20 via-pink-200/30 to-rose-200/20 rounded-3xl blur-xl opacity-60"></div>
+              <div className="absolute -inset-1 bg-gradient-to-r from-purple-200/20 via-purple-300/30 to-purple-200/20 rounded-3xl blur-xl opacity-60"></div>
               
               {/* Container mobile con liquid glass */}
               <div className="relative bg-white/40 backdrop-blur-2xl border border-white/50 shadow-2xl rounded-3xl mx-2 p-6">
                 {/* Pattern decorativo mobile */}
                 <div className="absolute inset-0 rounded-3xl overflow-hidden pointer-events-none">
-                  <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-bl from-rose-100/30 to-transparent rounded-full blur-xl"></div>
-                  <div className="absolute bottom-0 left-0 w-16 h-16 bg-gradient-to-tr from-pink-100/40 to-transparent rounded-full blur-lg"></div>
+                  <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-bl from-purple-100/30 to-transparent rounded-full blur-xl"></div>
+                  <div className="absolute bottom-0 left-0 w-16 h-16 bg-gradient-to-tr from-purple-200/40 to-transparent rounded-full blur-lg"></div>
                 </div>
 
                 <div className="space-y-2 relative z-10">
@@ -1218,7 +1218,7 @@ export default function LandingPage() {
                     <Link 
                       href="#pricing" 
                       onClick={() => setIsMenuOpen(false)} 
-                      className="block w-full text-center px-4 py-3 text-white font-semibold bg-gradient-to-r from-rose-500 to-pink-600 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 text-sm"
+                      className="block w-full text-center px-4 py-3 text-white font-semibold bg-gradient-to-r from-purple-600 to-purple-700 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 text-sm"
                     >
                       {t.navbar.register}
                     </Link>
@@ -1233,7 +1233,7 @@ export default function LandingPage() {
       {/* HERO SECTION - Ultra Luxurious Airbnb Style */}
       <section className="relative pt-32 md:pt-36 pb-16 md:pb-20 px-4 overflow-hidden">
         {/* Background ultra-elegante bianco e rosa */}
-        <div className="absolute inset-0 bg-gradient-to-br from-white via-rose-25/30 to-pink-25/40"></div>
+        <div className="absolute inset-0 bg-gradient-to-br from-white via-purple-50/30 to-purple-100/40"></div>
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(251,207,232,0.15),transparent_50%)] opacity-80"></div>
         <div className="absolute inset-0 bg-[conic-gradient(from_0deg_at_50%_50%,rgba(255,255,255,0.8)_0deg,rgba(251,207,232,0.1)_120deg,rgba(255,255,255,0.9)_240deg,rgba(251,207,232,0.05)_360deg)]"></div>
 
@@ -1241,7 +1241,7 @@ export default function LandingPage() {
         <div className="absolute inset-0 pointer-events-none">
           {/* Particelle rosa */}
           <motion.div
-            className="absolute top-20 left-10 w-2 h-2 bg-gradient-to-r from-rose-400 to-pink-500 rounded-full opacity-30"
+            className="absolute top-20 left-10 w-2 h-2 bg-gradient-to-r from-purple-500 to-purple-600 rounded-full opacity-30"
             animate={{
               y: [0, -20, 0],
               x: [0, 10, 0],
@@ -1254,7 +1254,7 @@ export default function LandingPage() {
             }}
           />
           <motion.div
-            className="absolute top-40 right-20 w-3 h-3 bg-gradient-to-r from-pink-400 to-rose-500 rounded-full opacity-25"
+            className="absolute top-40 right-20 w-3 h-3 bg-gradient-to-r from-purple-500 to-purple-600 rounded-full opacity-25"
             animate={{
               y: [0, 15, 0],
               x: [0, -15, 0],
@@ -1268,7 +1268,7 @@ export default function LandingPage() {
             }}
           />
           <motion.div
-            className="absolute bottom-40 left-1/4 w-1.5 h-1.5 bg-gradient-to-r from-rose-300 to-pink-400 rounded-full opacity-40"
+            className="absolute bottom-40 left-1/4 w-1.5 h-1.5 bg-gradient-to-r from-purple-400 to-purple-500 rounded-full opacity-40"
             animate={{
               y: [0, -25, 0],
               x: [0, 20, 0],
@@ -1282,7 +1282,7 @@ export default function LandingPage() {
             }}
           />
           <motion.div
-            className="absolute top-60 right-1/3 w-2.5 h-2.5 bg-gradient-to-r from-pink-300 to-rose-400 rounded-full opacity-20"
+            className="absolute top-60 right-1/3 w-2.5 h-2.5 bg-gradient-to-r from-purple-400 to-purple-500 rounded-full opacity-20"
             animate={{
               y: [0, 30, 0],
               x: [0, -25, 0],
@@ -1331,7 +1331,7 @@ export default function LandingPage() {
               className="text-4xl sm:text-6xl md:text-8xl font-black mb-8 leading-tight tracking-tight"
             >
               <span className="text-gray-900 block text-4xl sm:text-6xl md:text-6xl">{t.hero.titlePrefix}</span>
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-600 via-pink-600 to-rose-700 block relative text-5xl sm:text-7xl md:text-8xl">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-700 via-purple-600 to-purple-800 block relative text-5xl sm:text-7xl md:text-8xl">
                 OspiterAI
                 {/* Effetto shimmer */}
                 <motion.div
@@ -1359,7 +1359,7 @@ export default function LandingPage() {
               transition={{ duration: 0.8, delay: 0.6 }}
               className="text-lg sm:text-2xl text-gray-700 mb-12 max-w-6xl mx-auto leading-relaxed font-light"
             >
-              {t.hero.subtitle} <br /><span className="font-semibold text-transparent bg-clip-text bg-gradient-to-r from-rose-600 to-pink-600">{t.hero.subtitleHighlight}</span>
+              {t.hero.subtitle} <br /><span className="font-semibold text-transparent bg-clip-text bg-gradient-to-r from-purple-700 to-purple-600">{t.hero.subtitleHighlight}</span>
             </motion.p>
 
             {/* Bottoni CTA spettacolari */}
@@ -1414,12 +1414,12 @@ export default function LandingPage() {
                 className="relative group w-full sm:w-auto"
               >
                 <motion.div
-                  className="absolute -inset-2 bg-gradient-to-r from-rose-400 to-pink-500 rounded-2xl blur-xl opacity-0 group-hover:opacity-30 transition-opacity duration-300"
+                  className="absolute -inset-2 bg-gradient-to-r from-purple-500 to-purple-600 rounded-2xl blur-xl opacity-0 group-hover:opacity-30 transition-opacity duration-300"
                   whileHover={{ scale: 1.1 }}
                 />
                 <Link
                   href="#pricing"
-                  className="relative flex items-center justify-center gap-3 px-10 py-4 text-base font-bold text-white bg-gradient-to-r from-rose-500 via-pink-500 to-rose-600 rounded-2xl shadow-2xl transition-all duration-300 group-hover:shadow-rose-500/25 overflow-hidden w-[90%] mx-[5%] sm:w-96 sm:mx-0"
+                  className="relative flex items-center justify-center gap-3 px-10 py-4 text-base font-bold text-white bg-gradient-to-r from-purple-600 via-purple-500 to-purple-700 rounded-2xl shadow-2xl transition-all duration-300 group-hover:shadow-purple-500/25 overflow-hidden w-[90%] mx-[5%] sm:w-96 sm:mx-0"
                 >
                   {/* Effetto shimmer interno */}
                   <motion.div
@@ -1579,7 +1579,7 @@ export default function LandingPage() {
                             }`}>
                               <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
                                 message.role === 'user' 
-                                  ? 'bg-gradient-to-r from-rose-500 to-pink-600 text-white ml-3' 
+                                  ? 'bg-gradient-to-r from-purple-600 to-purple-700 text-white ml-3' 
                                   : 'bg-gray-200 text-gray-600 mr-3'
                               }`}>
                                 {message.role === 'user' ? (
@@ -1594,7 +1594,7 @@ export default function LandingPage() {
                 </div>
                               <div className={`rounded-2xl px-4 py-3 ${
                                 message.role === 'user'
-                                  ? 'bg-gradient-to-r from-rose-500 to-pink-600 text-white rounded-br-sm'
+                                  ? 'bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-br-sm'
                                   : 'bg-gray-100 text-gray-900 rounded-bl-sm'
                               }`}>
                                 <MarkdownText content={message.content} className="text-sm md:text-base" />
@@ -1754,7 +1754,7 @@ export default function LandingPage() {
       </section>
 
       {/* HOW IT WORKS SECTION MOVED HERE - Animazioni Interactive */}
-      <section id="how-it-works" className="section-padding bg-pink-50">
+      <section id="how-it-works" className="section-padding bg-purple-50">
         <div className="container-max">
           <motion.div
             initial={{ opacity: 0 }}
@@ -2037,15 +2037,15 @@ export default function LandingPage() {
                 />
 
                 {/* Card principale */}
-                <div className="relative bg-white rounded-3xl p-2 md:p-3 lg:p-4 shadow-lg border border-rose-100/40 overflow-hidden text-center group-hover:shadow-2xl transition-all duration-500 h-48 md:h-72 lg:h-80 flex flex-col"
+                <div className="relative bg-white rounded-3xl p-2 md:p-3 lg:p-4 shadow-lg border border-purple-100/40 overflow-hidden text-center group-hover:shadow-2xl transition-all duration-500 h-48 md:h-72 lg:h-80 flex flex-col"
                      style={{ 
                        boxShadow: "0 10px 25px rgba(244, 63, 94, 0.04), 0 0 0 1px rgba(251, 207, 232, 0.08)"
                      }}>
                   
                   {/* Background pattern interno */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-rose-50/20 via-transparent to-pink-50/15"></div>
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-rose-100/25 to-transparent rounded-full blur-2xl"></div>
-                  <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-pink-100/20 to-transparent rounded-full blur-xl"></div>
+                  <div className="absolute inset-0 bg-gradient-to-br from-purple-50/20 via-transparent to-purple-100/15"></div>
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-purple-100/25 to-transparent rounded-full blur-2xl"></div>
+                  <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-purple-100/20 to-transparent rounded-full blur-xl"></div>
 
                   {/* Contenuto della card con spaziatura uniforme */}
                   <div className="flex flex-col h-full justify-between py-2 md:py-4">
@@ -2116,10 +2116,10 @@ export default function LandingPage() {
 
 
                   {/* Decorazioni angolari sottili */}
-                  <div className="absolute top-3 left-3 w-4 h-4 border-l border-t border-rose-200/50 rounded-tl-lg"></div>
-                  <div className="absolute top-3 right-3 w-4 h-4 border-r border-t border-rose-200/50 rounded-tr-lg"></div>
-                  <div className="absolute bottom-3 left-3 w-4 h-4 border-l border-b border-rose-200/50 rounded-bl-lg"></div>
-                  <div className="absolute bottom-3 right-3 w-4 h-4 border-r border-b border-rose-200/50 rounded-bl-lg"></div>
+                  <div className="absolute top-3 left-3 w-4 h-4 border-l border-t border-purple-200/50 rounded-tl-lg"></div>
+                  <div className="absolute top-3 right-3 w-4 h-4 border-r border-t border-purple-200/50 rounded-tr-lg"></div>
+                  <div className="absolute bottom-3 left-3 w-4 h-4 border-l border-b border-purple-200/50 rounded-bl-lg"></div>
+                  <div className="absolute bottom-3 right-3 w-4 h-4 border-r border-b border-purple-200/50 rounded-bl-lg"></div>
 
                   {/* Linea decorativa bottom */}
                   <motion.div
@@ -2144,7 +2144,7 @@ export default function LandingPage() {
       {/* PRICING SECTION - Ultra Luxurious Airbnb Style */}
       <section id="pricing" className="relative overflow-hidden section-padding">
         {/* Background ultra-elegante bianco e rosa */}
-        <div className="absolute inset-0 bg-gradient-to-br from-white via-rose-50/30 to-pink-50/40"></div>
+        <div className="absolute inset-0 bg-gradient-to-br from-white via-purple-50/30 to-purple-100/40"></div>
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(251,207,232,0.15),transparent_50%)] opacity-80"></div>
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,rgba(244,63,94,0.08),transparent_60%)] opacity-70"></div>
         <div className="absolute inset-0 bg-[conic-gradient(from_45deg_at_30%_70%,transparent_0deg,rgba(251,207,232,0.1)_90deg,transparent_180deg)] opacity-60"></div>
@@ -2152,7 +2152,7 @@ export default function LandingPage() {
         {/* Particelle fluttuanti eleganti */}
         <div className="absolute inset-0 overflow-hidden">
           <motion.div
-            className="absolute top-[15%] left-[10%] w-4 h-4 bg-rose-200/40 rounded-full"
+            className="absolute top-[15%] left-[10%] w-4 h-4 bg-purple-200/40 rounded-full"
             animate={{
               y: [0, -60, 0],
               x: [0, 30, 0],
@@ -2166,7 +2166,7 @@ export default function LandingPage() {
             }}
           />
           <motion.div 
-            className="absolute top-[25%] right-[15%] w-3 h-3 bg-pink-300/35 rounded-full"
+            className="absolute top-[25%] right-[15%] w-3 h-3 bg-purple-300/35 rounded-full"
             animate={{
               y: [0, -45, 0],
               x: [0, -25, 0],
@@ -2181,7 +2181,7 @@ export default function LandingPage() {
             }}
           />
           <motion.div 
-            className="absolute top-[70%] left-[80%] w-2 h-2 bg-rose-400/30 rounded-full"
+            className="absolute top-[70%] left-[80%] w-2 h-2 bg-purple-400/30 rounded-full"
             animate={{
               y: [0, -35, 0],
               opacity: [0.3, 0.6, 0.3],
@@ -2195,7 +2195,7 @@ export default function LandingPage() {
             }}
           />
           <motion.div 
-            className="absolute top-[60%] left-[20%] w-1.5 h-1.5 bg-pink-200/50 rounded-full"
+            className="absolute top-[60%] left-[20%] w-1.5 h-1.5 bg-purple-200/50 rounded-full"
             animate={{
               y: [0, -40, 0],
               x: [0, 20, 0],
@@ -2212,7 +2212,7 @@ export default function LandingPage() {
 
         {/* Pattern geometrici sottili */}
         <div className="absolute inset-0 opacity-20">
-          <svg className="absolute top-10 left-10 w-32 h-32 text-rose-300" viewBox="0 0 100 100">
+          <svg className="absolute top-10 left-10 w-32 h-32 text-purple-300" viewBox="0 0 100 100">
             <motion.circle
               cx="50" cy="50" r="20" fill="none" stroke="currentColor" strokeWidth="0.5"
               animate={{ rotate: 360 }}
@@ -2224,7 +2224,7 @@ export default function LandingPage() {
               transition={{ duration: 45, repeat: Infinity, ease: "linear" }}
             />
           </svg>
-          <svg className="absolute bottom-20 right-20 w-24 h-24 text-pink-200" viewBox="0 0 100 100">
+          <svg className="absolute bottom-20 right-20 w-24 h-24 text-purple-200" viewBox="0 0 100 100">
             <motion.polygon
               points="50,15 85,85 15,85" fill="none" stroke="currentColor" strokeWidth="0.5"
               animate={{ rotate: 360 }}
@@ -2281,7 +2281,7 @@ export default function LandingPage() {
                 <button
                   onClick={() => setIsAnnualBilling(!isAnnualBilling)}
                   className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 ${
-                    isAnnualBilling ? 'bg-rose-600' : 'bg-gray-300'
+                    isAnnualBilling ? 'bg-purple-600' : 'bg-gray-300'
                   }`}
                 >
                   <span
@@ -2313,13 +2313,13 @@ export default function LandingPage() {
                     <div 
                       className={`relative rounded-[2rem] p-4 md:p-8 overflow-hidden shadow-2xl flex flex-col ${
                         isPopular 
-                          ? 'bg-gradient-to-br from-rose-50 to-pink-50 border-2 border-rose-200/60 aspect-[3/2] md:aspect-[4/5]' 
+                          ? 'bg-gradient-to-br from-purple-50 to-violet-50 border-2 border-purple-200/60 aspect-[3/2] md:aspect-[4/5]' 
                           : 'bg-white border border-gray-100/50 aspect-[3/2] md:aspect-[4/5]'
                       }`}
                       style={{ 
                         backfaceVisibility: 'hidden',
                         boxShadow: isPopular 
-                          ? "0 25px 50px rgba(244, 63, 94, 0.15), 0 0 0 1px rgba(251, 207, 232, 0.2)"
+                          ? "0 25px 50px rgba(139, 92, 246, 0.15), 0 0 0 1px rgba(196, 181, 253, 0.2)"
                           : "0 25px 50px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(0, 0, 0, 0.05)"
                       }}
                     >
@@ -2327,17 +2327,17 @@ export default function LandingPage() {
                       {/* Background pattern interno */}
                       <div className={`absolute inset-0 ${
                         isPopular 
-                          ? 'bg-gradient-to-br from-rose-50/40 via-transparent to-pink-50/30' 
+                          ? 'bg-gradient-to-br from-purple-50/40 via-transparent to-violet-50/30' 
                           : 'bg-gradient-to-br from-gray-50/20 via-transparent to-gray-50/10'
                       }`}></div>
                       <div className={`absolute top-0 right-0 w-32 h-32 rounded-full blur-3xl ${
                         isPopular 
-                          ? 'bg-gradient-to-br from-rose-100/50 to-transparent' 
+                          ? 'bg-gradient-to-br from-purple-100/50 to-transparent' 
                           : 'bg-gradient-to-br from-gray-100/30 to-transparent'
                       }`}></div>
                       <div className={`absolute bottom-0 left-0 w-24 h-24 rounded-full blur-2xl ${
                         isPopular 
-                          ? 'bg-gradient-to-tr from-pink-100/40 to-transparent' 
+                          ? 'bg-gradient-to-tr from-purple-200/40 to-transparent' 
                           : 'bg-gradient-to-tr from-gray-100/20 to-transparent'
                       }`}></div>
 
@@ -2351,7 +2351,7 @@ export default function LandingPage() {
                         <div className="text-3xl md:text-5xl font-black mb-1 md:mb-2">
                           <span className={`text-transparent bg-clip-text ${
                             isPopular 
-                              ? 'bg-gradient-to-r from-rose-600 to-pink-600' 
+                              ? 'bg-gradient-to-r from-purple-700 to-purple-600' 
                               : 'bg-gradient-to-r from-gray-700 to-gray-600'
                           }`}>
                             {plan.price}
@@ -2364,7 +2364,7 @@ export default function LandingPage() {
                         {/* Badge popolare per Premium */}
                         {isPopular && (
                           <div className="mb-1 md:mb-2">
-                            <span className="text-xs font-semibold text-rose-600 bg-rose-100 px-3 py-1 rounded-full">
+                            <span className="text-xs font-semibold text-purple-600 bg-purple-100 px-3 py-1 rounded-full">
                               Più Popolare
                             </span>
                           </div>
@@ -2383,7 +2383,7 @@ export default function LandingPage() {
                           >
                             <div className={`flex-shrink-0 w-4 h-4 md:w-5 md:h-5 rounded-full flex items-center justify-center mr-2 md:mr-3 mt-0.5 shadow-lg ${
                               isPopular 
-                                ? 'bg-gradient-to-r from-rose-500 to-pink-600' 
+                                ? 'bg-gradient-to-r from-purple-600 to-purple-700' 
                                 : 'bg-gradient-to-r from-gray-500 to-gray-600'
                             }`}>
                               <Check className="w-2 h-2 md:w-3 md:h-3 text-white font-bold" strokeWidth={3} />
@@ -2404,7 +2404,7 @@ export default function LandingPage() {
                       >
                         <div className={`text-white py-3 px-4 md:py-4 md:px-6 rounded-xl font-bold text-xs md:text-sm text-center shadow-lg overflow-hidden relative ${
                           isPopular 
-                            ? 'bg-gradient-to-r from-rose-500 via-pink-500 to-rose-600' 
+                            ? 'bg-gradient-to-r from-purple-600 via-purple-500 to-purple-700' 
                             : 'bg-gradient-to-r from-gray-600 via-gray-700 to-gray-800'
                         }`}>
                           <span className="relative flex items-center justify-center">
@@ -2419,16 +2419,16 @@ export default function LandingPage() {
 
                     {/* Decorazioni angolari */}
                     <div className={`absolute top-3 left-3 w-4 h-4 border-l-2 border-t-2 rounded-tl-lg ${
-                      isPopular ? 'border-rose-200' : 'border-gray-200'
+                      isPopular ? 'border-purple-200' : 'border-gray-200'
                     }`}></div>
                     <div className={`absolute top-3 right-3 w-4 h-4 border-r-2 border-t-2 rounded-tr-lg ${
-                      isPopular ? 'border-rose-200' : 'border-gray-200'
+                      isPopular ? 'border-purple-200' : 'border-gray-200'
                     }`}></div>
                     <div className={`absolute bottom-3 left-3 w-4 h-4 border-l-2 border-b-2 rounded-bl-lg ${
-                      isPopular ? 'border-rose-200' : 'border-gray-200'
+                      isPopular ? 'border-purple-200' : 'border-gray-200'
                     }`}></div>
                     <div className={`absolute bottom-3 right-3 w-4 h-4 border-r-2 border-b-2 rounded-br-lg ${
-                      isPopular ? 'border-rose-200' : 'border-gray-200'
+                      isPopular ? 'border-purple-200' : 'border-gray-200'
                     }`}></div>
                   </div>
                 </div>
@@ -2553,7 +2553,7 @@ export default function LandingPage() {
                       
                       {/* Video compatto per mobile */}
                       <div className="relative aspect-video bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl border border-white/10 overflow-hidden group cursor-pointer">
-                        <div className="absolute inset-0 bg-gradient-to-br from-purple-600/20 to-pink-600/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                        <div className="absolute inset-0 bg-gradient-to-br from-purple-600/20 to-violet-600/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                         <div className="absolute inset-0 flex items-center justify-center">
                           <motion.div
                             whileHover={{ scale: 1.1 }}
@@ -2596,7 +2596,7 @@ export default function LandingPage() {
                       whileInView={{ scale: 1 }}
                       transition={{ duration: 0.6, delay: 0.3, type: "spring", stiffness: 200 }}
                       viewport={{ once: true }}
-                      className="inline-flex items-center justify-center w-12 h-12 md:w-16 md:h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl mb-3 md:mb-4 shadow-lg"
+                      className="inline-flex items-center justify-center w-12 h-12 md:w-16 md:h-16 bg-gradient-to-r from-purple-500 to-violet-500 rounded-2xl mb-3 md:mb-4 shadow-lg"
                     >
                       <MessageSquare className="w-6 h-6 md:w-8 md:h-8 text-white" />
                     </motion.div>
@@ -2653,7 +2653,7 @@ export default function LandingPage() {
                           className="w-full px-4 py-3 md:px-6 md:py-4 bg-white/10 border border-white/20 rounded-xl md:rounded-2xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-400/50 backdrop-blur-sm transition-all duration-300 group-hover:bg-white/15 text-sm md:text-base"
                           required
                         />
-                        <div className="absolute inset-0 rounded-xl md:rounded-2xl bg-gradient-to-r from-purple-500/20 to-pink-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+                        <div className="absolute inset-0 rounded-xl md:rounded-2xl bg-gradient-to-r from-purple-500/20 to-violet-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
                       </motion.div>
 
                       <motion.div
@@ -2718,7 +2718,7 @@ export default function LandingPage() {
                           value={feedbackMessage}
                           onChange={(e) => setFeedbackMessage(e.target.value.slice(0, 500))}
                           placeholder="Condividi i tuoi pensieri, suggerimenti o esperienze con OspiterAI..."
-                          className="w-full px-4 py-3 md:px-6 md:py-4 bg-white/10 border border-white/20 rounded-xl md:rounded-2xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-500/50 focus:border-pink-400/50 backdrop-blur-sm transition-all duration-300 group-hover:bg-white/15 resize-none text-sm md:text-base"
+                          className="w-full px-4 py-3 md:px-6 md:py-4 bg-white/10 border border-white/20 rounded-xl md:rounded-2xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-400/50 backdrop-blur-sm transition-all duration-300 group-hover:bg-white/15 resize-none text-sm md:text-base"
                           required
                         />
                         <div className={`absolute bottom-2 right-2 text-xs transition-colors duration-200 ${
@@ -2726,7 +2726,7 @@ export default function LandingPage() {
                         }`}>
                           {feedbackMessage.length}/500
                         </div>
-                        <div className="absolute inset-0 rounded-xl md:rounded-2xl bg-gradient-to-r from-pink-500/20 to-purple-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+                        <div className="absolute inset-0 rounded-xl md:rounded-2xl bg-gradient-to-r from-violet-500/20 to-purple-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
                       </div>
                     </motion.div>
 
@@ -2752,7 +2752,7 @@ export default function LandingPage() {
                           {/* Background animato del bottone */}
                           <div className="absolute inset-0 bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 rounded-xl md:rounded-2xl"></div>
                           <motion.div
-                            className="absolute inset-0 bg-gradient-to-r from-pink-600 via-purple-600 to-blue-600 rounded-xl md:rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                            className="absolute inset-0 bg-gradient-to-r from-violet-600 via-purple-600 to-blue-600 rounded-xl md:rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"
                             animate={{
                               backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
                             }}
@@ -2839,7 +2839,7 @@ export default function LandingPage() {
                       
                       {/* Placeholder per video */}
                       <div className="relative aspect-video bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl border border-white/10 overflow-hidden group cursor-pointer">
-                        <div className="absolute inset-0 bg-gradient-to-br from-purple-600/20 to-pink-600/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                        <div className="absolute inset-0 bg-gradient-to-br from-purple-600/20 to-violet-600/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                         <div className="absolute inset-0 flex items-center justify-center">
                           <motion.div
                             whileHover={{ scale: 1.1 }}
@@ -2865,7 +2865,7 @@ export default function LandingPage() {
 
                 {/* Card statistiche feedback */}
                 <div className="relative">
-                  <div className="absolute -inset-4 bg-gradient-to-r from-blue-600/20 via-purple-600/20 to-pink-600/20 rounded-3xl blur-xl opacity-50"></div>
+                  <div className="absolute -inset-4 bg-gradient-to-r from-blue-600/20 via-purple-600/20 to-violet-600/20 rounded-3xl blur-xl opacity-50"></div>
                   <div className="relative bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-8 shadow-2xl">
                     <div className="text-center mb-8">
                       <motion.div
@@ -2934,7 +2934,7 @@ export default function LandingPage() {
       {/* STATS SECTION - Ultra Modern & Spectacular */}
       <section className="relative overflow-hidden section-padding">
         {/* Background ultra-moderno */}
-        <div className="absolute inset-0 bg-gradient-to-br from-indigo-900 via-purple-800 to-pink-900"></div>
+        <div className="absolute inset-0 bg-gradient-to-br from-indigo-900 via-purple-800 to-violet-900"></div>
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_25%_25%,rgba(99,102,241,0.4),transparent_50%)] opacity-60"></div>
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_75%_75%,rgba(236,72,153,0.3),transparent_50%)] opacity-50"></div>
         <div className="absolute inset-0 bg-[conic-gradient(from_0deg_at_50%_50%,transparent_0deg,rgba(147,51,234,0.1)_60deg,transparent_120deg,rgba(59,130,246,0.1)_240deg,transparent_300deg)] opacity-40"></div>
@@ -2956,7 +2956,7 @@ export default function LandingPage() {
             }}
           />
           <motion.div 
-            className="absolute top-[60%] right-[20%] w-2 h-2 bg-pink-400/40 rounded-full"
+            className="absolute top-[60%] right-[20%] w-2 h-2 bg-violet-400/40 rounded-full"
             animate={{
               y: [0, -25, 0],
               x: [0, -15, 0],
@@ -3076,7 +3076,7 @@ export default function LandingPage() {
               whileHover={{ scale: 1.05, y: -5 }}
               className="relative group"
             >
-              <div className="absolute -inset-2 bg-gradient-to-r from-purple-500/30 to-pink-500/30 rounded-3xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+              <div className="absolute -inset-2 bg-gradient-to-r from-purple-500/30 to-violet-500/30 rounded-3xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
               
               <div className="relative bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 md:p-8 shadow-2xl overflow-hidden text-center">
                 <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-purple-500/20 to-transparent rounded-full blur-2xl"></div>
@@ -3085,7 +3085,7 @@ export default function LandingPage() {
                   initial={{ scale: 0 }}
                   whileInView={{ scale: 1 }}
                   transition={{ duration: 0.5, delay: 0.4, type: "spring", stiffness: 200 }}
-                  className="inline-flex items-center justify-center w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl mb-4 shadow-lg"
+                  className="inline-flex items-center justify-center w-12 h-12 bg-gradient-to-r from-purple-500 to-violet-500 rounded-2xl mb-4 shadow-lg"
                 >
                   <MessageSquare className="w-6 h-6 text-white" />
                 </motion.div>
@@ -3094,7 +3094,7 @@ export default function LandingPage() {
                   initial={{ opacity: 0, scale: 0.5 }}
                   whileInView={{ opacity: 1, scale: 1 }}
                   transition={{ duration: 0.8, delay: 0.5 }}
-                  className="text-3xl md:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400 mb-2"
+                  className="text-3xl md:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-violet-400 mb-2"
                 >
                   {t.statistics.stats[1].number}
                 </motion.div>
@@ -3215,14 +3215,14 @@ export default function LandingPage() {
       {/* CTA SECTION - Ultra Luxurious Final Call */}
       <section className="relative section-padding overflow-hidden">
         {/* Background ultra-elegante con gradienti multipli */}
-        <div className="absolute inset-0 bg-gradient-to-br from-white via-rose-25/20 to-pink-25/30"></div>
+        <div className="absolute inset-0 bg-gradient-to-br from-white via-purple-25/20 to-violet-25/30"></div>
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(251,207,232,0.12),transparent_70%)] opacity-80"></div>
         <div className="absolute inset-0 bg-[conic-gradient(from_180deg_at_50%_50%,rgba(255,255,255,0.9)_0deg,rgba(251,207,232,0.08)_120deg,rgba(255,255,255,0.95)_240deg,rgba(251,207,232,0.05)_360deg)]"></div>
 
         {/* Particelle fluttuanti finali */}
         <div className="absolute inset-0 pointer-events-none">
           <motion.div
-            className="absolute top-20 left-1/4 w-2 h-2 bg-gradient-to-r from-rose-400 to-pink-500 rounded-full opacity-40"
+            className="absolute top-20 left-1/4 w-2 h-2 bg-gradient-to-r from-purple-500 to-purple-600 rounded-full opacity-40"
             animate={{
               y: [0, -30, 0],
               x: [0, 15, 0],
@@ -3235,7 +3235,7 @@ export default function LandingPage() {
             }}
           />
           <motion.div
-            className="absolute bottom-32 right-1/3 w-1.5 h-1.5 bg-gradient-to-r from-pink-300 to-rose-400 rounded-full opacity-30"
+            className="absolute bottom-32 right-1/3 w-1.5 h-1.5 bg-gradient-to-r from-purple-400 to-purple-500 rounded-full opacity-30"
             animate={{
               y: [0, 20, 0],
               x: [0, -10, 0],
@@ -3259,14 +3259,14 @@ export default function LandingPage() {
             className="relative"
           >
             {/* Glow esterno spettacolare */}
-            <div className="absolute -inset-8 bg-gradient-to-r from-rose-200/20 via-pink-300/30 to-rose-200/20 rounded-[3rem] blur-2xl opacity-60"></div>
+            <div className="absolute -inset-8 bg-gradient-to-r from-purple-200/20 via-violet-300/30 to-purple-200/20 rounded-[3rem] blur-2xl opacity-60"></div>
             
             {/* Container principale con glassmorphism premium */}
             <div className="relative bg-white/40 backdrop-blur-2xl border border-white/50 rounded-[2.5rem] p-12 md:p-16 shadow-2xl">
               {/* Pattern decorativo interno */}
               <div className="absolute inset-0 rounded-[2.5rem] overflow-hidden pointer-events-none">
-                <div className="absolute top-0 right-0 w-48 h-48 bg-gradient-to-bl from-rose-100/30 to-transparent rounded-full blur-3xl"></div>
-                <div className="absolute bottom-0 left-0 w-32 h-32 bg-gradient-to-tr from-pink-100/40 to-transparent rounded-full blur-2xl"></div>
+                <div className="absolute top-0 right-0 w-48 h-48 bg-gradient-to-bl from-purple-100/30 to-transparent rounded-full blur-3xl"></div>
+                <div className="absolute bottom-0 left-0 w-32 h-32 bg-gradient-to-tr from-purple-200/40 to-transparent rounded-full blur-2xl"></div>
               </div>
 
               {/* Badge premium */}
@@ -3278,7 +3278,7 @@ export default function LandingPage() {
                 className="inline-flex items-center gap-2 px-6 py-3 bg-white/50 backdrop-blur-xl border border-white/30 rounded-full shadow-lg mb-8"
               >
                 <motion.div
-                  className="w-2 h-2 bg-gradient-to-r from-rose-500 to-pink-600 rounded-full"
+                  className="w-2 h-2 bg-gradient-to-r from-purple-600 to-purple-700 rounded-full"
                   animate={{
                     scale: [1, 1.2, 1],
                     opacity: [0.7, 1, 0.7],
@@ -3292,7 +3292,7 @@ export default function LandingPage() {
                 <span className="text-sm font-bold text-gray-700">
                   Inizia la Rivoluzione Oggi
                 </span>
-                <Sparkles className="w-4 h-4 text-rose-500" />
+                <Sparkles className="w-4 h-4 text-purple-500" />
               </motion.div>
 
               {/* Titolo principale spettacolare */}
@@ -3304,7 +3304,7 @@ export default function LandingPage() {
                 className="text-2xl md:text-5xl lg:text-6xl font-black mb-6 md:mb-8 leading-tight"
               >
                 <span className="text-gray-900 block mb-1 md:mb-2">{t.cta.title}</span>
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-600 via-pink-600 to-rose-700 block relative">
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-700 via-purple-600 to-purple-800 block relative">
                   {t.cta.titleHighlight}
                   {/* Effetto shimmer */}
                   <motion.div
@@ -3330,7 +3330,7 @@ export default function LandingPage() {
                 viewport={{ once: true }}
                 className="text-base md:text-2xl text-gray-700 mb-8 md:mb-12 max-w-3xl mx-auto leading-relaxed font-light"
               >
-                {t.cta.subtitle} <span className="font-bold text-transparent bg-clip-text bg-gradient-to-r from-rose-600 to-pink-600">{t.cta.subtitleHighlight}</span> che hanno già migliorato il loro servizio con OspiterAI
+                {t.cta.subtitle} <span className="font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-700 to-purple-600">{t.cta.subtitleHighlight}</span> che hanno già migliorato il loro servizio con OspiterAI
               </motion.p>
 
               {/* Bottone CTA finale spettacolare */}
@@ -3348,13 +3348,13 @@ export default function LandingPage() {
                 >
                   {/* Glow esterno del bottone */}
                   <motion.div
-                    className="absolute -inset-3 bg-gradient-to-r from-rose-400 to-pink-500 rounded-3xl blur-xl opacity-0 group-hover:opacity-40 transition-opacity duration-300"
+                    className="absolute -inset-3 bg-gradient-to-r from-purple-500 to-purple-600 rounded-3xl blur-xl opacity-0 group-hover:opacity-40 transition-opacity duration-300"
                     whileHover={{ scale: 1.1 }}
                   />
                   
                   <Link
                     href="#pricing"
-                    className="relative inline-flex items-center gap-2 md:gap-4 px-8 py-3 md:px-12 md:py-6 text-sm md:text-xl font-black text-white bg-gradient-to-r from-rose-500 via-pink-500 to-rose-600 rounded-2xl md:rounded-3xl shadow-2xl transition-all duration-300 group-hover:shadow-rose-500/30 overflow-hidden"
+                    className="relative inline-flex items-center gap-2 md:gap-4 px-8 py-3 md:px-12 md:py-6 text-sm md:text-xl font-black text-white bg-gradient-to-r from-purple-600 via-purple-500 to-purple-700 rounded-2xl md:rounded-3xl shadow-2xl transition-all duration-300 group-hover:shadow-rose-500/30 overflow-hidden"
                   >
                     {/* Effetto shimmer interno */}
                     <motion.div
@@ -3386,10 +3386,10 @@ export default function LandingPage() {
             </div>
 
             {/* Decorazioni angolari eleganti */}
-            <div className="absolute top-6 left-6 w-6 h-6 border-l-2 border-t-2 border-rose-300/50 rounded-tl-lg"></div>
-            <div className="absolute top-6 right-6 w-6 h-6 border-r-2 border-t-2 border-pink-300/50 rounded-tr-lg"></div>
-            <div className="absolute bottom-6 left-6 w-6 h-6 border-l-2 border-b-2 border-rose-300/50 rounded-bl-lg"></div>
-            <div className="absolute bottom-6 right-6 w-6 h-6 border-r-2 border-b-2 border-pink-300/50 rounded-br-lg"></div>
+            <div className="absolute top-6 left-6 w-6 h-6 border-l-2 border-t-2 border-purple-300/50 rounded-tl-lg"></div>
+            <div className="absolute top-6 right-6 w-6 h-6 border-r-2 border-t-2 border-violet-300/50 rounded-tr-lg"></div>
+            <div className="absolute bottom-6 left-6 w-6 h-6 border-l-2 border-b-2 border-purple-300/50 rounded-bl-lg"></div>
+            <div className="absolute bottom-6 right-6 w-6 h-6 border-r-2 border-b-2 border-violet-300/50 rounded-br-lg"></div>
           </motion.div>
         </div>
       </section>
@@ -3404,7 +3404,7 @@ export default function LandingPage() {
               {/* Logo desktop */}
               <div className="hidden md:block text-left mb-8">
                 <div className="flex items-center space-x-2 mb-3">
-                <HostGPTLogo size="md" className="text-primary" />
+                <OspiterAILogo size="md" className="text-primary" />
                 <span className="text-xl font-bold">OspiterAI</span>
               </div>
               <p className="text-gray-400 text-sm">
@@ -3415,7 +3415,7 @@ export default function LandingPage() {
               {/* Logo mobile */}
               <div className="md:hidden text-center mb-6">
                 <div className="flex items-center justify-center space-x-2 mb-2">
-                  <HostGPTLogo size="md" className="text-primary" />
+                  <OspiterAILogo size="md" className="text-primary" />
                   <span className="text-lg font-bold">OspiterAI</span>
                 </div>
                 <p className="text-gray-400 text-xs">

@@ -24,7 +24,7 @@ export default function MarkdownText({ content, className = '' }: MarkdownTextPr
             href={match}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-rose-600 hover:text-rose-700 underline font-medium"
+            className="text-purple-600 hover:text-purple-700 underline font-medium"
           >
             {match}
           </a>
@@ -39,7 +39,7 @@ export default function MarkdownText({ content, className = '' }: MarkdownTextPr
             href={groups[1]}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-rose-600 hover:text-rose-700 underline font-medium"
+            className="text-purple-600 hover:text-purple-700 underline font-medium"
           >
             {groups[0]}
           </a>
@@ -49,7 +49,7 @@ export default function MarkdownText({ content, className = '' }: MarkdownTextPr
       {
         regex: /\*\*([^*]+)\*\*|__([^_]+)__/g,
         render: (match: string, ...groups: string[]) => (
-          <strong key={`bold-${Math.random()}`} className="font-bold text-rose-600">
+          <strong key={`bold-${Math.random()}`} className="font-bold text-purple-600">
             {groups[0] || groups[1]}
           </strong>
         )

@@ -36,7 +36,7 @@ export default function SEOImage({
 }
 
 // Componente specifico per il logo OspiterAI
-export function HostGPTLogo({ className = '', priority = true }: { className?: string, priority?: boolean }) {
+export function OspiterAILogo({ className = '', priority = true }: { className?: string, priority?: boolean }) {
   return (
     <SEOImage
       src="/icons/logohostgpt.png"

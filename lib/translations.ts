@@ -1225,7 +1225,7 @@ export const translations: Record<Language, Translations> = {
     },
     howItWorks: {
       title: "Come Funziona",
-      subtitle: "Ogni giorno perdi <span class='text-pink-600 font-bold'>ore preziose</span> a rispondere alle stesse domande dei tuoi ospiti.<br><br>Con <span class='text-pink-600 font-bold'>OspiterAI</span> risparmi tutto quel tempo per <span class='text-pink-600 font-bold'>meno di un caffè al giorno</span>.<br><br>Il tuo assistente virtuale risponde <span class='text-pink-600 font-bold'>automaticamente 24/7</span>, mentre tu ti concentri su ciò che conta davvero.",
+      subtitle: "Ogni giorno perdi <span class='text-purple-700 font-bold'>ore preziose</span> a rispondere alle stesse domande dei tuoi ospiti.<br><br>Con <span class='text-purple-700 font-bold'>OspiterAI</span> risparmi tutto quel tempo per <span class='text-purple-700 font-bold'>meno di un caffè al giorno</span>.<br><br>Il tuo assistente virtuale risponde <span class='text-purple-700 font-bold'>automaticamente 24/7</span>, mentre tu ti concentri su ciò che conta davvero.",
       steps: [
         {
           title: "Registrati",
@@ -2464,7 +2464,7 @@ export const translations: Record<Language, Translations> = {
     },
     howItWorks: {
       title: "How It Works",
-      subtitle: "Every day you lose <span class='text-pink-600 font-bold'>precious hours</span> answering the same questions from your guests.<br><br>With <span class='text-pink-600 font-bold'>OspiterAI</span> you save all that time for <span class='text-pink-600 font-bold'>less than a coffee a day</span>.<br><br>Your virtual assistant responds <span class='text-pink-600 font-bold'>automatically 24/7</span>, while you focus on what really matters.",
+      subtitle: "Every day you lose <span class='text-purple-700 font-bold'>precious hours</span> answering the same questions from your guests.<br><br>With <span class='text-purple-700 font-bold'>OspiterAI</span> you save all that time for <span class='text-purple-700 font-bold'>less than a coffee a day</span>.<br><br>Your virtual assistant responds <span class='text-purple-700 font-bold'>automatically 24/7</span>, while you focus on what really matters.",
       steps: [
         {
           title: "Sign Up",
