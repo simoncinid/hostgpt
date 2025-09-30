@@ -7018,6 +7018,54 @@ async def get_hostaway_mappings(
         logger.error(f"Error fetching Hostaway mappings for user {current_user.id}: {e}")
         raise HTTPException(status_code=500, detail="Errore nel recuperare i mapping")
 
+# ============= Hostaway Mock/Test Endpoints =============
+
+@app.post("/api/hostaway/test-credentials")
+async def test_hostaway_credentials():
+    """Endpoint di test per simulare credenziali Hostaway funzionanti"""
+    return {
+        "status": "success",
+        "message": "Credenziali di test salvate con successo",
+        "note": "Queste sono credenziali mock per testing"
+    }
+
+@app.get("/api/hostaway/test-apartments")
+async def get_test_apartments():
+    """Endpoint di test che restituisce appartamenti mock"""
+    mock_apartments = [
+        {
+            "id": "12345",
+            "name": "Appartamento Centro Storico",
+            "address": "Via Roma 123, Milano, Italia",
+            "is_mapped": False,
+            "chatbot_id": None
+        },
+        {
+            "id": "12346", 
+            "name": "Casa Vacanze Lago",
+            "address": "Via del Lago 45, Como, Italia",
+            "is_mapped": False,
+            "chatbot_id": None
+        },
+        {
+            "id": "12347",
+            "name": "Loft Moderno Brera",
+            "address": "Corso Garibaldi 78, Milano, Italia", 
+            "is_mapped": False,
+            "chatbot_id": None
+        }
+    ]
+    
+    return {
+        "status": "success",
+        "apartments": mock_apartments,
+        "chatbots": [
+            {"id": 1, "name": "Assistente Milano Centro"},
+            {"id": 2, "name": "Assistente Lago Como"},
+            {"id": 3, "name": "Assistente Brera"}
+        ]
+    }
+
 # ============= Property Analysis Endpoint =============
 
 class PropertyAnalysisRequest(BaseModel):

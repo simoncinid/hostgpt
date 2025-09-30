@@ -382,6 +382,44 @@ export default function SettingsPage() {
     }
   }
 
+  const handleTestMode = async () => {
+    setIsLoadingApartments(true)
+    setShowApartmentsModal(true)
+    
+    try {
+      // Usa gli endpoint di test invece di quelli reali
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/hostaway/test-apartments`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+
+      if (!response.ok) {
+        throw new Error('Errore nel recuperare i dati di test')
+      }
+
+      const data = await response.json()
+      setApartments(data.apartments || [])
+      setChatbots(data.chatbots || [])
+      
+      // Inizializza i mapping per i test
+      const mappings: {[key: string]: number | null} = {}
+      data.apartments.forEach((apt: any) => {
+        mappings[apt.id] = apt.chatbot_id || null
+      })
+      setApartmentMappings(mappings)
+      
+      toast.success('🧪 Modalità test attivata! Questi sono dati di esempio.')
+      
+    } catch (e: any) {
+      toast.error(e.message || 'Errore nel caricare i dati di test')
+      setShowApartmentsModal(false)
+    } finally {
+      setIsLoadingApartments(false)
+    }
+  }
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center text-gray-600">
@@ -666,8 +704,8 @@ export default function SettingsPage() {
                   </button>
                 </div>
                 
-                {/* Pulsante per caricare appartamenti */}
-                <div className="border-t pt-4">
+                {/* Pulsanti per caricare appartamenti */}
+                <div className="border-t pt-4 space-y-3">
                   <button
                     onClick={handleLoadApartments}
                     disabled={isLoadingApartments}
@@ -684,6 +722,16 @@ export default function SettingsPage() {
                         {(t.settings as any).apiIntegration?.apartments?.title || 'Gestisci Appartamenti Hostaway'}
                       </>
                     )}
+                  </button>
+                  
+                  {/* Pulsante di test */}
+                  <button
+                    onClick={handleTestMode}
+                    disabled={isLoadingApartments}
+                    className="w-full bg-orange-500 text-white px-4 py-3 rounded-lg hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center"
+                  >
+                    <Settings className="w-5 h-5 mr-2" />
+                    🧪 Modalità Test (Dati Mock)
                   </button>
                 </div>
               </div>
