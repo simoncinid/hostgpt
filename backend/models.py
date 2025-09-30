@@ -431,13 +431,16 @@ class HostawayMapping(Base):
     user = relationship("User")
     chatbot = relationship("Chatbot")
 
-# Tabella per memorizzare le API key Hostaway degli utenti
+# Tabella per memorizzare le credenziali Hostaway degli utenti
 class HostawayApiKey(Base):
     __tablename__ = "hostaway_api_keys"
     
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, unique=True)
+    account_id = Column(String(255), nullable=False)  # Account ID Hostaway
     api_key = Column(String(500), nullable=False)  # API key criptata
+    access_token = Column(String(1000))  # Access token per le chiamate API (criptato)
+    token_expires_at = Column(DateTime)  # Scadenza del token
     
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, onupdate=func.now())

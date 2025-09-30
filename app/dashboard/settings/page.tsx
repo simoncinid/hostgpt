@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { ArrowLeft, CreditCard, Mail, User, Loader2, LogOut, AlertTriangle, ChevronDown, Check, Link, Settings, ExternalLink } from 'lucide-react'
+import { ArrowLeft, CreditCard, Mail, User, Loader2, LogOut, AlertTriangle, ChevronDown, Check, Settings, ExternalLink, Link as LinkIcon } from 'lucide-react'
 import { auth, subscription } from '@/lib/api'
 import { useAuthStore } from '@/lib/store'
 import { useLanguage } from '@/lib/languageContext'
@@ -28,6 +28,7 @@ export default function SettingsPage() {
   const [isUpgrading, setIsUpgrading] = useState(false)
   
   // Stati per l'integrazione API Hostaway
+  const [hostawayAccountId, setHostawayAccountId] = useState('')
   const [hostawayApiKey, setHostawayApiKey] = useState('')
   const [isSavingApiKey, setIsSavingApiKey] = useState(false)
   const [showApartmentsModal, setShowApartmentsModal] = useState(false)
@@ -253,8 +254,8 @@ export default function SettingsPage() {
 
   // Funzioni per l'integrazione Hostaway
   const handleSaveApiKey = async () => {
-    if (!hostawayApiKey.trim()) {
-      toast.error('Inserisci una API Key valida')
+    if (!hostawayAccountId.trim() || !hostawayApiKey.trim()) {
+      toast.error('Inserisci sia Account ID che API Key')
       return
     }
 
@@ -266,15 +267,19 @@ export default function SettingsPage() {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ api_key: hostawayApiKey })
+        body: JSON.stringify({ 
+          account_id: hostawayAccountId,
+          api_key: hostawayApiKey 
+        })
       })
 
       if (!response.ok) {
         const error = await response.json()
-        throw new Error(error.detail || 'Errore nel salvare l\'API Key')
+        throw new Error(error.detail || 'Errore nel salvare le credenziali')
       }
 
       toast.success((t.settings as any).apiIntegration.apiKey.success)
+      setHostawayAccountId('')
       setHostawayApiKey('')
     } catch (e: any) {
       toast.error(e.message || (t.settings as any).apiIntegration.apiKey.error)
@@ -589,40 +594,76 @@ export default function SettingsPage() {
                 <Settings className="w-5 h-5 text-gray-600" />
               </div>
               
-              <p className="text-sm text-gray-600 mb-6">
+              <p className="text-sm text-gray-600 mb-4">
                 {(t.settings as any).apiIntegration?.description || 'Collega i tuoi appartamenti Hostaway ai chatbot di HostGPT per una gestione integrata.'}
               </p>
               
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                <div className="flex items-start gap-3">
+                  <ExternalLink className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <h4 className="font-medium text-blue-800 mb-1">Come ottenere la tua API Key Hostaway</h4>
+                    <p className="text-sm text-blue-700 mb-2">
+                      Per collegare il tuo account Hostaway, avrai bisogno dell'Account ID e dell'API Key.
+                    </p>
+                    <a 
+                      href="https://support.hostaway.com/hc/en-us/articles/360002576293-Hostaway-Public-API-Account-Secret-Key"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm text-blue-600 hover:text-blue-800 underline inline-flex items-center"
+                    >
+                      Segui questa guida per ottenere le tue credenziali
+                      <ExternalLink className="w-3 h-3 ml-1" />
+                    </a>
+                  </div>
+                </div>
+              </div>
+              
               <div className="space-y-4">
-                {/* Input API Key */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {(t.settings as any).apiIntegration?.apiKey?.label || 'API Key Hostaway'}
-                  </label>
-                  <div className="flex gap-3">
+                {/* Input credenziali Hostaway */}
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Account ID Hostaway
+                    </label>
+                    <input
+                      type="text"
+                      value={hostawayAccountId}
+                      onChange={(e) => setHostawayAccountId(e.target.value)}
+                      placeholder="Inserisci il tuo Account ID Hostaway..."
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      disabled={isSavingApiKey}
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      {(t.settings as any).apiIntegration?.apiKey?.label || 'API Key Hostaway'}
+                    </label>
                     <input
                       type="password"
                       value={hostawayApiKey}
                       onChange={(e) => setHostawayApiKey(e.target.value)}
                       placeholder={(t.settings as any).apiIntegration?.apiKey?.placeholder || 'Inserisci la tua API key Hostaway...'}
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       disabled={isSavingApiKey}
                     />
-                    <button
-                      onClick={handleSaveApiKey}
-                      disabled={isSavingApiKey || !hostawayApiKey.trim()}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center"
-                    >
-                      {isSavingApiKey ? (
-                        <>
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          {(t.settings as any).apiIntegration?.apiKey?.saving || 'Salvando...'}
-                        </>
-                      ) : (
-                        (t.settings as any).apiIntegration?.apiKey?.button || 'Conferma API Key'
-                      )}
-                    </button>
                   </div>
+                  
+                  <button
+                    onClick={handleSaveApiKey}
+                    disabled={isSavingApiKey || !hostawayAccountId.trim() || !hostawayApiKey.trim()}
+                    className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center"
+                  >
+                    {isSavingApiKey ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        {(t.settings as any).apiIntegration?.apiKey?.saving || 'Salvando...'}
+                      </>
+                    ) : (
+                      (t.settings as any).apiIntegration?.apiKey?.button || 'Conferma Credenziali'
+                    )}
+                  </button>
                 </div>
                 
                 {/* Pulsante per caricare appartamenti */}
@@ -962,7 +1003,7 @@ export default function SettingsPage() {
                                 <h4 className="font-medium text-gray-900">{apartment.name}</h4>
                                 {isMapped && (
                                   <span className="bg-green-100 text-green-800 text-xs font-medium px-2 py-1 rounded-full flex items-center">
-                                    <Link className="w-3 h-3 mr-1" />
+                                    <LinkIcon className="w-3 h-3 mr-1" />
                                     {(t.settings as any).apiIntegration?.apartments?.mapped || 'Collegato'}
                                   </span>
                                 )}

@@ -2259,10 +2259,10 @@ export const translations: Record<Language, Translations> = {
         apiKey: {
           label: "API Key Hostaway",
           placeholder: "Inserisci la tua API key Hostaway...",
-          button: "Conferma API Key",
+          button: "Conferma Credenziali",
           saving: "Salvando...",
-          success: "API Key salvata con successo!",
-          error: "Errore nel salvare l'API Key"
+          success: "Credenziali salvate con successo!",
+          error: "Errore nel salvare le credenziali"
         },
         apartments: {
           title: "Appartamenti Hostaway",
@@ -3526,10 +3526,10 @@ export const translations: Record<Language, Translations> = {
         apiKey: {
           label: "Hostaway API Key",
           placeholder: "Enter your Hostaway API key...",
-          button: "Confirm API Key",
+          button: "Confirm Credentials",
           saving: "Saving...",
-          success: "API Key saved successfully!",
-          error: "Error saving API Key"
+          success: "Credentials saved successfully!",
+          error: "Error saving credentials"
         },
         apartments: {
           title: "Hostaway Apartments",

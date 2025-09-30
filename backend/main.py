@@ -791,6 +791,7 @@ class ReferralCodeResponse(BaseModel):
 
 # Modelli per l'integrazione Hostaway
 class HostawayApiKeyRequest(BaseModel):
+    account_id: str
     api_key: str
 
 class HostawayApartment(BaseModel):
@@ -851,11 +852,42 @@ def decrypt_api_key(encrypted_key: str) -> str:
     return f.decrypt(encrypted_key.encode()).decode()
 
 # Funzioni per l'API Hostaway
-async def fetch_hostaway_apartments(api_key: str) -> List[dict]:
-    """Recupera gli appartamenti da Hostaway"""
+async def get_hostaway_access_token(account_id: str, api_key: str) -> str:
+    """Ottiene un access token da Hostaway usando Account ID e API Key"""
+    try:
+        url = "https://api.hostaway.com/v1/accessTokens"
+        
+        payload = {
+            "accountId": account_id,
+            "apiKey": api_key
+        }
+        
+        headers = {
+            'Content-Type': 'application/json'
+        }
+        
+        response = requests.post(url, json=payload, headers=headers)
+        response.raise_for_status()
+        
+        data = response.json()
+        
+        if 'result' in data and 'accessToken' in data['result']:
+            return data['result']['accessToken']
+        else:
+            raise Exception("Access token non trovato nella risposta")
+            
+    except requests.RequestException as e:
+        logger.error(f"Error getting Hostaway access token: {e}")
+        raise HTTPException(status_code=400, detail="Errore nell'autenticazione con Hostaway. Verifica Account ID e API Key.")
+    except Exception as e:
+        logger.error(f"Unexpected error getting access token: {e}")
+        raise HTTPException(status_code=500, detail="Errore interno del server")
+
+async def fetch_hostaway_apartments(access_token: str) -> List[dict]:
+    """Recupera gli appartamenti da Hostaway usando l'access token"""
     try:
         headers = {
-            'Authorization': f'Bearer {api_key}',
+            'Authorization': f'Bearer {access_token}',
             'Content-Type': 'application/json'
         }
         
@@ -885,6 +917,38 @@ async def fetch_hostaway_apartments(api_key: str) -> List[dict]:
     except Exception as e:
         logger.error(f"Unexpected error: {e}")
         raise HTTPException(status_code=500, detail="Errore interno del server")
+
+async def get_valid_hostaway_token(user_id: int, db: Session) -> str:
+    """Ottiene un token Hostaway valido, rinnovandolo se necessario"""
+    api_key_record = db.query(HostawayApiKey).filter(HostawayApiKey.user_id == user_id).first()
+    
+    if not api_key_record:
+        raise HTTPException(status_code=400, detail="Credenziali Hostaway non configurate")
+    
+    # Controlla se il token è ancora valido (con margine di 1 ora)
+    now = datetime.utcnow()
+    if (api_key_record.access_token and 
+        api_key_record.token_expires_at and 
+        api_key_record.token_expires_at > now + timedelta(hours=1)):
+        
+        # Token ancora valido, decrittalo e restituiscilo
+        return decrypt_api_key(api_key_record.access_token)
+    
+    # Token scaduto o non presente, ottienine uno nuovo
+    account_id = api_key_record.account_id
+    api_key = decrypt_api_key(api_key_record.api_key)
+    
+    new_access_token = await get_hostaway_access_token(account_id, api_key)
+    
+    # Salva il nuovo token (criptato) con scadenza di 23 mesi
+    encrypted_token = encrypt_api_key(new_access_token)
+    api_key_record.access_token = encrypted_token
+    api_key_record.token_expires_at = now + timedelta(days=23*30)  # ~23 mesi
+    api_key_record.updated_at = now
+    
+    db.commit()
+    
+    return new_access_token
 
 async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
     logger.info(f"🔍 BACKEND: get_current_user chiamato")
@@ -6771,23 +6835,35 @@ async def save_hostaway_api_key(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Salva l'API key di Hostaway per l'utente"""
+    """Salva le credenziali Hostaway per l'utente"""
     try:
-        # Cripta l'API key
-        encrypted_key = encrypt_api_key(request.api_key)
+        # Testa le credenziali ottenendo un access token
+        access_token = await get_hostaway_access_token(request.account_id, request.api_key)
         
-        # Verifica se l'utente ha già un'API key
+        # Cripta le credenziali
+        encrypted_api_key = encrypt_api_key(request.api_key)
+        encrypted_access_token = encrypt_api_key(access_token)
+        
+        # Verifica se l'utente ha già delle credenziali
         existing_key = db.query(HostawayApiKey).filter(HostawayApiKey.user_id == current_user.id).first()
         
+        now = datetime.utcnow()
+        
         if existing_key:
-            # Aggiorna l'API key esistente
-            existing_key.api_key = encrypted_key
-            existing_key.updated_at = datetime.utcnow()
+            # Aggiorna le credenziali esistenti
+            existing_key.account_id = request.account_id
+            existing_key.api_key = encrypted_api_key
+            existing_key.access_token = encrypted_access_token
+            existing_key.token_expires_at = now + timedelta(days=23*30)  # ~23 mesi
+            existing_key.updated_at = now
         else:
-            # Crea una nuova API key
+            # Crea nuove credenziali
             new_key = HostawayApiKey(
                 user_id=current_user.id,
-                api_key=encrypted_key
+                account_id=request.account_id,
+                api_key=encrypted_api_key,
+                access_token=encrypted_access_token,
+                token_expires_at=now + timedelta(days=23*30)  # ~23 mesi
             )
             db.add(new_key)
         
@@ -6795,13 +6871,15 @@ async def save_hostaway_api_key(
         
         return {
             "status": "success",
-            "message": "API Key salvata con successo"
+            "message": "Credenziali Hostaway salvate con successo"
         }
         
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error(f"Error saving Hostaway API key for user {current_user.id}: {e}")
+        logger.error(f"Error saving Hostaway credentials for user {current_user.id}: {e}")
         db.rollback()
-        raise HTTPException(status_code=500, detail="Errore nel salvare l'API Key")
+        raise HTTPException(status_code=500, detail="Errore nel salvare le credenziali")
 
 @app.get("/api/hostaway/apartments")
 async def get_hostaway_apartments(
@@ -6810,17 +6888,11 @@ async def get_hostaway_apartments(
 ):
     """Recupera gli appartamenti da Hostaway"""
     try:
-        # Recupera l'API key dell'utente
-        api_key_record = db.query(HostawayApiKey).filter(HostawayApiKey.user_id == current_user.id).first()
-        
-        if not api_key_record:
-            raise HTTPException(status_code=400, detail="API Key Hostaway non configurata")
-        
-        # Decripta l'API key
-        api_key = decrypt_api_key(api_key_record.api_key)
+        # Ottieni un token valido (rinnova automaticamente se necessario)
+        access_token = await get_valid_hostaway_token(current_user.id, db)
         
         # Recupera gli appartamenti da Hostaway
-        apartments = await fetch_hostaway_apartments(api_key)
+        apartments = await fetch_hostaway_apartments(access_token)
         
         # Recupera i mapping esistenti per questo utente
         existing_mappings = db.query(HostawayMapping).filter(HostawayMapping.user_id == current_user.id).all()
@@ -6855,14 +6927,9 @@ async def save_hostaway_mapping(
 ):
     """Salva il mapping tra appartamenti Hostaway e chatbot"""
     try:
-        # Recupera l'API key per ottenere i dettagli degli appartamenti
-        api_key_record = db.query(HostawayApiKey).filter(HostawayApiKey.user_id == current_user.id).first()
-        
-        if not api_key_record:
-            raise HTTPException(status_code=400, detail="API Key Hostaway non configurata")
-        
-        api_key = decrypt_api_key(api_key_record.api_key)
-        apartments = await fetch_hostaway_apartments(api_key)
+        # Ottieni un token valido per recuperare i dettagli degli appartamenti
+        access_token = await get_valid_hostaway_token(current_user.id, db)
+        apartments = await fetch_hostaway_apartments(access_token)
         apartment_dict = {apt['id']: apt for apt in apartments}
         
         # Processa ogni mapping
