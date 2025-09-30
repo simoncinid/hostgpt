@@ -919,32 +919,26 @@ async def fetch_hostaway_apartments(access_token: str) -> List[dict]:
         raise HTTPException(status_code=500, detail="Errore interno del server")
 
 async def get_valid_hostaway_token(user_id: int, db: Session) -> str:
-    """Ottiene un token Hostaway valido, rinnovandolo se necessario"""
-    api_key_record = db.query(HostawayApiKey).filter(HostawayApiKey.user_id == user_id).first()
+    """Ottiene un token Hostaway valido dalla tabella users"""
+    user = db.query(User).filter(User.id == user_id).first()
     
-    if not api_key_record:
+    if not user or not user.hostaway_account_id or not user.hostaway_api_key:
         raise HTTPException(status_code=400, detail="Credenziali Hostaway non configurate")
     
-    # Controlla se il token è ancora valido (con margine di 1 ora)
-    now = datetime.utcnow()
-    if (api_key_record.access_token and 
-        api_key_record.token_expires_at and 
-        api_key_record.token_expires_at > now + timedelta(hours=1)):
-        
-        # Token ancora valido, decrittalo e restituiscilo
-        return decrypt_api_key(api_key_record.access_token)
+    # Se abbiamo già un token, usalo (i token Hostaway durano 24 mesi)
+    if user.hostaway_access_token:
+        return decrypt_api_key(user.hostaway_access_token)
     
-    # Token scaduto o non presente, ottienine uno nuovo
-    account_id = api_key_record.account_id
-    api_key = decrypt_api_key(api_key_record.api_key)
+    # Altrimenti genera un nuovo token
+    account_id = user.hostaway_account_id
+    api_key = decrypt_api_key(user.hostaway_api_key)
     
     new_access_token = await get_hostaway_access_token(account_id, api_key)
     
-    # Salva il nuovo token (criptato) con scadenza di 23 mesi
+    # Salva il nuovo token (criptato) nella tabella users
     encrypted_token = encrypt_api_key(new_access_token)
-    api_key_record.access_token = encrypted_token
-    api_key_record.token_expires_at = now + timedelta(days=23*30)  # ~23 mesi
-    api_key_record.updated_at = now
+    user.hostaway_access_token = encrypted_token
+    user.updated_at = datetime.utcnow()
     
     db.commit()
     
@@ -6835,7 +6829,7 @@ async def save_hostaway_api_key(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Salva le credenziali Hostaway per l'utente"""
+    """Salva le credenziali Hostaway nella tabella users"""
     try:
         # Testa le credenziali ottenendo un access token
         access_token = await get_hostaway_access_token(request.account_id, request.api_key)
@@ -6844,28 +6838,11 @@ async def save_hostaway_api_key(
         encrypted_api_key = encrypt_api_key(request.api_key)
         encrypted_access_token = encrypt_api_key(access_token)
         
-        # Verifica se l'utente ha già delle credenziali
-        existing_key = db.query(HostawayApiKey).filter(HostawayApiKey.user_id == current_user.id).first()
-        
-        now = datetime.utcnow()
-        
-        if existing_key:
-            # Aggiorna le credenziali esistenti
-            existing_key.account_id = request.account_id
-            existing_key.api_key = encrypted_api_key
-            existing_key.access_token = encrypted_access_token
-            existing_key.token_expires_at = now + timedelta(days=23*30)  # ~23 mesi
-            existing_key.updated_at = now
-        else:
-            # Crea nuove credenziali
-            new_key = HostawayApiKey(
-                user_id=current_user.id,
-                account_id=request.account_id,
-                api_key=encrypted_api_key,
-                access_token=encrypted_access_token,
-                token_expires_at=now + timedelta(days=23*30)  # ~23 mesi
-            )
-            db.add(new_key)
+        # Salva direttamente nella tabella users
+        current_user.hostaway_account_id = request.account_id
+        current_user.hostaway_api_key = encrypted_api_key
+        current_user.hostaway_access_token = encrypted_access_token
+        current_user.updated_at = datetime.utcnow()
         
         db.commit()
         
@@ -7017,54 +6994,6 @@ async def get_hostaway_mappings(
     except Exception as e:
         logger.error(f"Error fetching Hostaway mappings for user {current_user.id}: {e}")
         raise HTTPException(status_code=500, detail="Errore nel recuperare i mapping")
-
-# ============= Hostaway Mock/Test Endpoints =============
-
-@app.post("/api/hostaway/test-credentials")
-async def test_hostaway_credentials():
-    """Endpoint di test per simulare credenziali Hostaway funzionanti"""
-    return {
-        "status": "success",
-        "message": "Credenziali di test salvate con successo",
-        "note": "Queste sono credenziali mock per testing"
-    }
-
-@app.get("/api/hostaway/test-apartments")
-async def get_test_apartments():
-    """Endpoint di test che restituisce appartamenti mock"""
-    mock_apartments = [
-        {
-            "id": "12345",
-            "name": "Appartamento Centro Storico",
-            "address": "Via Roma 123, Milano, Italia",
-            "is_mapped": False,
-            "chatbot_id": None
-        },
-        {
-            "id": "12346", 
-            "name": "Casa Vacanze Lago",
-            "address": "Via del Lago 45, Como, Italia",
-            "is_mapped": False,
-            "chatbot_id": None
-        },
-        {
-            "id": "12347",
-            "name": "Loft Moderno Brera",
-            "address": "Corso Garibaldi 78, Milano, Italia", 
-            "is_mapped": False,
-            "chatbot_id": None
-        }
-    ]
-    
-    return {
-        "status": "success",
-        "apartments": mock_apartments,
-        "chatbots": [
-            {"id": 1, "name": "Assistente Milano Centro"},
-            {"id": 2, "name": "Assistente Lago Como"},
-            {"id": 3, "name": "Assistente Brera"}
-        ]
-    }
 
 # ============= Property Analysis Endpoint =============
 

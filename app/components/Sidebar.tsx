@@ -112,7 +112,7 @@ export default function Sidebar({ currentPath, onLogout, isSidebarCollapsed: ext
             className={`flex items-center ${isSidebarCollapsed ? 'justify-center px-2 py-3' : 'px-6 py-3'} ${currentPath === '/dashboard/settings' ? 'bg-primary/10 text-primary border-r-3 border-primary' : 'text-gray-600 hover:bg-gray-50'}`}
           >
             <Settings className={`${isSidebarCollapsed ? 'w-6 h-6' : 'w-5 h-5'} ${!isSidebarCollapsed ? 'mr-3' : ''}`} />
-            {!isSidebarCollapsed && t.common.settings}
+            {!isSidebarCollapsed && 'Settings & API'}
           </Link>
         </nav>
 

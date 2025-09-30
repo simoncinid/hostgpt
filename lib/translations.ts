@@ -2255,7 +2255,7 @@ export const translations: Record<Language, Translations> = {
       // API Integration Section
       apiIntegration: {
         title: "Integrazione API",
-        description: "Collega i tuoi appartamenti Hostaway ai chatbot di HostGPT per una gestione integrata.",
+        description: "Collega i tuoi appartamenti Hostaway ai chatbot di OspiterAI per una gestione integrata.",
         apiKey: {
           label: "API Key Hostaway",
           placeholder: "Inserisci la tua API key Hostaway...",
@@ -3522,7 +3522,7 @@ export const translations: Record<Language, Translations> = {
       // API Integration Section
       apiIntegration: {
         title: "API Integration",
-        description: "Connect your Hostaway apartments to HostGPT chatbots for integrated management.",
+        description: "Connect your Hostaway apartments to OspiterAI chatbots for integrated management.",
         apiKey: {
           label: "Hostaway API Key",
           placeholder: "Enter your Hostaway API key...",

@@ -14,7 +14,7 @@ import Sidebar from '@/app/components/Sidebar'
 export default function SettingsPage() {
   const router = useRouter()
   const { user, setUser, logout } = useAuthStore()
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
   const [isLoading, setIsLoading] = useState(true)
   const [isCheckoutLoading, setIsCheckoutLoading] = useState(false)
   const [isCancellingSubscription, setIsCancellingSubscription] = useState(false)
@@ -289,10 +289,34 @@ export default function SettingsPage() {
   }
 
   const handleLoadApartments = async () => {
+    if (!hostawayAccountId.trim() || !hostawayApiKey.trim()) {
+      toast.error('Inserisci sia Account ID che API Key')
+      return
+    }
+
     setIsLoadingApartments(true)
     setShowApartmentsModal(true)
     
     try {
+      // Prima salva le credenziali
+      const saveResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/hostaway/save-api-key`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ 
+          account_id: hostawayAccountId,
+          api_key: hostawayApiKey 
+        })
+      })
+
+      if (!saveResponse.ok) {
+        const error = await saveResponse.json()
+        throw new Error(error.detail || 'Errore nel salvare le credenziali')
+      }
+
+      // Poi recupera gli appartamenti
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/hostaway/apartments`, {
         method: 'GET',
         headers: {
@@ -316,6 +340,10 @@ export default function SettingsPage() {
         mappings[apt.id] = apt.chatbot_id || null
       })
       setApartmentMappings(mappings)
+      
+      // Pulisci i campi dopo il successo
+      setHostawayAccountId('')
+      setHostawayApiKey('')
       
     } catch (e: any) {
       toast.error(e.message || 'Errore nel recuperare gli appartamenti')
@@ -382,43 +410,6 @@ export default function SettingsPage() {
     }
   }
 
-  const handleTestMode = async () => {
-    setIsLoadingApartments(true)
-    setShowApartmentsModal(true)
-    
-    try {
-      // Usa gli endpoint di test invece di quelli reali
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/hostaway/test-apartments`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      })
-
-      if (!response.ok) {
-        throw new Error('Errore nel recuperare i dati di test')
-      }
-
-      const data = await response.json()
-      setApartments(data.apartments || [])
-      setChatbots(data.chatbots || [])
-      
-      // Inizializza i mapping per i test
-      const mappings: {[key: string]: number | null} = {}
-      data.apartments.forEach((apt: any) => {
-        mappings[apt.id] = apt.chatbot_id || null
-      })
-      setApartmentMappings(mappings)
-      
-      toast.success('🧪 Modalità test attivata! Questi sono dati di esempio.')
-      
-    } catch (e: any) {
-      toast.error(e.message || 'Errore nel caricare i dati di test')
-      setShowApartmentsModal(false)
-    } finally {
-      setIsLoadingApartments(false)
-    }
-  }
 
   if (isLoading) {
     return (
@@ -633,27 +624,24 @@ export default function SettingsPage() {
               </div>
               
               <p className="text-sm text-gray-600 mb-4">
-                {(t.settings as any).apiIntegration?.description || 'Collega i tuoi appartamenti Hostaway ai chatbot di HostGPT per una gestione integrata.'}
+                {(t.settings as any).apiIntegration?.description || 'Collega i tuoi appartamenti Hostaway ai chatbot di OspiterAI per una gestione integrata.'}
               </p>
               
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-                <div className="flex items-start gap-3">
-                  <ExternalLink className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
-                  <div>
-                    <h4 className="font-medium text-blue-800 mb-1">Come ottenere la tua API Key Hostaway</h4>
-                    <p className="text-sm text-blue-700 mb-2">
-                      Per collegare il tuo account Hostaway, avrai bisogno dell'Account ID e dell'API Key.
-                    </p>
-                    <a 
-                      href="https://support.hostaway.com/hc/en-us/articles/360002576293-Hostaway-Public-API-Account-Secret-Key"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-sm text-blue-600 hover:text-blue-800 underline inline-flex items-center"
-                    >
-                      Segui questa guida per ottenere le tue credenziali
-                      <ExternalLink className="w-3 h-3 ml-1" />
-                    </a>
-                  </div>
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-6">
+                <div className="flex items-center gap-2">
+                  <ExternalLink className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                  <span className="text-sm text-blue-700">
+                    {String(language) === 'it' ? 'Hai bisogno di Account ID e API Key?' : 'Need Account ID and API Key?'}
+                  </span>
+                  <a 
+                    href="https://support.hostaway.com/hc/en-us/articles/360002576293-Hostaway-Public-API-Account-Secret-Key"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-blue-600 hover:text-blue-800 underline inline-flex items-center"
+                  >
+                    {String(language) === 'it' ? 'Guida Hostaway' : 'Hostaway Guide'}
+                    <ExternalLink className="w-3 h-3 ml-1" />
+                  </a>
                 </div>
               </div>
               
@@ -688,28 +676,14 @@ export default function SettingsPage() {
                     />
                   </div>
                   
-                  <button
-                    onClick={handleSaveApiKey}
-                    disabled={isSavingApiKey || !hostawayAccountId.trim() || !hostawayApiKey.trim()}
-                    className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center"
-                  >
-                    {isSavingApiKey ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        {(t.settings as any).apiIntegration?.apiKey?.saving || 'Salvando...'}
-                      </>
-                    ) : (
-                      (t.settings as any).apiIntegration?.apiKey?.button || 'Conferma Credenziali'
-                    )}
-                  </button>
                 </div>
                 
-                {/* Pulsanti per caricare appartamenti */}
-                <div className="border-t pt-4 space-y-3">
+                {/* Pulsante per caricare appartamenti */}
+                <div className="border-t pt-4">
                   <button
                     onClick={handleLoadApartments}
-                    disabled={isLoadingApartments}
-                    className="w-full bg-green-600 text-white px-4 py-3 rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center"
+                    disabled={isLoadingApartments || !hostawayAccountId.trim() || !hostawayApiKey.trim()}
+                    className="w-full bg-purple-600 text-white px-4 py-3 rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center"
                   >
                     {isLoadingApartments ? (
                       <>
@@ -722,16 +696,6 @@ export default function SettingsPage() {
                         {(t.settings as any).apiIntegration?.apartments?.title || 'Gestisci Appartamenti Hostaway'}
                       </>
                     )}
-                  </button>
-                  
-                  {/* Pulsante di test */}
-                  <button
-                    onClick={handleTestMode}
-                    disabled={isLoadingApartments}
-                    className="w-full bg-orange-500 text-white px-4 py-3 rounded-lg hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center"
-                  >
-                    <Settings className="w-5 h-5 mr-2" />
-                    🧪 Modalità Test (Dati Mock)
                   </button>
                 </div>
               </div>
@@ -1065,12 +1029,12 @@ export default function SettingsPage() {
                             <div className="border-t p-4 bg-gray-50">
                               <div className="space-y-3">
                                 <label className="block text-sm font-medium text-gray-700">
-                                  {(t.settings as any).apiIntegration?.apartments?.selectAssistant || 'Seleziona assistente'}
+                                  {(t.settings as any).apiIntegration?.apartments?.selectAssistant || (String(language) === 'it' ? 'Seleziona assistente' : 'Select assistant')}
                                 </label>
                                 
                                 {availableChatbots.length === 0 ? (
                                   <p className="text-sm text-gray-500">
-                                    {(t.settings as any).apiIntegration?.apartments?.noAvailableAssistants || 'Nessun assistente disponibile'}
+                                    {(t.settings as any).apiIntegration?.apartments?.noAvailableAssistants || (String(language) === 'it' ? 'Nessun assistente disponibile' : 'No available assistants')}
                                   </p>
                                 ) : (
                                   <select
@@ -1078,7 +1042,7 @@ export default function SettingsPage() {
                                     onChange={(e) => handleMappingChange(apartment.id, e.target.value ? parseInt(e.target.value) : null)}
                                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                   >
-                                    <option value="">-- Seleziona un assistente --</option>
+                                    <option value="">{String(language) === 'it' ? '-- Seleziona un assistente --' : '-- Select an assistant --'}</option>
                                     {availableChatbots.map((chatbot) => (
                                       <option key={chatbot.id} value={chatbot.id}>
                                         {chatbot.name}
@@ -1092,7 +1056,7 @@ export default function SettingsPage() {
                                     onClick={() => handleMappingChange(apartment.id, null)}
                                     className="text-sm text-red-600 hover:text-red-700"
                                   >
-                                    Rimuovi collegamento
+                                    {String(language) === 'it' ? 'Rimuovi collegamento' : 'Remove connection'}
                                   </button>
                                 )}
                               </div>
@@ -1109,12 +1073,12 @@ export default function SettingsPage() {
                       className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
                       disabled={isSavingMapping}
                     >
-                      Annulla
+                      {String(language) === 'it' ? 'Annulla' : 'Cancel'}
                     </button>
                     <button
                       onClick={handleSaveMapping}
                       disabled={isSavingMapping}
-                      className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center"
+                      className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center"
                     >
                       {isSavingMapping ? (
                         <>

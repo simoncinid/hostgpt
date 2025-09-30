@@ -62,6 +62,11 @@ class User(Base):
     # Chatbot limit management
     max_chatbots = Column(Integer, default=1)  # Default: 1 chatbot per utente
     
+    # Hostaway integration fields
+    hostaway_account_id = Column(String(255))  # Account ID Hostaway
+    hostaway_api_key = Column(String(500))  # API key Hostaway (criptata)
+    hostaway_access_token = Column(String(1000))  # Access token Hostaway (criptato)
+    
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, onupdate=func.now())
     
