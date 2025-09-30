@@ -1053,6 +1053,34 @@ export interface Translations {
     cancelSubscriptionMessage: string
     confirmCancellation: string
     cancelling: string
+    
+    // API Integration Section
+    apiIntegration: {
+      title: string
+      description: string
+      apiKey: {
+        label: string
+        placeholder: string
+        button: string
+        saving: string
+        success: string
+        error: string
+      }
+      apartments: {
+        title: string
+        loading: string
+        noApartments: string
+        clickToMap: string
+        selectAssistant: string
+        noAvailableAssistants: string
+        mapped: string
+        notMapped: string
+        save: string
+        saving: string
+        success: string
+        error: string
+      }
+    }
   }
   
   // Statistics Section
@@ -2222,7 +2250,35 @@ export const translations: Record<Language, Translations> = {
       cancelSubscriptionTitle: "Conferma Annullamento",
       cancelSubscriptionMessage: "Sei sicuro di voler annullare l'abbonamento? Il servizio verrà disattivato ma tutti i tuoi dati (chatbot, conversazioni, messaggi) rimarranno nel database.",
       confirmCancellation: "Conferma Annullamento",
-      cancelling: "Annullamento..."
+      cancelling: "Annullamento...",
+      
+      // API Integration Section
+      apiIntegration: {
+        title: "Integrazione API",
+        description: "Collega i tuoi appartamenti Hostaway ai chatbot di HostGPT per una gestione integrata.",
+        apiKey: {
+          label: "API Key Hostaway",
+          placeholder: "Inserisci la tua API key Hostaway...",
+          button: "Conferma API Key",
+          saving: "Salvando...",
+          success: "API Key salvata con successo!",
+          error: "Errore nel salvare l'API Key"
+        },
+        apartments: {
+          title: "Appartamenti Hostaway",
+          loading: "Caricamento appartamenti...",
+          noApartments: "Nessun appartamento trovato",
+          clickToMap: "Clicca su un appartamento per collegarlo a un assistente",
+          selectAssistant: "Seleziona assistente",
+          noAvailableAssistants: "Nessun assistente disponibile",
+          mapped: "Collegato",
+          notMapped: "Non collegato",
+          save: "Salva Mapping",
+          saving: "Salvando...",
+          success: "Mapping salvato con successo!",
+          error: "Errore nel salvare il mapping"
+        }
+      }
     },
     
     // Stampe (Print) translations
@@ -3461,7 +3517,35 @@ export const translations: Record<Language, Translations> = {
       cancelSubscriptionTitle: "Confirm Cancellation",
       cancelSubscriptionMessage: "Are you sure you want to cancel your subscription? The service will be deactivated but all your data (chatbots, conversations, messages) will remain in the database.",
       confirmCancellation: "Confirm Cancellation",
-      cancelling: "Cancelling..."
+      cancelling: "Cancelling...",
+      
+      // API Integration Section
+      apiIntegration: {
+        title: "API Integration",
+        description: "Connect your Hostaway apartments to HostGPT chatbots for integrated management.",
+        apiKey: {
+          label: "Hostaway API Key",
+          placeholder: "Enter your Hostaway API key...",
+          button: "Confirm API Key",
+          saving: "Saving...",
+          success: "API Key saved successfully!",
+          error: "Error saving API Key"
+        },
+        apartments: {
+          title: "Hostaway Apartments",
+          loading: "Loading apartments...",
+          noApartments: "No apartments found",
+          clickToMap: "Click on an apartment to link it to an assistant",
+          selectAssistant: "Select assistant",
+          noAvailableAssistants: "No available assistants",
+          mapped: "Linked",
+          notMapped: "Not linked",
+          save: "Save Mapping",
+          saving: "Saving...",
+          success: "Mapping saved successfully!",
+          error: "Error saving mapping"
+        }
+      }
     },
     
     // Stampe (Print) translations

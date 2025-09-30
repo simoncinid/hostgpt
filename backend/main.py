@@ -37,9 +37,11 @@ import PyPDF2
 import docx
 from odf import text as odf_text, teletype
 from odf.opendocument import load as odf_load
+import hashlib
+from cryptography.fernet import Fernet
 
 from database import get_db, engine
-from models import Base, User, Chatbot, Conversation, Message, KnowledgeBase, Analytics, GuardianAlert, GuardianAnalysis, ReferralCode, PrintOrder, PrintOrderItem, Guest, ChatbotGuest
+from models import Base, User, Chatbot, Conversation, Message, KnowledgeBase, Analytics, GuardianAlert, GuardianAnalysis, ReferralCode, PrintOrder, PrintOrderItem, Guest, ChatbotGuest, HostawayMapping, HostawayApiKey
 from config import settings
 from sms_service import sms_service
 from email_templates_simple import (
@@ -787,6 +789,18 @@ class ReferralCodeResponse(BaseModel):
     bonus_messages: int
     message: str
 
+# Modelli per l'integrazione Hostaway
+class HostawayApiKeyRequest(BaseModel):
+    api_key: str
+
+class HostawayApartment(BaseModel):
+    id: str
+    name: str
+    address: str
+
+class HostawayMappingRequest(BaseModel):
+    mappings: List[dict]  # Lista di {apartment_id: chatbot_id} o {apartment_id: None}
+
 # OTP System Models
 class ForgotPasswordRequest(BaseModel):
     phone: str
@@ -814,6 +828,63 @@ def create_access_token(data: dict):
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
     return encoded_jwt
+
+# Funzioni per la crittografia delle API key
+def get_encryption_key():
+    """Genera o recupera la chiave di crittografia"""
+    key = os.getenv("ENCRYPTION_KEY")
+    if not key:
+        # Genera una nuova chiave se non esiste
+        key = Fernet.generate_key().decode()
+        # In produzione, salva questa chiave in modo sicuro
+        print(f"Generated new encryption key: {key}")
+    return key.encode() if isinstance(key, str) else key
+
+def encrypt_api_key(api_key: str) -> str:
+    """Cripta l'API key"""
+    f = Fernet(get_encryption_key())
+    return f.encrypt(api_key.encode()).decode()
+
+def decrypt_api_key(encrypted_key: str) -> str:
+    """Decripta l'API key"""
+    f = Fernet(get_encryption_key())
+    return f.decrypt(encrypted_key.encode()).decode()
+
+# Funzioni per l'API Hostaway
+async def fetch_hostaway_apartments(api_key: str) -> List[dict]:
+    """Recupera gli appartamenti da Hostaway"""
+    try:
+        headers = {
+            'Authorization': f'Bearer {api_key}',
+            'Content-Type': 'application/json'
+        }
+        
+        # URL dell'API Hostaway per recuperare le proprietà
+        url = "https://api.hostaway.com/v1/listings"
+        
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()
+        
+        data = response.json()
+        apartments = []
+        
+        # Estrai le informazioni degli appartamenti
+        if 'result' in data:
+            for listing in data['result']:
+                apartments.append({
+                    'id': str(listing.get('id', '')),
+                    'name': listing.get('name', ''),
+                    'address': listing.get('address', {}).get('full', '')
+                })
+        
+        return apartments
+        
+    except requests.RequestException as e:
+        logger.error(f"Error fetching Hostaway apartments: {e}")
+        raise HTTPException(status_code=400, detail="Errore nel recuperare gli appartamenti da Hostaway")
+    except Exception as e:
+        logger.error(f"Unexpected error: {e}")
+        raise HTTPException(status_code=500, detail="Errore interno del server")
 
 async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
     logger.info(f"🔍 BACKEND: get_current_user chiamato")
@@ -6691,6 +6762,194 @@ async def delete_profile(
         logger.error(f"Error deleting profile for user {current_user.id}: {e}")
         db.rollback()
         raise HTTPException(status_code=500, detail="Errore nell'eliminazione del profilo")
+
+# ============= Hostaway Integration Endpoints =============
+
+@app.post("/api/hostaway/save-api-key")
+async def save_hostaway_api_key(
+    request: HostawayApiKeyRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Salva l'API key di Hostaway per l'utente"""
+    try:
+        # Cripta l'API key
+        encrypted_key = encrypt_api_key(request.api_key)
+        
+        # Verifica se l'utente ha già un'API key
+        existing_key = db.query(HostawayApiKey).filter(HostawayApiKey.user_id == current_user.id).first()
+        
+        if existing_key:
+            # Aggiorna l'API key esistente
+            existing_key.api_key = encrypted_key
+            existing_key.updated_at = datetime.utcnow()
+        else:
+            # Crea una nuova API key
+            new_key = HostawayApiKey(
+                user_id=current_user.id,
+                api_key=encrypted_key
+            )
+            db.add(new_key)
+        
+        db.commit()
+        
+        return {
+            "status": "success",
+            "message": "API Key salvata con successo"
+        }
+        
+    except Exception as e:
+        logger.error(f"Error saving Hostaway API key for user {current_user.id}: {e}")
+        db.rollback()
+        raise HTTPException(status_code=500, detail="Errore nel salvare l'API Key")
+
+@app.get("/api/hostaway/apartments")
+async def get_hostaway_apartments(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Recupera gli appartamenti da Hostaway"""
+    try:
+        # Recupera l'API key dell'utente
+        api_key_record = db.query(HostawayApiKey).filter(HostawayApiKey.user_id == current_user.id).first()
+        
+        if not api_key_record:
+            raise HTTPException(status_code=400, detail="API Key Hostaway non configurata")
+        
+        # Decripta l'API key
+        api_key = decrypt_api_key(api_key_record.api_key)
+        
+        # Recupera gli appartamenti da Hostaway
+        apartments = await fetch_hostaway_apartments(api_key)
+        
+        # Recupera i mapping esistenti per questo utente
+        existing_mappings = db.query(HostawayMapping).filter(HostawayMapping.user_id == current_user.id).all()
+        mapping_dict = {mapping.hostaway_apartment_id: mapping for mapping in existing_mappings}
+        
+        # Recupera i chatbot dell'utente
+        user_chatbots = db.query(Chatbot).filter(Chatbot.user_id == current_user.id).all()
+        
+        # Aggiungi informazioni sui mapping agli appartamenti
+        for apartment in apartments:
+            mapping = mapping_dict.get(apartment['id'])
+            apartment['is_mapped'] = mapping.is_mapped if mapping else False
+            apartment['chatbot_id'] = mapping.chatbot_id if mapping and mapping.is_mapped else None
+        
+        return {
+            "status": "success",
+            "apartments": apartments,
+            "chatbots": [{"id": cb.id, "name": cb.name} for cb in user_chatbots]
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error fetching Hostaway apartments for user {current_user.id}: {e}")
+        raise HTTPException(status_code=500, detail="Errore nel recuperare gli appartamenti")
+
+@app.post("/api/hostaway/save-mapping")
+async def save_hostaway_mapping(
+    request: HostawayMappingRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Salva il mapping tra appartamenti Hostaway e chatbot"""
+    try:
+        # Recupera l'API key per ottenere i dettagli degli appartamenti
+        api_key_record = db.query(HostawayApiKey).filter(HostawayApiKey.user_id == current_user.id).first()
+        
+        if not api_key_record:
+            raise HTTPException(status_code=400, detail="API Key Hostaway non configurata")
+        
+        api_key = decrypt_api_key(api_key_record.api_key)
+        apartments = await fetch_hostaway_apartments(api_key)
+        apartment_dict = {apt['id']: apt for apt in apartments}
+        
+        # Processa ogni mapping
+        for mapping_data in request.mappings:
+            apartment_id = mapping_data.get('apartment_id')
+            chatbot_id = mapping_data.get('chatbot_id')
+            
+            if not apartment_id:
+                continue
+                
+            apartment_info = apartment_dict.get(apartment_id)
+            if not apartment_info:
+                continue
+            
+            # Verifica se esiste già un mapping per questo appartamento
+            existing_mapping = db.query(HostawayMapping).filter(
+                HostawayMapping.user_id == current_user.id,
+                HostawayMapping.hostaway_apartment_id == apartment_id
+            ).first()
+            
+            if existing_mapping:
+                # Aggiorna il mapping esistente
+                existing_mapping.chatbot_id = chatbot_id
+                existing_mapping.is_mapped = chatbot_id is not None
+                existing_mapping.updated_at = datetime.utcnow()
+            else:
+                # Crea un nuovo mapping
+                new_mapping = HostawayMapping(
+                    user_id=current_user.id,
+                    chatbot_id=chatbot_id,
+                    hostaway_apartment_id=apartment_id,
+                    hostaway_apartment_name=apartment_info['name'],
+                    hostaway_apartment_address=apartment_info['address'],
+                    is_mapped=chatbot_id is not None
+                )
+                db.add(new_mapping)
+        
+        db.commit()
+        
+        return {
+            "status": "success",
+            "message": "Mapping salvato con successo"
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error saving Hostaway mapping for user {current_user.id}: {e}")
+        db.rollback()
+        raise HTTPException(status_code=500, detail="Errore nel salvare il mapping")
+
+@app.get("/api/hostaway/mappings")
+async def get_hostaway_mappings(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Recupera tutti i mapping Hostaway dell'utente"""
+    try:
+        mappings = db.query(HostawayMapping).filter(HostawayMapping.user_id == current_user.id).all()
+        
+        result = []
+        for mapping in mappings:
+            chatbot_name = None
+            if mapping.chatbot_id:
+                chatbot = db.query(Chatbot).filter(Chatbot.id == mapping.chatbot_id).first()
+                chatbot_name = chatbot.name if chatbot else None
+            
+            result.append({
+                "id": mapping.id,
+                "apartment_id": mapping.hostaway_apartment_id,
+                "apartment_name": mapping.hostaway_apartment_name,
+                "apartment_address": mapping.hostaway_apartment_address,
+                "chatbot_id": mapping.chatbot_id,
+                "chatbot_name": chatbot_name,
+                "is_mapped": mapping.is_mapped,
+                "created_at": mapping.created_at.isoformat() if mapping.created_at else None,
+                "updated_at": mapping.updated_at.isoformat() if mapping.updated_at else None
+            })
+        
+        return {
+            "status": "success",
+            "mappings": result
+        }
+        
+    except Exception as e:
+        logger.error(f"Error fetching Hostaway mappings for user {current_user.id}: {e}")
+        raise HTTPException(status_code=500, detail="Errore nel recuperare i mapping")
 
 # ============= Property Analysis Endpoint =============
 

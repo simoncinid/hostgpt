@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { ArrowLeft, CreditCard, Mail, User, Loader2, LogOut, AlertTriangle, ChevronDown, Check } from 'lucide-react'
+import { ArrowLeft, CreditCard, Mail, User, Loader2, LogOut, AlertTriangle, ChevronDown, Check, Link, Settings, ExternalLink } from 'lucide-react'
 import { auth, subscription } from '@/lib/api'
 import { useAuthStore } from '@/lib/store'
 import { useLanguage } from '@/lib/languageContext'
@@ -26,6 +26,17 @@ export default function SettingsPage() {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false)
   const [selectedPlan, setSelectedPlan] = useState('')
   const [isUpgrading, setIsUpgrading] = useState(false)
+  
+  // Stati per l'integrazione API Hostaway
+  const [hostawayApiKey, setHostawayApiKey] = useState('')
+  const [isSavingApiKey, setIsSavingApiKey] = useState(false)
+  const [showApartmentsModal, setShowApartmentsModal] = useState(false)
+  const [apartments, setApartments] = useState<any[]>([])
+  const [chatbots, setChatbots] = useState<any[]>([])
+  const [isLoadingApartments, setIsLoadingApartments] = useState(false)
+  const [apartmentMappings, setApartmentMappings] = useState<{[key: string]: number | null}>({})
+  const [expandedApartments, setExpandedApartments] = useState<Set<string>>(new Set())
+  const [isSavingMapping, setIsSavingMapping] = useState(false)
 
   useEffect(() => {
     const load = async () => {
@@ -240,6 +251,132 @@ export default function SettingsPage() {
     }
   }
 
+  // Funzioni per l'integrazione Hostaway
+  const handleSaveApiKey = async () => {
+    if (!hostawayApiKey.trim()) {
+      toast.error('Inserisci una API Key valida')
+      return
+    }
+
+    setIsSavingApiKey(true)
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/hostaway/save-api-key`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ api_key: hostawayApiKey })
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.detail || 'Errore nel salvare l\'API Key')
+      }
+
+      toast.success((t.settings as any).apiIntegration.apiKey.success)
+      setHostawayApiKey('')
+    } catch (e: any) {
+      toast.error(e.message || (t.settings as any).apiIntegration.apiKey.error)
+    } finally {
+      setIsSavingApiKey(false)
+    }
+  }
+
+  const handleLoadApartments = async () => {
+    setIsLoadingApartments(true)
+    setShowApartmentsModal(true)
+    
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/hostaway/apartments`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        }
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.detail || 'Errore nel recuperare gli appartamenti')
+      }
+
+      const data = await response.json()
+      setApartments(data.apartments || [])
+      setChatbots(data.chatbots || [])
+      
+      // Inizializza i mapping esistenti
+      const mappings: {[key: string]: number | null} = {}
+      data.apartments.forEach((apt: any) => {
+        mappings[apt.id] = apt.chatbot_id || null
+      })
+      setApartmentMappings(mappings)
+      
+    } catch (e: any) {
+      toast.error(e.message || 'Errore nel recuperare gli appartamenti')
+      setShowApartmentsModal(false)
+    } finally {
+      setIsLoadingApartments(false)
+    }
+  }
+
+  const handleToggleApartment = (apartmentId: string) => {
+    const newExpanded = new Set(expandedApartments)
+    if (newExpanded.has(apartmentId)) {
+      newExpanded.delete(apartmentId)
+    } else {
+      newExpanded.add(apartmentId)
+    }
+    setExpandedApartments(newExpanded)
+  }
+
+  const handleMappingChange = (apartmentId: string, chatbotId: number | null) => {
+    setApartmentMappings(prev => ({
+      ...prev,
+      [apartmentId]: chatbotId
+    }))
+  }
+
+  const getAvailableChatbots = (currentApartmentId: string) => {
+    // Filtra i chatbot che non sono già mappati ad altri appartamenti
+    const usedChatbotIds = Object.entries(apartmentMappings)
+      .filter(([aptId, chatbotId]) => aptId !== currentApartmentId && chatbotId !== null)
+      .map(([, chatbotId]) => chatbotId)
+    
+    return chatbots.filter(cb => !usedChatbotIds.includes(cb.id))
+  }
+
+  const handleSaveMapping = async () => {
+    setIsSavingMapping(true)
+    try {
+      const mappings = Object.entries(apartmentMappings).map(([apartmentId, chatbotId]) => ({
+        apartment_id: apartmentId,
+        chatbot_id: chatbotId
+      }))
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/hostaway/save-mapping`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ mappings })
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.detail || 'Errore nel salvare il mapping')
+      }
+
+      toast.success((t.settings as any).apiIntegration.apartments.success)
+      setShowApartmentsModal(false)
+    } catch (e: any) {
+      toast.error(e.message || (t.settings as any).apiIntegration.apartments.error)
+    } finally {
+      setIsSavingMapping(false)
+    }
+  }
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center text-gray-600">
@@ -442,6 +579,72 @@ export default function SettingsPage() {
                 >
                   Cambia Piano
                 </button>
+              </div>
+            </div>
+
+            {/* Sezione Integrazione API */}
+            <div className="bg-white rounded-2xl shadow p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold">{(t.settings as any).apiIntegration?.title || 'Integrazione API'}</h2>
+                <Settings className="w-5 h-5 text-gray-600" />
+              </div>
+              
+              <p className="text-sm text-gray-600 mb-6">
+                {(t.settings as any).apiIntegration?.description || 'Collega i tuoi appartamenti Hostaway ai chatbot di HostGPT per una gestione integrata.'}
+              </p>
+              
+              <div className="space-y-4">
+                {/* Input API Key */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    {(t.settings as any).apiIntegration?.apiKey?.label || 'API Key Hostaway'}
+                  </label>
+                  <div className="flex gap-3">
+                    <input
+                      type="password"
+                      value={hostawayApiKey}
+                      onChange={(e) => setHostawayApiKey(e.target.value)}
+                      placeholder={(t.settings as any).apiIntegration?.apiKey?.placeholder || 'Inserisci la tua API key Hostaway...'}
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      disabled={isSavingApiKey}
+                    />
+                    <button
+                      onClick={handleSaveApiKey}
+                      disabled={isSavingApiKey || !hostawayApiKey.trim()}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center"
+                    >
+                      {isSavingApiKey ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          {(t.settings as any).apiIntegration?.apiKey?.saving || 'Salvando...'}
+                        </>
+                      ) : (
+                        (t.settings as any).apiIntegration?.apiKey?.button || 'Conferma API Key'
+                      )}
+                    </button>
+                  </div>
+                </div>
+                
+                {/* Pulsante per caricare appartamenti */}
+                <div className="border-t pt-4">
+                  <button
+                    onClick={handleLoadApartments}
+                    disabled={isLoadingApartments}
+                    className="w-full bg-green-600 text-white px-4 py-3 rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center"
+                  >
+                    {isLoadingApartments ? (
+                      <>
+                        <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                        {(t.settings as any).apiIntegration?.apartments?.loading || 'Caricamento appartamenti...'}
+                      </>
+                    ) : (
+                      <>
+                        <ExternalLink className="w-5 h-5 mr-2" />
+                        {(t.settings as any).apiIntegration?.apartments?.title || 'Gestisci Appartamenti Hostaway'}
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -696,6 +899,146 @@ export default function SettingsPage() {
                   )}
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Appartamenti Hostaway */}
+      {showApartmentsModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-semibold text-gray-900">
+                  {(t.settings as any).apiIntegration?.apartments?.title || 'Appartamenti Hostaway'}
+                </h3>
+                <button
+                  onClick={() => setShowApartmentsModal(false)}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {isLoadingApartments ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+                  <span className="ml-3 text-gray-600">
+                    {(t.settings as any).apiIntegration?.apartments?.loading || 'Caricamento appartamenti...'}
+                  </span>
+                </div>
+              ) : apartments.length === 0 ? (
+                <div className="text-center py-12">
+                  <p className="text-gray-600">
+                    {(t.settings as any).apiIntegration?.apartments?.noApartments || 'Nessun appartamento trovato'}
+                  </p>
+                </div>
+              ) : (
+                <>
+                  <p className="text-sm text-gray-600 mb-6">
+                    {(t.settings as any).apiIntegration?.apartments?.clickToMap || 'Clicca su un appartamento per collegarlo a un assistente'}
+                  </p>
+
+                  <div className="space-y-3">
+                    {apartments.map((apartment) => {
+                      const isExpanded = expandedApartments.has(apartment.id)
+                      const isMapped = apartmentMappings[apartment.id] !== null
+                      const availableChatbots = getAvailableChatbots(apartment.id)
+                      
+                      return (
+                        <div
+                          key={apartment.id}
+                          className={`border rounded-lg transition-all ${
+                            isMapped ? 'border-green-300 bg-green-50' : 'border-gray-200 hover:border-gray-300'
+                          }`}
+                        >
+                          <div
+                            className="p-4 cursor-pointer flex items-center justify-between"
+                            onClick={() => handleToggleApartment(apartment.id)}
+                          >
+                            <div className="flex-1">
+                              <div className="flex items-center gap-3">
+                                <h4 className="font-medium text-gray-900">{apartment.name}</h4>
+                                {isMapped && (
+                                  <span className="bg-green-100 text-green-800 text-xs font-medium px-2 py-1 rounded-full flex items-center">
+                                    <Link className="w-3 h-3 mr-1" />
+                                    {(t.settings as any).apiIntegration?.apartments?.mapped || 'Collegato'}
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-sm text-gray-600 mt-1">{apartment.address}</p>
+                            </div>
+                            <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                          </div>
+                          
+                          {isExpanded && (
+                            <div className="border-t p-4 bg-gray-50">
+                              <div className="space-y-3">
+                                <label className="block text-sm font-medium text-gray-700">
+                                  {(t.settings as any).apiIntegration?.apartments?.selectAssistant || 'Seleziona assistente'}
+                                </label>
+                                
+                                {availableChatbots.length === 0 ? (
+                                  <p className="text-sm text-gray-500">
+                                    {(t.settings as any).apiIntegration?.apartments?.noAvailableAssistants || 'Nessun assistente disponibile'}
+                                  </p>
+                                ) : (
+                                  <select
+                                    value={apartmentMappings[apartment.id] || ''}
+                                    onChange={(e) => handleMappingChange(apartment.id, e.target.value ? parseInt(e.target.value) : null)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                  >
+                                    <option value="">-- Seleziona un assistente --</option>
+                                    {availableChatbots.map((chatbot) => (
+                                      <option key={chatbot.id} value={chatbot.id}>
+                                        {chatbot.name}
+                                      </option>
+                                    ))}
+                                  </select>
+                                )}
+                                
+                                {apartmentMappings[apartment.id] && (
+                                  <button
+                                    onClick={() => handleMappingChange(apartment.id, null)}
+                                    className="text-sm text-red-600 hover:text-red-700"
+                                  >
+                                    Rimuovi collegamento
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+
+                  <div className="mt-6 flex gap-3 justify-end">
+                    <button
+                      onClick={() => setShowApartmentsModal(false)}
+                      className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                      disabled={isSavingMapping}
+                    >
+                      Annulla
+                    </button>
+                    <button
+                      onClick={handleSaveMapping}
+                      disabled={isSavingMapping}
+                      className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center"
+                    >
+                      {isSavingMapping ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          {(t.settings as any).apiIntegration?.apartments?.saving || 'Salvando...'}
+                        </>
+                      ) : (
+                        (t.settings as any).apiIntegration?.apartments?.save || 'Salva Mapping'
+                      )}
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>

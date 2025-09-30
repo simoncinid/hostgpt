@@ -409,3 +409,38 @@ class PrintOrderItem(Base):
     
     # Relationships
     order = relationship("PrintOrder", back_populates="items")
+
+# Tabella per il mapping tra chatbot e apartment Hostaway
+class HostawayMapping(Base):
+    __tablename__ = "hostaway_mappings"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    chatbot_id = Column(Integer, ForeignKey("chatbots.id"), nullable=True)  # Nullable per apartment non mappati
+    hostaway_apartment_id = Column(String(255), nullable=False)  # ID apartment da Hostaway
+    hostaway_apartment_name = Column(String(500), nullable=False)  # Nome apartment da Hostaway
+    hostaway_apartment_address = Column(String(1000))  # Indirizzo apartment da Hostaway
+    
+    # Stato del mapping
+    is_mapped = Column(Boolean, default=False)  # True se mappato con un chatbot
+    
+    created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, onupdate=func.now())
+    
+    # Relationships
+    user = relationship("User")
+    chatbot = relationship("Chatbot")
+
+# Tabella per memorizzare le API key Hostaway degli utenti
+class HostawayApiKey(Base):
+    __tablename__ = "hostaway_api_keys"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, unique=True)
+    api_key = Column(String(500), nullable=False)  # API key criptata
+    
+    created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, onupdate=func.now())
+    
+    # Relationships
+    user = relationship("User")
