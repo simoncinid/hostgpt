@@ -213,6 +213,18 @@ export default function SettingsPage() {
 
       const res = await subscription.createCheckout(priceId, 'monthly')
       
+      // Controlla se è un upgrade di abbonamento esistente
+      if (res.data.status === 'upgraded') {
+        toast.success(
+          `Abbonamento aggiornato con successo! Nuovo limite: ${res.data.new_limit} conversazioni/mese`,
+          { duration: 5000 }
+        )
+        // Ricarica i dati utente per aggiornare lo stato
+        const me = await auth.me()
+        setUser(me.data)
+        return
+      }
+      
       if (res.data.client_secret) {
         router.push('/checkout')
       } else if (res.data.checkout_url) {

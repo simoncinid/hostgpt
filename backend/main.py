@@ -1924,13 +1924,20 @@ async def reset_password(request: ResetPasswordRequest, db: Session = Depends(ge
 @app.get("/api/auth/me")
 async def get_me(current_user: User = Depends(get_current_user)):
     """Ottieni informazioni utente corrente"""
-    # Controlla se deve essere resettato il conteggio mensile
+    db = next(get_db())
+    
+    # Controlla se deve essere resettato il conteggio mensile dei messaggi
     if current_user.messages_reset_date:
         if datetime.utcnow() > current_user.messages_reset_date + timedelta(days=30):
             current_user.messages_used = 0
             current_user.messages_reset_date = datetime.utcnow()
-            # Salva nel DB
-            db = next(get_db())
+            db.commit()
+    
+    # Controlla se deve essere resettato il conteggio mensile delle conversazioni
+    if current_user.conversations_reset_date:
+        if datetime.utcnow() > current_user.conversations_reset_date + timedelta(days=30):
+            current_user.conversations_used = 0
+            current_user.conversations_reset_date = datetime.utcnow()
             db.commit()
     
     # Calcola messaggi rimanenti in base al tipo di abbonamento
@@ -1938,10 +1945,14 @@ async def get_me(current_user: User = Depends(get_current_user)):
         messages_remaining = get_free_trial_messages_remaining(current_user)
         messages_limit = current_user.free_trial_messages_limit
         messages_used = current_user.free_trial_messages_used
+        conversations_limit = current_user.free_trial_conversations_limit
+        conversations_used = current_user.free_trial_conversations_used
     else:
         messages_remaining = current_user.messages_limit - current_user.messages_used
         messages_limit = current_user.messages_limit
         messages_used = current_user.messages_used
+        conversations_limit = current_user.conversations_limit
+        conversations_used = current_user.conversations_used
     
     return {
         "id": current_user.id,
@@ -1953,6 +1964,8 @@ async def get_me(current_user: User = Depends(get_current_user)):
         "messages_limit": messages_limit,
         "messages_used": messages_used,
         "messages_remaining": messages_remaining,
+        "conversations_limit": conversations_limit,
+        "conversations_used": conversations_used,
         "is_verified": current_user.is_verified,
         "guardian_subscription_status": current_user.guardian_subscription_status,
         "guardian_subscription_end_date": current_user.guardian_subscription_end_date,
@@ -1961,6 +1974,8 @@ async def get_me(current_user: User = Depends(get_current_user)):
         "free_trial_end_date": current_user.free_trial_end_date.isoformat() if current_user.free_trial_end_date else None,
         "free_trial_messages_limit": current_user.free_trial_messages_limit,
         "free_trial_messages_used": current_user.free_trial_messages_used,
+        "free_trial_conversations_limit": current_user.free_trial_conversations_limit,
+        "free_trial_conversations_used": current_user.free_trial_conversations_used,
         "free_trial_converted": current_user.free_trial_converted,
         "is_free_trial_active": is_free_trial_active(current_user),
         # Referral code info
@@ -2430,10 +2445,59 @@ async def create_checkout_session(
             logger.error(f"User {current_user.id} is not verified")
             raise HTTPException(status_code=400, detail="Devi verificare la tua email prima di sottoscrivere un abbonamento")
         
-        # Se ha già un abbonamento attivo (non in fase di cancellazione), non permettere un nuovo checkout
+        # Se ha già un abbonamento attivo, gestisci l'upgrade invece di creare un nuovo checkout
         if current_user.subscription_status == 'active':
-            logger.error(f"User {current_user.id} already has active subscription")
-            raise HTTPException(status_code=400, detail="Hai già un abbonamento attivo")
+            logger.info(f"User {current_user.id} has active subscription, handling upgrade")
+            
+            # Verifica che abbia un subscription_id valido
+            if not current_user.stripe_subscription_id:
+                logger.error(f"User {current_user.id} has active status but no subscription_id")
+                raise HTTPException(status_code=400, detail="Errore: abbonamento non valido")
+            
+            # Recupera la sottoscrizione da Stripe
+            try:
+                subscription = stripe.Subscription.retrieve(current_user.stripe_subscription_id)
+                logger.info(f"Retrieved subscription {subscription.id} for user {current_user.id}")
+            except Exception as e:
+                logger.error(f"Error retrieving subscription {current_user.stripe_subscription_id}: {e}")
+                raise HTTPException(status_code=400, detail="Errore nel recupero dell'abbonamento")
+            
+            # Aggiorna la sottoscrizione con il nuovo price_id
+            try:
+                # Recupera l'item della sottoscrizione
+                subscription_item = subscription['items']['data'][0]
+                
+                # Aggiorna la sottoscrizione con il nuovo price
+                updated_subscription = stripe.Subscription.modify(
+                    current_user.stripe_subscription_id,
+                    items=[{
+                        'id': subscription_item.id,
+                        'price': price_id_to_use,
+                    }],
+                    proration_behavior='create_prorations'
+                )
+                
+                logger.info(f"Successfully updated subscription {current_user.stripe_subscription_id} to price {price_id_to_use}")
+                
+                # Aggiorna i limiti nel database
+                new_limit = get_conversations_limit_by_price_id(price_id_to_use)
+                old_limit = current_user.conversations_limit
+                current_user.conversations_limit = new_limit
+                current_user.max_chatbots = 100
+                db.commit()
+                
+                logger.info(f"Updated user {current_user.id} limits: {old_limit} -> {new_limit} conversations")
+                
+                return {
+                    "status": "upgraded",
+                    "message": "Abbonamento aggiornato con successo",
+                    "new_limit": new_limit,
+                    "old_limit": old_limit
+                }
+                
+            except Exception as e:
+                logger.error(f"Error updating subscription: {e}")
+                raise HTTPException(status_code=400, detail=f"Errore nell'aggiornamento dell'abbonamento: {str(e)}")
         
         # Se è in free trial, marca come convertito
         if current_user.subscription_status == 'free_trial':
