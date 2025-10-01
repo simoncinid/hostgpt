@@ -1195,9 +1195,6 @@ export default function ChatWidgetPage() {
               <h2 className={`text-2xl font-bold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'} transition-colors duration-300`}>
                 {language === 'IT' ? `Benvenuto da ${chatInfo?.property_name || 'questa struttura'}` : `Welcome from ${chatInfo?.property_name || 'this property'}`}
               </h2>
-              <p className={`mb-4 max-w-2xl mx-auto transition-colors duration-300 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                {currentTexts.welcomeSubtitle}
-              </p>
               <p className={`mb-6 max-w-2xl mx-auto text-sm transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                 {language === 'IT' 
                   ? 'Inserisci i tuoi dati di contatto per accedere alla chat e mantenere sempre salvata la conversazione.' 
@@ -1259,7 +1256,7 @@ export default function ChatWidgetPage() {
 
               <button
                 onClick={handleStartChat}
-                className="px-6 py-3 bg-gradient-to-r from-primary to-secondary text-white rounded-2xl font-semibold hover:from-secondary hover:to-accent transition-all duration-200"
+                className="px-6 py-3 bg-purple-600 text-white rounded-2xl font-semibold hover:bg-purple-700 transition-all duration-200"
               >
                 {currentTexts.startChat}
               </button>
