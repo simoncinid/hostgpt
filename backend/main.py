@@ -20,6 +20,7 @@ from reportlab.lib.pagesizes import letter, A4
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
+from reportlab.lib import colors
 from reportlab.pdfgen import canvas
 from pydantic import BaseModel, EmailStr
 import aiosmtplib
