@@ -4432,6 +4432,63 @@ async def get_chat_info(uuid: str, db: Session = Depends(get_db)):
         "reviews_link": chatbot.reviews_link
     }
 
+def improve_text_with_openai(text: str, context: str = "") -> str:
+    """Migliora un testo usando OpenAI"""
+    try:
+        if not text or text.strip() == "":
+            return "Nessuna informazione disponibile"
+        
+        # Se il testo contiene oggetti JSON vuoti o malformati, restituisci messaggio di default
+        if any(pattern in text for pattern in ["{'name': '',", "{'name': '',", "• {'", "• {"]):
+            return "Nessuna informazione disponibile"
+        
+        # Usa un modello leggero e poco costoso
+        client = get_openai_client()
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",  # Modello leggero e poco costoso
+            messages=[
+                {
+                    "role": "system", 
+                    "content": f"""Sei un assistente che traduce e migliora testi per documenti di proprietà. 
+                    IMPORTANTE: Rispondi SOLO con il testo tradotto e migliorato, senza spiegazioni o prefissi.
+                    
+                    Regole:
+                    - Traduci in italiano
+                    - Rendi il testo più discorsivo e naturale
+                    - Evita formati JSON o liste tecniche
+                    - Scrivi in modo elegante e professionale
+                    - Se il testo è vuoto, rispondi SOLO con "Nessuna informazione disponibile"
+                    - NON aggiungere prefissi come "Traduzione:" o "Rendendo il testo più discorsivo:"
+                    - Rispondi SOLO con il risultato finale"""
+                },
+                {
+                    "role": "user", 
+                    "content": f"Contesto: {context}\n\nTesto da migliorare: {text}"
+                }
+            ],
+            temperature=0.3,
+            max_tokens=200
+        )
+        
+        improved_text = response.choices[0].message.content.strip()
+        
+        # Rimuovi eventuali prefissi indesiderati
+        prefixes_to_remove = [
+            "Traduzione:", "Tradotto:", "Migliorato:", "Risultato:", 
+            "Testo migliorato:", "Versione migliorata:", "Ecco il testo:",
+            "Il testo migliorato è:", "Rendendo il testo più discorsivo:"
+        ]
+        
+        for prefix in prefixes_to_remove:
+            if improved_text.startswith(prefix):
+                improved_text = improved_text[len(prefix):].strip()
+        
+        return improved_text if improved_text else text
+        
+    except Exception as e:
+        logger.warning(f"Error improving text with OpenAI: {e}")
+        return text  # Restituisce il testo originale in caso di errore
+
 def generate_house_rules_pdf(chatbot: Chatbot, lang: str = "IT") -> bytes:
     """Genera PDF con tutte le informazioni della proprietà e restituisce i bytes"""
     logger.info(f"Generating PDF for chatbot: {chatbot.property_name}, language: {lang}")
