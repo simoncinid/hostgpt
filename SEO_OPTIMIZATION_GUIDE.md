@@ -9,7 +9,7 @@ Posizionare HostGPT ai primi posti per le ricerche di:
 ## ✅ Implementazioni Completate
 
 ### 1. Favicon e Icone
-- ✅ Favicon configurato con `logohostgpt.png`
+- ✅ Favicon configurato con `logoospiterai.png`
 - ✅ Icone per dispositivi Apple (180x180)
 - ✅ Icone multiple per diverse dimensioni
 - ✅ Manifest.json per PWA

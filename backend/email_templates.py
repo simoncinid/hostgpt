@@ -1,21 +1,21 @@
 """
-Template Email HTML di livello Enterprise per HostGPT
+Template Email HTML di livello Enterprise per OspiterAI
 """
 
 # Palette colori HostGPT
 HOSTGPT_COLORS = {
-    'primary': '#667eea',
-    'secondary': '#764ba2', 
-    'accent': '#533887',
-    'success': '#4facfe',
+    'primary': '#533887',
+    'secondary': '#388753', 
+    'accent': '#141414',
+    'success': '#388753',
     'warning': '#533887',
-    'error': '#ff6b6b',
-    'dark': '#2d3748',
+    'error': '#533887',
+    'dark': '#141414',
     'light': '#f7fafc',
     'white': '#ffffff',
-    'gradient_primary': 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    'gradient_accent': 'linear-gradient(135deg, #533887 0%, #6b46c1 100%)',
-    'gradient_success': 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)'
+    'gradient_primary': 'linear-gradient(135deg, #533887 0%, #388753 100%)',
+    'gradient_accent': 'linear-gradient(135deg, #533887 0%, #141414 100%)',
+    'gradient_success': 'linear-gradient(135deg, #388753 0%, #533887 100%)'
 }
 
 def get_base_email_template(content: str):
@@ -26,7 +26,7 @@ def get_base_email_template(content: str):
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>HostGPT</title>
+        <title>OspiterAI</title>
         <style>
             * {{
                 margin: 0;
@@ -221,7 +221,7 @@ def get_base_email_template(content: str):
     <body>
         <div class="email-container">
             <div class="header">
-                <div class="logo">🏠 HostGPT</div>
+                <div class="logo" style="color: #533887; font-weight: bold; font-size: 24px;">🏠 OspiterAI</div>
                 <div class="header-subtitle">Il tuo assistente virtuale per ospitalità</div>
             </div>
             
@@ -237,7 +237,7 @@ def get_base_email_template(content: str):
                     <a href="https://hostgpt-docker.onrender.com/privacy">Privacy</a>
                 </div>
                 <div class="footer-text">
-                    © 2024 HostGPT. Tutti i diritti riservati.<br>
+                    © 2025 OspiterAI. Tutti i diritti riservati.<br>
                     Via dell'Innovazione 123, Milano, Italia
                 </div>
             </div>
@@ -289,7 +289,7 @@ def create_subscription_activation_email(user_name: str) -> str:
         <div class="greeting">🎉 Abbonamento Attivato!</div>
         
         <div class="message">
-            Congratulazioni, <strong>{user_name}</strong>! Il tuo abbonamento HostGPT è stato attivato con successo e sei ora pronto a rivoluzionare la gestione delle tue proprietà.
+            Congratulazioni, <strong>{user_name}</strong>! Il tuo abbonamento OspiterAI è stato attivato con successo e sei ora pronto a rivoluzionare la gestione delle tue proprietà.
         </div>
         
         <div class="highlight-box">
@@ -311,7 +311,7 @@ def create_subscription_activation_email(user_name: str) -> str:
         </div>
         
         <div class="message">
-            Il nostro team è qui per aiutarti a ottenere il massimo da HostGPT. Non esitare a contattarci se hai bisogno di assistenza!
+            Il nostro team è qui per aiutarti a ottenere il massimo da OspiterAI. Non esitare a contattarci se hai bisogno di assistenza!
         </div>
     """
     
@@ -323,7 +323,7 @@ def create_subscription_cancellation_email(user_name: str, end_date: str) -> str
         <div class="greeting">😔 Ci mancherai, {user_name}!</div>
         
         <div class="message">
-            Abbiamo ricevuto la tua richiesta di annullamento dell'abbonamento HostGPT. Siamo dispiaciuti di vederti andare via.
+            Abbiamo ricevuto la tua richiesta di annullamento dell'abbonamento OspiterAI. Siamo dispiaciuti di vederti andare via.
         </div>
         
         <div class="highlight-box" style="border-left-color: {HOSTGPT_COLORS['warning']};">
@@ -347,7 +347,7 @@ def create_subscription_cancellation_email(user_name: str, end_date: str) -> str
         </div>
         
         <div class="message">
-            Grazie per aver utilizzato HostGPT. Speriamo di rivederti presto!
+            Grazie per aver utilizzato OspiterAI. Speriamo di rivederti presto!
         </div>
     """
     
@@ -463,7 +463,7 @@ def create_guardian_alert_email(user_name: str, alert, conversation_summary: str
         </div>
         
         <div class="message">
-            Grazie per aver scelto HostGPT Guardian per proteggere la soddisfazione dei tuoi ospiti! 🛡️
+            Grazie per aver scelto OspiterAI Guardian per proteggere la soddisfazione dei tuoi ospiti! 🛡️
         </div>
     """
     
@@ -476,7 +476,7 @@ def create_free_trial_welcome_email(user_name: str) -> str:
         <div class="greeting">🎉 Benvenuto nel tuo periodo di prova gratuito!</div>
         
         <div class="message">
-            Ciao <strong>{user_name}</strong>, benvenuto in HostGPT! Hai appena iniziato il tuo periodo di prova gratuito di <strong>14 giorni</strong>.
+            Ciao <strong>{user_name}</strong>, benvenuto in OspiterAI! Hai appena iniziato il tuo periodo di prova gratuito di <strong>14 giorni</strong>.
         </div>
         
         <div class="highlight-box" style="border-left-color: {HOSTGPT_COLORS['success']};">
@@ -609,7 +609,7 @@ def create_free_trial_ending_email(user_name: str, days_remaining: int, messages
         </div>
         
         <div style="background: {HOSTGPT_COLORS['light']}; padding: 15px; border-radius: 8px; margin: 15px 0;">
-            <h3 style="color: {HOSTGPT_COLORS['primary']}; margin-bottom: 10px;">💡 Perché continuare con HostGPT:</h3>
+            <h3 style="color: {HOSTGPT_COLORS['primary']}; margin-bottom: 10px;">💡 Perché continuare con OspiterAI:</h3>
             <ul class="feature-list">
                 <li>Migliora la soddisfazione degli ospiti del 40% in media</li>
                 <li>Riduce il carico di lavoro per le domande ricorrenti</li>
@@ -620,7 +620,7 @@ def create_free_trial_ending_email(user_name: str, days_remaining: int, messages
         </div>
         
         <div class="message">
-            Grazie per aver provato HostGPT! Speriamo di continuare a supportarti nel migliorare l'esperienza dei tuoi ospiti. 🏠✨
+            Grazie per aver provato OspiterAI! Speriamo di continuare a supportarti nel migliorare l'esperienza dei tuoi ospiti. 🏠✨
         </div>
     """
     
@@ -635,7 +635,7 @@ def create_free_trial_expired_email(user_name: str, messages_used: int, total_me
         <div class="greeting">⏰ Il tuo periodo di prova è scaduto</div>
         
         <div class="message">
-            Ciao <strong>{user_name}</strong>, il tuo periodo di prova gratuito di HostGPT è scaduto. 
+            Ciao <strong>{user_name}</strong>, il tuo periodo di prova gratuito di OspiterAI è scaduto. 
             Il tuo chatbot è temporaneamente non disponibile.
         </div>
         
@@ -681,7 +681,7 @@ def create_free_trial_expired_email(user_name: str, messages_used: int, total_me
         </div>
         
         <div class="message">
-            Grazie per aver provato HostGPT! Speriamo di rivederti presto per continuare a migliorare l'esperienza dei tuoi ospiti. 🏠✨
+            Grazie per aver provato OspiterAI! Speriamo di rivederti presto per continuare a migliorare l'esperienza dei tuoi ospiti. 🏠✨
         </div>
     """
     
@@ -694,7 +694,7 @@ def create_subscription_confirmation_email(user_name: str) -> str:
         <div class="greeting">🎉 Abbonamento attivato con successo!</div>
         
         <div class="message">
-            Ciao <strong>{user_name}</strong>, il tuo abbonamento HostGPT è stato attivato con successo! 
+            Ciao <strong>{user_name}</strong>, il tuo abbonamento OspiterAI è stato attivato con successo! 
             Ora hai accesso completo a tutte le funzionalità della piattaforma.
         </div>
         
@@ -737,14 +737,14 @@ def create_subscription_confirmation_email(user_name: str) -> str:
         </div>
         
         <div class="message">
-            Grazie per aver scelto HostGPT! Siamo qui per aiutarti a creare un'esperienza straordinaria per i tuoi ospiti. 🏠✨
+            Grazie per aver scelto OspiterAI! Siamo qui per aiutarti a creare un'esperienza straordinaria per i tuoi ospiti. 🏠✨
         </div>
     """
     
     return get_base_email_template(content)
 
 def create_combined_subscription_confirmation_email(user_name: str) -> str:
-    """Template email per confermare l'attivazione del pacchetto completo HostGPT + Guardian"""
+    """Template email per confermare l'attivazione del pacchetto completo OspiterAI + Guardian"""
     content = f"""
     <div style="text-align: center; padding: 40px 20px;">
         <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 15px; margin-bottom: 30px;">
@@ -806,7 +806,7 @@ def create_guardian_subscription_confirmation_email(user_name: str) -> str:
         <div class="greeting">🛡️ Guardian attivato con successo!</div>
         
         <div class="message">
-            Ciao <strong>{user_name}</strong>, il tuo abbonamento HostGPT Guardian è stato attivato con successo! 
+            Ciao <strong>{user_name}</strong>, il tuo abbonamento OspiterAI Guardian è stato attivato con successo! 
             Ora hai accesso al sistema di protezione avanzato per monitorare la soddisfazione dei tuoi ospiti.
         </div>
         
@@ -849,7 +849,7 @@ def create_guardian_subscription_confirmation_email(user_name: str) -> str:
         </div>
         
         <div class="message">
-            Grazie per aver scelto HostGPT Guardian! Ora sei protetto e puoi concentrarti su ciò che conta davvero: 
+            Grazie per aver scelto OspiterAI Guardian! Ora sei protetto e puoi concentrarti su ciò che conta davvero: 
             offrire un'esperienza straordinaria ai tuoi ospiti. 🛡️✨
         </div>
     """
@@ -928,8 +928,8 @@ def create_checkin_notification_email(
         images_text = "Attached images:"
         images_info = "Check-in images are attached to this email. You can download them and proceed with verification to complete the guest's check-in process."
         privacy_title = "🔒 Privacy and Security"
-        privacy_info = "Images have been sent directly via email and have not been saved on HostGPT servers, ensuring maximum privacy and security of guest data."
-        footer_note = "This email was automatically generated by the HostGPT system following the guest's automatic check-in request."
+        privacy_info = "Images have been sent directly via email and have not been saved on OspiterAI servers, ensuring maximum privacy and security of guest data."
+        footer_note = "This email was automatically generated by the OspiterAI system following the guest's automatic check-in request."
     else:  # it
         greeting = "📋 Richiesta Check-in Automatico"
         message = f"Un ospite ha inviato i documenti per il check-in automatico{property_text}."
@@ -940,8 +940,8 @@ def create_checkin_notification_email(
         images_text = "Immagini allegate:"
         images_info = "Le immagini del check-in sono allegate a questa email. Puoi scaricarle e procedere con la verifica per completare il processo di check-in dell'ospite."
         privacy_title = "🔒 Privacy e Sicurezza"
-        privacy_info = "Le immagini sono state inviate direttamente via email e non sono state salvate sui server di HostGPT, garantendo la massima privacy e sicurezza dei dati dell'ospite."
-        footer_note = "Questa email è stata generata automaticamente dal sistema HostGPT in seguito alla richiesta di check-in automatico dell'ospite."
+        privacy_info = "Le immagini sono state inviate direttamente via email e non sono state salvate sui server di OspiterAI, garantendo la massima privacy e sicurezza dei dati dell'ospite."
+        footer_note = "Questa email è stata generata automaticamente dal sistema OspiterAI in seguito alla richiesta di check-in automatico dell'ospite."
     
     content = f"""
         <div class="greeting">{greeting}</div>

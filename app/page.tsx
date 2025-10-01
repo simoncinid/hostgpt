@@ -1232,10 +1232,10 @@ export default function LandingPage() {
 
       {/* HERO SECTION - Ultra Luxurious Airbnb Style */}
       <section className="relative pt-32 md:pt-36 pb-16 md:pb-20 px-4 overflow-hidden">
-        {/* Background ultra-elegante bianco e rosa */}
+        {/* Background ultra-elegante viola, verde e nero */}
         <div className="absolute inset-0 bg-gradient-to-br from-white via-purple-50/30 to-purple-100/40"></div>
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(251,207,232,0.15),transparent_50%)] opacity-80"></div>
-        <div className="absolute inset-0 bg-[conic-gradient(from_0deg_at_50%_50%,rgba(255,255,255,0.8)_0deg,rgba(251,207,232,0.1)_120deg,rgba(255,255,255,0.9)_240deg,rgba(251,207,232,0.05)_360deg)]"></div>
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(83,56,135,0.15),transparent_50%)] opacity-80"></div>
+        <div className="absolute inset-0 bg-[conic-gradient(from_0deg_at_50%_50%,rgba(255,255,255,0.8)_0deg,rgba(83,56,135,0.1)_120deg,rgba(255,255,255,0.9)_240deg,rgba(83,56,135,0.05)_360deg)]"></div>
 
         {/* Particelle fluttuanti eleganti */}
         <div className="absolute inset-0 pointer-events-none">
@@ -1305,8 +1305,8 @@ export default function LandingPage() {
                 <circle cx="20" cy="20" r="1.5" fill="url(#hero-gradient)" />
               </pattern>
               <linearGradient id="hero-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#f43f5e" />
-                <stop offset="100%" stopColor="#ec4899" />
+                <stop offset="0%" stopColor="#533887" />
+                <stop offset="100%" stopColor="#388753" />
               </linearGradient>
             </defs>
             <rect width="100%" height="100%" fill="url(#hero-dots)" />
@@ -1714,11 +1714,11 @@ export default function LandingPage() {
             border-radius: 10px;
           }
           .scrollbar-custom::-webkit-scrollbar-thumb {
-            background: linear-gradient(to bottom, #f43f5e, #ec4899);
+            background: linear-gradient(to bottom, #533887, #388753);
             border-radius: 10px;
           }
           .scrollbar-custom::-webkit-scrollbar-thumb:hover {
-            background: linear-gradient(to bottom, #e11d48, #db2777);
+            background: linear-gradient(to bottom, #533887, #141414);
           }
           
           /* Nascondi auto-switch su desktop */
@@ -2017,7 +2017,7 @@ export default function LandingPage() {
                 whileHover={{ 
                   y: -8,
                   scale: 1.02,
-                  boxShadow: "0 25px 50px rgba(244, 63, 94, 0.12)"
+                  boxShadow: "0 25px 50px rgba(83, 56, 135, 0.12)"
                 }}
                 className="relative group"
               >
@@ -2039,7 +2039,7 @@ export default function LandingPage() {
                 {/* Card principale */}
                 <div className="relative bg-white rounded-3xl p-2 md:p-3 lg:p-4 shadow-lg border border-purple-100/40 overflow-hidden text-center group-hover:shadow-2xl transition-all duration-500 h-48 md:h-72 lg:h-80 flex flex-col"
                      style={{ 
-                       boxShadow: "0 10px 25px rgba(244, 63, 94, 0.04), 0 0 0 1px rgba(251, 207, 232, 0.08)"
+                       boxShadow: "0 10px 25px rgba(83, 56, 135, 0.04), 0 0 0 1px rgba(83, 56, 135, 0.08)"
                      }}>
                   
                   {/* Background pattern interno */}
@@ -2064,7 +2064,7 @@ export default function LandingPage() {
                         whileHover={{ 
                           scale: 1.1, 
                           rotate: 5,
-                          boxShadow: "0 15px 30px rgba(244, 63, 94, 0.2)"
+                          boxShadow: "0 15px 30px rgba(83, 56, 135, 0.2)"
                         }}
                         className="relative w-10 h-10 md:w-14 md:h-14 lg:w-18 lg:h-18 rounded-xl md:rounded-2xl bg-gradient-to-r from-purple-500 to-indigo-600 flex items-center justify-center mx-auto shadow-lg overflow-hidden"
                       >
@@ -2145,9 +2145,9 @@ export default function LandingPage() {
       <section id="pricing" className="relative overflow-hidden section-padding">
         {/* Background ultra-elegante bianco e rosa */}
         <div className="absolute inset-0 bg-gradient-to-br from-white via-purple-50/30 to-purple-100/40"></div>
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(251,207,232,0.15),transparent_50%)] opacity-80"></div>
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,rgba(244,63,94,0.08),transparent_60%)] opacity-70"></div>
-        <div className="absolute inset-0 bg-[conic-gradient(from_45deg_at_30%_70%,transparent_0deg,rgba(251,207,232,0.1)_90deg,transparent_180deg)] opacity-60"></div>
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(83,56,135,0.15),transparent_50%)] opacity-80"></div>
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,rgba(56,135,83,0.08),transparent_60%)] opacity-70"></div>
+        <div className="absolute inset-0 bg-[conic-gradient(from_45deg_at_30%_70%,transparent_0deg,rgba(83,56,135,0.1)_90deg,transparent_180deg)] opacity-60"></div>
 
         {/* Particelle fluttuanti eleganti */}
         <div className="absolute inset-0 overflow-hidden">
@@ -2280,7 +2280,7 @@ export default function LandingPage() {
                 </span>
                 <button
                   onClick={() => setIsAnnualBilling(!isAnnualBilling)}
-                  className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 ${
+                  className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 ${
                     isAnnualBilling ? 'bg-purple-600' : 'bg-gray-300'
                   }`}
                 >
@@ -2586,7 +2586,7 @@ export default function LandingPage() {
                 viewport={{ once: true }}
                 className="relative"
               >
-                <div className="absolute -inset-4 bg-gradient-to-r from-purple-600/20 via-pink-600/20 to-blue-600/20 rounded-3xl blur-xl opacity-60"></div>
+                <div className="absolute -inset-4 bg-gradient-to-r from-purple-600/20 via-green-600/20 to-gray-900/20 rounded-3xl blur-xl opacity-60"></div>
                 
                 <div className="relative bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 md:p-8 lg:p-12 shadow-2xl">
                   {/* Header del form */}
@@ -2750,7 +2750,7 @@ export default function LandingPage() {
                           className="relative w-full group overflow-hidden disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           {/* Background animato del bottone */}
-                          <div className="absolute inset-0 bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 rounded-xl md:rounded-2xl"></div>
+                          <div className="absolute inset-0 bg-gradient-to-r from-purple-600 via-green-600 to-gray-900 rounded-xl md:rounded-2xl"></div>
                           <motion.div
                             className="absolute inset-0 bg-gradient-to-r from-violet-600 via-purple-600 to-blue-600 rounded-xl md:rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"
                             animate={{
@@ -2936,7 +2936,7 @@ export default function LandingPage() {
         {/* Background ultra-moderno */}
         <div className="absolute inset-0 bg-gradient-to-br from-indigo-900 via-purple-800 to-violet-900"></div>
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_25%_25%,rgba(99,102,241,0.4),transparent_50%)] opacity-60"></div>
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_75%_75%,rgba(236,72,153,0.3),transparent_50%)] opacity-50"></div>
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_75%_75%,rgba(56,135,83,0.3),transparent_50%)] opacity-50"></div>
         <div className="absolute inset-0 bg-[conic-gradient(from_0deg_at_50%_50%,transparent_0deg,rgba(147,51,234,0.1)_60deg,transparent_120deg,rgba(59,130,246,0.1)_240deg,transparent_300deg)] opacity-40"></div>
 
         {/* Particelle animate di background */}
@@ -3216,8 +3216,8 @@ export default function LandingPage() {
       <section className="relative section-padding overflow-hidden">
         {/* Background ultra-elegante con gradienti multipli */}
         <div className="absolute inset-0 bg-gradient-to-br from-white via-purple-25/20 to-violet-25/30"></div>
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(251,207,232,0.12),transparent_70%)] opacity-80"></div>
-        <div className="absolute inset-0 bg-[conic-gradient(from_180deg_at_50%_50%,rgba(255,255,255,0.9)_0deg,rgba(251,207,232,0.08)_120deg,rgba(255,255,255,0.95)_240deg,rgba(251,207,232,0.05)_360deg)]"></div>
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(83,56,135,0.12),transparent_70%)] opacity-80"></div>
+        <div className="absolute inset-0 bg-[conic-gradient(from_180deg_at_50%_50%,rgba(255,255,255,0.9)_0deg,rgba(83,56,135,0.08)_120deg,rgba(255,255,255,0.95)_240deg,rgba(83,56,135,0.05)_360deg)]"></div>
 
         {/* Particelle fluttuanti finali */}
         <div className="absolute inset-0 pointer-events-none">
@@ -3354,7 +3354,7 @@ export default function LandingPage() {
                   
                   <Link
                     href="#pricing"
-                    className="relative inline-flex items-center gap-2 md:gap-4 px-8 py-3 md:px-12 md:py-6 text-sm md:text-xl font-black text-white bg-gradient-to-r from-purple-600 via-purple-500 to-purple-700 rounded-2xl md:rounded-3xl shadow-2xl transition-all duration-300 group-hover:shadow-rose-500/30 overflow-hidden"
+                    className="relative inline-flex items-center gap-2 md:gap-4 px-8 py-3 md:px-12 md:py-6 text-sm md:text-xl font-black text-white bg-gradient-to-r from-purple-600 via-purple-500 to-purple-700 rounded-2xl md:rounded-3xl shadow-2xl transition-all duration-300 group-hover:shadow-purple-500/30 overflow-hidden"
                   >
                     {/* Effetto shimmer interno */}
                     <motion.div

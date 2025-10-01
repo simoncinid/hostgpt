@@ -39,7 +39,7 @@ export default function SEOImage({
 export function OspiterAILogo({ className = '', priority = true }: { className?: string, priority?: boolean }) {
   return (
     <SEOImage
-      src="/icons/logohostgpt.png"
+      src="/icons/logoospiterai.png"
       alt="OspiterAI - Assistente AI per Proprietà in Affitto Breve"
       width={200}
       height={60}

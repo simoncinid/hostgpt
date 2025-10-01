@@ -11,9 +11,9 @@ interface SEOHeadProps {
 export default function SEOHead({
   title = 'OspiterAI - Assistente AI per Proprietà in Affitto Breve | Gestione Ospiti Airbnb',
   description = 'OspiterAI è il miglior assistente AI per gestire le proprietà in affitto breve e gli ospiti Airbnb. Chatbot intelligenti 24/7 per host, risposte automatiche, gestione prenotazioni e supporto multilingue.',
-  keywords = 'hostgpt, assistente AI, proprietà affitto breve, gestione ospiti airbnb, chatbot host, AI airbnb, assistente virtuale proprietà, gestione affitti vacanza, chatbot intelligente, AI ospitalità, host assistant, airbnb management, short term rental AI, property management AI, guest management, automated responses, 24/7 support, multilingue, italiano, inglese',
+  keywords = 'OspiterAI, assistente AI, proprietà affitto breve, gestione ospiti airbnb, chatbot host, AI airbnb, assistente virtuale proprietà, gestione affitti vacanza, chatbot intelligente, AI ospitalità, host assistant, airbnb management, short term rental AI, property management AI, guest management, automated responses, 24/7 support, multilingue, italiano, inglese',
   canonical = 'https://ospiterai.it',
-  ogImage = '/icons/logohostgpt.png',
+  ogImage = '/icons/logoospiterai.png',
   ogType = 'website',
   noindex = false
 }: SEOHeadProps) {
@@ -39,7 +39,7 @@ export default function SEOHead({
       <meta name="twitter:title" content={title} />
       <meta name="twitter:description" content={description} />
       <meta name="twitter:image" content={ogImage} />
-      <meta name="twitter:creator" content="@hostgpt" />
+      <meta name="twitter:creator" content="@ospiterai" />
       
       {/* Additional SEO */}
       <meta name="robots" content={noindex ? 'noindex,nofollow' : 'index,follow'} />
@@ -54,10 +54,10 @@ export default function SEOHead({
       <meta name="apple-mobile-web-app-title" content="OspiterAI" />
       
       {/* Favicon */}
-      <link rel="icon" type="image/png" sizes="32x32" href="/icons/logohostgpt.png" />
-      <link rel="icon" type="image/png" sizes="16x16" href="/icons/logohostgpt.png" />
-      <link rel="apple-touch-icon" sizes="180x180" href="/icons/logohostgpt.png" />
-      <link rel="shortcut icon" href="/icons/logohostgpt.png" />
+      <link rel="icon" type="image/png" sizes="32x32" href="/icons/logoospiterai.png" />
+      <link rel="icon" type="image/png" sizes="16x16" href="/icons/logoospiterai.png" />
+      <link rel="apple-touch-icon" sizes="180x180" href="/icons/logoospiterai.png" />
+      <link rel="shortcut icon" href="/icons/logoospiterai.png" />
       
       {/* Manifest */}
       <link rel="manifest" href="/manifest.json" />

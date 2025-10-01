@@ -31,41 +31,41 @@ export const pageSEOConfig = {
     it: {
       title: 'Dashboard OspiterAI - Gestisci i Tuoi Chatbot | OspiterAI',
       description: 'Dashboard completa per gestire i tuoi chatbot, monitorare le conversazioni e ottimizzare l\'esperienza degli ospiti nelle tue proprietà.',
-      keywords: 'dashboard hostgpt, gestione chatbot, monitoraggio ospiti, analytics host, gestione proprietà, ottimizzazione ospitalità',
+      keywords: 'dashboard OspiterAI, gestione chatbot, monitoraggio ospiti, analytics host, gestione proprietà, ottimizzazione ospitalità',
       canonical: 'https://ospiterai.it/dashboard'
     },
     en: {
       title: 'OspiterAI Dashboard - Manage Your Chatbots | OspiterAI',
       description: 'Complete dashboard to manage your chatbots, monitor conversations and optimize guest experience in your properties.',
-      keywords: 'hostgpt dashboard, chatbot management, guest monitoring, host analytics, property management, hospitality optimization',
+      keywords: 'OspiterAI dashboard, chatbot management, guest monitoring, host analytics, property management, hospitality optimization',
       canonical: 'https://ospiterai.it/dashboard'
     }
   },
   login: {
     it: {
-      title: 'Accedi a HostGPT - Gestisci i Tuoi Chatbot | HostGPT',
-      description: 'Accedi al tuo account HostGPT per gestire i chatbot delle tue proprietà in affitto breve e monitorare le conversazioni con gli ospiti.',
-      keywords: 'login hostgpt, accedi hostgpt, account host, gestione chatbot, dashboard host',
+      title: 'Accedi a OspiterAI - Gestisci i Tuoi Chatbot | OspiterAI',
+      description: 'Accedi al tuo account OspiterAI per gestire i chatbot delle tue proprietà in affitto breve e monitorare le conversazioni con gli ospiti.',
+      keywords: 'login OspiterAI, accedi OspiterAI, account host, gestione chatbot, dashboard host',
       canonical: 'https://ospiterai.it/login'
     },
     en: {
-      title: 'Login to HostGPT - Manage Your Chatbots | HostGPT',
-      description: 'Login to your HostGPT account to manage your short-term rental chatbots and monitor guest conversations.',
-      keywords: 'hostgpt login, hostgpt sign in, host account, chatbot management, host dashboard',
+      title: 'Login to OspiterAI - Manage Your Chatbots | OspiterAI',
+      description: 'Login to your OspiterAI account to manage your short-term rental chatbots and monitor guest conversations.',
+      keywords: 'OspiterAI login, OspiterAI sign in, host account, chatbot management, host dashboard',
       canonical: 'https://ospiterai.it/login'
     }
   },
   register: {
     it: {
-      title: 'Registrati su HostGPT - Inizia Gratis | HostGPT',
-      description: 'Registrati gratuitamente su HostGPT e inizia a creare chatbot intelligenti per le tue proprietà in affitto breve. Prova gratis per 7 giorni.',
-      keywords: 'registrati hostgpt, iscriviti hostgpt, prova gratuita, chatbot gratis, assistente AI host, inizia gratis',
+      title: 'Registrati su OspiterAI - Inizia Gratis | OspiterAI',
+      description: 'Registrati gratuitamente su OspiterAI e inizia a creare chatbot intelligenti per le tue proprietà in affitto breve. Prova gratis per 7 giorni.',
+      keywords: 'registrati OspiterAI, iscriviti OspiterAI, prova gratuita, chatbot gratis, assistente AI host, inizia gratis',
       canonical: 'https://ospiterai.it/register'
     },
     en: {
-      title: 'Sign Up for HostGPT - Start Free | HostGPT',
-      description: 'Sign up for free on HostGPT and start creating intelligent chatbots for your short-term rental properties. Free trial for 7 days.',
-      keywords: 'hostgpt sign up, hostgpt register, free trial, free chatbot, AI host assistant, start free',
+      title: 'Sign Up for OspiterAI - Start Free | OspiterAI',
+      description: 'Sign up for free on OspiterAI and start creating intelligent chatbots for your short-term rental properties. Free trial for 7 days.',
+      keywords: 'OspiterAI sign up, OspiterAI register, free trial, free chatbot, AI host assistant, start free',
       canonical: 'https://ospiterai.it/register'
     }
   }

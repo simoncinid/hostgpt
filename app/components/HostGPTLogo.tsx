@@ -24,8 +24,8 @@ export default function HostGPTLogo({
   return (
     <div className={cn('flex items-center space-x-2', className)}>
       <Image
-        src="/icons/logohostgpt.png"
-        alt="HostGPT Logo"
+        src="/icons/logoospiterai.png"
+        alt="OspiterAI Logo"
         width={size === 'sm' ? 24 : size === 'md' ? 32 : size === 'lg' ? 40 : 48}
         height={size === 'sm' ? 24 : size === 'md' ? 32 : size === 'lg' ? 40 : 48}
         className={cn(sizeClasses[size], 'object-contain')}

@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   metadataBase: new URL('https://ospiterai.it'),
   title: 'OspiterAI - Assistente AI per Proprietà in Affitto Breve | Gestione Ospiti Airbnb',
   description: 'OspiterAI è il miglior assistente AI per gestire le proprietà in affitto breve e gli ospiti Airbnb. Chatbot intelligenti 24/7 per host, risposte automatiche, gestione prenotazioni e supporto multilingue.',
-  keywords: 'hostgpt, assistente AI, proprietà affitto breve, gestione ospiti airbnb, chatbot host, AI airbnb, assistente virtuale proprietà, gestione affitti vacanza, chatbot intelligente, AI ospitalità, host assistant, airbnb management, short term rental AI, property management AI, guest management, automated responses, 24/7 support, multilingue, italiano, inglese',
+  keywords: 'OspiterAI, assistente AI, proprietà affitto breve, gestione ospiti airbnb, chatbot host, AI airbnb, assistente virtuale proprietà, gestione affitti vacanza, chatbot intelligente, AI ospitalità, host assistant, airbnb management, short term rental AI, property management AI, guest management, automated responses, 24/7 support, multilingue, italiano, inglese',
   authors: [{ name: 'OspiterAI Team' }],
   creator: 'OspiterAI',
   publisher: 'OspiterAI',
@@ -33,7 +33,7 @@ export const metadata: Metadata = {
     description: 'Il miglior assistente AI per gestire le proprietà in affitto breve e gli ospiti Airbnb. Chatbot intelligenti 24/7 per host.',
     images: [
       {
-        url: '/icons/logohostgpt.png',
+        url: '/icons/logoospiterai.png',
         width: 1200,
         height: 630,
         alt: 'OspiterAI - Assistente AI per Proprietà in Affitto Breve',
@@ -44,22 +44,22 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'OspiterAI - Assistente AI per Proprietà in Affitto Breve',
     description: 'Il miglior assistente AI per gestire le proprietà in affitto breve e gli ospiti Airbnb.',
-    images: ['/icons/logohostgpt.png'],
-    creator: '@hostgpt',
+    images: ['/icons/logoospiterai.png'],
+    creator: '@OspiterAI',
   },
   icons: {
     icon: [
-      { url: '/icons/logohostgpt.png', sizes: '32x32', type: 'image/png' },
-      { url: '/icons/logohostgpt.png', sizes: '16x16', type: 'image/png' },
+      { url: '/icons/logoospiterai.png', sizes: '32x32', type: 'image/png' },
+      { url: '/icons/logoospiterai.png', sizes: '16x16', type: 'image/png' },
     ],
     apple: [
-      { url: '/icons/logohostgpt.png', sizes: '180x180', type: 'image/png' },
+      { url: '/icons/logoospiterai.png', sizes: '180x180', type: 'image/png' },
     ],
-    shortcut: '/icons/logohostgpt.png',
+    shortcut: '/icons/logoospiterai.png',
   },
   manifest: '/manifest.json',
   alternates: {
-    canonical: 'https://hostgpt.com',
+    canonical: 'https://ospiterai.com',
       languages: {
         'it-IT': 'https://ospiterai.it',
         'en-US': 'https://ospiterai.it/en',
@@ -69,7 +69,7 @@ export const metadata: Metadata = {
   classification: 'AI Assistant for Short-term Rental Management',
   other: {
     // Performance optimizations
-    'preload': '/icons/logohostgpt.png',
+    'preload': '/icons/logoospiterai.png',
   },
 }
 
@@ -91,7 +91,7 @@ export default function RootLayout({
         <link rel="canonical" href="https://ospiterai.it" />
         <meta name="google-site-verification" content="your-google-verification-code" />
         <meta name="msvalidate.01" content="your-bing-verification-code" />
-        <meta name="theme-color" content="#3B82F6" />
+        <meta name="theme-color" content="#533887" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="OspiterAI" />
@@ -116,7 +116,7 @@ export default function RootLayout({
                 "name": "OspiterAI",
                 "url": "https://ospiterai.it"
               },
-              "keywords": "hostgpt, assistente AI, proprietà affitto breve, gestione ospiti airbnb, chatbot host, AI airbnb",
+              "keywords": "OspiterAI, assistente AI, proprietà affitto breve, gestione ospiti airbnb, chatbot host, AI airbnb",
               "inLanguage": ["it", "en"]
             })
           }}

@@ -1593,7 +1593,7 @@ def generate_qr_code(url: str, icon_data: bytes = None) -> str:
         from PIL import Image, ImageDraw, ImageFont
         
         # Carica l'icona HostGPT
-        hostgpt_icon_path = os.path.join(os.path.dirname(__file__), '..', 'public', 'icons', 'logohostgpt.png')
+        hostgpt_icon_path = os.path.join(os.path.dirname(__file__), '..', 'public', 'icons', 'logoospiterai.png')
         
         if os.path.exists(hostgpt_icon_path):
             # Carica l'icona HostGPT così com'è
@@ -4445,11 +4445,11 @@ async def download_house_rules_pdf(uuid: str, lang: str = "IT", db: Session = De
                 import os
                 # Prova diversi path possibili
                 possible_paths = [
-                    "/app/public/icons/logohostgpt.png",  # Docker path
-                    "/app/backend/../public/icons/logohostgpt.png",  # Docker path alternativo
-                    "public/icons/logohostgpt.png",       # Se eseguito dalla root
-                    "../public/icons/logohostgpt.png",     # Se eseguito da backend/
-                    os.path.join(os.path.dirname(__file__), "..", "public", "icons", "logohostgpt.png"),  # Path assoluto
+                    "/app/public/icons/logoospiterai.png",  # Docker path
+                    "/app/backend/../public/icons/logoospiterai.png",  # Docker path alternativo
+                    "public/icons/logoospiterai.png",       # Se eseguito dalla root
+                    "../public/icons/logoospiterai.png",     # Se eseguito da backend/
+                    os.path.join(os.path.dirname(__file__), "..", "public", "icons", "logoospiterai.png"),  # Path assoluto
                 ]
                 
                 # Debug: lista tutti i file nella directory /app
@@ -4473,8 +4473,8 @@ async def download_house_rules_pdf(uuid: str, lang: str = "IT", db: Session = De
                     # Ricerca ricorsiva del logo
                     logger.info("Searching for logo file recursively...")
                     for root, dirs, files in os.walk('/app'):
-                        if 'logohostgpt.png' in files:
-                            logo_path = os.path.join(root, 'logohostgpt.png')
+                        if 'logoospiterai.png' in files:
+                            logo_path = os.path.join(root, 'logoospiterai.png')
                             logger.info(f"Found logo at: {logo_path}")
                             break
                     

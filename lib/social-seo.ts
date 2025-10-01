@@ -4,8 +4,8 @@ export const socialSEOConfig = {
     admins: 'your-facebook-admin-id' // Da configurare
   },
   twitter: {
-    site: '@hostgpt',
-    creator: '@hostgpt',
+    site: '@ospiterai',
+    creator: '@ospiterai',
     card: 'summary_large_image'
   },
   linkedin: {
@@ -13,13 +13,13 @@ export const socialSEOConfig = {
     product: 'AI Assistant for Short-term Rental Management'
   },
   instagram: {
-    username: '@hostgpt'
+    username: '@ospiterai'
   }
 }
 
 export const generateSocialMetaTags = (page: string, language: 'it' | 'en' = 'it') => {
   const baseUrl = 'https://ospiterai.it'
-  const imageUrl = `${baseUrl}/icons/logohostgpt.png`
+  const imageUrl = `${baseUrl}/icons/logoospiterai.png`
   
   const titles = {
     it: {
@@ -75,7 +75,7 @@ export const generateSocialMetaTags = (page: string, language: 'it' | 'en' = 'it
     
     // Additional meta
     'article:author': 'OspiterAI Team',
-    'article:publisher': 'https://www.facebook.com/hostgpt',
+    'article:publisher': 'https://www.facebook.com/ospiterai',
     'article:section': 'Technology',
     'article:tag': language === 'it' ? 'AI, Chatbot, Ospitalità, Airbnb' : 'AI, Chatbot, Hospitality, Airbnb'
   }
