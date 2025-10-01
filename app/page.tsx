@@ -1991,7 +1991,7 @@ export default function LandingPage() {
             >
               {t.features.subtitle}
               <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary font-semibold">
+              <span className="text-white font-semibold">
                 {t.features.subtitleHighlight}
               </span>
             </motion.p>

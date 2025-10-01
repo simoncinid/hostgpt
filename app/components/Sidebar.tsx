@@ -66,7 +66,7 @@ export default function Sidebar({ currentPath, onLogout, isSidebarCollapsed: ext
           {!isSidebarCollapsed && (
             <Link href="/" className="flex items-center space-x-2">
               <OspiterAILogo size="lg" className="text-primary" />
-              <span className="text-2xl font-bold text-dark">HostGPT</span>
+              <span className="text-2xl font-bold text-dark">OspiterAI</span>
             </Link>
           )}
         </div>
@@ -177,7 +177,7 @@ export default function Sidebar({ currentPath, onLogout, isSidebarCollapsed: ext
         </button>
         <Link href="/" className="flex items-center space-x-2">
           <OspiterAILogo size="md" className="text-primary" />
-          <span className="text-xl font-bold text-dark">HostGPT</span>
+          <span className="text-xl font-bold text-dark">OspiterAI</span>
         </Link>
         <div className="flex items-center space-x-2">
           <LanguageSelector />

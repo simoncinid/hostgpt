@@ -534,7 +534,7 @@ function CheckoutContent() {
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <Link href="/" className="flex items-center space-x-3">
             <OspiterAILogo size="lg" className="text-primary" />
-            <span className="text-xl font-bold text-dark">HostGPT</span>
+            <span className="text-xl font-bold text-dark">OspiterAI</span>
           </Link>
           <div className="flex items-center space-x-3 text-sm text-gray-600">
             <Shield className="w-4 h-4" />
@@ -670,7 +670,7 @@ function CheckoutContent() {
                 
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-600">HostGPT {selectedPlan?.name || 'Standard'}</span>
+                    <span className="text-gray-600">OspiterAI {selectedPlan?.name || 'Standard'}</span>
                     <span className="font-semibold">{selectedPlan?.price || '19€'}{selectedPlan?.period || '/mese'}</span>
                   </div>
                   <div className="flex items-center justify-between">
