@@ -2,7 +2,7 @@
 
 ## Panoramica
 
-Il sistema di traduzione implementato permette di cambiare dinamicamente la lingua dell'intera applicazione HostGPT tra Italiano (IT) e Inglese (ENG). Il sistema è completamente integrato e funziona in tempo reale senza necessità di ricaricare la pagina.
+Il sistema di traduzione implementato permette di cambiare dinamicamente la lingua dell'intera applicazione OspiterAI tra Italiano (IT) e Inglese (ENG). Il sistema è completamente integrato e funziona in tempo reale senza necessità di ricaricare la pagina.
 
 ## Struttura del Sistema
 

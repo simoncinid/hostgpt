@@ -84,9 +84,9 @@ function SelectServiceContent() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-white via-purple-50/30 to-purple-100/40">
       {/* Background effects */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(83,56,135,0.15),transparent_50%)] opacity-80"></div>
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(111,51,223,0.15),transparent_50%)] opacity-80"></div>
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,rgba(56,135,83,0.08),transparent_60%)] opacity-70"></div>
-      <div className="absolute inset-0 bg-[conic-gradient(from_45deg_at_30%_70%,transparent_0deg,rgba(83,56,135,0.1)_90deg,transparent_180deg)] opacity-60"></div>
+      <div className="absolute inset-0 bg-[conic-gradient(from_45deg_at_30%_70%,transparent_0deg,rgba(111,51,223,0.1)_90deg,transparent_180deg)] opacity-60"></div>
 
       {/* Particelle fluttuanti eleganti */}
       <div className="absolute inset-0 overflow-hidden">
@@ -164,7 +164,7 @@ function SelectServiceContent() {
           <div className="flex justify-between items-center py-4">
             <Link href="/dashboard" className="flex items-center space-x-2">
               <OspiterAILogo className="h-8 w-8" />
-              <span className="text-xl font-bold text-gray-900">HostGPT</span>
+              <span className="text-xl font-bold text-gray-900">OspiterAI</span>
             </Link>
             <div className="flex items-center space-x-4">
               <span className="text-sm text-gray-600">

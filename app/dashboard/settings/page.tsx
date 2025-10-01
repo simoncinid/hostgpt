@@ -462,7 +462,7 @@ export default function SettingsPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="font-medium">{t.settings.subscriptionStatus}: <span className={
-                      user?.subscription_status === 'active' ? 'text-green-600' : 
+                      user?.subscription_status === 'active' ? 'text-secondary' : 
                       user?.subscription_status === 'cancelling' ? 'text-orange-600' : 
                       'text-red-600'
                     }>{user?.subscription_status || 'inactive'}</span></p>
@@ -683,7 +683,7 @@ export default function SettingsPage() {
                   <button
                     onClick={handleLoadApartments}
                     disabled={isLoadingApartments || !hostawayAccountId.trim() || !hostawayApiKey.trim()}
-                    className="w-full bg-purple-600 text-white px-4 py-3 rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center"
+                    className="w-full bg-primary text-white px-4 py-3 rounded-lg hover:bg-primary/80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center"
                   >
                     {isLoadingApartments ? (
                       <>
@@ -902,7 +902,7 @@ export default function SettingsPage() {
                           <ul className="mt-2 space-y-1">
                             {plan.features.map((feature, index) => (
                               <li key={index} className="flex items-center text-sm text-gray-600">
-                                <Check className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" />
+                                <Check className="w-4 h-4 text-secondary mr-2 flex-shrink-0" />
                                 {feature}
                               </li>
                             ))}
@@ -1078,7 +1078,7 @@ export default function SettingsPage() {
                     <button
                       onClick={handleSaveMapping}
                       disabled={isSavingMapping}
-                      className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center"
+                      className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center"
                     >
                       {isSavingMapping ? (
                         <>

@@ -4,18 +4,18 @@ Template Email HTML di livello Enterprise per OspiterAI
 
 # Palette colori HostGPT
 HOSTGPT_COLORS = {
-    'primary': '#533887',
+    'primary': '#6f33df',
     'secondary': '#388753', 
     'accent': '#141414',
     'success': '#388753',
-    'warning': '#533887',
-    'error': '#533887',
+    'warning': '#6f33df',
+    'error': '#6f33df',
     'dark': '#141414',
     'light': '#f7fafc',
     'white': '#ffffff',
-    'gradient_primary': 'linear-gradient(135deg, #533887 0%, #388753 100%)',
-    'gradient_accent': 'linear-gradient(135deg, #533887 0%, #141414 100%)',
-    'gradient_success': 'linear-gradient(135deg, #388753 0%, #533887 100%)'
+    'gradient_primary': 'linear-gradient(135deg, #6f33df 0%, #388753 100%)',
+    'gradient_accent': 'linear-gradient(135deg, #6f33df 0%, #141414 100%)',
+    'gradient_success': 'linear-gradient(135deg, #388753 0%, #6f33df 100%)'
 }
 
 def get_base_email_template(content: str):
@@ -221,7 +221,7 @@ def get_base_email_template(content: str):
     <body>
         <div class="email-container">
             <div class="header">
-                <div class="logo" style="color: #533887; font-weight: bold; font-size: 24px;">🏠 OspiterAI</div>
+                <div class="logo" style="color: #6f33df; font-weight: bold; font-size: 24px;">🏠 OspiterAI</div>
                 <div class="header-subtitle">Il tuo assistente virtuale per ospitalità</div>
             </div>
             
@@ -400,7 +400,7 @@ def create_guardian_alert_email(user_name: str, alert, conversation_summary: str
     severity_colors = {
         'critical': HOSTGPT_COLORS['error'],
         'high': '#ff6b6b',
-        'medium': '#533887',
+        'medium': '#6f33df',
         'low': '#4facfe'
     }
     

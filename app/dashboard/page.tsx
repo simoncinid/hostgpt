@@ -212,7 +212,7 @@ function DashboardContent() {
               <span className="md:hidden">{t.dashboard.stats.totalChatbots}</span>
               <span className="hidden md:inline">{t.dashboard.stats.totalChatbots}</span>
             </p>
-            <p className="text-xs md:text-sm text-green-600 mt-1">
+            <p className="text-xs md:text-sm text-secondary mt-1">
               <span className="md:hidden">{totalStats.activeBots} {t.dashboard.stats.activeChatbots}</span>
               <span className="hidden md:inline">{totalStats.activeBots} {t.dashboard.stats.activeChatbots}</span>
             </p>
@@ -267,7 +267,7 @@ function DashboardContent() {
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
                 <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                  <span className="text-green-600 text-lg">🎉</span>
+                  <span className="text-secondary text-lg">🎉</span>
                 </div>
                 <div>
                   <h3 className="font-semibold text-green-800">{t.dashboard.freeTrial.title}</h3>
@@ -282,7 +282,7 @@ function DashboardContent() {
               </div>
               <Link
                 href="/select-service"
-                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                className="bg-secondary hover:bg-secondary/80 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
               >
 {t.dashboard.freeTrial.activateButton}
               </Link>
@@ -336,7 +336,7 @@ function DashboardContent() {
                        <h3 className="font-semibold text-base md:text-lg">{bot.property_name}</h3>
                      </div>
                      {bot.is_active ? (
-                       <span className="px-2 py-1 bg-green-100 text-green-600 text-xs rounded-full">
+                       <span className="px-2 py-1 bg-green-100 text-secondary text-xs rounded-full">
                          {t.chatbots.active}
                        </span>
                      ) : (

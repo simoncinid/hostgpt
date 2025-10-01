@@ -66,9 +66,9 @@ function StampeDashboardContent() {
       case 'processing':
         return <Package className="w-5 h-5 text-blue-500" />
       case 'shipped':
-        return <Truck className="w-5 h-5 text-green-500" />
+        return <Truck className="w-5 h-5 text-secondary" />
       case 'delivered':
-        return <CheckCircle className="w-5 h-5 text-green-600" />
+        return <CheckCircle className="w-5 h-5 text-secondary" />
       case 'cancelled':
         return <XCircle className="w-5 h-5 text-red-500" />
       default:

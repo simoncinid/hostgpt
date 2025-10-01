@@ -125,6 +125,7 @@ class Chatbot(Base):
     icon_filename = Column(String(255))  # Nome file originale
     icon_content_type = Column(String(100))  # MIME type (image/png, image/jpeg)
     has_icon = Column(Boolean, default=False)  # Flag per indicare se ha un'icona
+    house_rules_pdf_data = Column(LargeBinary)  # PDF pre-generato delle regole della casa
     
     # Statistiche
     total_conversations = Column(Integer, default=0)

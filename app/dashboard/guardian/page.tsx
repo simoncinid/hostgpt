@@ -170,7 +170,7 @@ function GuardianContent() {
       
       // Se è un checkout combinato, reindirizza al checkout combinato personalizzato
       if (response.data.is_combined) {
-        toast.success('Reindirizzamento al checkout per HostGPT + Guardian...')
+        toast.success('Reindirizzamento al checkout per OspiterAI + Guardian...')
         router.push('/checkout/combined')
         return
       }
@@ -284,7 +284,7 @@ function GuardianContent() {
             <div className="flex items-center space-x-3">
               {/* Nascondi scudo e titolo su mobile, mostra solo su desktop */}
               <div className="hidden md:flex items-center space-x-3">
-                <div className="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center">
+                <div className="w-10 h-10 bg-secondary rounded-lg flex items-center justify-center">
                   <Shield className="w-5 h-5 text-white" />
                 </div>
                 <h1 className="text-xl font-semibold">{t.guardian.title}</h1>
@@ -312,7 +312,7 @@ function GuardianContent() {
                       <button
                         onClick={handleSubscribe}
                         disabled={isCheckoutLoading}
-                        className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg text-sm transition-all duration-200 transform hover:scale-105 shadow-md flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="bg-secondary hover:bg-secondary/80 text-white font-bold py-2 px-4 rounded-lg text-sm transition-all duration-200 transform hover:scale-105 shadow-md flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {isCheckoutLoading ? (
                           <>
@@ -328,7 +328,7 @@ function GuardianContent() {
 
                   {/* Main Statistic */}
                   <div className="bg-white rounded-xl p-6 mb-6 text-center shadow-sm">
-                    <div className="text-4xl font-bold text-green-600 mb-2">{t.guardian.benefits.statistic.percentage}</div>
+                    <div className="text-4xl font-bold text-secondary mb-2">{t.guardian.benefits.statistic.percentage}</div>
                     <p className="text-lg text-gray-800 font-semibold">{t.guardian.benefits.statistic.description}</p>
                     
                     {/* Bottone di acquisto per mobile - centrato nel div bianco */}
@@ -336,7 +336,7 @@ function GuardianContent() {
                       <button
                         onClick={handleSubscribe}
                         disabled={isCheckoutLoading}
-                        className="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-xl text-base transition-all duration-200 transform hover:scale-105 shadow-lg flex items-center space-x-2 mx-auto disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="bg-secondary hover:bg-secondary/80 text-white font-bold py-3 px-6 rounded-xl text-base transition-all duration-200 transform hover:scale-105 shadow-lg flex items-center space-x-2 mx-auto disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {isCheckoutLoading ? (
                           <>
@@ -362,7 +362,7 @@ function GuardianContent() {
                   <div className="grid md:grid-cols-2 gap-6">
                     <div className="bg-white rounded-xl p-6 shadow-sm">
                       <h3 className="text-xl font-semibold text-gray-900 mb-3 flex items-center">
-                        <Target className="w-5 h-5 text-green-500 mr-2" />
+                        <Target className="w-5 h-5 text-secondary mr-2" />
                         {t.guardian.benefits.whatIs.title}
                       </h3>
                       <p className="text-gray-700 leading-relaxed">
@@ -372,13 +372,13 @@ function GuardianContent() {
 
                     <div className="bg-white rounded-xl p-6 shadow-sm">
                       <h3 className="text-xl font-semibold text-gray-900 mb-3 flex items-center">
-                        <TrendingUp className="w-5 h-5 text-green-500 mr-2" />
+                        <TrendingUp className="w-5 h-5 text-secondary mr-2" />
                         {t.guardian.benefits.keyBenefits.title}
                       </h3>
                       <ul className="space-y-2 text-gray-700">
                         {t.guardian.benefits.keyBenefits.items.map((item, index) => (
                           <li key={index} className="flex items-center">
-                            <CheckCircle className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" />
+                            <CheckCircle className="w-4 h-4 text-secondary mr-2 flex-shrink-0" />
                             {item}
                           </li>
                         ))}
@@ -408,7 +408,7 @@ function GuardianContent() {
                         <span className="md:hidden">{t.guardian.stats.totalGuestsShort}</span>
                         <span className="hidden md:inline">{t.guardian.stats.totalGuests}</span>
                       </p>
-                      <p className="text-xs md:text-sm text-green-600 mt-1">
+                      <p className="text-xs md:text-sm text-secondary mt-1">
                         <span className="md:hidden">{t.guardian.stats.monitored}</span>
                         <span className="hidden md:inline">{t.guardian.stats.monitored}</span>
                       </p>
@@ -441,14 +441,14 @@ function GuardianContent() {
                       className="stats-card p-2 md:p-6"
                     >
                       <div className="flex items-center justify-between mb-1 md:mb-2">
-                        <CheckCircle className="w-4 h-4 md:w-8 md:h-8 text-green-500" />
-                        <span className="text-sm md:text-3xl font-bold text-green-600">{guardianStats.resolved_issues}</span>
+                        <CheckCircle className="w-4 h-4 md:w-8 md:h-8 text-secondary" />
+                        <span className="text-sm md:text-3xl font-bold text-secondary">{guardianStats.resolved_issues}</span>
                       </div>
                       <p className="text-gray-600 text-xs md:text-base">
                         <span className="md:hidden">{t.guardian.stats.resolvedIssuesShort}</span>
                         <span className="hidden md:inline">{t.guardian.stats.resolvedIssues}</span>
                       </p>
-                      <p className="text-xs md:text-sm text-green-600 mt-1">
+                      <p className="text-xs md:text-sm text-secondary mt-1">
                         <span className="md:hidden">{t.guardian.stats.managed}</span>
                         <span className="hidden md:inline">{t.guardian.stats.managed}</span>
                       </p>
@@ -469,7 +469,7 @@ function GuardianContent() {
                   <div className="p-6">
                     {alerts.length === 0 ? (
                       <div className="text-center py-8">
-                        <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-4" />
+                        <CheckCircle className="w-12 h-12 text-secondary mx-auto mb-4" />
                         <p className="text-gray-600">{t.guardian.alerts.allUnderControl}</p>
                       </div>
                     ) : (
@@ -504,7 +504,7 @@ function GuardianContent() {
                                       e.stopPropagation()
                                       handleResolveAlert(alert.id)
                                     }}
-                                    className="px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-full text-sm font-medium hover:from-green-600 hover:to-green-700 transition-all duration-200 shadow-sm hover:shadow-md transform hover:scale-105"
+                                    className="px-4 py-2 bg-gradient-to-r from-secondary to-secondary/80 text-white rounded-full text-sm font-medium hover:from-secondary/80 hover:to-secondary/60 transition-all duration-200 shadow-sm hover:shadow-md transform hover:scale-105"
                                   >
 {t.guardian.alerts.resolve}
                                   </button>
@@ -564,7 +564,7 @@ function GuardianContent() {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="font-medium">{t.guardian.subscription.status}: <span className={
-                          guardianStatus?.guardian_subscription_status === 'active' ? 'text-green-600' : 
+                          guardianStatus?.guardian_subscription_status === 'active' ? 'text-secondary' : 
                           guardianStatus?.guardian_subscription_status === 'cancelling' ? 'text-orange-600' : 
                           'text-red-600'
                         }>{guardianStatus?.guardian_subscription_status || 'inactive'}</span></p>

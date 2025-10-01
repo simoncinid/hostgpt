@@ -1021,7 +1021,12 @@ export default function ChatWidgetPage() {
               )}
               <div>
                 <h1 className={`font-semibold text-lg transition-colors duration-300 ${isDarkMode ? 'text-white' : 'text-gray-900'}`} title={chatInfo?.name}>
-                  {chatInfo?.name && chatInfo.name.length > 10 ? `${chatInfo.name.substring(0, 10)}...` : chatInfo?.name}
+                  <span className="block md:hidden">
+                    {chatInfo?.name && chatInfo.name.length > 10 ? `${chatInfo.name.substring(0, 10)}...` : chatInfo?.name}
+                  </span>
+                  <span className="hidden md:block">
+                    {chatInfo?.name}
+                  </span>
                 </h1>
                 <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-500'} transition-colors duration-300`}>{currentTexts.assistant}</p>
               </div>
@@ -1175,11 +1180,29 @@ export default function ChatWidgetPage() {
               className="p-8 text-center flex-1 flex flex-col justify-center"
             >
               <div className="w-20 h-20 bg-purple-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
-                <MessageSquare className="w-10 h-10 text-purple-500" />
+                {chatInfo ? (
+                  <ChatbotIcon 
+                    chatbotUuid={uuid} 
+                    hasIcon={chatInfo.has_icon} 
+                    size="lg" 
+                    className="w-12 h-12"
+                    noBorder={true}
+                  />
+                ) : (
+                  <MessageSquare className="w-10 h-10 text-purple-500" />
+                )}
               </div>
-              <h2 className={`text-2xl font-bold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'} transition-colors duration-300`}>{currentTexts.welcome}</h2>
-              <p className={`mb-6 max-w-2xl mx-auto transition-colors duration-300 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+              <h2 className={`text-2xl font-bold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'} transition-colors duration-300`}>
+                {language === 'IT' ? `Benvenuto da ${chatInfo?.property_name || 'questa struttura'}` : `Welcome from ${chatInfo?.property_name || 'this property'}`}
+              </h2>
+              <p className={`mb-4 max-w-2xl mx-auto transition-colors duration-300 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
                 {currentTexts.welcomeSubtitle}
+              </p>
+              <p className={`mb-6 max-w-2xl mx-auto text-sm transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                {language === 'IT' 
+                  ? 'Inserisci i tuoi dati di contatto per accedere alla chat e mantenere sempre salvata la conversazione.' 
+                  : 'Enter your contact details to access the chat and keep your conversation always saved.'
+                }
               </p>
               
               {/* Form identificazione ospite */}

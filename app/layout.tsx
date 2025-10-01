@@ -91,7 +91,7 @@ export default function RootLayout({
         <link rel="canonical" href="https://ospiterai.it" />
         <meta name="google-site-verification" content="your-google-verification-code" />
         <meta name="msvalidate.01" content="your-bing-verification-code" />
-        <meta name="theme-color" content="#533887" />
+        <meta name="theme-color" content="#6f33df" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="OspiterAI" />

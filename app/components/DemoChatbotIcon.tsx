@@ -15,7 +15,7 @@ export default function DemoChatbotIcon({ size = 'md', className = '' }: DemoCha
   const [hasIcon, setHasIcon] = useState(false)
 
   // UUID del chatbot demo reale
-  const DEMO_CHATBOT_UUID = "e413257a-f165-41f2-9f9d-2f244d11d3b4"
+  const DEMO_CHATBOT_UUID = "9713e4f9-dd6c-4f03-a3ba-12f7c53fa200"
 
   useEffect(() => {
     // Prima controlla se il chatbot demo ha un'icona

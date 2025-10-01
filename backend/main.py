@@ -650,7 +650,6 @@ class Token(BaseModel):
     token_type: str
 
 class ChatbotCreate(BaseModel):
-    name: str
     property_name: str
     property_type: str
     property_address: str
@@ -682,7 +681,6 @@ class ChatbotCreate(BaseModel):
     has_wifi_qr_code: Optional[bool] = None
 
 class ChatbotUpdate(BaseModel):
-    name: Optional[str] = None
     property_name: Optional[str] = None
     property_type: Optional[str] = None
     property_address: Optional[str] = None
@@ -1621,9 +1619,9 @@ def generate_qr_code(url: str, icon_data: bytes = None) -> str:
             else:
                 print(f"QR code troppo piccolo ({qr_size}px) per aggiungere icona senza compromettere la scansione")
         else:
-            print(f"Icona HostGPT non trovata in: {hostgpt_icon_path}")
+            print(f"Icona OspiterAI non trovata in: {hostgpt_icon_path}")
     except Exception as e:
-        print(f"Errore nell'aggiunta dell'icona HostGPT al QR code: {e}")
+        print(f"Errore nell'aggiunta dell'icona OspiterAI al QR code: {e}")
         # Se c'è un errore, usa il QR code normale
     
     # Aggiungi l'immagine text.png sotto il QR code
@@ -1736,7 +1734,7 @@ async def create_openai_assistant(chatbot_data: dict) -> str:
         
         # Crea l'assistant (Assistants v2)
         assistant = client.beta.assistants.create(
-            name=f"HostGPT - {chatbot_data['property_name']}",
+            name=f"Assistente {chatbot_data['property_name']}",
             instructions=instructions,
             model="gpt-4o-mini",
             tools=[],
@@ -1822,7 +1820,7 @@ def build_assistant_instructions_from_model(chatbot: Chatbot) -> str:
 
 @app.get("/")
 async def root():
-    return {"message": "HostGPT API v1.0", "status": "active"}
+    return {"message": "OspiterAI API v1.0", "status": "active"}
 
 # --- Authentication ---
 
@@ -2306,7 +2304,7 @@ async def handle_checkout_session_completed(event, db: Session):
             user.subscription_status = 'active'
             user.subscription_end_date = datetime.utcfromtimestamp(subscription.current_period_end)
             user.free_trial_converted = True
-            logger.info(f"🔍 [DEBUG] HostGPT subscription activated for user {user.id}: {subscription.id}")
+            logger.info(f"🔍 [DEBUG] OspiterAI subscription activated for user {user.id}: {subscription.id}")
         
         # DEBUG: Determina il piano in base all'amount dalla sessione (solo per HostGPT)
         if subscription_type != 'guardian':
@@ -2909,21 +2907,21 @@ async def confirm_combined_payment(
         hostgpt_price_id = payment_intent.metadata.get('hostgpt_price_id')
         guardian_price_id = payment_intent.metadata.get('guardian_price_id')
         
-        logger.info(f"HostGPT price ID: {hostgpt_price_id}")
+        logger.info(f"OspiterAI price ID: {hostgpt_price_id}")
         logger.info(f"Guardian price ID: {guardian_price_id}")
         
         if not hostgpt_price_id or not guardian_price_id:
             raise HTTPException(status_code=400, detail="Price IDs non trovati nel Payment Intent")
         
         # Crea sottoscrizione HostGPT
-        logger.info("Creating HostGPT subscription...")
+        logger.info("Creating OspiterAI subscription...")
         hostgpt_subscription = stripe.Subscription.create(
             customer=current_user.stripe_customer_id,
             items=[{'price': hostgpt_price_id}],
             payment_settings={'save_default_payment_method': 'on_subscription'},
             expand=['latest_invoice.payment_intent'],
         )
-        logger.info(f"HostGPT subscription created: {hostgpt_subscription.id}")
+        logger.info(f"OspiterAI subscription created: {hostgpt_subscription.id}")
         
         # Crea sottoscrizione Guardian
         logger.info("Creating Guardian subscription...")
@@ -3011,7 +3009,7 @@ async def create_combined_checkout_endpoint(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Crea checkout per il pacchetto combinato HostGPT + Guardian"""
+    """Crea checkout per il pacchetto combinato OspiterAI + Guardian"""
     try:
         logger.info(f"Creating combined checkout for user {current_user.id}")
         
@@ -3086,7 +3084,7 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
                         user.subscription_status = 'active'
                         user.subscription_end_date = datetime.utcfromtimestamp(hostgpt_subscription.current_period_end)
                         user.free_trial_converted = True
-                        logger.info(f"User {user.id} HostGPT subscription activated: {hostgpt_subscription.id}")
+                        logger.info(f"User {user.id} OspiterAI subscription activated: {hostgpt_subscription.id}")
                     
                     # Aggiorna Guardian subscription
                     if guardian_subscription:
@@ -3157,7 +3155,7 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
                             user.messages_used = 0
                             user.messages_reset_date = datetime.utcnow()
                         
-                        logger.info(f"User {user.id} HostGPT subscription updated with new subscription_id: {session['subscription']}")
+                        logger.info(f"User {user.id} OspiterAI subscription updated with new subscription_id: {session['subscription']}")
                         
                         # Invia email di conferma acquisto HostGPT
                         email_body = create_purchase_confirmation_email_simple(
@@ -3204,7 +3202,7 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
                 user_hostgpt.messages_used = 0
                 user_hostgpt.messages_reset_date = None
                 db.commit()
-                logger.info(f"User {user_hostgpt.id} HostGPT subscription completely cancelled")
+                logger.info(f"User {user_hostgpt.id} OspiterAI subscription completely cancelled")
         
         elif event['type'] == 'customer.subscription.updated':
             subscription = event['data']['object']
@@ -3247,7 +3245,7 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
                 logger.info(f"WEBHOOK UNIFICATO: User {user_guardian.id} Guardian subscription status updated to: {subscription['status']}")
             
             if user_hostgpt:
-                logger.info(f"WEBHOOK HOSTGPT: User {user_hostgpt.id} HostGPT subscription updated - status: {subscription['status']}, cancel_at_period_end: {subscription.get('cancel_at_period_end', False)}")
+                logger.info(f"WEBHOOK OspiterAI: User {user_hostgpt.id} OspiterAI subscription updated - status: {subscription['status']}, cancel_at_period_end: {subscription.get('cancel_at_period_end', False)}")
                 
                 # Gestisci upgrade del piano se ci sono items nella subscription
                 if subscription['status'] == 'active' and 'items' in subscription and subscription['items']['data']:
@@ -3260,7 +3258,7 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
                         user_hostgpt.conversations_limit = new_limit
                         user_hostgpt.max_chatbots = 100  # Assicura che il limite di chatbot sia sempre 100
                         
-                        logger.info(f"WEBHOOK HOSTGPT: User {user_hostgpt.id} plan upgraded: {old_limit} -> {new_limit} conversations")
+                        logger.info(f"WEBHOOK OspiterAI: User {user_hostgpt.id} plan upgraded: {old_limit} -> {new_limit} conversations")
                         
                         # Invia email di conferma upgrade
                         try:
@@ -3283,20 +3281,20 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
                                 body=email_body
                             )
                             
-                            logger.info(f"WEBHOOK HOSTGPT: Plan upgrade confirmation email sent to {user_hostgpt.email}: {old_plan} -> {new_plan}")
+                            logger.info(f"WEBHOOK OspiterAI: Plan upgrade confirmation email sent to {user_hostgpt.email}: {old_plan} -> {new_plan}")
                             
                         except Exception as e:
-                            logger.error(f"WEBHOOK HOSTGPT: Failed to send plan upgrade confirmation email: {e}")
+                            logger.error(f"WEBHOOK OspiterAI: Failed to send plan upgrade confirmation email: {e}")
                 
                 # Aggiorna lo stato dell'abbonamento HostGPT nel database
                 if subscription['status'] == 'active':
                     # Se l'abbonamento è attivo ma ha cancel_at_period_end=True, è in fase di cancellazione
                     if subscription.get('cancel_at_period_end', False):
                         user_hostgpt.subscription_status = 'cancelling'
-                        logger.info(f"WEBHOOK HOSTGPT: User {user_hostgpt.id} HostGPT subscription marked as cancelling (cancel_at_period_end=True)")
+                        logger.info(f"WEBHOOK OspiterAI: User {user_hostgpt.id} OspiterAI subscription marked as cancelling (cancel_at_period_end=True)")
                     else:
                         user_hostgpt.subscription_status = 'active'
-                        logger.info(f"WEBHOOK HOSTGPT: User {user_hostgpt.id} HostGPT subscription reactivated (cancel_at_period_end=False)")
+                        logger.info(f"WEBHOOK OspiterAI: User {user_hostgpt.id} OspiterAI subscription reactivated (cancel_at_period_end=False)")
                     
                     # Controlla se current_period_end esiste prima di usarlo
                     if 'current_period_end' in subscription:
@@ -3309,10 +3307,10 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
                     user_hostgpt.subscription_end_date = None
                     user_hostgpt.messages_used = 0
                     user_hostgpt.messages_reset_date = None
-                    logger.info(f"WEBHOOK HOSTGPT: User {user_hostgpt.id} HostGPT subscription completely cancelled")
+                    logger.info(f"WEBHOOK OspiterAI: User {user_hostgpt.id} OspiterAI subscription completely cancelled")
                 
                 db.commit()
-                logger.info(f"WEBHOOK HOSTGPT: User {user_hostgpt.id} HostGPT subscription status updated to: {subscription['status']}")
+                logger.info(f"WEBHOOK OspiterAI: User {user_hostgpt.id} OspiterAI subscription status updated to: {subscription['status']}")
     
     except Exception as e:
         logger.error(f"Errore nell'elaborazione del webhook Stripe: {e}")
@@ -3395,7 +3393,7 @@ async def confirm_subscription(
                 background_tasks.add_task(
                     send_email, 
                     current_user.email, 
-"🎉 HostGPT Subscription Activated!" if (current_user.language or "it") == "en" else "🎉 Abbonamento HostGPT Attivato!", 
+"🎉 OspiterAI Subscription Activated!" if (current_user.language or "it") == "en" else "🎉 Abbonamento OspiterAI Attivato!", 
                     email_body
                 )
                 
@@ -3433,7 +3431,7 @@ async def confirm_subscription(
                         background_tasks.add_task(
                             send_email, 
                             current_user.email, 
-        "🎉 HostGPT Subscription Activated!" if (current_user.language or "it") == "en" else "🎉 Abbonamento HostGPT Attivato!", 
+        "🎉 OspiterAI Subscription Activated!" if (current_user.language or "it") == "en" else "🎉 Abbonamento OspiterAI Attivato!", 
                             email_body
                         )
                     
@@ -3526,7 +3524,7 @@ async def reactivate_subscription(
             background_tasks.add_task(
                 send_email, 
                 current_user.email, 
-"🎉 HostGPT Subscription Reactivated!" if (current_user.language or "it") == "en" else "🎉 Abbonamento HostGPT Riattivato!", 
+"🎉 OspiterAI Subscription Reactivated!" if (current_user.language or "it") == "en" else "🎉 Abbonamento OspiterAI Riattivato!", 
                 email_body
             )
             
@@ -3703,7 +3701,7 @@ async def cancel_subscription(
         background_tasks.add_task(
             send_email, 
             current_user.email, 
-"😔 HostGPT Subscription Cancelled" if (current_user.language or "it") == "en" else "😔 Abbonamento HostGPT Annullato", 
+"😔 OspiterAI Subscription Cancelled" if (current_user.language or "it") == "en" else "😔 Abbonamento OspiterAI Annullato", 
             email_body
         )
         
@@ -3728,7 +3726,6 @@ async def create_chatbot(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
     # Form data - campi obbligatori
-    name: str = Form(...),
     property_name: str = Form(...),
     property_type: str = Form(...),
     property_address: str = Form(...),
@@ -3760,9 +3757,12 @@ async def create_chatbot(
     icon: Optional[UploadFile] = File(None)
 ):
     """Crea un nuovo chatbot"""
+    # Genera automaticamente il nome del chatbot
+    name = f"Assistente {property_name}"
+    
     # Debug: stampa i dati ricevuti
     print(f"🚀 Backend: Ricevuti dati per creazione chatbot:")
-    print(f"  name: {name}")
+    print(f"  name: {name} (generato automaticamente)")
     print(f"  property_name: {property_name}")
     print(f"  property_type: {property_type}")
     print(f"  property_address: {property_address}")
@@ -3926,6 +3926,17 @@ async def create_chatbot(
     db.add(db_chatbot)
     db.commit()
     db.refresh(db_chatbot)
+    
+    # Genera PDF delle regole della casa e salvalo nel database
+    try:
+        logger.info(f"Generating house rules PDF for chatbot: {db_chatbot.property_name}")
+        pdf_bytes = generate_house_rules_pdf(db_chatbot, "IT")  # Genera sempre in italiano di default
+        db_chatbot.house_rules_pdf_data = pdf_bytes
+        db.commit()
+        logger.info(f"House rules PDF generated and saved for chatbot: {db_chatbot.property_name}")
+    except Exception as e:
+        logger.error(f"Failed to generate house rules PDF for chatbot {db_chatbot.id}: {str(e)}")
+        # Non bloccare la creazione del chatbot se il PDF fallisce
     
     # Genera QR code
     chat_url = f"{settings.FRONTEND_URL}/chat/{db_chatbot.uuid}"
@@ -4280,6 +4291,10 @@ async def update_chatbot(
     for field, value in update_data.dict(exclude_unset=True).items():
         setattr(chatbot, field, value)
     
+    # Se è stato modificato il nome della proprietà, aggiorna automaticamente il nome del chatbot
+    if 'property_name' in update_data.dict(exclude_unset=True):
+        chatbot.name = f"Assistente {chatbot.property_name}"
+    
     db.commit()
     
     # Aggiorna anche l'assistant OpenAI
@@ -4289,6 +4304,7 @@ async def update_chatbot(
         new_instructions = build_assistant_instructions_from_model(chatbot)
         client.beta.assistants.update(
             chatbot.assistant_id,
+            name=chatbot.name,
             instructions=new_instructions,
             extra_headers={"OpenAI-Beta": "assistants=v2"}
         )
@@ -4416,18 +4432,9 @@ async def get_chat_info(uuid: str, db: Session = Depends(get_db)):
         "reviews_link": chatbot.reviews_link
     }
 
-@app.get("/api/chat/{uuid}/house-rules-pdf")
-async def download_house_rules_pdf(uuid: str, lang: str = "IT", db: Session = Depends(get_db)):
-    """Genera e scarica PDF con tutte le informazioni della proprietà"""
-    logger.info(f"Property info PDF generation requested for chatbot UUID: {uuid}, language: {lang}")
-    
-    chatbot = db.query(Chatbot).filter(Chatbot.uuid == uuid).first()
-    
-    if not chatbot or not chatbot.is_active:
-        logger.warning(f"Chatbot not found or inactive for UUID: {uuid}")
-        raise HTTPException(status_code=404, detail="Chatbot non trovato")
-    
-    logger.info(f"Chatbot found: {chatbot.property_name}")
+def generate_house_rules_pdf(chatbot: Chatbot, lang: str = "IT") -> bytes:
+    """Genera PDF con tutte le informazioni della proprietà e restituisce i bytes"""
+    logger.info(f"Generating PDF for chatbot: {chatbot.property_name}, language: {lang}")
     
     try:
         # Crea buffer in memoria per il PDF
@@ -4450,6 +4457,397 @@ async def download_house_rules_pdf(uuid: str, lang: str = "IT", db: Session = De
                     "public/icons/logoospiterai.png",       # Se eseguito dalla root
                     "../public/icons/logoospiterai.png",     # Se eseguito da backend/
                     os.path.join(os.path.dirname(__file__), "..", "public", "icons", "logoospiterai.png"),  # Path assoluto
+                ]
+                
+                logo_path = None
+                for path in possible_paths:
+                    if os.path.exists(path):
+                        logo_path = path
+                        break
+                
+                if logo_path:
+                    # Carica e ridimensiona il logo
+                    from PIL import Image
+                    img = Image.open(logo_path)
+                    
+                    # Ridimensiona mantenendo le proporzioni
+                    max_width = 100
+                    max_height = 50
+                    img.thumbnail((max_width, max_height), Image.Resampling.LANCZOS)
+                    
+                    # Salva in un buffer temporaneo
+                    img_buffer = io.BytesIO()
+                    img.save(img_buffer, format='PNG')
+                    img_buffer.seek(0)
+                    
+                    # Posiziona il watermark in alto a destra
+                    page_width, page_height = A4
+                    x = page_width - img.width - 50
+                    y = page_height - img.height - 50
+                    
+                    # Disegna l'immagine con trasparenza
+                    canvas.saveState()
+                    canvas.setFillAlpha(0.3)  # Trasparenza al 30%
+                    canvas.drawInlineImage(img_buffer, x, y, width=img.width, height=img.height)
+                    canvas.restoreState()
+                    
+                    logger.info(f"Watermark added successfully from: {logo_path}")
+                else:
+                    logger.warning("Logo not found, continuing without watermark")
+                    
+            except Exception as e:
+                logger.warning(f"Could not add watermark: {e}")
+        
+        # Stili per il documento
+        styles = getSampleStyleSheet()
+        
+        # Stile personalizzato per il titolo
+        title_style = ParagraphStyle(
+            'CustomTitle',
+            parent=styles['Heading1'],
+            fontSize=24,
+            spaceAfter=30,
+            alignment=1,  # Centrato
+            textColor=colors.HexColor('#2563eb')
+        )
+        
+        # Stile per le sezioni
+        section_style = ParagraphStyle(
+            'CustomSection',
+            parent=styles['Heading2'],
+            fontSize=16,
+            spaceAfter=12,
+            spaceBefore=20,
+            textColor=colors.HexColor('#1f2937')
+        )
+        
+        # Stile per il contenuto
+        content_style = ParagraphStyle(
+            'CustomContent',
+            parent=styles['Normal'],
+            fontSize=11,
+            spaceAfter=8,
+            leading=14,
+            textColor=colors.HexColor('#374151')
+        )
+        
+        # Stile per il footer
+        footer_style = ParagraphStyle(
+            'CustomFooter',
+            parent=styles['Normal'],
+            fontSize=10,
+            alignment=1,  # Centrato
+            textColor=colors.HexColor('#6b7280')
+        )
+        
+        # Contenuto del documento
+        story = []
+        
+        # Titolo principale
+        title_text = f"Informazioni Proprietà - {chatbot.property_name}" if lang == "IT" else f"Property Information - {chatbot.property_name}"
+        story.append(Paragraph(title_text, title_style))
+        story.append(Spacer(1, 20))
+        
+        # Informazioni generali
+        section_title = "Informazioni Generali" if lang == "IT" else "General Information"
+        story.append(Paragraph(section_title, section_style))
+        
+        # Nome proprietà
+        if chatbot.property_name:
+            label = "Nome Proprietà:" if lang == "IT" else "Property Name:"
+            story.append(Paragraph(f"<b>{label}</b> {chatbot.property_name}", content_style))
+        
+        # Tipo proprietà
+        if chatbot.property_type:
+            label = "Tipo:" if lang == "IT" else "Type:"
+            story.append(Paragraph(f"<b>{label}</b> {chatbot.property_type}", content_style))
+        
+        # Indirizzo completo
+        if chatbot.property_address:
+            address_parts = [chatbot.property_address]
+            if chatbot.property_street_number:
+                address_parts[0] = f"{chatbot.property_address} {chatbot.property_street_number}"
+            if chatbot.property_city:
+                address_parts.append(chatbot.property_city)
+            if chatbot.property_state:
+                address_parts.append(chatbot.property_state)
+            if chatbot.property_postal_code:
+                address_parts.append(chatbot.property_postal_code)
+            if chatbot.property_country:
+                address_parts.append(chatbot.property_country)
+            
+            full_address = ", ".join(address_parts)
+            label = "Indirizzo:" if lang == "IT" else "Address:"
+            story.append(Paragraph(f"<b>{label}</b> {full_address}", content_style))
+        
+        # Descrizione proprietà
+        if chatbot.property_description and chatbot.property_description.strip():
+            label = "Descrizione:" if lang == "IT" else "Description:"
+            story.append(Paragraph(f"<b>{label}</b>", content_style))
+            improved_description = improve_text_with_openai(chatbot.property_description, "Descrizione della proprietà per gli ospiti")
+            story.append(Paragraph(improved_description, content_style))
+        
+        story.append(Spacer(1, 10))
+        
+        # Check-in/Check-out
+        section_title = "Check-in e Check-out" if lang == "IT" else "Check-in and Check-out"
+        story.append(Paragraph(section_title, section_style))
+        
+        if chatbot.check_in_time:
+            label = "Check-in:" if lang == "IT" else "Check-in:"
+            story.append(Paragraph(f"<b>{label}</b> {chatbot.check_in_time}", content_style))
+        
+        if chatbot.check_out_time:
+            label = "Check-out:" if lang == "IT" else "Check-out:"
+            story.append(Paragraph(f"<b>{label}</b> {chatbot.check_out_time}", content_style))
+        
+        story.append(Spacer(1, 10))
+        
+        # Servizi e comfort
+        if chatbot.amenities and isinstance(chatbot.amenities, list) and chatbot.amenities:
+            section_title = "Servizi e Comfort" if lang == "IT" else "Amenities and Services"
+            story.append(Paragraph(section_title, section_style))
+            amenities_text = ", ".join([str(amenity) for amenity in chatbot.amenities if str(amenity).strip()])
+            if amenities_text:
+                improved_amenities = improve_text_with_openai(amenities_text, "Lista dei servizi disponibili nella proprietà")
+                story.append(Paragraph(improved_amenities, content_style))
+            story.append(Spacer(1, 10))
+        
+        # Informazioni WiFi
+        if chatbot.wifi_info and isinstance(chatbot.wifi_info, dict):
+            wifi_name = chatbot.wifi_info.get('name', '')
+            wifi_password = chatbot.wifi_info.get('password', '')
+            
+            if wifi_name or wifi_password:
+                section_title = "Informazioni WiFi" if lang == "IT" else "WiFi Information"
+                story.append(Paragraph(section_title, section_style))
+                
+                if wifi_name:
+                    label = "Nome Rete:" if lang == "IT" else "Network Name:"
+                    story.append(Paragraph(f"<b>{label}</b> {wifi_name}", content_style))
+                
+                if wifi_password:
+                    label = "Password:" if lang == "IT" else "Password:"
+                    story.append(Paragraph(f"<b>{label}</b> {wifi_password}", content_style))
+                
+                story.append(Spacer(1, 10))
+        
+        # Informazioni parcheggio
+        if chatbot.parking_info and chatbot.parking_info.strip():
+            section_title = "Informazioni Parcheggio" if lang == "IT" else "Parking Information"
+            story.append(Paragraph(section_title, section_style))
+            improved_parking = improve_text_with_openai(chatbot.parking_info, "Informazioni sul parcheggio per gli ospiti")
+            story.append(Paragraph(improved_parking, content_style))
+            story.append(Spacer(1, 10))
+        
+        # Descrizione del quartiere
+        if chatbot.neighborhood_description and chatbot.neighborhood_description.strip():
+            section_title = "Il Quartiere" if lang == "IT" else "The Neighborhood"
+            story.append(Paragraph(section_title, section_style))
+            improved_neighborhood = improve_text_with_openai(chatbot.neighborhood_description, "Descrizione del quartiere per i turisti")
+            story.append(Paragraph(improved_neighborhood, content_style))
+            story.append(Spacer(1, 10))
+        
+        # Attrazioni nelle vicinanze
+        if chatbot.nearby_attractions and isinstance(chatbot.nearby_attractions, list) and chatbot.nearby_attractions:
+            valid_attractions = [str(attr) for attr in chatbot.nearby_attractions if str(attr).strip()]
+            if valid_attractions:
+                section_title = "Attrazioni nelle Vicinanze" if lang == "IT" else "Nearby Attractions"
+                story.append(Paragraph(section_title, section_style))
+                attractions_text = ", ".join(valid_attractions)
+                improved_attractions = improve_text_with_openai(attractions_text, "Lista delle attrazioni turistiche nelle vicinanze")
+                story.append(Paragraph(improved_attractions, content_style))
+                story.append(Spacer(1, 10))
+        
+        # Informazioni sui trasporti
+        if chatbot.transportation_info and chatbot.transportation_info.strip():
+            section_title = "Trasporti" if lang == "IT" else "Transportation"
+            story.append(Paragraph(section_title, section_style))
+            improved_transport = improve_text_with_openai(chatbot.transportation_info, "Informazioni sui trasporti pubblici e privati")
+            story.append(Paragraph(improved_transport, content_style))
+            story.append(Spacer(1, 10))
+        
+        # Ristoranti e bar
+        if chatbot.restaurants_bars and isinstance(chatbot.restaurants_bars, list) and chatbot.restaurants_bars:
+            valid_restaurants = [str(rest) for rest in chatbot.restaurants_bars if str(rest).strip()]
+            if valid_restaurants:
+                section_title = "Ristoranti e Bar" if lang == "IT" else "Restaurants and Bars"
+                story.append(Paragraph(section_title, section_style))
+                restaurants_text = ", ".join(valid_restaurants)
+                improved_restaurants = improve_text_with_openai(restaurants_text, "Lista di ristoranti e bar consigliati")
+                story.append(Paragraph(improved_restaurants, content_style))
+                story.append(Spacer(1, 10))
+        
+        # Informazioni shopping
+        if chatbot.shopping_info and chatbot.shopping_info.strip():
+            section_title = "Shopping" if lang == "IT" else "Shopping"
+            story.append(Paragraph(section_title, section_style))
+            improved_shopping = improve_text_with_openai(chatbot.shopping_info, "Informazioni sui negozi e centri commerciali")
+            story.append(Paragraph(improved_shopping, content_style))
+            story.append(Spacer(1, 10))
+        
+        # Contatti di emergenza
+        if chatbot.emergency_contacts and isinstance(chatbot.emergency_contacts, list) and chatbot.emergency_contacts:
+            valid_contacts = [str(contact) for contact in chatbot.emergency_contacts if str(contact).strip()]
+            if valid_contacts:
+                section_title = "Contatti di Emergenza" if lang == "IT" else "Emergency Contacts"
+                story.append(Paragraph(section_title, section_style))
+                for contact in valid_contacts:
+                    story.append(Paragraph(f"• {contact}", content_style))
+                story.append(Spacer(1, 10))
+        
+        # Istruzioni speciali
+        if chatbot.special_instructions and chatbot.special_instructions.strip():
+            section_title = "Istruzioni Speciali" if lang == "IT" else "Special Instructions"
+            story.append(Paragraph(section_title, section_style))
+            improved_instructions = improve_text_with_openai(chatbot.special_instructions, "Istruzioni speciali per gli ospiti")
+            story.append(Paragraph(improved_instructions, content_style))
+            story.append(Spacer(1, 10))
+        
+        # FAQ
+        if chatbot.faq:
+            section_title = "Domande Frequenti" if lang == "IT" else "Frequently Asked Questions"
+            story.append(Paragraph(section_title, section_style))
+            if isinstance(chatbot.faq, list) and chatbot.faq:
+                # Filtra FAQ valide
+                valid_faqs = [f for f in chatbot.faq if isinstance(f, dict) and f.get('question') and f.get('answer') and str(f.get('question')).strip() and str(f.get('answer')).strip()]
+                if valid_faqs:
+                    for faq_item in valid_faqs:
+                        question = faq_item['question']
+                        answer = faq_item['answer']
+                        improved_question = improve_text_with_openai(question, "Domanda frequente")
+                        improved_answer = improve_text_with_openai(answer, "Risposta alla domanda")
+                        story.append(Paragraph(f"Q: {improved_question}", content_style))
+                        story.append(Paragraph(f"A: {improved_answer}", content_style))
+                        story.append(Spacer(1, 8))
+                else:
+                    no_info_text = "Nessuna informazione disponibile" if lang == "IT" else "No information available"
+                    story.append(Paragraph(no_info_text, content_style))
+            story.append(Spacer(1, 10))
+        
+        # Regole della casa (se presenti)
+        if chatbot.house_rules and chatbot.house_rules.strip():
+            section_title = "Regole della Casa" if lang == "IT" else "House Rules"
+            story.append(Paragraph(section_title, section_style))
+            improved_rules = improve_text_with_openai(chatbot.house_rules, "Regole della casa per gli ospiti")
+            story.append(Paragraph(improved_rules, content_style))
+            story.append(Spacer(1, 10))
+        
+        story.append(Spacer(1, 40))
+        
+        # Footer
+        footer_text = "Generato da OspiterAI" if lang == "IT" else "Generated by OspiterAI"
+        story.append(Paragraph(footer_text, footer_style))
+        
+        logger.info("Built PDF story with all property information")
+        
+        # Genera PDF con watermark
+        doc.build(story, onFirstPage=add_watermark, onLaterPages=add_watermark)
+        buffer.seek(0)
+        logger.info("Property info PDF generated successfully with watermark")
+        
+        # Restituisce i bytes del PDF
+        pdf_bytes = buffer.getvalue()
+        buffer.close()
+        
+        return pdf_bytes
+        
+    except Exception as e:
+        logger.error(f"Error generating property info PDF for chatbot {chatbot.id}: {str(e)}", exc_info=True)
+        raise Exception(f"Errore nella generazione del PDF: {str(e)}")
+
+@app.get("/api/chat/{uuid}/house-rules-pdf")
+async def download_house_rules_pdf(uuid: str, lang: str = "IT", db: Session = Depends(get_db)):
+    """Scarica PDF pre-generato con tutte le informazioni della proprietà"""
+    logger.info(f"Property info PDF download requested for chatbot UUID: {uuid}, language: {lang}")
+    
+    chatbot = db.query(Chatbot).filter(Chatbot.uuid == uuid).first()
+    
+    if not chatbot or not chatbot.is_active:
+        logger.warning(f"Chatbot not found or inactive for UUID: {uuid}")
+        raise HTTPException(status_code=404, detail="Chatbot non trovato")
+    
+    logger.info(f"Chatbot found: {chatbot.property_name}")
+    
+    # Controlla se esiste il PDF pre-generato
+    if chatbot.house_rules_pdf_data:
+        logger.info("Using pre-generated PDF from database")
+        try:
+            # Nome file
+            filename = f"INFO_{chatbot.property_name.replace(' ', '_').upper()}.pdf" if lang == "IT" else f"{chatbot.property_name.replace(' ', '_').upper()}_INFO.pdf"
+            logger.info(f"Serving pre-generated PDF: {filename}")
+            
+            return StreamingResponse(
+                io.BytesIO(chatbot.house_rules_pdf_data),
+                media_type="application/pdf",
+                headers={"Content-Disposition": f"attachment; filename={filename}"}
+            )
+        except Exception as e:
+            logger.error(f"Error serving pre-generated PDF for UUID {uuid}: {str(e)}")
+            # Fallback alla generazione al volo se il PDF pre-generato è corrotto
+    
+    # Fallback: genera PDF al volo se non esiste quello pre-generato
+    logger.info("Pre-generated PDF not found, generating on-the-fly")
+    try:
+        # Usa la funzione di generazione PDF
+        pdf_bytes = generate_house_rules_pdf(chatbot, lang)
+        
+        # Nome file
+        filename = f"INFO_{chatbot.property_name.replace(' ', '_').upper()}.pdf" if lang == "IT" else f"{chatbot.property_name.replace(' ', '_').upper()}_INFO.pdf"
+        logger.info(f"Generated filename: {filename}")
+        
+        return StreamingResponse(
+            io.BytesIO(pdf_bytes),
+            media_type="application/pdf",
+            headers={"Content-Disposition": f"attachment; filename={filename}"}
+        )
+        
+    except Exception as e:
+        logger.error(f"Error generating property info PDF for UUID {uuid}: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Errore nella generazione del PDF")
+
+@app.get("/api/demo/info")
+async def get_demo_info(db: Session = Depends(get_db)):
+    """Ottieni informazioni del chatbot demo per la landing page"""
+    # UUID fisso del chatbot demo
+    demo_uuid = "9713e4f9-dd6c-4f03-a3ba-12f7c53fa200"
+    chatbot = db.query(Chatbot).filter(Chatbot.uuid == demo_uuid).first()
+    
+    if not chatbot:
+        # Se il chatbot demo non esiste, restituisci info di default
+        return {
+            "name": "Assistente Demo",
+            "property_name": "Casa Bella Vista",
+            "welcome_message": "Ciao! Sono il tuo assistente virtuale per Casa Bella Vista. Come posso aiutarti?",
+            "has_icon": False,
+            "id": None
+        }
+    
+    return {
+        "name": chatbot.name,
+        "property_name": chatbot.property_name,
+        "welcome_message": chatbot.welcome_message,
+        "has_icon": chatbot.has_icon,
+        "id": chatbot.id
+    }
+
+@app.get("/api/demo/icon")
+async def get_demo_icon(db: Session = Depends(get_db)):
+    """Ottieni l'icona del chatbot demo per la landing page"""
+    # UUID fisso del chatbot demo
+    demo_uuid = "5e2665c8-e243-4df3-a9fd-8e0d1e4fedcc"
+    chatbot = db.query(Chatbot).filter(Chatbot.uuid == demo_uuid).first()
+    
+    if not chatbot or not chatbot.icon_data:
+        # Restituisci un'icona di default se non trovata
+        raise HTTPException(status_code=404, detail="Icona demo non trovata")
+    
+    return StreamingResponse(
+        io.BytesIO(chatbot.icon_data),
+        media_type=chatbot.icon_content_type or "image/png"
+    )
+
+@app.post("/api/chat/{uuid}/message")
                 ]
                 
                 # Debug: lista tutti i file nella directory /app
@@ -4814,7 +5212,7 @@ async def download_house_rules_pdf(uuid: str, lang: str = "IT", db: Session = De
         story.append(Spacer(1, 40))
         
         # Footer
-        footer_text = "Generato da HostGPT" if lang == "IT" else "Generated by HostGPT"
+        footer_text = "Generato da OspiterAI" if lang == "IT" else "Generated by OspiterAI"
         story.append(Paragraph(footer_text, footer_style))
         
         logger.info("Built PDF story with all property information")
@@ -5557,7 +5955,7 @@ async def create_guardian_checkout_session(current_user: User = Depends(get_curr
         if not is_subscription_active(current_user.subscription_status):
             raise HTTPException(
                 status_code=400,
-                detail="Devi avere un abbonamento HostGPT attivo per sottoscrivere Guardian"
+                detail="Devi avere un abbonamento OspiterAI attivo per sottoscrivere Guardian"
             )
         
         # Se ha già un abbonamento Guardian attivo, non permettere un nuovo checkout
@@ -5647,7 +6045,7 @@ async def create_guardian_checkout_session(current_user: User = Depends(get_curr
         raise HTTPException(status_code=400, detail=str(e))
 
 async def create_combined_checkout_session(current_user: User, db: Session):
-    """Crea sessione di checkout Stripe combinata per HostGPT + Guardian per utenti in free trial"""
+    """Crea sessione di checkout Stripe combinata per OspiterAI + Guardian per utenti in free trial"""
     try:
         logger.info(f"Creating combined checkout session for free trial user {current_user.id}")
         
@@ -5774,7 +6172,7 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
                     user.subscription_status = 'active'
                     user.subscription_end_date = datetime.utcfromtimestamp(hostgpt_subscription.current_period_end)
                     user.free_trial_converted = True
-                    logger.info(f"User {user.id} HostGPT subscription activated: {hostgpt_subscription.id}")
+                    logger.info(f"User {user.id} OspiterAI subscription activated: {hostgpt_subscription.id}")
                 
                 # Aggiorna Guardian subscription
                 if guardian_subscription:
@@ -5873,7 +6271,7 @@ async def confirm_guardian_subscription(
                 background_tasks.add_task(
                     send_email, 
                     current_user.email, 
-"🎉 HostGPT Subscription Activated!" if (current_user.language or "it") == "en" else "🎉 Abbonamento HostGPT Attivato!", 
+"🎉 OspiterAI Subscription Activated!" if (current_user.language or "it") == "en" else "🎉 Abbonamento OspiterAI Attivato!", 
                     email_body
                 )
                 
@@ -5898,7 +6296,7 @@ async def confirm_guardian_subscription(
                         background_tasks.add_task(
                             send_email, 
                             current_user.email, 
-        "🎉 HostGPT Subscription Activated!" if (current_user.language or "it") == "en" else "🎉 Abbonamento HostGPT Attivato!", 
+        "🎉 OspiterAI Subscription Activated!" if (current_user.language or "it") == "en" else "🎉 Abbonamento OspiterAI Attivato!", 
                             email_body
                         )
                     
@@ -6189,9 +6587,9 @@ async def reactivate_guardian_subscription(
             email_body = f"""
             <h2>Abbonamento Guardian Riattivato</h2>
             <p>Ciao {current_user.full_name},</p>
-            <p>Il tuo abbonamento HostGPT Guardian è stato riattivato con successo!</p>
+            <p>Il tuo abbonamento OspiterAI Guardian è stato riattivato con successo!</p>
             <p>Ora puoi continuare a utilizzare tutte le funzionalità Guardian per proteggere la soddisfazione dei tuoi ospiti.</p>
-            <p>Grazie per aver scelto HostGPT Guardian!</p>
+            <p>Grazie per aver scelto OspiterAI Guardian!</p>
             """
             background_tasks.add_task(
                 send_email, 
@@ -6252,7 +6650,7 @@ async def send_monthly_report(
             language=current_user.language or "it"
         )
         
-        email_subject = "Your Monthly HostGPT Report 📊" if (current_user.language or "it") == "en" else "Il tuo Report Mensile HostGPT 📊"
+        email_subject = "Your Monthly OspiterAI Report 📊" if (current_user.language or "it") == "en" else "Il tuo Report Mensile OspiterAI 📊"
         
         # Invia l'email
         background_tasks.add_task(
@@ -6296,7 +6694,7 @@ async def send_monthly_reports_to_all_users(
                     language=user.language or "it"
                 )
                 
-                email_subject = "Your Monthly HostGPT Report 📊" if (user.language or "it") == "en" else "Il tuo Report Mensile HostGPT 📊"
+                email_subject = "Your Monthly OspiterAI Report 📊" if (user.language or "it") == "en" else "Il tuo Report Mensile OspiterAI 📊"
                 
                 # Invia l'email
                 background_tasks.add_task(
@@ -6596,7 +6994,7 @@ async def start_free_trial(
         background_tasks.add_task(
             send_email, 
             current_user.email, 
-"🎉 Welcome to your HostGPT free trial!" if (current_user.language or "it") == "en" else "🎉 Benvenuto nel tuo periodo di prova gratuito HostGPT!", 
+"🎉 Welcome to your OspiterAI free trial!" if (current_user.language or "it") == "en" else "🎉 Benvenuto nel tuo periodo di prova gratuito OspiterAI!", 
             email_body
         )
         
@@ -6673,7 +7071,7 @@ async def send_free_trial_notifications(
                 background_tasks.add_task(
                     send_email,
                     user.email,
-                    "⏰ Il tuo periodo di prova HostGPT scade tra 3 giorni",
+                    "⏰ Il tuo periodo di prova OspiterAI scade tra 3 giorni",
                     email_body
                 )
                 notifications_sent += 1
@@ -6691,7 +7089,7 @@ async def send_free_trial_notifications(
                 background_tasks.add_task(
                     send_email,
                     user.email,
-                    "🚨 Il tuo periodo di prova HostGPT scade domani!",
+                    "🚨 Il tuo periodo di prova OspiterAI scade domani!",
                     email_body
                 )
                 notifications_sent += 1
@@ -6708,7 +7106,7 @@ async def send_free_trial_notifications(
                 background_tasks.add_task(
                     send_email,
                     user.email,
-    "⏰ Your HostGPT free trial has expired" if (user.language or "it") == "en" else "⏰ Il tuo periodo di prova HostGPT è scaduto",
+    "⏰ Your OspiterAI free trial has expired" if (user.language or "it") == "en" else "⏰ Il tuo periodo di prova OspiterAI è scaduto",
                     email_body
                 )
                 notifications_sent += 1
@@ -6744,9 +7142,9 @@ async def delete_profile(
                     stripe_subscription = stripe.Subscription.retrieve(current_user.stripe_subscription_id)
                     if stripe_subscription.status in ['active', 'trialing', 'past_due']:
                         stripe.Subscription.delete(current_user.stripe_subscription_id)
-                        logger.info(f"Deleted HostGPT subscription {current_user.stripe_subscription_id}")
+                        logger.info(f"Deleted OspiterAI subscription {current_user.stripe_subscription_id}")
                 except stripe.error.StripeError as e:
-                    logger.error(f"Error deleting HostGPT subscription: {e}")
+                    logger.error(f"Error deleting OspiterAI subscription: {e}")
             
             # Cancella abbonamento Guardian se esiste
             if current_user.guardian_stripe_subscription_id:

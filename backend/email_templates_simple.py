@@ -5,7 +5,7 @@ Design con colori viola, verde e nero
 
 # Palette colori semplificata - viola, verde e nero
 HOSTGPT_SIMPLE_COLORS = {
-    'primary': '#533887',  # Viola
+    'primary': '#6f33df',  # Viola
     'secondary': '#388753',  # Verde
     'accent': '#141414',  # Nero
     'white': '#FFFFFF',
@@ -651,7 +651,7 @@ def create_monthly_report_email_simple(user_name: str, report_data: dict, langua
         # Dati chatbot
         chatbot_section = ""
         if report_data.get('chatbots'):
-            chatbot_section = "<h3 style='color: #533887; margin: 20px 0 10px 0;'>🤖 Your Chatbots Activity</h3>"
+            chatbot_section = "<h3 style='color: #6f33df; margin: 20px 0 10px 0;'>🤖 Your Chatbots Activity</h3>"
             for chatbot in report_data['chatbots']:
                 chatbot_section += f"""
                 <div style="background-color: {HOSTGPT_SIMPLE_COLORS['light_gray']}; padding: 15px; border-radius: 8px; margin: 10px 0;">
@@ -679,7 +679,7 @@ def create_monthly_report_email_simple(user_name: str, report_data: dict, langua
         
         # Riepilogo
         summary_text = f"""
-        <h3 style='color: #533887; margin: 20px 0 10px 0;'>📈 Monthly Summary</h3>
+        <h3 style='color: #6f33df; margin: 20px 0 10px 0;'>📈 Monthly Summary</h3>
         <div style="background-color: {HOSTGPT_SIMPLE_COLORS['secondary']}; padding: 15px; border-radius: 8px; margin: 10px 0;">
             • Total conversations: {report_data.get('total_conversations', 0)}<br>
             • Total messages: {report_data.get('total_messages', 0)}<br>
@@ -696,7 +696,7 @@ def create_monthly_report_email_simple(user_name: str, report_data: dict, langua
         # Dati chatbot
         chatbot_section = ""
         if report_data.get('chatbots'):
-            chatbot_section = "<h3 style='color: #533887; margin: 20px 0 10px 0;'>🤖 Attività dei tuoi Chatbot</h3>"
+            chatbot_section = "<h3 style='color: #6f33df; margin: 20px 0 10px 0;'>🤖 Attività dei tuoi Chatbot</h3>"
             for chatbot in report_data['chatbots']:
                 chatbot_section += f"""
                 <div style="background-color: {HOSTGPT_SIMPLE_COLORS['light_gray']}; padding: 15px; border-radius: 8px; margin: 10px 0;">
@@ -724,7 +724,7 @@ def create_monthly_report_email_simple(user_name: str, report_data: dict, langua
         
         # Riepilogo
         summary_text = f"""
-        <h3 style='color: #533887; margin: 20px 0 10px 0;'>📈 Riepilogo Mensile</h3>
+        <h3 style='color: #6f33df; margin: 20px 0 10px 0;'>📈 Riepilogo Mensile</h3>
         <div style="background-color: {HOSTGPT_SIMPLE_COLORS['secondary']}; padding: 15px; border-radius: 8px; margin: 10px 0;">
             • Conversazioni totali: {report_data.get('total_conversations', 0)}<br>
             • Messaggi totali: {report_data.get('total_messages', 0)}<br>

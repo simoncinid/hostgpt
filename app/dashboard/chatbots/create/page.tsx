@@ -28,7 +28,6 @@ import { useChatbotStore } from '@/lib/store'
 import { useLanguage } from '@/lib/languageContext'
 
 interface ChatbotFormData {
-  name: string
   property_name: string
   property_type: string
   property_address: string
@@ -636,7 +635,6 @@ export default function CreateChatbotPage() {
       // Pulisce e valida i dati prima dell'invio
       const cleanData = {
         // Campi obbligatori (sempre presenti)
-        name: data.name || '',
         property_name: data.property_name || '',
         property_type: data.property_type || '',
         property_address: data.property_address || '',
@@ -729,10 +727,6 @@ export default function CreateChatbotPage() {
 
     switch (currentStep) {
       case 1: // Step 1 - Informazioni Base
-        if (!currentData.name?.trim()) {
-          newErrors.name = language === 'IT' ? 'Nome richiesto' : 'Name required'
-          hasErrors = true
-        }
         if (!currentData.property_name?.trim()) {
           newErrors.property_name = language === 'IT' ? 'Nome proprietà richiesto' : 'Property name required'
           hasErrors = true
@@ -903,21 +897,6 @@ export default function CreateChatbotPage() {
           <div className="space-y-6">
             <h2 className="text-2xl font-bold mb-4">{t.chatbots.create.steps.basic}</h2>
             
-            <div>
-              <label className="label">{t.chatbots.create.form.name}</label>
-              <input
-                {...register('name', { required: language === 'IT' ? 'Nome richiesto' : 'Name required' })}
-                className={`input-field ${formErrors.name ? 'border-red-500' : ''}`}
-                placeholder={language === 'IT' ? "Es. Assistente Casa Bella Vista" : "E.g. Bella Vista House Assistant"}
-                onChange={(e) => {
-                  register('name').onChange(e)
-                  clearFieldError('name')
-                }}
-              />
-              {(errors.name || formErrors.name) && (
-                <p className="error-text">{errors.name?.message || formErrors.name}</p>
-              )}
-            </div>
 
             <div>
               <label className="label">{t.chatbots.create.form.icon} ({language === 'IT' ? 'opzionale' : 'optional'})</label>
