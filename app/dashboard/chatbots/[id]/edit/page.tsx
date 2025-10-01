@@ -214,7 +214,6 @@ export default function EditChatbotPage() {
       
       // Aggiorna lo store con i nuovi dati (solo proprietà valide)
       const validUpdateData = {
-        name: data.name,
         property_name: data.property_name,
         property_type: data.property_type,
         property_address: data.property_address,
