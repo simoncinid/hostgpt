@@ -445,11 +445,11 @@ export default function EditChatbotPage() {
                   <label className="label">{t.chatbots.edit.form.propertyType}</label>
                   <select {...register('property_type')} className="input-field">
                     <option value="">{t.chatbots.edit.form.selectType || 'Seleziona tipo'}</option>
-                    <option value="appartamento">{t.chatbots.edit.form.apartment || 'Appartamento'}</option>
-                    <option value="villa">{t.chatbots.edit.form.villa || 'Villa'}</option>
-                    <option value="casa">{t.chatbots.edit.form.house || 'Casa'}</option>
-                    <option value="stanza">{t.chatbots.edit.form.room || 'Stanza'}</option>
-                    <option value="loft">{t.chatbots.edit.form.loft || 'Loft'}</option>
+                    <option value="albergo">{t.chatbots.create.form.propertyTypes.hotel}</option>
+                    <option value="bed_breakfast">{t.chatbots.create.form.propertyTypes.bedBreakfast}</option>
+                    <option value="campeggio">{t.chatbots.create.form.propertyTypes.camping}</option>
+                    <option value="appartamento">{t.chatbots.create.form.propertyTypes.apartment}</option>
+                    <option value="stanza">{t.chatbots.create.form.propertyTypes.room}</option>
                   </select>
                 </div>
                 <div>

@@ -730,14 +730,14 @@ export interface Translations {
           autoFillSuccess: string
           autoFillError: string
           propertyTypes: {
-            apartment: string
-            house: string
-            villa: string
-            room: string
-            loft: string
-            studio: string
+            hotel: string
             bedBreakfast: string
+            camping: string
+            apartment: string
+            room: string
           }
+          hotelServices: string
+          hotelServicesPlaceholder: string
         }
       amenities: {
         wifi: string
@@ -1819,14 +1819,14 @@ export const translations: Record<Language, Translations> = {
           autoFillSuccess: "Informazioni proprietà caricate con successo!",
           autoFillError: "Impossibile analizzare la proprietà. Compila manualmente le informazioni.",
           propertyTypes: {
+            hotel: "Albergo",
+            bedBreakfast: "Bed & Breakfast",
+            camping: "Campeggio",
             apartment: "Appartamento",
-            house: "Casa",
-            villa: "Villa",
-            room: "Stanza",
-            loft: "Loft",
-            studio: "Monolocale",
-            bedBreakfast: "Bed & Breakfast"
-          }
+            room: "Stanza"
+          },
+          hotelServices: "Servizi Alberghieri (SPA, servizio in camera, ecc.)",
+          hotelServicesPlaceholder: "La SPA è accessibile dalle ore X alle Y, per servizio in camera contattare la reception (costo Z) ecc..."
         },
         amenities: {
           wifi: "WiFi",
@@ -3086,14 +3086,14 @@ export const translations: Record<Language, Translations> = {
           autoFillSuccess: "Property information loaded successfully!",
           autoFillError: "Could not analyze the property. Please fill in the information manually.",
           propertyTypes: {
+            hotel: "Hotel",
+            bedBreakfast: "Bed & Breakfast",
+            camping: "Camping",
             apartment: "Apartment",
-            house: "House",
-            villa: "Villa",
-            room: "Room",
-            loft: "Loft",
-            studio: "Studio",
-            bedBreakfast: "Bed & Breakfast"
-          }
+            room: "Room"
+          },
+          hotelServices: "Hotel Services (SPA, room service, etc.)",
+          hotelServicesPlaceholder: "The SPA is accessible from X to Y hours, for room service contact reception (cost Z) etc..."
         },
         amenities: {
           wifi: "WiFi",

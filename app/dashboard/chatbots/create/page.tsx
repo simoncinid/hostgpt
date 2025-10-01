@@ -41,6 +41,7 @@ interface ChatbotFormData {
   check_out_time: string
   house_rules: string
   amenities: string[]
+  hotel_services?: string
   neighborhood_description: string
   nearby_attractions: { name: string; note: string }[]
   transportation_info: string
@@ -154,8 +155,11 @@ export default function CreateChatbotPage() {
   const { register, control, handleSubmit, watch, formState: { errors }, setValue } = useForm<ChatbotFormData>({
     defaultValues: {
       amenities: [],
-      nearby_attractions: [{ name: '', note: '' }],
-      restaurants_bars: [{ name: '', note: '' }],
+      nearby_attractions: [
+        { name: 'Farmacia', note: 'Farmacia locale' },
+        { name: 'Supermercato', note: 'Supermercato nelle vicinanze' }
+      ],
+      restaurants_bars: [{ name: 'Ristorante locale', note: 'Ristorante consigliato' }],
       emergency_contacts: [{ name: '', number: '', type: '' }],
       faq: [{ question: '', answer: '' }],
       wifi_info: { network: '', password: '' }
@@ -183,6 +187,7 @@ export default function CreateChatbotPage() {
   })
 
   const selectedAmenities = watch('amenities')
+  const selectedPropertyType = watch('property_type')
 
   const toggleAmenity = (amenity: string) => {
     const current = selectedAmenities || []
@@ -462,13 +467,16 @@ export default function CreateChatbotPage() {
       if (data.property_type) {
         // Mappa il tipo di proprietà dall'API ai valori del frontend
         const propertyTypeMap: { [key: string]: string } = {
+          'albergo': 'albergo',
+          'hotel': 'albergo',
+          'bed_breakfast': 'bed_breakfast',
+          'bed&breakfast': 'bed_breakfast',
+          'campeggio': 'campeggio',
+          'camping': 'campeggio',
           'appartamento': 'appartamento',
-          'villa': 'villa',
-          'casa': 'casa',
+          'apartment': 'appartamento',
           'stanza': 'stanza',
-          'loft': 'loft',
-          'monolocale': 'monolocale',
-          'bed_breakfast': 'bed_breakfast'
+          'room': 'stanza'
         }
         const mappedType = propertyTypeMap[data.property_type] || data.property_type
         setValue('property_type', mappedType)
@@ -633,6 +641,13 @@ export default function CreateChatbotPage() {
     setIsSubmitting(true)
     try {
       // Pulisce e valida i dati prima dell'invio
+      let amenitiesWithHotelServices = data.amenities || []
+      
+      // Se è un albergo e ci sono servizi alberghieri, li concatena agli amenities
+      if (data.property_type === 'albergo' && data.hotel_services?.trim()) {
+        amenitiesWithHotelServices = [...amenitiesWithHotelServices, data.hotel_services.trim()]
+      }
+      
       const cleanData = {
         // Campi obbligatori (sempre presenti)
         property_name: data.property_name || '',
@@ -651,7 +666,7 @@ export default function CreateChatbotPage() {
         transportation_info: data.transportation_info || '',
         welcome_message: data.welcome_message || '',
         // Campi opzionali (con valori di default)
-        amenities: data.amenities || [],
+        amenities: amenitiesWithHotelServices,
         nearby_attractions: data.nearby_attractions || [],
         restaurants_bars: data.restaurants_bars || [],
         emergency_contacts: data.emergency_contacts || [],
@@ -965,13 +980,11 @@ export default function CreateChatbotPage() {
                 }}
               >
                 <option value="">{t.chatbots.create.form.select}</option>
-                <option value="appartamento">{t.chatbots.create.form.propertyTypes.apartment}</option>
-                <option value="casa">{t.chatbots.create.form.propertyTypes.house}</option>
-                <option value="villa">{t.chatbots.create.form.propertyTypes.villa}</option>
-                <option value="stanza">{t.chatbots.create.form.propertyTypes.room}</option>
-                <option value="loft">{t.chatbots.create.form.propertyTypes.loft}</option>
-                <option value="monolocale">{t.chatbots.create.form.propertyTypes.studio}</option>
+                <option value="albergo">{t.chatbots.create.form.propertyTypes.hotel}</option>
                 <option value="bed_breakfast">{t.chatbots.create.form.propertyTypes.bedBreakfast}</option>
+                <option value="campeggio">{t.chatbots.create.form.propertyTypes.camping}</option>
+                <option value="appartamento">{t.chatbots.create.form.propertyTypes.apartment}</option>
+                <option value="stanza">{t.chatbots.create.form.propertyTypes.room}</option>
               </select>
               {(errors.property_type || formErrors.property_type) && (
                 <p className="error-text">{errors.property_type?.message || formErrors.property_type}</p>
@@ -1317,6 +1330,17 @@ export default function CreateChatbotPage() {
                 placeholder={language === 'IT' ? "Descrivi le opzioni di parcheggio disponibili..." : "Describe available parking options..."}
               />
             </div>
+
+            {selectedPropertyType === 'albergo' && (
+              <div>
+                <label className="label">{t.chatbots.create.form.hotelServices}</label>
+                <textarea
+                  {...register('hotel_services')}
+                  className="input-field min-h-24"
+                  placeholder={t.chatbots.create.form.hotelServicesPlaceholder}
+                />
+              </div>
+            )}
 
             <div>
               <label className="label">{t.chatbots.create.form.specialInstructions}</label>
