@@ -4,7 +4,7 @@ from fastapi.responses import StreamingResponse
 from fastapi.security import OAuth2PasswordBearer
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func
 from typing import List, Optional, Tuple
 from datetime import datetime, timedelta
@@ -5432,15 +5432,24 @@ async def get_conversations(
     if not chatbot:
         raise HTTPException(status_code=404, detail="Chatbot non trovato")
     
-    conversations = db.query(Conversation).filter(
+    conversations = db.query(Conversation).options(
+        joinedload(Conversation.guest)
+    ).filter(
         Conversation.chatbot_id == chatbot_id
     ).order_by(Conversation.started_at.desc()).all()
     
     result = []
     for conv in conversations:
+        # Determina il nome da mostrare: numero di telefono se disponibile, altrimenti guest_name o "Ospite"
+        display_name = "Ospite"
+        if conv.guest and conv.guest.phone:
+            display_name = conv.guest.phone
+        elif conv.guest_name:
+            display_name = conv.guest_name
+        
         result.append({
             "id": conv.id,
-            "guest_name": conv.guest_name or "Ospite",
+            "guest_name": display_name,
             "started_at": conv.started_at,
             "message_count": conv.message_count,
             "last_message": db.query(Message).filter(

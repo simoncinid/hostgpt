@@ -1761,7 +1761,7 @@ export const translations: Record<Language, Translations> = {
         chatUrl: "URL chat",
         messages: "Messaggi",
         conversations: "Conversazioni",
-        averagePerChat: "Media per chat"
+        averagePerChat: "Media messaggi per chat"
       },
       alert: {
         critical: "🚨 ALERT CRITICO",
@@ -3051,7 +3051,7 @@ export const translations: Record<Language, Translations> = {
         chatUrl: "Chat URL",
         messages: "Messages",
         conversations: "Conversations",
-        averagePerChat: "Average per chat"
+        averagePerChat: "Average messages per chat"
       },
       alert: {
         critical: "🚨 CRITICAL ALERT",
