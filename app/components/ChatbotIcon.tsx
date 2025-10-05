@@ -18,7 +18,7 @@ interface ChatbotIconProps {
   chatbotId?: number
   chatbotUuid?: string
   hasIcon: boolean
-  size?: 'sm' | 'md' | 'lg'
+  size?: 'sm' | 'md' | 'lg' | 'xl'
   className?: string
   noBorder?: boolean // Nuova prop per rimuovere il bordo
 }
@@ -116,7 +116,8 @@ export default function ChatbotIcon({ chatbotId, chatbotUuid, hasIcon, size = 'm
   const sizeClasses = {
     sm: 'w-8 h-8',
     md: 'w-12 h-12',
-    lg: 'w-16 h-16'
+    lg: 'w-16 h-16',
+    xl: 'w-20 h-20'
   }
   
   // Se viene passata una className personalizzata, usa quella invece delle dimensioni predefinite

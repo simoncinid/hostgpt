@@ -1020,12 +1020,12 @@ export default function ChatWidgetPage() {
                 </div>
               )}
               <div>
-                <h1 className={`font-semibold text-lg transition-colors duration-300 ${isDarkMode ? 'text-white' : 'text-gray-900'}`} title={chatInfo?.name}>
+                <h1 className={`font-semibold text-lg transition-colors duration-300 ${isDarkMode ? 'text-white' : 'text-gray-900'}`} title={chatInfo?.property_name}>
                   <span className="block md:hidden">
-                    {chatInfo?.name && chatInfo.name.length > 10 ? `${chatInfo.name.substring(0, 10)}...` : chatInfo?.name}
+                    {chatInfo?.property_name && chatInfo.property_name.length > 10 ? `${chatInfo.property_name.substring(0, 10)}...` : chatInfo?.property_name}
                   </span>
                   <span className="hidden md:block">
-                    {chatInfo?.name}
+                    {chatInfo?.property_name}
                   </span>
                 </h1>
                 <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-500'} transition-colors duration-300`}>{currentTexts.assistant}</p>
@@ -1179,17 +1179,17 @@ export default function ChatWidgetPage() {
               animate={{ opacity: 1, scale: 1 }}
               className="p-8 text-center flex-1 flex flex-col justify-center"
             >
-              <div className="w-20 h-20 bg-purple-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
+              <div className="mx-auto mb-6">
                 {chatInfo ? (
                   <ChatbotIcon 
                     chatbotUuid={uuid} 
                     hasIcon={chatInfo.has_icon} 
-                    size="lg" 
-                    className="w-12 h-12"
+                    size="xl" 
+                    className="w-20 h-20"
                     noBorder={true}
                   />
                 ) : (
-                  <MessageSquare className="w-10 h-10 text-purple-500" />
+                  <MessageSquare className="w-20 h-20 text-purple-500" />
                 )}
               </div>
               <h2 className={`text-2xl font-bold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'} transition-colors duration-300`}>

@@ -144,7 +144,7 @@ export default function ChatbotDetailPage() {
               <div className="stats-card p-3 md:p-6">
                 <div className="flex items-center justify-between mb-1 md:mb-2">
                   <BarChart3 className="w-5 h-5 md:w-8 md:h-8 text-primary" />
-                  <span className="text-lg md:text-3xl font-bold">{Math.round((analytics?.avg_messages_per_conversation || 0) * 10) / 10}</span>
+                  <span className="text-lg md:text-3xl font-bold">{Math.round((currentChatbot.total_messages / Math.max(currentChatbot.total_conversations, 1)) * 10) / 10}</span>
                 </div>
                 <p className="text-gray-600 text-xs md:text-base">{t.chatbots.preview.averagePerChat}</p>
               </div>
