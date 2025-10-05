@@ -60,6 +60,7 @@ export default function LandingPage() {
   const [currentTestimonial, setCurrentTestimonial] = useState(0)
   const [touchStart, setTouchStart] = useState<number | null>(null)
   const [touchEnd, setTouchEnd] = useState<number | null>(null)
+  const [showCalendly, setShowCalendly] = useState(false)
 
   // Messaggi demo dinamici
   const demoChatMessages: { role: 'user' | 'assistant'; text: string }[] = t.demoMessages
@@ -1025,9 +1026,7 @@ export default function LandingPage() {
                   whileTap={{ scale: 0.98 }}
                 >
                   <Link 
-                    href="https://wa.me/393391797616" 
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    href="#cta" 
                     className="px-3 py-2 text-primary bg-primary/10 hover:bg-primary/20 hover:text-primary font-medium transition-all duration-300 rounded-lg text-sm"
                   >
                     {t.navbar.contactUs}
@@ -1180,9 +1179,7 @@ export default function LandingPage() {
                     transition={{ duration: 0.3, delay: 0.2 }}
                   >
                     <Link 
-                      href="https://wa.me/393391797616" 
-                      target="_blank"
-                      rel="noopener noreferrer"
+                      href="#cta" 
                       onClick={() => setIsMenuOpen(false)} 
                       className="block px-4 py-2.5 text-primary bg-primary/10 hover:bg-primary/20 hover:text-primary font-medium rounded-lg transition-all duration-300 text-sm"
                     >
@@ -1456,7 +1453,7 @@ export default function LandingPage() {
             transition={{ duration: 1.2, delay: 1, ease: [0.23, 1, 0.320, 1] }}
             className="relative w-[95%] mx-[2.5%] md:w-full md:max-w-4xl md:mx-auto"
           >
-            <div className={`h-[90vh] flex flex-col overflow-hidden transition-colors duration-300 w-full md:w-auto ${
+            <div className={`h-[72vh] md:h-[90vh] flex flex-col overflow-hidden transition-colors duration-300 w-full md:w-auto ${
               demoIsDarkMode 
                 ? 'bg-gradient-to-br from-gray-900 to-gray-800' 
                 : 'bg-gradient-to-br from-primary/5 to-accent/5'
@@ -1805,11 +1802,41 @@ export default function LandingPage() {
                     </p>
                   </div>
                   
-                  {/* Animazioni dinamiche - posizionamento ottimizzato */}
+                  {/* Immagini statiche - posizionamento ottimizzato */}
                   <div className="flex-1 flex items-center justify-center">
-                    {index === 0 && <RegistrationAnimation isActive={true} />}
-                    {index === 1 && <CustomizationAnimation isActive={true} />}
-                    {index === 2 && <SharingAnimation isActive={true} />}
+                    {index === 0 && (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <Image
+                          src="/icons/screen1.png"
+                          alt="Step 1"
+                          width={200}
+                          height={200}
+                          className="w-full h-full object-contain"
+                        />
+                      </div>
+                    )}
+                    {index === 1 && (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <Image
+                          src="/icons/screen3.png"
+                          alt="Step 2"
+                          width={200}
+                          height={200}
+                          className="w-full h-full object-contain"
+                        />
+                      </div>
+                    )}
+                    {index === 2 && (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <Image
+                          src="/icons/screen4.png"
+                          alt="Step 3"
+                          width={200}
+                          height={200}
+                          className="w-full h-full object-contain"
+                        />
+                      </div>
+                    )}
                   </div>
                   
                   {/* Gradiente decorativo */}
@@ -1840,7 +1867,7 @@ export default function LandingPage() {
                    className="relative flex-shrink-0 w-full snap-center px-4"
                  >
                    {/* Card con animazione statica - MOBILE VERSIONE */}
-                   <div className="bg-white rounded-2xl p-6 shadow-xl border border-gray-100 aspect-[9/16] relative overflow-hidden flex flex-col">
+                   <div className="bg-white rounded-2xl p-6 shadow-xl border border-gray-100 aspect-[9/13] relative overflow-hidden flex flex-col">
                      
                      {/* Numero del passo - dentro la card in alto a sinistra */}
                      <div className="absolute top-4 left-4 z-20">
@@ -1863,11 +1890,41 @@ export default function LandingPage() {
                        </p>
                      </div>
                      
-                     {/* Animazioni statiche per mobile - senza animazioni */}
+                     {/* Immagini statiche per mobile */}
                      <div className="flex-1 flex items-center justify-center">
-                       {index === 0 && <RegistrationAnimationStatic />}
-                       {index === 1 && <CustomizationAnimationStatic />}
-                       {index === 2 && <SharingAnimationStatic />}
+                       {index === 0 && (
+                         <div className="w-full h-full flex items-center justify-center">
+                           <Image
+                             src="/icons/screen1.png"
+                             alt="Step 1"
+                             width={200}
+                             height={200}
+                             className="w-full h-full object-contain"
+                           />
+                         </div>
+                       )}
+                       {index === 1 && (
+                         <div className="w-full h-full flex items-center justify-center">
+                           <Image
+                             src="/icons/screen3.png"
+                             alt="Step 2"
+                             width={200}
+                             height={200}
+                             className="w-full h-full object-contain"
+                           />
+                         </div>
+                       )}
+                       {index === 2 && (
+                         <div className="w-full h-full flex items-center justify-center">
+                           <Image
+                             src="/icons/screen4.png"
+                             alt="Step 3"
+                             width={200}
+                             height={200}
+                             className="w-full h-full object-contain"
+                           />
+                         </div>
+                       )}
                      </div>
                      
                      {/* Gradiente decorativo */}
@@ -1997,12 +2054,16 @@ export default function LandingPage() {
             </motion.p>
           </motion.div>
 
-          {/* Grid delle features ultra-lussuose */}
+          {/* Grid delle immagini features */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-4">
-             {features.map((feature, index) => (
-               <div key={index}>
-               <motion.div
-                 key={index}
+            {[
+              { src: "/icons/grafica1.png", alt: "Feature 1" },
+              { src: "/icons/grafica2.png", alt: "Feature 2" },
+              { src: "/icons/grafica3.png", alt: "Feature 3" },
+              { src: "/icons/grafica4.png", alt: "Feature 4" }
+            ].map((image, index) => (
+              <motion.div
+                key={index}
                 initial={{ opacity: 0, y: 40, scale: 0.95 }}
                 whileInView={{ opacity: 1, y: 0, scale: 1 }}
                 transition={{ 
@@ -2015,7 +2076,6 @@ export default function LandingPage() {
                 whileHover={{ 
                   y: -8,
                   scale: 1.02,
-                  boxShadow: "0 25px 50px rgba(83, 56, 135, 0.12)"
                 }}
                 className="relative group"
               >
@@ -2034,105 +2094,18 @@ export default function LandingPage() {
                   }}
                 />
 
-                {/* Card principale */}
-                <div className="relative bg-white rounded-3xl p-2 md:p-3 lg:p-4 shadow-lg border border-purple-100/40 overflow-hidden text-center group-hover:shadow-2xl transition-all duration-500 h-48 md:h-72 lg:h-80 flex flex-col"
-                     style={{ 
-                       boxShadow: "0 10px 25px rgba(83, 56, 135, 0.04), 0 0 0 1px rgba(83, 56, 135, 0.08)"
-                     }}>
-                  
-                  {/* Background pattern interno */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-purple-50/20 via-transparent to-purple-100/15"></div>
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-purple-100/25 to-transparent rounded-full blur-2xl"></div>
-                  <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-primary/5 to-transparent rounded-full blur-xl"></div>
-
-                  {/* Contenuto della card con spaziatura uniforme */}
-                  <div className="flex flex-col h-full justify-between py-2 md:py-4">
-                    {/* Sezione superiore: Icona */}
-                    <div className="flex-shrink-0">
-                      <motion.div
-                        initial={{ scale: 0, rotate: -180 }}
-                        whileInView={{ scale: 1, rotate: 0 }}
-                        transition={{ 
-                          duration: 0.8, 
-                          delay: 0.3 + (index * 0.1),
-                          type: "spring",
-                          stiffness: 200
-                        }}
-                        viewport={{ once: true }}
-                        whileHover={{ 
-                          scale: 1.1, 
-                          rotate: 5,
-                          boxShadow: "0 15px 30px rgba(83, 56, 135, 0.2)"
-                        }}
-                        className="relative w-10 h-10 md:w-14 md:h-14 lg:w-18 lg:h-18 rounded-xl md:rounded-2xl bg-gradient-to-r from-primary to-secondary flex items-center justify-center mx-auto shadow-lg overflow-hidden"
-                      >
-                        {/* Shimmer effect sull'icona */}
-                        <motion.div
-                          className="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent -skew-x-12"
-                          animate={{
-                            x: ["-100%", "200%"]
-                          }}
-                          transition={{
-                            duration: 2.5,
-                            repeat: Infinity,
-                            repeatDelay: 4,
-                            ease: "easeInOut"
-                          }}
-                        />
-                        <div className="relative text-white text-sm md:text-lg lg:text-xl">
-                          {feature.icon}
-                        </div>
-                      </motion.div>
-                    </div>
-
-                    {/* Sezione centrale: Titolo e Descrizione */}
-                    <div className="flex-1 flex flex-col justify-center px-1">
-                      {/* Titolo con animazione */}
-                      <motion.h3 
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.5 + (index * 0.1), duration: 0.6 }}
-                        viewport={{ once: true }}
-                        className="text-sm md:text-lg lg:text-xl font-bold mb-2 md:mb-3 text-gray-900 group-hover:text-gray-800 transition-colors duration-300 leading-tight"
-                      >
-                        {feature.title}
-                      </motion.h3>
-
-                      {/* Descrizione (solo desktop) */}
-                      <motion.p 
-                        initial={{ opacity: 0 }}
-                        whileInView={{ opacity: 1 }}
-                        transition={{ delay: 0.7 + (index * 0.1), duration: 0.6 }}
-                        viewport={{ once: true }}
-                        className="hidden lg:block text-gray-600 leading-relaxed group-hover:text-gray-700 transition-colors duration-300 text-sm"
-                      >
-                        {feature.description}
-                      </motion.p>
-                    </div>
-                  </div>
-
-
-
-                  {/* Decorazioni angolari sottili */}
-                  <div className="absolute top-3 left-3 w-4 h-4 border-l border-t border-purple-200/50 rounded-tl-lg"></div>
-                  <div className="absolute top-3 right-3 w-4 h-4 border-r border-t border-purple-200/50 rounded-tr-lg"></div>
-                  <div className="absolute bottom-3 left-3 w-4 h-4 border-l border-b border-purple-200/50 rounded-bl-lg"></div>
-                  <div className="absolute bottom-3 right-3 w-4 h-4 border-r border-b border-purple-200/50 rounded-bl-lg"></div>
-
-                  {/* Linea decorativa bottom */}
-                  <motion.div
-                    className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-16 h-0.5 bg-gradient-to-r from-primary to-secondary rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                    initial={{ scaleX: 0 }}
-                    whileInView={{ scaleX: 1 }}
-                    transition={{ delay: 1.2 + (index * 0.1), duration: 0.8 }}
-                    viewport={{ once: true }}
+                {/* Immagine diretta senza container bianco */}
+                <div className="relative w-full h-48 md:h-72 lg:h-80 flex items-center justify-center">
+                  <Image
+                    src={image.src}
+                    alt={image.alt}
+                    width={300}
+                    height={300}
+                    className="w-full h-full object-contain"
                   />
                 </div>
-
-
-               </motion.div>
-               </div>
-             ))}
+              </motion.div>
+            ))}
           </div>
 
 
@@ -2359,14 +2332,6 @@ export default function LandingPage() {
                           </span>
                         </div>
                         
-                        {/* Badge popolare per Premium */}
-                        {isPopular && (
-                          <div className="mb-1 md:mb-2">
-                            <span className="text-xs font-semibold text-primary bg-primary/10 px-3 py-1 rounded-full">
-                              Più Popolare
-                            </span>
-                          </div>
-                        )}
                         
                       </div>
                     </div>
@@ -3211,7 +3176,7 @@ export default function LandingPage() {
       </section>
 
       {/* CTA SECTION - Ultra Luxurious Final Call */}
-      <section className="relative section-padding overflow-hidden">
+      <section id="cta" className="relative section-padding overflow-hidden">
         {/* Background ultra-elegante con gradienti multipli */}
         <div className="absolute inset-0 bg-gradient-to-br from-white via-purple-25/20 to-violet-25/30"></div>
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(111,51,223,0.12),transparent_70%)] opacity-80"></div>
@@ -3331,18 +3296,19 @@ export default function LandingPage() {
                 {t.cta.subtitle} <span className="font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-primary/80">{t.cta.subtitleHighlight}</span> che hanno già migliorato il loro servizio con OspiterAI
               </motion.p>
 
-              {/* Bottone CTA finale spettacolare */}
+              {/* Bottoni CTA finali spettacolari */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.7 }}
                 viewport={{ once: true }}
-                className="relative"
+                className="relative flex flex-col sm:flex-row gap-4 justify-center items-center"
               >
+                {/* Bottone Book a Call */}
                 <motion.div
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  className="relative group inline-block"
+                  className="relative group"
                 >
                   {/* Glow esterno del bottone */}
                   <motion.div
@@ -3350,8 +3316,8 @@ export default function LandingPage() {
                     whileHover={{ scale: 1.1 }}
                   />
                   
-                  <Link
-                    href="#pricing"
+                  <button
+                    onClick={() => setShowCalendly(true)}
                     className="relative inline-flex items-center gap-2 md:gap-4 px-8 py-3 md:px-12 md:py-6 text-sm md:text-xl font-black text-white bg-gradient-to-r from-primary via-primary/90 to-primary/80 rounded-2xl md:rounded-3xl shadow-2xl transition-all duration-300 group-hover:shadow-primary/30 overflow-hidden"
                   >
                     {/* Effetto shimmer interno */}
@@ -3368,7 +3334,50 @@ export default function LandingPage() {
                       }}
                     />
                     
-                    <span className="relative z-10">{t.cta.button}</span>
+                    <span className="relative z-10">{t.cta.bookCallButton}</span>
+                    <motion.div
+                      whileHover={{ x: 8 }}
+                      transition={{ type: "spring", stiffness: 400 }}
+                      className="relative z-10"
+                    >
+                      <ArrowRight className="w-4 h-4 md:w-6 md:h-6" />
+                    </motion.div>
+                  </button>
+                </motion.div>
+
+                {/* Bottone WhatsApp */}
+                <motion.div
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="relative group"
+                >
+                  {/* Glow esterno del bottone verde */}
+                  <motion.div
+                    className="absolute -inset-3 bg-gradient-to-r from-green-500 to-green-600 rounded-3xl blur-xl opacity-0 group-hover:opacity-40 transition-opacity duration-300"
+                    whileHover={{ scale: 1.1 }}
+                  />
+                  
+                  <Link
+                    href="https://api.whatsapp.com/message/BVWGHR65VXRDL1?autoload=1&app_absent=0"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="relative inline-flex items-center gap-2 md:gap-4 px-8 py-3 md:px-12 md:py-6 text-sm md:text-xl font-black text-white bg-gradient-to-r from-green-500 via-green-600 to-green-700 rounded-2xl md:rounded-3xl shadow-2xl transition-all duration-300 group-hover:shadow-green-500/30 overflow-hidden"
+                  >
+                    {/* Effetto shimmer interno */}
+                    <motion.div
+                      className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12"
+                      animate={{
+                        x: ['-100%', '100%'],
+                      }}
+                      transition={{
+                        duration: 2,
+                        repeat: Infinity,
+                        repeatDelay: 3,
+                        ease: "easeInOut",
+                      }}
+                    />
+                    
+                    <span className="relative z-10">{t.cta.whatsappButton}</span>
                     <motion.div
                       whileHover={{ x: 8 }}
                       transition={{ type: "spring", stiffness: 400 }}
@@ -3457,6 +3466,33 @@ export default function LandingPage() {
         </div>
       </footer>
 
+      {/* Calendly Popup */}
+      {showCalendly && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="relative bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+            {/* Header */}
+            <div className="flex items-center justify-between p-6 border-b">
+              <h3 className="text-xl font-bold text-gray-900">Prenota una Call</h3>
+              <button
+                onClick={() => setShowCalendly(false)}
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+              >
+                <X className="w-6 h-6 text-gray-500" />
+              </button>
+            </div>
+            
+            {/* Calendly Widget */}
+            <div className="p-6">
+              <div className="calendly-inline-widget" data-url="https://calendly.com/contact-ospiterai/30min?text_color=7a18b3&primary_color=7300ff" style={{minWidth: '320px', height: '700px'}}></div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Calendly Script */}
+      {showCalendly && (
+        <script type="text/javascript" src="https://assets.calendly.com/assets/external/widget.js" async></script>
+      )}
 
     </div>
   )

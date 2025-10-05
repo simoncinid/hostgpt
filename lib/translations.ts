@@ -1101,6 +1101,8 @@ export interface Translations {
     subtitle: string
     subtitleHighlight: string
     button: string
+    bookCallButton: string
+    whatsappButton: string
   }
   
   // Footer
@@ -1176,9 +1178,9 @@ export interface Translations {
 export const translations: Record<Language, Translations> = {
   IT: {
     navbar: {
-      features: "Funzionalità",
+      features: "Perchè",
       demo: "Demo",
-      howItWorks: "Come Funziona",
+      howItWorks: "Come",
       pricing: "Prezzi",
       feedback: "Feedback",
       contactUs: "Contattaci",
@@ -2126,7 +2128,9 @@ export const translations: Record<Language, Translations> = {
       titleHighlight: "l'Esperienza dei Tuoi Ospiti?",
       subtitle: "Unisciti a",
       subtitleHighlight: "centinaia di host",
-      button: "Registrati per iniziare"
+      button: "Registrati per iniziare",
+      bookCallButton: "Prenota una Call",
+      whatsappButton: "Scrivici su WhatsApp"
     },
     footer: {
       description: "Il tuo assistente virtuale per affitti vacanza",
@@ -2443,9 +2447,9 @@ export const translations: Record<Language, Translations> = {
   
   ENG: {
     navbar: {
-      features: "Features",
+      features: "Why",
       demo: "Demo",
-      howItWorks: "How It Works",
+      howItWorks: "How",
       pricing: "Pricing",
       feedback: "Feedback",
       contactUs: "Contact Us",
@@ -3393,7 +3397,9 @@ export const translations: Record<Language, Translations> = {
       titleHighlight: "Your Guests' Experience?",
       subtitle: "Join",
       subtitleHighlight: "hundreds of hosts",
-      button: "Sign Up to Start"
+      button: "Sign Up to Start",
+      bookCallButton: "Book a Call",
+      whatsappButton: "Message us on WhatsApp"
     },
     footer: {
       description: "Your virtual assistant for vacation rentals",

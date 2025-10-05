@@ -14,7 +14,7 @@ export default function CookiePolicyPage() {
           <div className="flex justify-between items-center py-3 px-4 bg-white/60 backdrop-blur-lg border border-white/30 shadow-lg rounded-2xl mx-2">
             <Link href="/" className="flex items-center space-x-2">
               <OspiterAILogo size="lg" className="text-primary" />
-              <span className="text-2xl font-bold text-dark">HostGPT</span>
+              <span className="text-2xl font-bold text-dark">OspiterAI</span>
             </Link>
             <Link href="/" className="flex items-center space-x-2 text-gray-600 hover:text-primary transition">
               <ArrowLeft className="w-5 h-5" />
@@ -40,7 +40,7 @@ export default function CookiePolicyPage() {
               Cookie Policy
             </h1>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Scopri come utilizziamo i cookie per migliorare la tua esperienza su HostGPT e come puoi gestire le tue preferenze.
+              Scopri come utilizziamo i cookie per migliorare la tua esperienza su OspiterAI e come puoi gestire le tue preferenze.
             </p>
           </motion.div>
         </div>
@@ -154,7 +154,7 @@ export default function CookiePolicyPage() {
             <div className="md:col-span-2">
               <div className="flex items-center space-x-2 mb-4">
                 <OspiterAILogo size="lg" className="text-primary" />
-                <span className="text-2xl font-bold">HostGPT</span>
+                <span className="text-2xl font-bold">OspiterAI</span>
               </div>
               <p className="text-gray-400 mb-4 max-w-md">
                 Crea chatbot intelligenti per i tuoi affitti vacanza. Offri ai tuoi ospiti assistenza 24/7 con informazioni sulla casa e sulla zona.
@@ -195,7 +195,7 @@ export default function CookiePolicyPage() {
           
           {/* Separatore */}
           <div className="border-t border-gray-800 pt-6 text-center">
-            <p className="text-gray-400 text-sm">&copy; 2025 HostGPT. Tutti i diritti riservati.</p>
+            <p className="text-gray-400 text-sm">&copy; 2025 OspiterAI. Tutti i diritti riservati.</p>
           </div>
         </div>
       </footer>

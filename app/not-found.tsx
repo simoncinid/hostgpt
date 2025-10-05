@@ -2,8 +2,8 @@ import Link from 'next/link'
 import { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Pagina Non Trovata - HostGPT',
-  description: 'La pagina che stai cercando non esiste. Torna alla homepage di HostGPT per continuare a gestire i tuoi chatbot per affitti vacanza.',
+  title: 'Pagina Non Trovata - OspiterAI',
+  description: 'La pagina che stai cercando non esiste. Torna alla homepage di OspiterAI per continuare a gestire i tuoi chatbot per affitti vacanza.',
   robots: {
     index: false,
     follow: false,

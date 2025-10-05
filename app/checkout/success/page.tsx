@@ -63,8 +63,8 @@ function CheckoutSuccessContent() {
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center">
       <SEOHead 
-        title="Pagamento Completato - HostGPT"
-        description="Il tuo abbonamento HostGPT è stato attivato con successo"
+        title="Pagamento Completato - OspiterAI"
+        description="Il tuo abbonamento OspiterAI è stato attivato con successo"
       />
       
       <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">

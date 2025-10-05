@@ -33,7 +33,7 @@ export default function HostGPTLogo({
       />
       {showText && (
         <span className={cn('font-bold text-gray-900', textClassName)}>
-          HostGPT
+          OspiterAI
         </span>
       )}
     </div>
