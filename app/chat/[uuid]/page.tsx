@@ -369,10 +369,10 @@ export default function ChatWidgetPage() {
     
     // Crea il messaggio base con le informazioni WiFi
     let wifiMessage = language === 'IT' 
-      ? `📶 **Informazioni WiFi**\n\n` +
+      ? `**Informazioni WiFi**\n\n` +
         (networkName ? `**Nome rete:** ${networkName}\n` : '') +
         (password ? `**Password:** ${password}\n` : '')
-      : `📶 **WiFi Information**\n\n` +
+      : `**WiFi Information**\n\n` +
         (networkName ? `**Network name:** ${networkName}\n` : '') +
         (password ? `**Password:** ${password}\n` : '')
     
@@ -1263,11 +1263,15 @@ export default function ChatWidgetPage() {
             <div className="flex md:hidden items-center">
               <button
                 onClick={handleEmergency}
-                className="px-3 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-2"
+                disabled={!guestData}
+                className={`px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
+                  guestData 
+                    ? 'bg-red-500 hover:bg-red-600 text-white' 
+                    : 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                }`}
                 title={language === 'IT' ? 'Emergenza - Contatta Host' : 'Emergency - Contact Host'}
               >
-                <Phone className="w-4 h-4" />
-                <span className="hidden sm:inline">{language === 'IT' ? 'Emergenza' : 'Emergency'}</span>
+                <span>{language === 'IT' ? 'Emergenza' : 'Emergency'}</span>
               </button>
             </div>
           </div>
