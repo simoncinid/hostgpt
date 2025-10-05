@@ -367,17 +367,51 @@ export default function ChatWidgetPage() {
     const networkName = wifiData.network || wifiData.name || ''
     const password = wifiData.password || ''
     
-    // Crea un messaggio con le informazioni WiFi (non salvato nel DB)
-    const wifiMessage = language === 'IT' 
+    // Crea il messaggio base con le informazioni WiFi
+    let wifiMessage = language === 'IT' 
       ? `📶 **Informazioni WiFi**\n\n` +
         (networkName ? `**Nome rete:** ${networkName}\n` : '') +
-        (password ? `**Password:** ${password}\n` : '') +
-        (chatInfo.has_wifi_qr_code ? `\n**QR Code:** Disponibile (vedi immagine sotto)` : '')
+        (password ? `**Password:** ${password}\n` : '')
       : `📶 **WiFi Information**\n\n` +
         (networkName ? `**Network name:** ${networkName}\n` : '') +
-        (password ? `**Password:** ${password}\n` : '') +
-        (chatInfo.has_wifi_qr_code ? `\n**QR Code:** Available (see image below)` : '')
+        (password ? `**Password:** ${password}\n` : '')
+    
+    // Se c'è un QR code, lo scarichiamo e lo includiamo nel messaggio
+    if (chatInfo.has_wifi_qr_code) {
+      try {
+        const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+        const qrResponse = await fetch(`${API_URL}/api/chat/${uuid}/wifi-qr-code`)
+        if (qrResponse.ok) {
+          const qrBlob = await qrResponse.blob()
+          
+          // Converti il blob in base64
+          const reader = new FileReader()
+          reader.onload = () => {
+            const base64String = reader.result as string
+            
+            // Aggiungi il QR code al messaggio
+            wifiMessage += language === 'IT' 
+              ? `\n**QR Code:**\n\n<img src="${base64String}" alt="QR Code WiFi" style="max-width: 200px; height: auto; border-radius: 8px;" />`
+              : `\n**QR Code:**\n\n<img src="${base64String}" alt="WiFi QR Code" style="max-width: 200px; height: auto; border-radius: 8px;" />`
+            
+            const assistantMessage: Message = {
+              id: Date.now().toString(),
+              role: 'assistant',
+              content: wifiMessage,
+              timestamp: new Date()
+            }
 
+            setMessages(prev => [...prev, assistantMessage])
+          }
+          reader.readAsDataURL(qrBlob)
+          return // Esci dalla funzione, il messaggio verrà aggiunto nel callback
+        }
+      } catch (error) {
+        console.error('Errore nel caricamento del QR code WiFi:', error)
+      }
+    }
+    
+    // Se non c'è QR code o se c'è stato un errore, aggiungi solo il messaggio base
     const assistantMessage: Message = {
       id: Date.now().toString(),
       role: 'assistant',
@@ -386,30 +420,6 @@ export default function ChatWidgetPage() {
     }
 
     setMessages(prev => [...prev, assistantMessage])
-    
-    // Se c'è un QR code, lo mostriamo come immagine
-    if (chatInfo.has_wifi_qr_code) {
-      try {
-        const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
-        const qrResponse = await fetch(`${API_URL}/api/chat/${uuid}/wifi-qr-code`)
-        if (qrResponse.ok) {
-          const qrBlob = await qrResponse.blob()
-          const qrUrl = URL.createObjectURL(qrBlob)
-          
-          // Aggiungi un messaggio con l'immagine del QR code
-          const qrMessage: Message = {
-            id: (Date.now() + 1).toString(),
-            role: 'assistant',
-            content: `![QR Code WiFi](${qrUrl})`,
-            timestamp: new Date()
-          }
-          
-          setMessages(prev => [...prev, qrMessage])
-        }
-      } catch (error) {
-        console.error('Errore nel caricamento del QR code WiFi:', error)
-      }
-    }
   }
 
 

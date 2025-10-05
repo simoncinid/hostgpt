@@ -8,13 +8,43 @@ interface MarkdownTextProps {
 }
 
 export default function MarkdownText({ content, className = '' }: MarkdownTextProps) {
+  // Funzione per convertire stringa CSS in oggetto JavaScript
+  const parseStyleString = (styleString: string): React.CSSProperties => {
+    const styles: any = {}
+    const declarations = styleString.split(';')
+    
+    declarations.forEach(declaration => {
+      const [property, value] = declaration.split(':').map(s => s.trim())
+      if (property && value) {
+        // Converte kebab-case in camelCase
+        const camelProperty = property.replace(/-([a-z])/g, (g) => g[1].toUpperCase())
+        styles[camelProperty] = value
+      }
+    })
+    
+    return styles
+  }
+
   // Funzione per convertire markdown in JSX
   const parseMarkdown = (text: string): React.ReactNode[] => {
     const elements: React.ReactNode[] = []
     let currentIndex = 0
     
-    // Regex per catturare grassetto, italic e link
+    // Regex per catturare grassetto, italic, link e immagini
     const patterns = [
+      // Immagini HTML: <img src="..." alt="..." style="..." />
+      {
+        regex: /<img\s+src="([^"]+)"\s+alt="([^"]*)"(?:\s+style="([^"]*)")?\s*\/?>/g,
+        render: (match: string, ...groups: string[]) => (
+          <img
+            key={`img-${Math.random()}`}
+            src={groups[0]}
+            alt={groups[1] || 'Image'}
+            style={groups[2] ? { ...parseStyleString(groups[2]) } : {}}
+            className="rounded-lg shadow-sm"
+          />
+        )
+      },
       // URL diretti: http://... o https://...
       {
         regex: /(https?:\/\/[^\s]+)/g,
