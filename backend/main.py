@@ -4276,6 +4276,42 @@ async def get_chatbot_icon_public(
         media_type=chatbot.icon_content_type or "image/png"
     )
 
+@app.get("/api/chat/{uuid}/wifi-qr-code")
+async def get_chatbot_wifi_qr_public(
+    uuid: str,
+    db: Session = Depends(get_db)
+):
+    """Ottieni il QR code WiFi del chatbot per la chat pubblica"""
+    print(f"DEBUG: Cercando QR code WiFi per chatbot UUID: {uuid}")
+    
+    chatbot = db.query(Chatbot).filter(Chatbot.uuid == uuid).first()
+    
+    if not chatbot:
+        print(f"DEBUG: Chatbot non trovato per UUID: {uuid}")
+        # Debug: mostra tutti gli UUID esistenti
+        all_chatbots = db.query(Chatbot).all()
+        print(f"DEBUG: UUID esistenti nel database: {[bot.uuid for bot in all_chatbots]}")
+        raise HTTPException(status_code=404, detail="Chatbot non trovato")
+    
+    print(f"DEBUG: Chatbot trovato: {chatbot.name}, is_active: {chatbot.is_active}")
+    print(f"DEBUG: Chatbot has_wifi_qr_code: {chatbot.has_wifi_qr_code}")
+    
+    if not chatbot.is_active:
+        print(f"DEBUG: Chatbot non attivo: {chatbot.name}")
+        raise HTTPException(status_code=404, detail="Chatbot non attivo")
+    
+    if not chatbot.has_wifi_qr_code or not chatbot.wifi_qr_code_data:
+        print(f"DEBUG: QR code WiFi non trovato per chatbot: {chatbot.name}")
+        raise HTTPException(status_code=404, detail="QR code WiFi non trovato")
+    
+    print(f"DEBUG: QR code WiFi trovato per chatbot: {chatbot.name}, content_type: {chatbot.wifi_qr_code_content_type}")
+    
+    from fastapi.responses import Response
+    return Response(
+        content=chatbot.wifi_qr_code_data,
+        media_type=chatbot.wifi_qr_code_content_type or "image/png"
+    )
+
 @app.get("/api/chatbots/{chatbot_id}")
 async def get_chatbot(
     chatbot_id: int,
@@ -4358,6 +4394,9 @@ async def update_chatbot(
     db: Session = Depends(get_db)
 ):
     """Aggiorna un chatbot"""
+    # Debug: stampa i dati ricevuti
+    logger.info(f"Update chatbot {chatbot_id} - Data received: {update_data.dict(exclude_unset=True)}")
+    
     # Blocca accesso senza abbonamento attivo
     if not is_subscription_active(current_user.subscription_status):
         raise HTTPException(
@@ -4384,6 +4423,7 @@ async def update_chatbot(
     if 'wifi_info' in update_data.dict(exclude_unset=True):
         try:
             wifi_info_dict = update_data.wifi_info
+            logger.info(f"WiFi info updated for chatbot {chatbot.id}: {wifi_info_dict}")
             if wifi_info_dict and wifi_info_dict.get('network') and wifi_info_dict.get('password'):
                 logger.info(f"Regenerating WiFi QR code for chatbot: {chatbot.property_name}")
                 wifi_qr_code_data = generate_wifi_qr_code(wifi_info_dict)
@@ -4542,6 +4582,8 @@ async def get_chat_info(uuid: str, db: Session = Depends(get_db)):
         "property_name": chatbot.property_name,
         "welcome_message": chatbot.welcome_message,
         "has_icon": chatbot.has_icon,
+        "has_wifi_qr_code": chatbot.has_wifi_qr_code,
+        "wifi_info": chatbot.wifi_info,
         "id": chatbot.id,
         "house_rules": chatbot.house_rules,
         "reviews_link": chatbot.reviews_link

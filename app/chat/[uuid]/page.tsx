@@ -358,24 +358,24 @@ export default function ChatWidgetPage() {
 
   // Funzione per mostrare le informazioni WiFi
   const handleWifiInfo = async () => {
-    if (!chatInfo?.wifi_info) {
+    if (!chatInfo?.wifi_info && !chatInfo?.has_wifi_qr_code) {
       toast.error(language === 'IT' ? 'Informazioni WiFi non disponibili' : 'WiFi information not available')
       return
     }
 
-    const wifiData = chatInfo.wifi_info
+    const wifiData = chatInfo.wifi_info || {}
     const networkName = wifiData.network || wifiData.name || ''
     const password = wifiData.password || ''
     
     // Crea un messaggio con le informazioni WiFi (non salvato nel DB)
     const wifiMessage = language === 'IT' 
       ? `📶 **Informazioni WiFi**\n\n` +
-        `**Nome rete:** ${networkName}\n` +
-        `**Password:** ${password}\n` +
+        (networkName ? `**Nome rete:** ${networkName}\n` : '') +
+        (password ? `**Password:** ${password}\n` : '') +
         (chatInfo.has_wifi_qr_code ? `\n**QR Code:** Disponibile (vedi immagine sotto)` : '')
       : `📶 **WiFi Information**\n\n` +
-        `**Network name:** ${networkName}\n` +
-        `**Password:** ${password}\n` +
+        (networkName ? `**Network name:** ${networkName}\n` : '') +
+        (password ? `**Password:** ${password}\n` : '') +
         (chatInfo.has_wifi_qr_code ? `\n**QR Code:** Available (see image below)` : '')
 
     const assistantMessage: Message = {
@@ -1559,9 +1559,9 @@ export default function ChatWidgetPage() {
                   {/* Pulsante WiFi - Verde e nella sezione suggerimenti */}
                   <button
                     onClick={handleWifiInfo}
-                    disabled={isLoading || !chatInfo?.wifi_info}
+                    disabled={isLoading || (!chatInfo?.wifi_info && !chatInfo?.has_wifi_qr_code)}
                     className={`p-2 rounded-full transition-colors duration-200 flex-shrink-0 ${
-                      isLoading || !chatInfo?.wifi_info
+                      isLoading || (!chatInfo?.wifi_info && !chatInfo?.has_wifi_qr_code)
                         ? 'bg-gray-400 cursor-not-allowed' 
                         : 'bg-green-500 hover:bg-green-600'
                     }`}
