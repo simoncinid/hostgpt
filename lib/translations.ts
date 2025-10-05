@@ -1262,11 +1262,15 @@ export const translations: Record<Language, Translations> = {
           description: "Crea il tuo account e scegli il piano che meglio si adatta alle tue esigenze"
         },
         {
-          title: "Personalizza",
-          description: "Rispondi a domande guidate per creare la base di conoscenza del tuo chatbot"
+          title: "Inserisci il link per autofill",
+          description: "Collega il tuo listing Airbnb per compilare automaticamente le informazioni base"
         },
         {
-          title: "Condividi",
+          title: "Personalizza con le info extra",
+          description: "Aggiungi dettagli specifici e personalizza le risposte del tuo chatbot"
+        },
+        {
+          title: "Condividi crea QR/link per i tuoi ospiti",
           description: "Ricevi il QR code e il link da condividere con i tuoi ospiti"
         }
       ],
@@ -2531,11 +2535,15 @@ export const translations: Record<Language, Translations> = {
           description: "Create your account and choose the plan that best suits your needs"
         },
         {
-          title: "Customize",
-          description: "Answer guided questions to create your chatbot's knowledge base"
+          title: "Insert link for autofill",
+          description: "Connect your Airbnb listing to automatically fill in basic information"
         },
         {
-          title: "Share",
+          title: "Customize with extra info",
+          description: "Add specific details and customize your chatbot's responses"
+        },
+        {
+          title: "Share create QR/link for your guests",
           description: "Receive the QR code and link to share with your guests"
         }
       ],

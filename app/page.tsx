@@ -1767,7 +1767,7 @@ export default function LandingPage() {
           </motion.div>
 
           {/* Steps con animazioni - Gallery style su mobile */}
-          <div className="hidden md:grid md:grid-cols-3 gap-8 lg:gap-12">
+          <div className="hidden md:grid md:grid-cols-4 gap-6 lg:gap-8">
                {howItWorksSteps.map((step, index) => (
                  <motion.div
                    key={index}
@@ -1818,7 +1818,7 @@ export default function LandingPage() {
                     {index === 1 && (
                       <div className="w-full h-full flex items-center justify-center">
                         <Image
-                          src="/icons/screen3.png"
+                          src="/icons/screen2.png"
                           alt="Step 2"
                           width={200}
                           height={200}
@@ -1829,8 +1829,19 @@ export default function LandingPage() {
                     {index === 2 && (
                       <div className="w-full h-full flex items-center justify-center">
                         <Image
-                          src="/icons/screen4.png"
+                          src="/icons/screen3.png"
                           alt="Step 3"
+                          width={200}
+                          height={200}
+                          className="w-full h-full object-contain"
+                        />
+                      </div>
+                    )}
+                    {index === 3 && (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <Image
+                          src="/icons/screen4.png"
+                          alt="Step 4"
                           width={200}
                           height={200}
                           className="w-full h-full object-contain"
@@ -1843,6 +1854,7 @@ export default function LandingPage() {
                   <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${
                     index === 0 ? 'from-primary to-primary/80' :
                     index === 1 ? 'from-green-400 to-green-600' :
+                    index === 2 ? 'from-blue-400 to-blue-600' :
                     'from-primary to-primary/80'
                   } rounded-t-2xl z-10`}></div>
                 </div>
@@ -1906,7 +1918,7 @@ export default function LandingPage() {
                        {index === 1 && (
                          <div className="w-full h-full flex items-center justify-center">
                            <Image
-                             src="/icons/screen3.png"
+                             src="/icons/screen2.png"
                              alt="Step 2"
                              width={200}
                              height={200}
@@ -1917,8 +1929,19 @@ export default function LandingPage() {
                        {index === 2 && (
                          <div className="w-full h-full flex items-center justify-center">
                            <Image
-                             src="/icons/screen4.png"
+                             src="/icons/screen3.png"
                              alt="Step 3"
+                             width={200}
+                             height={200}
+                             className="w-full h-full object-contain"
+                           />
+                         </div>
+                       )}
+                       {index === 3 && (
+                         <div className="w-full h-full flex items-center justify-center">
+                           <Image
+                             src="/icons/screen4.png"
+                             alt="Step 4"
                              width={200}
                              height={200}
                              className="w-full h-full object-contain"
@@ -1931,6 +1954,7 @@ export default function LandingPage() {
                      <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${
                        index === 0 ? 'from-primary to-primary/80' :
                        index === 1 ? 'from-green-400 to-green-600' :
+                       index === 2 ? 'from-blue-400 to-blue-600' :
                        'from-primary to-primary/80'
                      } rounded-t-2xl z-10`}></div>
                    </div>
@@ -2099,9 +2123,9 @@ export default function LandingPage() {
                   <Image
                     src={image.src}
                     alt={image.alt}
-                    width={300}
-                    height={300}
-                    className="w-full h-full object-contain"
+                    width={400}
+                    height={400}
+                    className="w-full h-full object-contain scale-110"
                   />
                 </div>
               </motion.div>
@@ -3291,7 +3315,7 @@ export default function LandingPage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.5 }}
                 viewport={{ once: true }}
-                className="text-base md:text-2xl text-gray-700 mb-8 md:mb-12 max-w-3xl mx-auto leading-relaxed font-light"
+                className="text-base md:text-2xl text-gray-700 mb-8 md:mb-6 max-w-3xl mx-auto leading-relaxed font-light"
               >
                 {t.cta.subtitle} <span className="font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-primary/80">{t.cta.subtitleHighlight}</span> che hanno già migliorato il loro servizio con OspiterAI
               </motion.p>
@@ -3471,19 +3495,19 @@ export default function LandingPage() {
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="relative bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
             {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b">
-              <h3 className="text-xl font-bold text-gray-900">Prenota una Call</h3>
+            <div className="flex items-center justify-between p-4 md:p-6 border-b">
+              <h3 className="text-lg md:text-xl font-bold text-gray-900">Prenota una Call</h3>
               <button
                 onClick={() => setShowCalendly(false)}
                 className="p-2 hover:bg-gray-100 rounded-full transition-colors"
               >
-                <X className="w-6 h-6 text-gray-500" />
+                <X className="w-5 h-5 md:w-6 md:h-6 text-gray-500" />
               </button>
             </div>
             
             {/* Calendly Widget */}
-            <div className="p-6">
-              <div className="calendly-inline-widget" data-url="https://calendly.com/contact-ospiterai/30min?text_color=7a18b3&primary_color=7300ff" style={{minWidth: '320px', height: '700px'}}></div>
+            <div className="p-2 md:p-6">
+              <div className="calendly-inline-widget" data-url="https://calendly.com/contact-ospiterai/30min" style={{minWidth: '320px', height: '500px'}}></div>
             </div>
           </div>
         </div>
