@@ -12,12 +12,10 @@ import { useLanguage } from '../lib/languageContext'
 import api from '../lib/api'
 import { chat } from '../lib/api'
 import { 
-  MessageSquare, 
   Home, 
   Globe, 
   BarChart3, 
   Clock, 
-  Shield, 
   Zap,
   Check,
   ArrowRight,
@@ -51,7 +49,9 @@ import {
   User,
   Bot,
   Loader2,
-  FileText
+  FileText,
+  Shield,
+  MessageSquare
 } from 'lucide-react'
 
 export default function LandingPage() {
@@ -985,7 +985,8 @@ export default function LandingPage() {
                   { href: "#demo", label: t.navbar.demo },
                   { href: "#how-it-works", label: t.navbar.howItWorks },
                   { href: "#features", label: t.navbar.features },
-                  { href: "#pricing", label: t.navbar.pricing }
+                  { href: "#pricing", label: t.navbar.pricing },
+                  { href: "#coming-soon", label: t.navbar.comingSoon, isSpecial: true }
                 ].map((item, index) => (
                   <motion.div
                     key={item.href}
@@ -997,13 +998,19 @@ export default function LandingPage() {
                   >
                     <Link 
                       href={item.href} 
-                      className="relative px-3 py-2 font-medium transition-all duration-300 rounded-lg group text-sm text-gray-700 hover:text-gray-900 hover:bg-white/40"
+                      className={`relative px-3 py-2 font-medium transition-all duration-300 rounded-lg group text-sm ${
+                        item.isSpecial 
+                          ? "bg-yellow-400 text-yellow-900 hover:bg-yellow-500 hover:text-yellow-950 shadow-md" 
+                          : "text-gray-700 hover:text-gray-900 hover:bg-white/40"
+                      }`}
                     >
                       <span className="relative z-10">{item.label}</span>
-                      <motion.div
-                        className="absolute inset-0 bg-gradient-to-r from-purple-100/50 to-purple-200/50 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                        layoutId="navbar-hover"
-                      />
+                      {!item.isSpecial && (
+                        <motion.div
+                          className="absolute inset-0 bg-gradient-to-r from-purple-100/50 to-purple-200/50 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                          layoutId="navbar-hover"
+                        />
+                      )}
                     </Link>
                   </motion.div>
                 ))}
@@ -1154,7 +1161,8 @@ export default function LandingPage() {
                     { href: "#demo", label: t.navbar.demo },
                     { href: "#how-it-works", label: t.navbar.howItWorks },
                     { href: "#features", label: t.navbar.features },
-                    { href: "#pricing", label: t.navbar.pricing }
+                    { href: "#pricing", label: t.navbar.pricing },
+                    { href: "#coming-soon", label: t.navbar.comingSoon, isSpecial: true }
                   ].map((item, index) => (
                     <motion.div
                       key={item.href}
@@ -1165,7 +1173,11 @@ export default function LandingPage() {
                       <Link 
                         href={item.href} 
                         onClick={() => setIsMenuOpen(false)} 
-                        className="block px-4 py-2.5 font-medium rounded-lg transition-all duration-300 text-sm text-gray-700 hover:text-gray-900 hover:bg-white/30"
+                        className={`block px-4 py-2.5 font-medium rounded-lg transition-all duration-300 text-sm ${
+                          item.isSpecial 
+                            ? "bg-yellow-400 text-yellow-900 hover:bg-yellow-500 hover:text-yellow-950 shadow-md" 
+                            : "text-gray-700 hover:text-gray-900 hover:bg-white/30"
+                        }`}
                       >
                         {item.label}
                       </Link>
@@ -3196,6 +3208,150 @@ export default function LandingPage() {
           </div>
 
 
+        </div>
+      </section>
+
+      {/* COMING SOON SECTION - Innovative Features */}
+      <section id="coming-soon" className="relative section-padding overflow-hidden bg-white">
+        {/* Background elegante */}
+        <div className="absolute inset-0 bg-gradient-to-br from-gray-50 to-white"></div>
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(99,102,241,0.05),transparent_70%)] opacity-60"></div>
+
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Header */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <motion.div
+              initial={{ scale: 0 }}
+              whileInView={{ scale: 1 }}
+              transition={{ duration: 0.6, delay: 0.2, type: "spring", stiffness: 200 }}
+              viewport={{ once: true }}
+              className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-yellow-400 to-orange-400 rounded-2xl mb-6 shadow-lg"
+            >
+              <motion.div
+                animate={{ rotate: [0, 10, -10, 0] }}
+                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+              >
+                <Zap className="w-8 h-8 text-white" />
+              </motion.div>
+            </motion.div>
+            
+            <motion.h2
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+              viewport={{ once: true }}
+              className="text-4xl md:text-5xl font-bold text-gray-900 mb-4"
+            >
+              {t.comingSoon.title}
+            </motion.h2>
+            
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.4 }}
+              viewport={{ once: true }}
+              className="text-xl text-gray-600 max-w-3xl mx-auto"
+            >
+              {t.comingSoon.subtitle}
+            </motion.p>
+          </motion.div>
+
+          {/* Features Grid */}
+          <div className="grid md:grid-cols-2 gap-8 lg:gap-12">
+            {t.comingSoon.features.map((feature: any, index: number) => {
+              const IconComponent = feature.icon === "Shield" ? Shield : MessageSquare
+              
+              // Colori specifici per ogni feature
+              const isGuardian = feature.title === "Guardian"
+              const glowColors = isGuardian 
+                ? "from-green-400/20 via-emerald-400/20 to-teal-400/20"
+                : "from-blue-400/20 via-cyan-400/20 to-sky-400/20"
+              const iconGradient = isGuardian
+                ? "from-green-500 to-emerald-500"
+                : "from-blue-500 to-cyan-500"
+              const badgeGradient = isGuardian
+                ? "from-green-400 to-emerald-400"
+                : "from-blue-400 to-cyan-400"
+              const badgeTextColor = isGuardian
+                ? "text-green-900"
+                : "text-blue-900"
+              const badgeDotColor = isGuardian
+                ? "bg-green-900"
+                : "bg-blue-900"
+              
+              return (
+                <motion.div
+                  key={feature.title}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 0.1 * index }}
+                  viewport={{ once: true }}
+                  whileHover={{ scale: 1.02, y: -5 }}
+                  className="relative group h-full"
+                >
+                  {/* Glow effect */}
+                  <div className={`absolute -inset-4 bg-gradient-to-r ${glowColors} rounded-3xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500`}></div>
+                  
+                  <div className="relative bg-white border border-gray-200 rounded-3xl p-8 shadow-lg hover:shadow-2xl transition-all duration-500 h-full flex flex-col">
+                    {/* Icon */}
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      whileInView={{ scale: 1 }}
+                      transition={{ duration: 0.6, delay: 0.2 + 0.1 * index, type: "spring", stiffness: 200 }}
+                      viewport={{ once: true }}
+                      className={`inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r ${iconGradient} rounded-2xl mb-6 shadow-lg`}
+                    >
+                      <IconComponent className="w-8 h-8 text-white" />
+                    </motion.div>
+
+                    {/* Title */}
+                    <motion.h3
+                      initial={{ opacity: 0, y: 20 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.6, delay: 0.3 + 0.1 * index }}
+                      viewport={{ once: true }}
+                      className="text-2xl font-bold text-gray-900 mb-4"
+                    >
+                      {feature.title}
+                    </motion.h3>
+
+                    {/* Description */}
+                    <motion.p
+                      initial={{ opacity: 0, y: 20 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.6, delay: 0.4 + 0.1 * index }}
+                      viewport={{ once: true }}
+                      className="text-gray-600 leading-relaxed flex-grow"
+                    >
+                      {feature.description}
+                    </motion.p>
+
+                    {/* Coming Soon Badge */}
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      whileInView={{ opacity: 1, scale: 1 }}
+                      transition={{ duration: 0.6, delay: 0.5 + 0.1 * index }}
+                      viewport={{ once: true }}
+                      className={`mt-6 inline-flex items-center px-4 py-2 bg-gradient-to-r ${badgeGradient} ${badgeTextColor} rounded-full text-sm font-semibold shadow-md`}
+                    >
+                      <motion.div
+                        animate={{ scale: [1, 1.1, 1] }}
+                        transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                        className={`w-2 h-2 ${badgeDotColor} rounded-full mr-2`}
+                      />
+                      Coming Soon
+                    </motion.div>
+                  </div>
+                </motion.div>
+              )
+            })}
+          </div>
         </div>
       </section>
 
