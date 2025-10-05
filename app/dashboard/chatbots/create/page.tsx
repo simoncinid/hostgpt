@@ -55,7 +55,6 @@ interface ChatbotFormData {
   welcome_message: string
   property_url: string
   reviews_link: string
-  wifi_qr_code: File | null
 }
 
 // Steps will be created dynamically from translations
@@ -680,7 +679,7 @@ export default function CreateChatbotPage() {
       }
       
       console.log('🚀 Invio dati chatbot:', cleanData)
-      const response = await chatbots.create(cleanData, iconFile || undefined, data.wifi_qr_code || undefined)
+      const response = await chatbots.create(cleanData, iconFile || undefined)
       
       if (response?.data) {
         addChatbot(response.data)
@@ -1614,24 +1613,6 @@ export default function CreateChatbotPage() {
               </p>
             </div>
 
-            <div>
-              <label className="label">{language === 'IT' ? 'Codice QR WiFi (opzionale)' : 'WiFi QR Code (optional)'}</label>
-              <input
-                type="file"
-                accept="image/png,image/jpeg,image/jpg"
-                onChange={(e) => {
-                  const file = e.target.files?.[0] || null
-                  setValue('wifi_qr_code', file)
-                }}
-                className="input-field"
-              />
-              <p className="text-sm text-gray-600 mt-1">
-                {language === 'IT'
-                  ? 'Carica un\'immagine del QR code WiFi (PNG, JPG)'
-                  : 'Upload a WiFi QR code image (PNG, JPG)'
-                }
-              </p>
-            </div>
 
             <div className="bg-green-50 border border-green-200 rounded-lg p-6">
               <h3 className="font-semibold text-green-800 mb-2">{t.chatbots.create.form.allReady}</h3>

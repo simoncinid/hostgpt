@@ -117,9 +117,9 @@ class Chatbot(Base):
     # Configurazione chatbot
     welcome_message = Column(Text)
     reviews_link = Column(String(500))  # Link per le recensioni (opzionale)
-    wifi_qr_code_data = Column(LargeBinary)  # Dati del QR code WiFi come BLOB
-    wifi_qr_code_filename = Column(String(255))  # Nome file originale del QR code
-    wifi_qr_code_content_type = Column(String(100))  # MIME type (image/png, image/jpeg)
+    wifi_qr_code_data = Column(LargeBinary)  # Dati del QR code WiFi generato automaticamente
+    wifi_qr_code_filename = Column(String(255))  # Nome file del QR code generato
+    wifi_qr_code_content_type = Column(String(100))  # MIME type (image/png)
     has_wifi_qr_code = Column(Boolean, default=False)  # Flag per verificare se ha QR code
     icon_data = Column(LargeBinary)  # Dati dell'icona come BLOB
     icon_filename = Column(String(255))  # Nome file originale

@@ -16,6 +16,7 @@ import json
 import qrcode
 import io
 import base64
+import wifi_qrcode_generator.generator
 from reportlab.lib.pagesizes import letter, A4
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
@@ -3721,6 +3722,38 @@ async def cancel_subscription(
 
 # --- Chatbot Management ---
 
+def generate_wifi_qr_code(wifi_info: dict) -> Optional[bytes]:
+    """Genera un QR code WiFi basato sulle informazioni WiFi fornite"""
+    try:
+        # Estrai le informazioni WiFi
+        ssid = wifi_info.get('network', '').strip()
+        password = wifi_info.get('password', '').strip()
+        
+        # Se non ci sono informazioni WiFi valide, non generare il QR code
+        if not ssid or not password:
+            logger.info("No valid WiFi information provided, skipping QR code generation")
+            return None
+        
+        # Genera il QR code WiFi
+        qr_code = wifi_qrcode_generator.generator.wifi_qrcode(
+            ssid=ssid,
+            hidden=False,  # Assumiamo che la rete non sia nascosta
+            authentication_type='WPA',  # Assumiamo WPA/WPA2
+            password=password
+        )
+        
+        # Converti in bytes
+        img_buffer = io.BytesIO()
+        qr_code.make_image().save(img_buffer, format='PNG')
+        img_buffer.seek(0)
+        
+        logger.info(f"WiFi QR code generated successfully for network: {ssid}")
+        return img_buffer.getvalue()
+        
+    except Exception as e:
+        logger.error(f"Error generating WiFi QR code: {str(e)}")
+        return None
+
 @app.post("/api/chatbots/create")
 async def create_chatbot(
     background_tasks: BackgroundTasks,
@@ -3928,6 +3961,26 @@ async def create_chatbot(
     db.commit()
     db.refresh(db_chatbot)
     
+    # Genera QR code WiFi se le informazioni WiFi sono disponibili
+    try:
+        if wifi_info_dict and wifi_info_dict.get('network') and wifi_info_dict.get('password'):
+            logger.info(f"Generating WiFi QR code for chatbot: {db_chatbot.property_name}")
+            wifi_qr_code_data = generate_wifi_qr_code(wifi_info_dict)
+            if wifi_qr_code_data:
+                db_chatbot.wifi_qr_code_data = wifi_qr_code_data
+                db_chatbot.wifi_qr_code_filename = f"wifi_qr_{db_chatbot.uuid}.png"
+                db_chatbot.wifi_qr_code_content_type = "image/png"
+                db_chatbot.has_wifi_qr_code = True
+                db.commit()
+                logger.info(f"WiFi QR code generated and saved for chatbot: {db_chatbot.property_name}")
+            else:
+                logger.info(f"No WiFi QR code generated for chatbot: {db_chatbot.property_name}")
+        else:
+            logger.info(f"No WiFi information provided for chatbot: {db_chatbot.property_name}")
+    except Exception as e:
+        logger.error(f"Failed to generate WiFi QR code for chatbot {db_chatbot.id}: {str(e)}")
+        # Non bloccare la creazione del chatbot se il QR code WiFi fallisce
+    
     # Genera PDF delle regole della casa e salvalo nel database
     try:
         logger.info(f"Generating house rules PDF for chatbot: {db_chatbot.property_name}")
@@ -4078,6 +4131,38 @@ async def get_chatbot_icon(
     return Response(
         content=chatbot.icon_data,
         media_type=chatbot.icon_content_type or "image/png"
+    )
+
+@app.get("/api/chatbots/{chatbot_id}/wifi-qr")
+async def get_chatbot_wifi_qr(
+    chatbot_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Ottieni il QR code WiFi del chatbot"""
+    print(f"DEBUG: Cercando QR code WiFi per chatbot ID: {chatbot_id} per user: {current_user.id}")
+    
+    chatbot = db.query(Chatbot).filter(
+        Chatbot.id == chatbot_id,
+        Chatbot.user_id == current_user.id
+    ).first()
+    
+    if not chatbot:
+        print(f"DEBUG: Chatbot non trovato per ID: {chatbot_id}")
+        raise HTTPException(status_code=404, detail="Chatbot non trovato")
+    
+    print(f"DEBUG: Chatbot trovato: {chatbot.name}, has_wifi_qr_code: {chatbot.has_wifi_qr_code}")
+    
+    if not chatbot.has_wifi_qr_code or not chatbot.wifi_qr_code_data:
+        print(f"DEBUG: QR code WiFi non trovato per chatbot: {chatbot.name}")
+        raise HTTPException(status_code=404, detail="QR code WiFi non trovato")
+    
+    print(f"DEBUG: QR code WiFi trovato per chatbot: {chatbot.name}, content_type: {chatbot.wifi_qr_code_content_type}")
+    
+    from fastapi.responses import Response
+    return Response(
+        content=chatbot.wifi_qr_code_data,
+        media_type=chatbot.wifi_qr_code_content_type or "image/png"
     )
 
 @app.put("/api/chatbots/{chatbot_id}/icon")
@@ -4295,6 +4380,36 @@ async def update_chatbot(
     # Se è stato modificato il nome della proprietà, aggiorna automaticamente il nome del chatbot
     if 'property_name' in update_data.dict(exclude_unset=True):
         chatbot.name = f"Assistente {chatbot.property_name}"
+    
+    # Se sono state aggiornate le informazioni WiFi, rigenera il QR code WiFi
+    if 'wifi_info' in update_data.dict(exclude_unset=True):
+        try:
+            wifi_info_dict = update_data.wifi_info
+            if wifi_info_dict and wifi_info_dict.get('network') and wifi_info_dict.get('password'):
+                logger.info(f"Regenerating WiFi QR code for chatbot: {chatbot.property_name}")
+                wifi_qr_code_data = generate_wifi_qr_code(wifi_info_dict)
+                if wifi_qr_code_data:
+                    chatbot.wifi_qr_code_data = wifi_qr_code_data
+                    chatbot.wifi_qr_code_filename = f"wifi_qr_{chatbot.uuid}.png"
+                    chatbot.wifi_qr_code_content_type = "image/png"
+                    chatbot.has_wifi_qr_code = True
+                    logger.info(f"WiFi QR code regenerated for chatbot: {chatbot.property_name}")
+                else:
+                    chatbot.wifi_qr_code_data = None
+                    chatbot.wifi_qr_code_filename = None
+                    chatbot.wifi_qr_code_content_type = None
+                    chatbot.has_wifi_qr_code = False
+                    logger.info(f"WiFi QR code removed for chatbot: {chatbot.property_name}")
+            else:
+                # Rimuovi il QR code WiFi se le informazioni non sono valide
+                chatbot.wifi_qr_code_data = None
+                chatbot.wifi_qr_code_filename = None
+                chatbot.wifi_qr_code_content_type = None
+                chatbot.has_wifi_qr_code = False
+                logger.info(f"WiFi QR code removed for chatbot: {chatbot.property_name}")
+        except Exception as e:
+            logger.error(f"Failed to regenerate WiFi QR code for chatbot {chatbot.id}: {str(e)}")
+            # Non bloccare l'aggiornamento se il QR code WiFi fallisce
     
     db.commit()
     

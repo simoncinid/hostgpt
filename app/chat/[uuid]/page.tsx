@@ -23,7 +23,9 @@ import {
   Upload,
   Camera,
   Check,
-  AlertCircle
+  AlertCircle,
+  Wifi,
+  Phone
 } from 'lucide-react'
 import { chat } from '@/lib/api'
 import toast from 'react-hot-toast'
@@ -47,6 +49,12 @@ interface ChatInfo {
   id: number
   house_rules: string
   reviews_link?: string
+  wifi_info?: {
+    network?: string
+    name?: string
+    password?: string
+  }
+  has_wifi_qr_code?: boolean
 }
 
 export default function ChatWidgetPage() {
@@ -83,6 +91,13 @@ export default function ChatWidgetPage() {
   const [isDarkMode, setIsDarkMode] = useState(false)
   const [isDownloadingPDF, setIsDownloadingPDF] = useState(false)
   
+  // Stati per WiFi e emergenza
+  const [wifiInfo, setWifiInfo] = useState<{
+    network?: string
+    password?: string
+    qr_code?: string
+  } | null>(null)
+  
   // Stati per registrazione audio
   const [isRecording, setIsRecording] = useState(false)
   const [isProcessingAudio, setIsProcessingAudio] = useState(false)
@@ -102,7 +117,6 @@ export default function ChatWidgetPage() {
     IT: {
       assistant: 'Assistente Virtuale',
       suggestedMessages: [
-        "Contatta Host",
         "Attrazioni", 
         "Check-in/out"
       ],
@@ -144,7 +158,6 @@ export default function ChatWidgetPage() {
     ENG: {
       assistant: 'Virtual Assistant',
       suggestedMessages: [
-        "Contact Host",
         "Attractions",
         "Check-in/out"
       ],
@@ -190,12 +203,10 @@ export default function ChatWidgetPage() {
   // Messaggi completi per i suggerimenti
   const fullMessages = {
     IT: {
-      "Contatta Host": "Voglio contattare l'host. Come faccio?",
       "Attrazioni": "Vorrei visitare la zona, che attrazioni ci sono e come posso raggiungerle?",
       "Check-in/out": "Quali sono gli orari di check-in e check-out?"
     },
     ENG: {
-      "Contact Host": "I want to contact the host. How can I do it?",
       "Attractions": "I'd like to visit the area, what attractions are there and how can I reach them?",
       "Check-in/out": "What are the check-in and check-out times?"
     }
@@ -275,6 +286,130 @@ export default function ChatWidgetPage() {
 
   const toggleDarkMode = () => {
     setIsDarkMode(!isDarkMode)
+  }
+
+  // Funzione per gestire l'emergenza (si comporta come "contatta host")
+  const handleEmergency = async () => {
+    const emergencyMessage = language === 'IT' 
+      ? "Voglio contattare l'host. Come faccio?"
+      : "I want to contact the host. How can I do it?"
+    
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      role: 'user',
+      content: emergencyMessage,
+      timestamp: new Date()
+    }
+
+    setMessages(prev => [...prev, userMessage])
+    setIsLoading(true)
+
+    try {
+      const response = await chat.sendMessage(uuid, {
+        content: emergencyMessage,
+        thread_id: threadId,
+        guest_name: guestName || undefined,
+        guest_id: guestData?.id,
+        phone: guestData?.phone,
+        email: guestData?.email,
+        first_name: guestData?.first_name,
+        last_name: guestData?.last_name,
+        force_new_conversation: false
+      })
+
+      if (!threadId) {
+        setThreadId(response.data.thread_id)
+      }
+
+      const assistantMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: response.data.message,
+        timestamp: new Date()
+      }
+
+      setMessages(prev => [...prev, assistantMessage])
+    } catch (error: any) {
+      if (error.response?.status === 403) {
+        const errorDetail = error.response?.data?.detail || ''
+        if (errorDetail.includes('free trial') || errorDetail.includes('periodo di prova')) {
+          if (errorDetail.includes('scaduto') || errorDetail.includes('expired')) {
+            setFreeTrialExpired(true)
+          } else {
+            setFreeTrialLimitReached(true)
+          }
+        } else {
+          setSubscriptionCancelled(true)
+        }
+      } else if (error.response?.status === 429) {
+        const errorDetail = error.response?.data?.detail || ''
+        if (errorDetail.includes('free trial') || errorDetail.includes('periodo di prova')) {
+          setFreeTrialLimitReached(true)
+        } else {
+          toast.error(currentTexts.error)
+        }
+      } else {
+        toast.error(currentTexts.error)
+      }
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // Funzione per mostrare le informazioni WiFi
+  const handleWifiInfo = async () => {
+    if (!chatInfo?.wifi_info) {
+      toast.error(language === 'IT' ? 'Informazioni WiFi non disponibili' : 'WiFi information not available')
+      return
+    }
+
+    const wifiData = chatInfo.wifi_info
+    const networkName = wifiData.network || wifiData.name || ''
+    const password = wifiData.password || ''
+    
+    // Crea un messaggio con le informazioni WiFi (non salvato nel DB)
+    const wifiMessage = language === 'IT' 
+      ? `📶 **Informazioni WiFi**\n\n` +
+        `**Nome rete:** ${networkName}\n` +
+        `**Password:** ${password}\n` +
+        (chatInfo.has_wifi_qr_code ? `\n**QR Code:** Disponibile (vedi immagine sotto)` : '')
+      : `📶 **WiFi Information**\n\n` +
+        `**Network name:** ${networkName}\n` +
+        `**Password:** ${password}\n` +
+        (chatInfo.has_wifi_qr_code ? `\n**QR Code:** Available (see image below)` : '')
+
+    const assistantMessage: Message = {
+      id: Date.now().toString(),
+      role: 'assistant',
+      content: wifiMessage,
+      timestamp: new Date()
+    }
+
+    setMessages(prev => [...prev, assistantMessage])
+    
+    // Se c'è un QR code, lo mostriamo come immagine
+    if (chatInfo.has_wifi_qr_code) {
+      try {
+        const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+        const qrResponse = await fetch(`${API_URL}/api/chat/${uuid}/wifi-qr-code`)
+        if (qrResponse.ok) {
+          const qrBlob = await qrResponse.blob()
+          const qrUrl = URL.createObjectURL(qrBlob)
+          
+          // Aggiungi un messaggio con l'immagine del QR code
+          const qrMessage: Message = {
+            id: (Date.now() + 1).toString(),
+            role: 'assistant',
+            content: `![QR Code WiFi](${qrUrl})`,
+            timestamp: new Date()
+          }
+          
+          setMessages(prev => [...prev, qrMessage])
+        }
+      } catch (error) {
+        console.error('Errore nel caricamento del QR code WiFi:', error)
+      }
+    }
   }
 
 
@@ -1005,7 +1140,8 @@ export default function ChatWidgetPage() {
       <div className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'} shadow-sm flex-shrink-0 border-b transition-colors duration-300`}>
         <div className="max-w-4xl mx-auto px-2 py-2 md:py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center">
+            {/* Desktop: mostra icona, nome e assistente virtuale */}
+            <div className="hidden md:flex items-center">
               {chatInfo ? (
                 <ChatbotIcon 
                   chatbotUuid={uuid} 
@@ -1021,17 +1157,52 @@ export default function ChatWidgetPage() {
               )}
               <div>
                 <h1 className={`font-semibold text-lg transition-colors duration-300 ${isDarkMode ? 'text-white' : 'text-gray-900'}`} title={chatInfo?.property_name}>
-                  <span className="block md:hidden">
-                    {chatInfo?.property_name && chatInfo.property_name.length > 10 ? `${chatInfo.property_name.substring(0, 10)}...` : chatInfo?.property_name}
-                  </span>
-                  <span className="hidden md:block">
-                    {chatInfo?.property_name}
-                  </span>
+                  {chatInfo?.property_name}
                 </h1>
                 <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-500'} transition-colors duration-300`}>{currentTexts.assistant}</p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            
+            {/* Mobile: solo controlli a sinistra */}
+            <div className="flex md:hidden items-center gap-2">
+              <button
+                onClick={handleNewConversation}
+                className={`p-2 rounded-lg transition-colors duration-200 group ${
+                  isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
+                }`}
+                title="Nuova conversazione"
+              >
+                <RefreshCw className={`w-5 h-5 transition-colors duration-200 ${
+                  isDarkMode ? 'text-gray-300 group-hover:text-primary' : 'text-gray-600 group-hover:text-primary'
+                }`} />
+              </button>
+              <button
+                onClick={toggleLanguage}
+                className="px-3 py-1.5 bg-gradient-to-r from-primary/10 to-accent/10 text-primary border border-primary/20 rounded-lg text-sm font-medium hover:from-primary/20 hover:to-accent/20 hover:border-primary/40 transition-all duration-200"
+              >
+                {language}
+              </button>
+              <button
+                onClick={toggleDarkMode}
+                className={`p-2 rounded-lg transition-colors duration-200 group ${
+                  isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
+                }`}
+                title={isDarkMode ? "Passa alla modalità chiara" : "Passa alla modalità scura"}
+              >
+                {isDarkMode ? (
+                  <Sun className={`w-5 h-5 transition-colors duration-200 ${
+                    isDarkMode ? 'text-gray-300 group-hover:text-primary' : 'text-gray-600 group-hover:text-primary'
+                  }`} />
+                ) : (
+                  <Moon className={`w-5 h-5 transition-colors duration-200 ${
+                    isDarkMode ? 'text-gray-300 group-hover:text-primary' : 'text-gray-600 group-hover:text-primary'
+                  }`} />
+                )}
+              </button>
+            </div>
+            
+            {/* Desktop: controlli a destra */}
+            <div className="hidden md:flex items-center gap-2">
               <button
                 onClick={handleNewConversation}
                 className={`p-2 rounded-lg transition-colors duration-200 group ${
@@ -1075,6 +1246,18 @@ export default function ChatWidgetPage() {
                 <Info className={`w-5 h-5 transition-colors duration-300 ${
                   isDarkMode ? 'text-gray-300' : 'text-gray-600'
                 }`} />
+              </button>
+            </div>
+            
+            {/* Mobile: button emergenza a destra */}
+            <div className="flex md:hidden items-center">
+              <button
+                onClick={handleEmergency}
+                className="px-3 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-2"
+                title={language === 'IT' ? 'Emergenza - Contatta Host' : 'Emergency - Contact Host'}
+              >
+                <Phone className="w-4 h-4" />
+                <span className="hidden sm:inline">{language === 'IT' ? 'Emergenza' : 'Emergency'}</span>
               </button>
             </div>
           </div>
@@ -1372,6 +1555,21 @@ export default function ChatWidgetPage() {
                   >
                     <FileText className="w-4 h-4 text-white" />
                   </button>
+                  
+                  {/* Pulsante WiFi - Verde e nella sezione suggerimenti */}
+                  <button
+                    onClick={handleWifiInfo}
+                    disabled={isLoading || !chatInfo?.wifi_info}
+                    className={`p-2 rounded-full transition-colors duration-200 flex-shrink-0 ${
+                      isLoading || !chatInfo?.wifi_info
+                        ? 'bg-gray-400 cursor-not-allowed' 
+                        : 'bg-green-500 hover:bg-green-600'
+                    }`}
+                    title={language === 'IT' ? 'Informazioni WiFi' : 'WiFi Information'}
+                  >
+                    <Wifi className="w-4 h-4 text-white" />
+                  </button>
+                  
                   {currentTexts.suggestedMessages.map((message: string, index: number) => (
                     <motion.button
                       key={index}

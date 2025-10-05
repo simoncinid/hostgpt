@@ -39,3 +39,6 @@ odfpy==1.4.1
 
 # Libreria per generazione PDF
 reportlab==4.0.7
+
+# Libreria per generazione QR code WiFi
+wifi-qrcode-generator==1.0.0

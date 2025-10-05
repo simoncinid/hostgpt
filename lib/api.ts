@@ -89,7 +89,7 @@ export const referral = {
 }
 
 export const chatbots = {
-  create: async (data: any, iconFile?: File, wifiQrCodeFile?: File) => {
+  create: async (data: any, iconFile?: File) => {
     const formData = new FormData()
     
     console.log('🚀 API: Dati ricevuti per creazione chatbot:', data)
@@ -119,11 +119,6 @@ export const chatbots = {
       console.log('🚀 API: Aggiunto file icona:', iconFile.name)
     }
     
-    // Aggiungi il file WiFi QR code se presente
-    if (wifiQrCodeFile) {
-      formData.append('wifi_qr_code', wifiQrCodeFile)
-      console.log('🚀 API: Aggiunto file WiFi QR code:', wifiQrCodeFile.name)
-    }
     
     // Debug: mostra tutti i campi del FormData
     console.log('🚀 API: FormData entries:')

@@ -35,7 +35,6 @@ interface FormValues {
   faq?: { question: string; answer: string }[]
   welcome_message?: string
   reviews_link?: string
-  wifi_qr_code?: File | null
 }
 
 export default function EditChatbotPage() {
@@ -782,24 +781,6 @@ export default function EditChatbotPage() {
                   </p>
                 </div>
 
-                <div>
-                  <label className="label">{language === 'IT' ? 'Codice QR WiFi (opzionale)' : 'WiFi QR Code (optional)'}</label>
-                  <input
-                    type="file"
-                    accept="image/png,image/jpeg,image/jpg"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0] || null
-                      setValue('wifi_qr_code', file)
-                    }}
-                    className="input-field"
-                  />
-                  <p className="text-sm text-gray-600 mt-1">
-                    {language === 'IT'
-                      ? 'Carica un\'immagine del QR code WiFi (PNG, JPG)'
-                      : 'Upload a WiFi QR code image (PNG, JPG)'
-                    }
-                  </p>
-                </div>
               </div>
             </div>
 
