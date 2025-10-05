@@ -3624,7 +3624,7 @@ export default function LandingPage() {
               <div className="text-center md:text-left">
                 <h4 className="font-semibold mb-3 text-sm md:text-base">{t.footer.sections.company.title}</h4>
                 <ul className="space-y-1 md:space-y-2 text-gray-400 text-xs md:text-sm">
-                <li><a href="https://wa.me/393391797616" target="_blank" rel="noopener noreferrer" className="hover:text-white transition">{t.footer.sections.company.contact}</a></li>
+                <li><Link href="#cta" className="hover:text-white transition">{t.footer.sections.company.contact}</Link></li>
               </ul>
             </div>
             
