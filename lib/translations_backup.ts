@@ -1,4 +1,4 @@
-export type Language = 'IT' | 'ENG'
+﻿export type Language = 'IT' | 'ENG'
 
 export interface Translations {
   // Navbar
@@ -1178,7 +1178,7 @@ export interface Translations {
 export const translations: Record<Language, Translations> = {
   IT: {
     navbar: {
-      features: "Perchè",
+      features: "PerchÃ¨",
       demo: "Demo",
       howItWorks: "Come",
       pricing: "Prezzi",
@@ -1191,8 +1191,8 @@ export const translations: Record<Language, Translations> = {
       title: "L'assistente H24 per i tuoi ospiti",
       titlePrefix: "Risparmia ore di tempo prezioso con",
       subtitle: "Risponde automaticamente, in modo completo e immediato, alle richieste degli ospiti.",
-      subtitleHighlight: "Meno messaggi per te, più soddisfazione per loro.",
-      freeTrialButton: "🎉 14 Giorni Gratis",
+      subtitleHighlight: "Meno messaggi per te, piÃ¹ soddisfazione per loro.",
+      freeTrialButton: "ðŸŽ‰ 14 Giorni Gratis",
       registerButton: "Registrati per iniziare",
       demoButton: "PROVA DEMO"
     },
@@ -1228,16 +1228,16 @@ export const translations: Record<Language, Translations> = {
     },
     features: {
       title: "Tutto Quello che Ti Serve",
-      subtitle: "Funzionalità potenti e raffinate per trasformare completamente",
+      subtitle: "FunzionalitÃ  potenti e raffinate per trasformare completamente",
       subtitleHighlight: "l'esperienza dei tuoi ospiti",
       items: [
         {
           title: "Stop alle Domande Ripetitive",
-          description: "Non perdere più tempo a rispondere alle stesse domande sui check-in, WiFi e attrazioni locali",
+          description: "Non perdere piÃ¹ tempo a rispondere alle stesse domande sui check-in, WiFi e attrazioni locali",
           features: ["Risposte automatiche 24/7", "Zero interruzioni", "Tempo recuperato"]
         },
         {
-          title: "Ospiti Più Soddisfatti",
+          title: "Ospiti PiÃ¹ Soddisfatti",
           description: "Risposte immediate e complete aumentano la soddisfazione e le recensioni positive",
           features: ["Risposte istantanee", "Informazioni complete", "Recensioni migliori"]
         },
@@ -1247,15 +1247,15 @@ export const translations: Record<Language, Translations> = {
           features: ["Configurazione guidata", "Nessuna programmazione", "Pronto subito"]
         },
         {
-          title: "Costa Meno di un Caffè",
-          description: "Investi meno di quello che spendi per un caffè al giorno e risparmia ore di lavoro",
+          title: "Costa Meno di un CaffÃ¨",
+          description: "Investi meno di quello che spendi per un caffÃ¨ al giorno e risparmia ore di lavoro",
           features: ["Prezzo accessibile", "ROI immediato", "Risparmio garantito"]
         }
       ]
     },
     howItWorks: {
       title: "Come Funziona",
-      subtitle: "Ogni giorno perdi <span class='text-purple-700 font-bold'>ore preziose</span> a rispondere alle stesse domande dei tuoi ospiti.<br><br>Con <span class='text-purple-700 font-bold'>OspiterAI</span> risparmi tutto quel tempo per <span class='text-purple-700 font-bold'>meno di un caffè al giorno</span>.<br><br>Il tuo assistente virtuale risponde <span class='text-purple-700 font-bold'>automaticamente 24/7</span>, mentre tu ti concentri su ciò che conta davvero.",
+      subtitle: "Ogni giorno perdi <span class='text-purple-700 font-bold'>ore preziose</span> a rispondere alle stesse domande dei tuoi ospiti.<br><br>Con <span class='text-purple-700 font-bold'>OspiterAI</span> risparmi tutto quel tempo per <span class='text-purple-700 font-bold'>meno di un caffÃ¨ al giorno</span>.<br><br>Il tuo assistente virtuale risponde <span class='text-purple-700 font-bold'>automaticamente 24/7</span>, mentre tu ti concentri su ciÃ² che conta davvero.",
       steps: [
         {
           title: "Registrati",
@@ -1278,13 +1278,13 @@ export const translations: Record<Language, Translations> = {
         register: {
           title: "Registrati",
           email: "mario.rossi@email.com",
-          password: "••••••••",
+          password: "â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢",
           button: "Registrati",
           success: "Account creato!"
         },
         customize: {
           title: "Crea Chatbot",
-          propertyName: "Nome proprietà",
+          propertyName: "Nome proprietÃ ",
           propertyValue: "Casa Bella Vista",
           checkIn: "Check-in",
           checkInValue: "15:00-20:00",
@@ -1306,57 +1306,57 @@ export const translations: Record<Language, Translations> = {
       plans: [
         {
           name: "Standard",
-          price: "€19",
+          price: "â‚¬19",
           period: "/mese",
           features: [
             "20 conversazioni/mese"
           ],
-          freeTrialButton: "🎉 14 Giorni Gratis",
+          freeTrialButton: "ðŸŽ‰ 14 Giorni Gratis",
           ctaButton: "Scegli Standard",
           priceId: "STANDARD_PRICE_ID"
         },
         {
           name: "Premium",
-          price: "€39",
+          price: "â‚¬39",
           period: "/mese",
           features: [
             "50 conversazioni/mese"
           ],
-          freeTrialButton: "🎉 14 Giorni Gratis",
+          freeTrialButton: "ðŸŽ‰ 14 Giorni Gratis",
           ctaButton: "Scegli Premium",
           priceId: "PREMIUM_PRICE_ID"
         },
         {
           name: "Pro",
-          price: "€79",
+          price: "â‚¬79",
           period: "/mese",
           features: [
             "150 conversazioni/mese"
           ],
-          freeTrialButton: "🎉 14 Giorni Gratis",
+          freeTrialButton: "ðŸŽ‰ 14 Giorni Gratis",
           ctaButton: "Scegli Pro",
           priceId: "PRO_PRICE_ID"
         },
         {
           name: "Enterprise",
-          price: "€199",
+          price: "â‚¬199",
           period: "/mese",
           features: [
             "500 conversazioni/mese"
           ],
-          freeTrialButton: "🎉 14 Giorni Gratis",
+          freeTrialButton: "ðŸŽ‰ 14 Giorni Gratis",
           ctaButton: "Scegli Enterprise",
           priceId: "ENTERPRISE_PRICE_ID"
         }
       ]
     },
     demoMessages: [
-      { role: 'user', text: 'Ciao! A che ora è il check-in?' },
-      { role: 'assistant', text: 'Ciao! Il check-in è dalle 15:00 alle 20:00. Ti invieremo il codice della cassetta di sicurezza il giorno dell\'arrivo.' },
+      { role: 'user', text: 'Ciao! A che ora Ã¨ il check-in?' },
+      { role: 'assistant', text: 'Ciao! Il check-in Ã¨ dalle 15:00 alle 20:00. Ti invieremo il codice della cassetta di sicurezza il giorno dell\'arrivo.' },
       { role: 'user', text: 'Posso fare check-in dopo le 22?' },
-      { role: 'assistant', text: 'Certo! È previsto un self check-in 24/7. Facci sapere l\'orario stimato e ti assistiamo noi.' },
-      { role: 'user', text: 'Com\'è il parcheggio in zona?' },
-      { role: 'assistant', text: 'C\'è parcheggio gratuito in strada nei dintorni. In alternativa, a 300m trovi il Garage Verdi a 15€/giorno.' },
+      { role: 'assistant', text: 'Certo! Ãˆ previsto un self check-in 24/7. Facci sapere l\'orario stimato e ti assistiamo noi.' },
+      { role: 'user', text: 'Com\'Ã¨ il parcheggio in zona?' },
+      { role: 'assistant', text: 'C\'Ã¨ parcheggio gratuito in strada nei dintorni. In alternativa, a 300m trovi il Garage Verdi a 15â‚¬/giorno.' },
       { role: 'user', text: 'Wifi e ristoranti consigliati?' },
       { role: 'assistant', text: 'Wifi fibra 200Mbps, password: CASA2024. Per cenare ti consiglio Trattoria Roma (5 min a piedi) e Osteria Bella Vista.' }
     ],
@@ -1364,9 +1364,9 @@ export const translations: Record<Language, Translations> = {
       title: "Demo Chat Live",
       subtitle: "Vedi OspiterAI in azione!",
       messages: {
-        user1: "Ciao! A che ora è il check-in?",
-        assistant1: "Il check-in è dalle 15:00 alle 20:00. Ti invio il codice!",
-        user2: "Perfetto! Grazie mille! 🙏"
+        user1: "Ciao! A che ora Ã¨ il check-in?",
+        assistant1: "Il check-in Ã¨ dalle 15:00 alle 20:00. Ti invio il codice!",
+        user2: "Perfetto! Grazie mille! ðŸ™"
       }
     },
     testimonials: [
@@ -1387,7 +1387,7 @@ export const translations: Record<Language, Translations> = {
       {
         name: "Giuseppe Verdi",
         role: "Host in Milan",
-        content: "Facile da configurare e utilissimo. Non posso più farne a meno!",
+        content: "Facile da configurare e utilissimo. Non posso piÃ¹ farne a meno!",
         rating: 5,
         avatar: "GV"
       }
@@ -1552,7 +1552,7 @@ export const translations: Record<Language, Translations> = {
           monitoring: "Monitoraggio automatico",
           alerts: "Alert ospiti insoddisfatti"
         },
-        button: "Attiva Pacchetto Completo - 38€/mese",
+        button: "Attiva Pacchetto Completo - 38â‚¬/mese",
         processing: "Elaborazione...",
         securePayment: "Pagamento Sicuro",
         referralCode: "Codice Referral (opzionale)",
@@ -1603,7 +1603,7 @@ export const translations: Record<Language, Translations> = {
           detection: "Rilevamento in tempo reale",
           suggestions: "Suggerimenti di azione"
         },
-        button: "Attiva Guardian - 9€/mese",
+        button: "Attiva Guardian - 9â‚¬/mese",
         processing: "Elaborazione...",
         securePayment: "Pagamento Sicuro",
         termsText: "Cliccando su \"Attiva Guardian\" accetti i nostri",
@@ -1653,7 +1653,7 @@ export const translations: Record<Language, Translations> = {
         agreeTerms: "Accetto i termini e condizioni",
         termsLink: "Termini e Condizioni",
         registerButton: "Registrati",
-        haveAccount: "Hai già un account?",
+        haveAccount: "Hai giÃ  un account?",
         loginLink: "Accedi"
       }
     },
@@ -1678,7 +1678,7 @@ export const translations: Record<Language, Translations> = {
       },
       freeTrial: {
         title: "Periodo di prova gratuito attivo",
-        description: "Hai {messages} messaggi rimanenti su {limit} • Scade il {date}",
+        description: "Hai {messages} messaggi rimanenti su {limit} â€¢ Scade il {date}",
         activateButton: "Attiva Abbonamento"
       },
       qrBanner: {
@@ -1688,13 +1688,13 @@ export const translations: Record<Language, Translations> = {
       },
       chatbots: {
         title: "I Tuoi Chatbot",
-        seeAll: "Vedi tutti →",
+        seeAll: "Vedi tutti â†’",
         noChatbots: "Non hai ancora creato nessun chatbot",
         createFirst: "Crea il tuo primo chatbot"
       },
       support: {
         title: "Hai bisogno di assistenza?",
-        description: "Il nostro team è qui per aiutarti con qualsiasi domanda o problema.",
+        description: "Il nostro team Ã¨ qui per aiutarti con qualsiasi domanda o problema.",
         whatsappButton: "Contattaci su WhatsApp"
       },
       qrModal: {
@@ -1728,7 +1728,7 @@ export const translations: Record<Language, Translations> = {
       status: "Stato",
       messages: "Messaggi",
       guests: "Ospiti",
-      lastActivity: "Ultima Attività",
+      lastActivity: "Ultima AttivitÃ ",
       actions: "Azioni",
       noChatbots: "Non hai ancora creato nessun chatbot",
       createFirst: "Crea il tuo primo chatbot",
@@ -1751,17 +1751,17 @@ export const translations: Record<Language, Translations> = {
         averagePerChat: "Media per chat"
       },
       alert: {
-        critical: "🚨 ALERT CRITICO",
+        critical: "ðŸš¨ ALERT CRITICO",
         dissatisfiedGuest: "Ospite insoddisfatto rilevato nella conversazione",
         negativeReviewRisk: "Rischio recensione negativa",
         sentiment: "Sentiment"
       },
       create: {
         title: "Crea Nuovo Chatbot",
-        subtitle: "Configura il tuo chatbot per la tua proprietà",
+        subtitle: "Configura il tuo chatbot per la tua proprietÃ ",
         steps: {
           basic: "Informazioni Base",
-          property: "Proprietà",
+          property: "ProprietÃ ",
           amenities: "Servizi",
           location: "Posizione",
           services: "Servizi Locali",
@@ -1769,11 +1769,11 @@ export const translations: Record<Language, Translations> = {
         },
         form: {
           name: "Nome Chatbot",
-          propertyName: "Nome Proprietà",
-          propertyType: "Tipo di Proprietà",
+          propertyName: "Nome ProprietÃ ",
+          propertyType: "Tipo di ProprietÃ ",
           propertyAddress: "Indirizzo",
-          propertyCity: "Città",
-          propertyDescription: "Descrizione Proprietà",
+          propertyCity: "CittÃ ",
+          propertyDescription: "Descrizione ProprietÃ ",
           checkInTime: "Orario Check-in",
           checkOutTime: "Orario Check-out",
           houseRules: "Regole della Casa",
@@ -1814,16 +1814,16 @@ export const translations: Record<Language, Translations> = {
           chooseFile: "scegli file",
           select: "Seleziona...",
           allReady: "Tutto pronto!",
-          allInfoEntered: "Hai inserito tutte le informazioni necessarie. Il tuo chatbot sarà creato e allenato con questi dati. Potrai sempre modificarli in seguito dalla dashboard.",
+          allInfoEntered: "Hai inserito tutte le informazioni necessarie. Il tuo chatbot sarÃ  creato e allenato con questi dati. Potrai sempre modificarli in seguito dalla dashboard.",
           backToDashboard: "Torna alla Dashboard",
           createNewChatbot: "Crea Nuovo Chatbot",
-          propertyUrl: "URL Proprietà (Opzionale)",
+          propertyUrl: "URL ProprietÃ  (Opzionale)",
           propertyUrlPlaceholder: "Es. https://www.airbnb.com/rooms/123456",
-          propertyUrlHelp: "Incolla il link della tua proprietà (Airbnb, Booking, ecc.) e l'AI riempirà automaticamente le informazioni",
+          propertyUrlHelp: "Incolla il link della tua proprietÃ  (Airbnb, Booking, ecc.) e l'AI riempirÃ  automaticamente le informazioni",
           autoFill: "Riempimento automatico con AI",
-          autoFilling: "Analisi proprietà in corso...",
-          autoFillSuccess: "Informazioni proprietà caricate con successo!",
-          autoFillError: "Impossibile analizzare la proprietà. Compila manualmente le informazioni.",
+          autoFilling: "Analisi proprietÃ  in corso...",
+          autoFillSuccess: "Informazioni proprietÃ  caricate con successo!",
+          autoFillError: "Impossibile analizzare la proprietÃ . Compila manualmente le informazioni.",
           propertyTypes: {
             hotel: "Albergo",
             bedBreakfast: "Bed & Breakfast",
@@ -1832,7 +1832,7 @@ export const translations: Record<Language, Translations> = {
             room: "Stanza"
           },
           hotelServices: "Servizi Alberghieri (SPA, servizio in camera, ecc.)",
-          hotelServicesPlaceholder: "La SPA è accessibile dalle ore X alle Y, per servizio in camera contattare la reception (costo Z) ecc..."
+          hotelServicesPlaceholder: "La SPA Ã¨ accessibile dalle ore X alle Y, per servizio in camera contattare la reception (costo Z) ecc..."
         },
         amenities: {
           wifi: "WiFi",
@@ -1877,8 +1877,8 @@ export const translations: Record<Language, Translations> = {
         subtitle: "Aggiorna le informazioni del tuo chatbot",
         form: {
           name: "Nome Chatbot",
-          propertyName: "Nome Proprietà",
-          propertyType: "Tipo di Proprietà",
+          propertyName: "Nome ProprietÃ ",
+          propertyType: "Tipo di ProprietÃ ",
           selectType: "Seleziona tipo",
           apartment: "Appartamento",
           villa: "Villa",
@@ -1886,8 +1886,8 @@ export const translations: Record<Language, Translations> = {
           room: "Stanza",
           loft: "Loft",
           propertyAddress: "Indirizzo",
-          propertyCity: "Città",
-          propertyDescription: "Descrizione Proprietà",
+          propertyCity: "CittÃ ",
+          propertyDescription: "Descrizione ProprietÃ ",
           checkInTime: "Orario Check-in",
           checkOutTime: "Orario Check-out",
           houseRules: "Regole della Casa",
@@ -1936,7 +1936,7 @@ export const translations: Record<Language, Translations> = {
           manageFaqTitle: "Gestisci FAQ",
           welcomeMessageTitle: "Messaggio di Benvenuto",
           initialMessage: "Messaggio Iniziale",
-          welcomeMessagePlaceholder: "Messaggio di benvenuto che apparirà quando un ospite inizia la chat..."
+          welcomeMessagePlaceholder: "Messaggio di benvenuto che apparirÃ  quando un ospite inizia la chat..."
         },
         amenities: {
           wifi: "WiFi",
@@ -1974,20 +1974,20 @@ export const translations: Record<Language, Translations> = {
     },
     guardian: {
       title: "Guardian",
-      subtitle: "Proteggi la tua proprietà con l'AI avanzata",
+      subtitle: "Proteggi la tua proprietÃ  con l'AI avanzata",
       features: [
         "Monitoraggio 24/7",
         "Rilevamento anomalie",
         "Notifiche immediate",
         "Report dettagliati"
       ],
-      pricing: "€9/mese",
+      pricing: "â‚¬9/mese",
       activate: "Attiva Guardian",
       deactivate: "Disattiva Guardian",
       loading: "Caricamento Guardian...",
       redirecting: "Reindirizzamento...",
       reactivate: "Riattiva Guardian",
-      activateWithPrice: "Attiva Guardian - 9€/mese",
+      activateWithPrice: "Attiva Guardian - 9â‚¬/mese",
       stats: {
         totalGuests: "Ospiti Totali",
         totalGuestsShort: "Ospiti",
@@ -2007,7 +2007,7 @@ export const translations: Record<Language, Translations> = {
         title: "Alert Attivi",
         activeAlerts: "Alert Attivi",
         noAlerts: "Nessun alert attivo",
-        allUnderControl: "Nessun alert attivo. Tutto sotto controllo! 🎉",
+        allUnderControl: "Nessun alert attivo. Tutto sotto controllo! ðŸŽ‰",
         resolve: "Risolvi",
         guest: "Ospite",
         created: "Creato",
@@ -2033,19 +2033,19 @@ export const translations: Record<Language, Translations> = {
         nextRenewal: "Prossimo rinnovo",
         cancelSection: {
           title: "Annulla Abbonamento Guardian",
-          description: "Annullando l'abbonamento il servizio verrà disattivato, ma tutti i tuoi dati rimarranno nel database.",
+          description: "Annullando l'abbonamento il servizio verrÃ  disattivato, ma tutti i tuoi dati rimarranno nel database.",
           button: "Annulla Abbonamento",
           cancelling: "Annullamento..."
         },
         cancellingSection: {
           title: "Abbonamento Guardian in Fase di Annullamento",
-          description: "Il tuo abbonamento è in fase di annullamento e rimarrà attivo fino alla fine del periodo corrente. Puoi riattivarlo in qualsiasi momento.",
+          description: "Il tuo abbonamento Ã¨ in fase di annullamento e rimarrÃ  attivo fino alla fine del periodo corrente. Puoi riattivarlo in qualsiasi momento.",
           button: "Riattiva Abbonamento (Gratis)",
           reactivating: "Riattivazione..."
         },
         cancelModal: {
           title: "Conferma Annullamento Guardian",
-          message: "Sei sicuro di voler annullare l'abbonamento Guardian? Il servizio rimarrà attivo fino alla fine del periodo corrente, ma non riceverai più alert per le conversazioni problematiche.",
+          message: "Sei sicuro di voler annullare l'abbonamento Guardian? Il servizio rimarrÃ  attivo fino alla fine del periodo corrente, ma non riceverai piÃ¹ alert per le conversazioni problematiche.",
           confirm: "Conferma Annullamento",
           cancel: "Annulla",
           cancelling: "Annullamento..."
@@ -2057,15 +2057,15 @@ export const translations: Record<Language, Translations> = {
         messages: {
           guest: "Ciao! Ho un problema con il WiFi, non riesco a connettermi",
           assistant: "Ciao! Mi dispiace per il problema. Prova a riavviare il router",
-          guestFrustrated: "Ho già provato, ma non funziona. Sono molto frustrato!",
+          guestFrustrated: "Ho giÃ  provato, ma non funziona. Sono molto frustrato!",
           time: "14:32"
         },
         alert: {
-          title: "🚨 ALERT CRITICO",
+          title: "ðŸš¨ ALERT CRITICO",
           subtitle: "Ospite insoddisfatto rilevato"
         },
-        phoneCall: "📞 Host chiama l'ospite",
-        problemSolved: "🎉 Problema risolto!",
+        phoneCall: "ðŸ“ž Host chiama l'ospite",
+        problemSolved: "ðŸŽ‰ Problema risolto!",
         negativeReviewAvoided: "Recensione negativa evitata"
       },
       benefits: {
@@ -2076,7 +2076,7 @@ export const translations: Record<Language, Translations> = {
           description: "Riduzione degli ospiti insoddisfatti"
         },
         whatIs: {
-          title: "Cos'è Guardian?",
+          title: "Cos'Ã¨ Guardian?",
           description: "Monitora in tempo reale le conversazioni tra ospiti e chatbot. Rileva automaticamente problemi e frustrazioni prima che diventino recensioni negative."
         },
         keyBenefits: {
@@ -2089,7 +2089,7 @@ export const translations: Record<Language, Translations> = {
         }
       },
       success: {
-        subscriptionActivated: "🎉 Abbonamento Guardian attivato con successo!",
+        subscriptionActivated: "ðŸŽ‰ Abbonamento Guardian attivato con successo!",
         alertResolved: "Alert risolto con successo!",
         subscriptionCancelled: "Abbonamento Guardian cancellato con successo",
         subscriptionReactivated: "Abbonamento Guardian riattivato con successo"
@@ -2141,7 +2141,7 @@ export const translations: Record<Language, Translations> = {
       sections: {
         product: {
           title: "Prodotto",
-          features: "Funzionalità",
+          features: "FunzionalitÃ ",
           pricing: "Prezzi",
           api: "API"
         },
@@ -2158,15 +2158,15 @@ export const translations: Record<Language, Translations> = {
           cookies: "Cookie"
         }
       },
-      copyright: "© 2025 OspiterAI. Tutti i diritti riservati."
+      copyright: "Â© 2025 OspiterAI. Tutti i diritti riservati."
     },
     register: {
       title: "Crea il tuo Account",
       subtitle: "Inizia subito con OspiterAI",
       freeTrialSubtitle: "Inizia la prova gratuita di 14 giorni",
       paidSubtitle: "Inizia subito con OspiterAI",
-      freeTrialBanner: "🎉 Hai selezionato la prova gratuita! Dopo la registrazione potrai iniziare subito a creare il tuo chatbot.",
-      paidBanner: "💳 Dopo la registrazione completerai il pagamento per attivare il tuo abbonamento.",
+      freeTrialBanner: "ðŸŽ‰ Hai selezionato la prova gratuita! Dopo la registrazione potrai iniziare subito a creare il tuo chatbot.",
+      paidBanner: "ðŸ’³ Dopo la registrazione completerai il pagamento per attivare il tuo abbonamento.",
       fullName: "Nome Completo",
       email: "Email",
       phone: "Telefono",
@@ -2177,7 +2177,7 @@ export const translations: Record<Language, Translations> = {
       termsAccept: "Accetto i",
       termsLink: "Termini e Condizioni",
       privacyLink: "Privacy Policy",
-      alreadyHaveAccount: "Hai già un account?",
+      alreadyHaveAccount: "Hai giÃ  un account?",
       loginNow: "Accedi ora",
       passwordRequirements: "Requisiti password:",
       passwordMinLength: "Almeno 8 caratteri",
@@ -2235,13 +2235,13 @@ export const translations: Record<Language, Translations> = {
       marketingEmails: "Email Marketing",
       analytics: "Analytics",
       deleteAccount: "Elimina Account",
-      deleteAccountWarning: "Questa azione non può essere annullata",
+      deleteAccountWarning: "Questa azione non puÃ² essere annullata",
       deleteAccountConfirm: "Conferma Eliminazione",
       deleteProfile: "Elimina Profilo",
-      deleteProfileWarning: "Questa azione eliminerà permanentemente il tuo profilo, tutti i tuoi chatbot, conversazioni, knowledge base e annullerà tutti gli abbonamenti. Questa azione non può essere annullata.",
+      deleteProfileWarning: "Questa azione eliminerÃ  permanentemente il tuo profilo, tutti i tuoi chatbot, conversazioni, knowledge base e annullerÃ  tutti gli abbonamenti. Questa azione non puÃ² essere annullata.",
       deleteProfileModal: {
         title: "Conferma Eliminazione Profilo",
-        description: "Questa azione eliminerà permanentemente:",
+        description: "Questa azione eliminerÃ  permanentemente:",
         items: [
           "Il tuo profilo utente",
           "Tutti i tuoi chatbot",
@@ -2249,14 +2249,14 @@ export const translations: Record<Language, Translations> = {
           "La knowledge base",
           "Tutti gli abbonamenti Stripe"
         ],
-        warning: "Questa azione non può essere annullata!",
+        warning: "Questa azione non puÃ² essere annullata!",
         confirmationText: "Per confermare, scrivi esattamente: \"voglio eliminare il profilo\" o \"I want to delete my profile\"",
         placeholder: "Scrivi qui la conferma...",
         button: "Elimina Profilo",
         deleting: "Eliminazione..."
       },
       cancelSubscriptionTitle: "Conferma Annullamento",
-      cancelSubscriptionMessage: "Sei sicuro di voler annullare l'abbonamento? Il servizio verrà disattivato ma tutti i tuoi dati (chatbot, conversazioni, messaggi) rimarranno nel database.",
+      cancelSubscriptionMessage: "Sei sicuro di voler annullare l'abbonamento? Il servizio verrÃ  disattivato ma tutti i tuoi dati (chatbot, conversazioni, messaggi) rimarranno nel database.",
       confirmCancellation: "Conferma Annullamento",
       cancelling: "Annullamento...",
       
@@ -2311,8 +2311,8 @@ export const translations: Record<Language, Translations> = {
           features: [
             "Resistenti all'acqua",
             "Adesivi ai raggi UV",
-            "Dimensioni 5.83″×8.27″",
-            "Spedizione worldwide €4.99"
+            "Dimensioni 5.83â€³Ã—8.27â€³",
+            "Spedizione worldwide â‚¬4.99"
           ]
         }
       },
@@ -2360,12 +2360,12 @@ export const translations: Record<Language, Translations> = {
           companyOptional: "Azienda (opzionale)",
           address: "Indirizzo",
           streetNumber: "Numero civico",
-          city: "Città",
+          city: "CittÃ ",
           state: "Provincia/Stato",
           postalCode: "CAP",
           country: "Paese",
           phone: "Telefono",
-          addressHint: "💡 Inizia a digitare l'indirizzo e seleziona dai suggerimenti per compilare automaticamente tutti i campi",
+          addressHint: "ðŸ’¡ Inizia a digitare l'indirizzo e seleziona dai suggerimenti per compilare automaticamente tutti i campi",
           addressPlaceholder: "Inizia a digitare l'indirizzo...",
           autoFillHint: "Seleziona un indirizzo per compilare automaticamente",
           required: "*"
@@ -2384,14 +2384,14 @@ export const translations: Record<Language, Translations> = {
           createOrder: "Crea Ordine",
           creatingOrder: "Creazione Ordine...",
           processingPayment: "Elaborazione Pagamento...",
-          sslProtected: "Il pagamento è protetto con crittografia SSL e gestito da Stripe"
+          sslProtected: "Il pagamento Ã¨ protetto con crittografia SSL e gestito da Stripe"
         }
       },
       
       // Success page
       success: {
         title: "Ordine Confermato!",
-        subtitle: "Il tuo pagamento è stato elaborato con successo.",
+        subtitle: "Il tuo pagamento Ã¨ stato elaborato con successo.",
         emailConfirmation: "Riceverai una email di conferma a breve con tutti i dettagli dell'ordine.",
         orderSummary: "Riepilogo Ordine",
         chatbot: "Chatbot:",
@@ -2401,7 +2401,7 @@ export const translations: Record<Language, Translations> = {
         production: "Produzione",
         productionDescription: "I tuoi QR-Code personalizzati saranno prodotti entro 1-2 giorni lavorativi.",
         shipping: "Spedizione",
-        shippingDescription: "Riceverai un'email con il numero di tracking quando l'ordine sarà spedito.",
+        shippingDescription: "Riceverai un'email con il numero di tracking quando l'ordine sarÃ  spedito.",
         delivery: "Consegna",
         deliveryDescription: "Tempo di consegna stimato: 3-5 giorni lavorativi in Italia.",
         backToDashboard: "Torna alla Dashboard",
@@ -2413,13 +2413,13 @@ export const translations: Record<Language, Translations> = {
       // Cancel page
       cancel: {
         title: "Ordine Annullato",
-        subtitle: "Il pagamento è stato annullato.",
-        noCharge: "Non è stato addebitato alcun importo. Puoi riprovare quando vuoi.",
-        whatHappened: "Cosa è successo?",
-        whatHappened1: "• Hai annullato il processo di pagamento",
-        whatHappened2: "• Non è stato effettuato alcun addebito",
-        whatHappened3: "• I tuoi dati sono stati salvati e puoi riprovare",
-        whatHappened4: "• Il tuo carrello è ancora disponibile",
+        subtitle: "Il pagamento Ã¨ stato annullato.",
+        noCharge: "Non Ã¨ stato addebitato alcun importo. Puoi riprovare quando vuoi.",
+        whatHappened: "Cosa Ã¨ successo?",
+        whatHappened1: "â€¢ Hai annullato il processo di pagamento",
+        whatHappened2: "â€¢ Non Ã¨ stato effettuato alcun addebito",
+        whatHappened3: "â€¢ I tuoi dati sono stati salvati e puoi riprovare",
+        whatHappened4: "â€¢ Il tuo carrello Ã¨ ancora disponibile",
         retryOrder: "Riprova l'Ordine",
         backToDashboard: "Torna alla Dashboard",
         needHelp: "Hai bisogno di aiuto?",
@@ -2438,7 +2438,7 @@ export const translations: Record<Language, Translations> = {
         addressAutoFilled: "Indirizzo compilato automaticamente!",
         addressError: "Errore nella ricerca indirizzi. Verifica la connessione.",
         addressDetailsError: "Errore nel recuperare i dettagli dell'indirizzo",
-        demoMode: "Modalità demo: seleziona un indirizzo di test"
+        demoMode: "ModalitÃ  demo: seleziona un indirizzo di test"
       }
     },
     selectService: {
@@ -2465,7 +2465,7 @@ export const translations: Record<Language, Translations> = {
       titlePrefix: "Save precious hours of time with",
       subtitle: "Automatically respond completely and immediately to guest requests 24/7.",
       subtitleHighlight: "Less messages for you, more satisfaction for them.",
-      freeTrialButton: "🎉 14 Days Free",
+      freeTrialButton: "ðŸŽ‰ 14 Days Free",
       registerButton: "Sign Up to Start",
       demoButton: "TRY DEMO"
     },
@@ -2551,7 +2551,7 @@ export const translations: Record<Language, Translations> = {
         register: {
           title: "Sign Up",
           email: "mario.rossi@email.com",
-          password: "••••••••",
+          password: "â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢",
           button: "Sign Up",
           success: "Account created!"
         },
@@ -2579,45 +2579,45 @@ export const translations: Record<Language, Translations> = {
       plans: [
         {
           name: "Standard",
-          price: "€19",
+          price: "â‚¬19",
           period: "/month",
           features: [
             "20 conversations/month"
           ],
-          freeTrialButton: "🎉 14 Days Free",
+          freeTrialButton: "ðŸŽ‰ 14 Days Free",
           ctaButton: "Choose Standard",
           priceId: "STANDARD_PRICE_ID"
         },
         {
           name: "Premium",
-          price: "€39",
+          price: "â‚¬39",
           period: "/month",
           features: [
             "50 conversations/month"
           ],
-          freeTrialButton: "🎉 14 Days Free",
+          freeTrialButton: "ðŸŽ‰ 14 Days Free",
           ctaButton: "Choose Premium",
           priceId: "PREMIUM_PRICE_ID"
         },
         {
           name: "Pro",
-          price: "€79",
+          price: "â‚¬79",
           period: "/month",
           features: [
             "150 conversations/month"
           ],
-          freeTrialButton: "🎉 14 Days Free",
+          freeTrialButton: "ðŸŽ‰ 14 Days Free",
           ctaButton: "Choose Pro",
           priceId: "PRO_PRICE_ID"
         },
         {
           name: "Enterprise",
-          price: "€199",
+          price: "â‚¬199",
           period: "/month",
           features: [
             "500 conversations/month"
           ],
-          freeTrialButton: "🎉 14 Days Free",
+          freeTrialButton: "ðŸŽ‰ 14 Days Free",
           ctaButton: "Choose Enterprise",
           priceId: "ENTERPRISE_PRICE_ID"
         }
@@ -2629,7 +2629,7 @@ export const translations: Record<Language, Translations> = {
       { role: 'user', text: 'Can I check-in after 10 PM?' },
       { role: 'assistant', text: 'Sure! Self check-in is available 24/7. Let us know your estimated time and we\'ll assist you.' },
       { role: 'user', text: 'How is parking in the area?' },
-      { role: 'assistant', text: 'There\'s free street parking nearby. Alternatively, 300m away you\'ll find Garage Verdi at €15/day.' },
+      { role: 'assistant', text: 'There\'s free street parking nearby. Alternatively, 300m away you\'ll find Garage Verdi at â‚¬15/day.' },
       { role: 'user', text: 'WiFi and recommended restaurants?' },
       { role: 'assistant', text: 'WiFi fiber 200Mbps, password: CASA2024. For dinner I recommend Trattoria Roma (5 min walk) and Osteria Bella Vista.' }
     ],
@@ -2639,7 +2639,7 @@ export const translations: Record<Language, Translations> = {
       messages: {
         user1: "Hi! What time is check-in?",
         assistant1: "Check-in is from 3:00 PM to 8:00 PM. I'll send you the code!",
-        user2: "Perfect! Thank you so much! 🙏"
+        user2: "Perfect! Thank you so much! ðŸ™"
       }
     },
     testimonials: [
@@ -2825,7 +2825,7 @@ export const translations: Record<Language, Translations> = {
           monitoring: "Automatic monitoring",
           alerts: "Dissatisfied guest alerts"
         },
-        button: "Activate Complete Package - €38/month",
+        button: "Activate Complete Package - â‚¬38/month",
         processing: "Processing...",
         securePayment: "Secure Payment",
         referralCode: "Referral Code (optional)",
@@ -2876,7 +2876,7 @@ export const translations: Record<Language, Translations> = {
           detection: "Real-time detection",
           suggestions: "Action suggestions"
         },
-        button: "Activate Guardian - €9/month",
+        button: "Activate Guardian - â‚¬9/month",
         processing: "Processing...",
         securePayment: "Secure Payment",
         termsText: "By clicking \"Activate Guardian\" you accept our",
@@ -2951,7 +2951,7 @@ export const translations: Record<Language, Translations> = {
       },
       freeTrial: {
         title: "Free trial period active",
-        description: "You have {messages} messages remaining out of {limit} • Expires on {date}",
+        description: "You have {messages} messages remaining out of {limit} â€¢ Expires on {date}",
         activateButton: "Activate Subscription"
       },
       qrBanner: {
@@ -2961,7 +2961,7 @@ export const translations: Record<Language, Translations> = {
       },
       chatbots: {
         title: "Your Chatbots",
-        seeAll: "See all →",
+        seeAll: "See all â†’",
         noChatbots: "You haven't created any chatbots yet",
         createFirst: "Create your first chatbot"
       },
@@ -3024,7 +3024,7 @@ export const translations: Record<Language, Translations> = {
         averagePerChat: "Average per chat"
       },
       alert: {
-        critical: "🚨 CRITICAL ALERT",
+        critical: "ðŸš¨ CRITICAL ALERT",
         dissatisfiedGuest: "Dissatisfied guest detected in conversation",
         negativeReviewRisk: "Negative review risk",
         sentiment: "Sentiment"
@@ -3254,13 +3254,13 @@ export const translations: Record<Language, Translations> = {
         "Instant Notifications",
         "Detailed Reports"
       ],
-      pricing: "€9/month",
+      pricing: "â‚¬9/month",
       activate: "Activate Guardian",
       deactivate: "Deactivate Guardian",
       loading: "Loading Guardian...",
       redirecting: "Redirecting...",
       reactivate: "Reactivate Guardian",
-      activateWithPrice: "Activate Guardian - €9/month",
+      activateWithPrice: "Activate Guardian - â‚¬9/month",
       stats: {
         totalGuests: "Total Guests",
         totalGuestsShort: "Guests",
@@ -3280,7 +3280,7 @@ export const translations: Record<Language, Translations> = {
         title: "Active Alerts",
         activeAlerts: "Active Alerts",
         noAlerts: "No active alerts",
-        allUnderControl: "No active alerts. Everything under control! 🎉",
+        allUnderControl: "No active alerts. Everything under control! ðŸŽ‰",
         resolve: "Resolve",
         guest: "Guest",
         created: "Created",
@@ -3334,11 +3334,11 @@ export const translations: Record<Language, Translations> = {
           time: "14:32"
         },
         alert: {
-          title: "🚨 CRITICAL ALERT",
+          title: "ðŸš¨ CRITICAL ALERT",
           subtitle: "Dissatisfied guest detected"
         },
-        phoneCall: "📞 Host calls guest",
-        problemSolved: "🎉 Problem solved!",
+        phoneCall: "ðŸ“ž Host calls guest",
+        problemSolved: "ðŸŽ‰ Problem solved!",
         negativeReviewAvoided: "Negative review avoided"
       },
       benefits: {
@@ -3362,7 +3362,7 @@ export const translations: Record<Language, Translations> = {
         }
       },
       success: {
-        subscriptionActivated: "🎉 Guardian subscription activated successfully!",
+        subscriptionActivated: "ðŸŽ‰ Guardian subscription activated successfully!",
         alertResolved: "Alert resolved successfully!",
         subscriptionCancelled: "Guardian subscription cancelled successfully",
         subscriptionReactivated: "Guardian subscription reactivated successfully"
@@ -3431,15 +3431,15 @@ export const translations: Record<Language, Translations> = {
           cookies: "Cookies"
         }
       },
-      copyright: "© 2025 OspiterAI. All rights reserved."
+      copyright: "Â© 2025 OspiterAI. All rights reserved."
     },
     register: {
       title: "Create your Account",
       subtitle: "Start with OspiterAI",
       freeTrialSubtitle: "Start your 14-day free trial",
       paidSubtitle: "Start with OspiterAI",
-      freeTrialBanner: "🎉 You selected the free trial! After registration you can start creating your chatbot immediately.",
-      paidBanner: "💳 After registration you will complete the payment to activate your subscription.",
+      freeTrialBanner: "ðŸŽ‰ You selected the free trial! After registration you can start creating your chatbot immediately.",
+      paidBanner: "ðŸ’³ After registration you will complete the payment to activate your subscription.",
       fullName: "Full Name",
       email: "Email",
       phone: "Phone",
@@ -3584,8 +3584,8 @@ export const translations: Record<Language, Translations> = {
           features: [
             "Water resistant",
             "UV resistant",
-            "Size 5.83″×8.27″",
-            "Worldwide shipping €4.99"
+            "Size 5.83â€³Ã—8.27â€³",
+            "Worldwide shipping â‚¬4.99"
           ]
         }
       },
@@ -3638,7 +3638,7 @@ export const translations: Record<Language, Translations> = {
           postalCode: "Postal Code",
           country: "Country",
           phone: "Phone",
-          addressHint: "💡 Start typing the address and select from suggestions to automatically fill all fields",
+          addressHint: "ðŸ’¡ Start typing the address and select from suggestions to automatically fill all fields",
           addressPlaceholder: "Start typing the address...",
           autoFillHint: "Select an address to automatically fill",
           required: "*"
@@ -3689,10 +3689,10 @@ export const translations: Record<Language, Translations> = {
         subtitle: "The payment has been cancelled.",
         noCharge: "No amount has been charged. You can try again anytime.",
         whatHappened: "What happened?",
-        whatHappened1: "• You cancelled the payment process",
-        whatHappened2: "• No charge has been made",
-        whatHappened3: "• Your data has been saved and you can try again",
-        whatHappened4: "• Your cart is still available",
+        whatHappened1: "â€¢ You cancelled the payment process",
+        whatHappened2: "â€¢ No charge has been made",
+        whatHappened3: "â€¢ Your data has been saved and you can try again",
+        whatHappened4: "â€¢ Your cart is still available",
         retryOrder: "Retry Order",
         backToDashboard: "Back to Dashboard",
         needHelp: "Need help?",
@@ -3722,5 +3722,3 @@ export const translations: Record<Language, Translations> = {
     }
   }
 }
-/ /   F o r c e   s a v e 
- 
