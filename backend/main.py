@@ -4335,7 +4335,6 @@ async def get_chatbot(
         "faq": chatbot.faq,
         "welcome_message": chatbot.welcome_message,
         "reviews_link": chatbot.reviews_link,
-        "wifi_qr_code_data": chatbot.wifi_qr_code_data,
         "wifi_qr_code_filename": chatbot.wifi_qr_code_filename,
         "wifi_qr_code_content_type": chatbot.wifi_qr_code_content_type,
         "has_wifi_qr_code": chatbot.has_wifi_qr_code,
