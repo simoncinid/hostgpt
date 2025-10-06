@@ -361,7 +361,24 @@ function RegisterForm() {
                           className="mt-0.5 mr-2 flex-shrink-0"
                         />
                         <span className="text-xs text-gray-600">
-                          {t.termsAccept} termini e condizioni e la privacy policy
+                          {t.termsAccept}{' '}
+                          <Link 
+                            href="/terms" 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-primary hover:text-secondary underline"
+                          >
+                            termini e condizioni
+                          </Link>
+                          {' '}e la{' '}
+                          <Link 
+                            href="/privacy" 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-primary hover:text-secondary underline"
+                          >
+                            privacy policy
+                          </Link>
                         </span>
                       </label>
                       {formErrors.terms && (
@@ -559,7 +576,24 @@ function RegisterForm() {
                         className="mt-0.5 mr-2 flex-shrink-0"
                       />
                       <span className="text-xs text-gray-600">
-                        {t.termsAccept} termini e condizioni e la privacy policy
+                        {t.termsAccept}{' '}
+                        <Link 
+                          href="/terms" 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-primary hover:text-secondary underline"
+                        >
+                          termini e condizioni
+                        </Link>
+                        {' '}e la{' '}
+                        <Link 
+                          href="/privacy" 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-primary hover:text-secondary underline"
+                        >
+                          privacy policy
+                        </Link>
                       </span>
                     </label>
                     {formErrors.terms && (
