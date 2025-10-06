@@ -5,7 +5,7 @@ from fastapi.security import OAuth2PasswordBearer
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session, joinedload
-from sqlalchemy import func
+from sqlalchemy import func, text
 from typing import List, Optional, Tuple
 from datetime import datetime, timedelta
 import uuid
@@ -4548,6 +4548,22 @@ async def delete_chatbot(
     if not chatbot:
         raise HTTPException(status_code=404, detail="Chatbot non trovato")
     
+    # Prima elimina tutti gli ordini di stampa correlati
+    deleted_orders = 0
+    try:
+        # Conta prima quanti ordini ci sono
+        count_result = db.execute(text("SELECT COUNT(*) as count FROM print_orders WHERE chatbot_id = :chatbot_id"), 
+                                {"chatbot_id": chatbot_id})
+        deleted_orders = count_result.fetchone()[0]
+        
+        # Elimina i record dalla tabella print_orders che fanno riferimento a questo chatbot
+        db.execute(text("DELETE FROM print_orders WHERE chatbot_id = :chatbot_id"), 
+                  {"chatbot_id": chatbot_id})
+        logger.info(f"Eliminati {deleted_orders} ordini di stampa per il chatbot {chatbot_id}")
+    except Exception as e:
+        logger.error(f"Errore nell'eliminazione degli ordini di stampa: {e}")
+        # Continua comunque con l'eliminazione del chatbot
+    
     # Elimina assistant OpenAI
     try:
         client = get_openai_client()
@@ -4558,7 +4574,47 @@ async def delete_chatbot(
     db.delete(chatbot)
     db.commit()
     
-    return {"message": "Chatbot eliminato con successo"}
+    message = "Chatbot eliminato con successo"
+    if deleted_orders > 0:
+        message += f" (eliminati anche {deleted_orders} ordini di stampa associati)"
+    
+    return {"message": message}
+
+@app.get("/api/chatbots/{chatbot_id}/can-delete")
+async def can_delete_chatbot(
+    chatbot_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Verifica se un chatbot può essere eliminato"""
+    chatbot = db.query(Chatbot).filter(
+        Chatbot.id == chatbot_id,
+        Chatbot.user_id == current_user.id
+    ).first()
+    
+    if not chatbot:
+        raise HTTPException(status_code=404, detail="Chatbot non trovato")
+    
+    # Controlla se ci sono ordini di stampa correlati
+    try:
+        result = db.execute(text("SELECT COUNT(*) as count FROM print_orders WHERE chatbot_id = :chatbot_id"), 
+                          {"chatbot_id": chatbot_id})
+        order_count = result.fetchone()[0]
+        
+        return {
+            "can_delete": True,
+            "has_print_orders": order_count > 0,
+            "print_orders_count": order_count,
+            "message": f"Il chatbot ha {order_count} ordini di stampa associati che verranno eliminati insieme al chatbot" if order_count > 0 else "Il chatbot può essere eliminato senza problemi"
+        }
+    except Exception as e:
+        logger.error(f"Errore nel controllo degli ordini di stampa: {e}")
+        return {
+            "can_delete": True,
+            "has_print_orders": False,
+            "print_orders_count": 0,
+            "message": "Impossibile verificare gli ordini di stampa, ma il chatbot può essere eliminato"
+        }
 
 # --- Collaborator Endpoints ---
 
@@ -4612,7 +4668,11 @@ async def invite_collaborators(
         ).join(User, ChatbotCollaborator.user_id == User.id).first()
         
         if existing_collaborator:
-            continue
+            # Restituisce errore per email già collaboratore
+            raise HTTPException(
+                status_code=400, 
+                detail=f"L'email {email} è già collaboratore di questo chatbot"
+            )
         
         # Verifica se c'è già un invito pendente
         existing_invite = db.query(ChatbotCollaboratorInvite).filter(
