@@ -5669,14 +5669,24 @@ async def send_message(
             # Cerca conversazione esistente per questo guest
             existing_conversation = get_latest_guest_conversation(chatbot.id, guest.id, db)
             if existing_conversation:
-                # CARICA conversazione esistente
-                conversation = carica_conversazione_esistente(existing_conversation, message, chatbot, owner, client, db, request)
+                # Verifica che la conversazione esistente sia valida
+                if existing_conversation.id and existing_conversation.chatbot_id == chatbot.id:
+                    # CARICA conversazione esistente
+                    conversation = carica_conversazione_esistente(existing_conversation, message, chatbot, owner, client, db, request)
+                else:
+                    logger.warning(f"⚠️ Conversazione esistente {existing_conversation.id} non valida, creando nuova conversazione")
+                    conversation = crea_nuova_conversazione(guest, message, chatbot, owner, client, db, request)
             else:
                 # CREA nuova conversazione (prima conversazione per questo guest-chatbot)
                 conversation = crea_nuova_conversazione(guest, message, chatbot, owner, client, db, request)
         else:
             # CREA sempre nuova conversazione quando force_new_conversation=True
             conversation = crea_nuova_conversazione(guest, message, chatbot, owner, client, db, request)
+        
+        # Verifica che la conversazione abbia un thread_id valido
+        if not conversation.thread_id:
+            logger.error(f"❌ Conversazione {conversation.id} non ha thread_id valido")
+            raise HTTPException(status_code=500, detail="Errore interno: thread_id mancante")
         
         # Esegui assistant
         run = client.beta.threads.runs.create(
@@ -5687,16 +5697,32 @@ async def send_message(
         
         # Attendi risposta
         import time
-        while run.status in ["queued", "in_progress"]:
+        max_wait_time = 30  # Massimo 30 secondi di attesa
+        wait_time = 0
+        
+        while run.status in ["queued", "in_progress"] and wait_time < max_wait_time:
             time.sleep(1)
+            wait_time += 1
             run = client.beta.threads.runs.retrieve(
                 thread_id=conversation.thread_id,
                 run_id=run.id,
                 extra_headers={"OpenAI-Beta": "assistants=v2"}
             )
         
+        # Verifica se il run è completato con successo
+        if run.status != "completed":
+            logger.error(f"❌ Run OpenAI fallito con status: {run.status}")
+            if hasattr(run, 'last_error') and run.last_error:
+                logger.error(f"❌ Errore OpenAI: {run.last_error}")
+            raise HTTPException(status_code=500, detail="Errore nel processare la richiesta con OpenAI")
+        
         # Ottieni risposta
         messages = client.beta.threads.messages.list(thread_id=conversation.thread_id, extra_headers={"OpenAI-Beta": "assistants=v2"})
+        
+        if not messages.data or not messages.data[0].content:
+            logger.error("❌ Nessun messaggio ricevuto da OpenAI")
+            raise HTTPException(status_code=500, detail="Nessuna risposta ricevuta dal chatbot")
+        
         assistant_message = messages.data[0].content[0].text.value
         
         # Salva messaggi nel DB
@@ -5747,7 +5773,7 @@ async def send_message(
         }
         
         # IMPORTANTE: Se è una conversazione esistente, includi i messaggi esistenti
-        if hasattr(conversation, 'is_existing_conversation') and conversation.is_existing_conversation:
+        if getattr(conversation, 'is_existing_conversation', False):
             existing_messages = db.query(Message).filter(
                 Message.conversation_id == conversation.id
             ).order_by(Message.timestamp.asc()).all()
@@ -5768,6 +5794,16 @@ async def send_message(
         
     except Exception as e:
         logger.error(f"Error in chat: {e}")
+        # Assicurati che il database venga rollback in caso di errore
+        try:
+            db.rollback()
+        except Exception as rollback_error:
+            logger.error(f"Errore durante rollback: {rollback_error}")
+        
+        # Log dell'errore completo per debug
+        import traceback
+        logger.error(f"Traceback completo: {traceback.format_exc()}")
+        
         raise HTTPException(status_code=500, detail="Errore nel processare il messaggio")
 
 @app.post("/api/chat/{uuid}/voice-message")
@@ -9167,21 +9203,29 @@ def carica_conversazione_esistente(conversation: Conversation, message: MessageC
     
     # Se la conversazione non ha thread_id, crealo
     if not conversation.thread_id:
-        thread = client.beta.threads.create(extra_headers={"OpenAI-Beta": "assistants=v2"})
-        conversation.thread_id = thread.id
-        db.commit()
-        logger.info(f"🆕 Creato thread OpenAI per conversazione esistente: {conversation.thread_id}")
+        try:
+            thread = client.beta.threads.create(extra_headers={"OpenAI-Beta": "assistants=v2"})
+            conversation.thread_id = thread.id
+            db.commit()
+            logger.info(f"🆕 Creato thread OpenAI per conversazione esistente: {conversation.thread_id}")
+        except Exception as e:
+            logger.error(f"❌ Errore nella creazione del thread OpenAI: {e}")
+            raise HTTPException(status_code=500, detail="Errore nella creazione del thread OpenAI")
     
     # Invia il messaggio a OpenAI
-    client.beta.threads.messages.create(
-        thread_id=conversation.thread_id,
-        role="user",
-        content=message.content,
-        extra_headers={"OpenAI-Beta": "assistants=v2"}
-    )
+    try:
+        client.beta.threads.messages.create(
+            thread_id=conversation.thread_id,
+            role="user",
+            content=message.content,
+            extra_headers={"OpenAI-Beta": "assistants=v2"}
+        )
+    except Exception as e:
+        logger.error(f"❌ Errore nell'invio del messaggio a OpenAI: {e}")
+        raise HTTPException(status_code=500, detail="Errore nell'invio del messaggio a OpenAI")
     
-    # IMPORTANTE: Marca che questa è una conversazione esistente
-    conversation.is_existing_conversation = True
+    # IMPORTANTE: Marca che questa è una conversazione esistente usando un attributo dinamico
+    setattr(conversation, 'is_existing_conversation', True)
     
     return conversation
 
