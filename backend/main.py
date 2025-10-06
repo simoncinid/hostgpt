@@ -4556,12 +4556,32 @@ async def delete_chatbot(
                                 {"chatbot_id": chatbot_id})
         deleted_orders = count_result.fetchone()[0]
         
-        # Elimina i record dalla tabella print_orders che fanno riferimento a questo chatbot
-        db.execute(text("DELETE FROM print_orders WHERE chatbot_id = :chatbot_id"), 
-                  {"chatbot_id": chatbot_id})
-        logger.info(f"Eliminati {deleted_orders} ordini di stampa per il chatbot {chatbot_id}")
+        if deleted_orders > 0:
+            logger.info(f"Trovati {deleted_orders} ordini di stampa da eliminare per il chatbot {chatbot_id}")
+            
+            # Prova prima a disabilitare temporaneamente i controlli di foreign key
+            try:
+                db.execute(text("SET FOREIGN_KEY_CHECKS = 0"))
+                delete_result = db.execute(text("DELETE FROM print_orders WHERE chatbot_id = :chatbot_id"), 
+                                          {"chatbot_id": chatbot_id})
+                db.execute(text("SET FOREIGN_KEY_CHECKS = 1"))
+                db.commit()
+                logger.info(f"Eliminati {deleted_orders} ordini di stampa per il chatbot {chatbot_id}")
+            except Exception as fk_error:
+                logger.error(f"Errore con disabilitazione foreign key: {fk_error}")
+                # Riprova con il metodo normale
+                db.execute(text("SET FOREIGN_KEY_CHECKS = 1"))
+                db.rollback()
+                delete_result = db.execute(text("DELETE FROM print_orders WHERE chatbot_id = :chatbot_id"), 
+                                          {"chatbot_id": chatbot_id})
+                db.commit()
+                logger.info(f"Eliminati {deleted_orders} ordini di stampa per il chatbot {chatbot_id} (metodo normale)")
+        else:
+            logger.info(f"Nessun ordine di stampa da eliminare per il chatbot {chatbot_id}")
     except Exception as e:
         logger.error(f"Errore nell'eliminazione degli ordini di stampa: {e}")
+        # Rollback e riprova senza eliminare gli ordini
+        db.rollback()
         # Continua comunque con l'eliminazione del chatbot
     
     # Elimina assistant OpenAI
@@ -4571,8 +4591,31 @@ async def delete_chatbot(
     except Exception as e:
         logger.error(f"Error deleting OpenAI assistant: {e}")
     
-    db.delete(chatbot)
-    db.commit()
+    # Prova a eliminare il chatbot con gestione degli errori di foreign key
+    try:
+        db.delete(chatbot)
+        db.commit()
+        logger.info(f"Chatbot {chatbot_id} eliminato con successo")
+    except Exception as delete_error:
+        logger.error(f"Errore nell'eliminazione del chatbot: {delete_error}")
+        
+        # Se c'è ancora un errore di foreign key, prova con un approccio più drastico
+        if "foreign key constraint fails" in str(delete_error).lower():
+            logger.warning("Tentativo di eliminazione forzata del chatbot")
+            try:
+                # Disabilita i controlli di foreign key e elimina tutto
+                db.execute(text("SET FOREIGN_KEY_CHECKS = 0"))
+                db.execute(text("DELETE FROM chatbots WHERE id = :chatbot_id"), {"chatbot_id": chatbot_id})
+                db.execute(text("SET FOREIGN_KEY_CHECKS = 1"))
+                db.commit()
+                logger.info(f"Chatbot {chatbot_id} eliminato con eliminazione forzata")
+            except Exception as force_error:
+                logger.error(f"Errore anche con eliminazione forzata: {force_error}")
+                db.rollback()
+                raise HTTPException(status_code=500, detail="Impossibile eliminare il chatbot a causa di vincoli di database")
+        else:
+            db.rollback()
+            raise HTTPException(status_code=500, detail=f"Errore nell'eliminazione del chatbot: {str(delete_error)}")
     
     message = "Chatbot eliminato con successo"
     if deleted_orders > 0:

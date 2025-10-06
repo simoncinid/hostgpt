@@ -53,7 +53,7 @@ export default function CollaboratorInviteModal({
   }
 
   const isExistingCollaborator = (email: string): boolean => {
-    return collaborators.some(collaborator => 
+    return Array.isArray(collaborators) && collaborators.some(collaborator => 
       collaborator.user.email.toLowerCase() === email.toLowerCase()
     )
   }
@@ -62,9 +62,10 @@ export default function CollaboratorInviteModal({
     setIsLoadingCollaborators(true)
     try {
       const response = await chatbots.getCollaborators(chatbotId)
-      setCollaborators(response.data)
+      setCollaborators(Array.isArray(response.data) ? response.data : [])
     } catch (error) {
       console.error('Error loading collaborators:', error)
+      setCollaborators([])
     } finally {
       setIsLoadingCollaborators(false)
     }
@@ -207,7 +208,7 @@ export default function CollaboratorInviteModal({
                   {language === 'ENG' ? 'Loading collaborators...' : 'Caricamento collaboratori...'}
                 </div>
               </div>
-            ) : collaborators.length > 0 && (
+            ) : Array.isArray(collaborators) && collaborators.length > 0 && (
               <div className="mb-6">
                 <h4 className="text-sm font-medium text-gray-700 mb-3">
                   {language === 'ENG' ? 'Current Collaborators' : 'Collaboratori Attuali'}
