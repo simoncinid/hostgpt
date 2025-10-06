@@ -221,15 +221,6 @@ export default function CollaboratorInviteModal({
               </button>
             </div>
 
-            {/* Description */}
-            <div className="mb-6">
-              <p className="text-sm text-gray-600 mb-4">
-                {language === 'ENG' 
-                  ? 'Invite up to 3 collaborators to manage this chatbot. They will receive an email with a link to access.'
-                  : 'Invita fino a 3 collaboratori a gestire questo chatbot. Riceveranno un\'email con un link per accedere.'
-                }
-              </p>
-            </div>
 
             {/* Existing Collaborators */}
             {isLoadingCollaborators ? (
@@ -258,6 +249,13 @@ export default function CollaboratorInviteModal({
                           </span>
                         </div>
                       )}
+                      <button
+                        onClick={() => handleRemoveCollaborator(collaborator)}
+                        className="p-1 text-red-500 hover:bg-red-50 rounded transition"
+                        title={language === 'ENG' ? 'Remove' : 'Rimuovi'}
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
                       <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
                         collaborator.status === 'pending' 
                           ? 'bg-yellow-100' 
@@ -277,17 +275,8 @@ export default function CollaboratorInviteModal({
                           <p className="text-xs text-gray-500">{collaborator.email}</p>
                         )}
                       </div>
-                      <div className="flex items-center gap-2">
-                        <div className="text-xs text-gray-500">
-                          {new Date(collaborator.joined_at).toLocaleDateString()}
-                        </div>
-                        <button
-                          onClick={() => handleRemoveCollaborator(collaborator)}
-                          className="p-1 text-red-500 hover:bg-red-50 rounded transition"
-                          title={language === 'ENG' ? 'Remove' : 'Rimuovi'}
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
+                      <div className="text-xs text-gray-500">
+                        {new Date(collaborator.joined_at).toLocaleDateString()}
                       </div>
                     </div>
                   ))}
