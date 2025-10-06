@@ -4606,7 +4606,7 @@ async def invite_collaborators(
             ChatbotCollaborator.chatbot_id == request.chatbot_id,
             ChatbotCollaborator.user_id == User.id,
             User.email == email
-        ).join(User).first()
+        ).join(User, ChatbotCollaborator.user_id == User.id).first()
         
         if existing_collaborator:
             continue
