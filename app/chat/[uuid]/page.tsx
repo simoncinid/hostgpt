@@ -243,6 +243,8 @@ export default function ChatWidgetPage() {
       // Se non abbiamo ancora un thread_id, lo salviamo
       if (!threadId) {
         setThreadId(response.data.thread_id)
+        // Salva il threadId nel localStorage
+        localStorage.setItem(`thread_id_${uuid}`, response.data.thread_id)
       }
 
       const assistantMessage: Message = {
@@ -472,8 +474,6 @@ export default function ChatWidgetPage() {
   useEffect(() => {
     // Reset dello stato al cambio di UUID (refresh)
     setMessages([])
-    setConversationId(null)
-    setThreadId(null)
     setInputMessage('')
     setShowWelcome(true)
     setGuestData(null)
@@ -482,27 +482,75 @@ export default function ChatWidgetPage() {
     setPhoneNumber('')
     setSelectedCountryCode('+39')
     
-    // CORREZIONE: Distingui tra prima visita e refresh
+    // Controlla se c'è una conversazione esistente salvata
     const savedGuestId = localStorage.getItem(`guest_id_${uuid}`)
-    const hasBeenHereBefore = sessionStorage.getItem(`visited_${uuid}`)
+    const savedConversationId = localStorage.getItem(`conversation_id_${uuid}`)
+    const savedThreadId = localStorage.getItem(`thread_id_${uuid}`)
     
-    console.log('🔄 [DEBUG] useEffect - savedGuestId dal localStorage:', savedGuestId)
-    console.log('🔄 [DEBUG] useEffect - hasBeenHereBefore:', hasBeenHereBefore)
-    console.log('🔄 [DEBUG] useEffect - localStorage key:', `guest_id_${uuid}`)
+    console.log('🔄 [DEBUG] useEffect - savedGuestId:', savedGuestId)
+    console.log('🔄 [DEBUG] useEffect - savedConversationId:', savedConversationId)
+    console.log('🔄 [DEBUG] useEffect - savedThreadId:', savedThreadId)
     
-    // Crea conversazione solo se NON è la prima visita nella sessione E c'è un guest_id salvato
-    const shouldCreateConversation = hasBeenHereBefore && savedGuestId
-    console.log('🔄 [DEBUG] useEffect - shouldCreateConversation:', shouldCreateConversation)
-    
-    // Segna che abbiamo visitato questa chat in questa sessione
-    sessionStorage.setItem(`visited_${uuid}`, 'true')
-    
-    loadChatInfo(shouldCreateConversation ? parseInt(savedGuestId) : null)
+    if (savedGuestId && savedConversationId) {
+      // Ripristina la conversazione esistente
+      console.log('🔄 [DEBUG] Ripristinando conversazione esistente')
+      setConversationId(parseInt(savedConversationId))
+      setThreadId(savedThreadId || null)
+      
+      // Carica i messaggi della conversazione esistente
+      loadExistingConversation(parseInt(savedConversationId))
+    } else {
+      // Nessuna conversazione salvata, reset completo
+      setConversationId(null)
+      setThreadId(null)
+      loadChatInfo(null)
+    }
   }, [uuid])
 
   useEffect(() => {
     scrollToBottom()
   }, [messages])
+
+  const loadExistingConversation = async (conversationId: number) => {
+    try {
+      console.log('🔄 [DEBUG] Caricando conversazione esistente:', conversationId)
+      
+      // Carica le informazioni del chatbot
+      const response = await chat.getInfo(uuid)
+      setChatInfo(response.data)
+      
+      // Carica i messaggi della conversazione esistente
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+      const messagesResponse = await fetch(`${API_URL}/api/chat/${uuid}/conversation/${conversationId}/messages`)
+      
+      if (messagesResponse.ok) {
+        const messagesData = await messagesResponse.json()
+        const formattedMessages = messagesData.messages.map((msg: any) => ({
+          ...msg,
+          timestamp: msg.timestamp ? new Date(msg.timestamp) : new Date(),
+          id: msg.id || Date.now() + Math.random(),
+          role: (msg.role || 'assistant') as 'assistant' | 'user',
+          content: msg.content || ''
+        }))
+        setMessages(formattedMessages || [])
+        console.log('🔄 [DEBUG] Messaggi caricati per conversazione esistente:', formattedMessages.length)
+        
+        // Non mostrare la schermata di identificazione se abbiamo messaggi
+        if (formattedMessages.length > 0) {
+          setShowWelcome(false)
+        }
+      } else {
+        console.error('Errore nel caricamento messaggi conversazione esistente')
+        // Se non riusciamo a caricare i messaggi, mostra la schermata di identificazione
+        setShowWelcome(true)
+      }
+      
+    } catch (error) {
+      console.error('Errore nel caricamento conversazione esistente:', error)
+      // In caso di errore, mostra la schermata di identificazione
+      setShowWelcome(true)
+    }
+  }
 
   const loadChatInfo = async (savedGuestId?: number | null) => {
     try {
@@ -596,6 +644,8 @@ export default function ChatWidgetPage() {
       // Se non abbiamo ancora un thread_id, lo salviamo
       if (!threadId) {
         setThreadId(response.data.thread_id)
+        // Salva il threadId nel localStorage
+        localStorage.setItem(`thread_id_${uuid}`, response.data.thread_id)
       }
 
       const assistantMessage: Message = {
@@ -794,6 +844,8 @@ export default function ChatWidgetPage() {
       // Se non abbiamo ancora un thread_id, lo salviamo
       if (!threadId) {
         setThreadId(response.data.thread_id)
+        // Salva il threadId nel localStorage
+        localStorage.setItem(`thread_id_${uuid}`, response.data.thread_id)
       }
 
       // Aggiungi messaggio utente (testo trascritto)
@@ -875,6 +927,12 @@ export default function ChatWidgetPage() {
         // Abbiamo già una conversazione creata al refresh, mantienila e carica i messaggi
         console.log('🔄 [DEBUG] Usando conversazione creata al refresh:', conversationId)
         
+        // Salva lo stato della conversazione nel localStorage
+        localStorage.setItem(`conversation_id_${uuid}`, conversationId.toString())
+        if (threadId) {
+          localStorage.setItem(`thread_id_${uuid}`, threadId)
+        }
+        
         // Ora carica i messaggi della conversazione creata al refresh
         try {
           const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
@@ -900,6 +958,10 @@ export default function ChatWidgetPage() {
         // Riutilizza la conversazione esistente
         setConversationId(guestInfo.existing_conversation_id)
         setThreadId(guestInfo.existing_thread_id)
+        
+        // Salva lo stato della conversazione nel localStorage
+        localStorage.setItem(`conversation_id_${uuid}`, guestInfo.existing_conversation_id.toString())
+        localStorage.setItem(`thread_id_${uuid}`, guestInfo.existing_thread_id || '')
         
         try {
           const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
@@ -930,6 +992,10 @@ export default function ChatWidgetPage() {
           // Salva l'ID della nuova conversazione
           setConversationId(welcomeResponse.data.conversation_id)
           setThreadId(null) // Nessun thread ancora
+          
+          // Salva lo stato della conversazione nel localStorage
+          localStorage.setItem(`conversation_id_${uuid}`, welcomeResponse.data.conversation_id.toString())
+          localStorage.setItem(`thread_id_${uuid}`, '')
           
           // Carica i messaggi della nuova conversazione
           const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
@@ -991,6 +1057,10 @@ export default function ChatWidgetPage() {
     setPhoneNumber('')
     setSelectedCountryCode('+39')
     setShowWelcome(true)
+    
+    // Pulisci il localStorage per forzare la creazione di una nuova conversazione
+    localStorage.removeItem(`conversation_id_${uuid}`)
+    localStorage.removeItem(`thread_id_${uuid}`)
     
     // NUOVO: Controlla se c'è un guest_id salvato per creare nuova conversazione
     const savedGuestId = localStorage.getItem(`guest_id_${uuid}`)
