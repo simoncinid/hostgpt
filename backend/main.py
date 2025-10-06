@@ -4570,6 +4570,9 @@ class CollaboratorInviteResponse(BaseModel):
     invited_count: int
     message: str
 
+class AcceptInviteRequest(BaseModel):
+    invite_token: str
+
 @app.post("/api/chatbots/collaborators/invite", response_model=CollaboratorInviteResponse)
 async def invite_collaborators(
     request: CollaboratorInviteRequest,
@@ -4729,14 +4732,14 @@ async def remove_collaborator(
 
 @app.post("/api/collaborators/accept-invite")
 async def accept_collaborator_invite(
-    invite_token: str,
+    request: AcceptInviteRequest,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """Accetta un invito a collaborare"""
     # Trova l'invito
     invite = db.query(ChatbotCollaboratorInvite).filter(
-        ChatbotCollaboratorInvite.invite_token == invite_token,
+        ChatbotCollaboratorInvite.invite_token == request.invite_token,
         ChatbotCollaboratorInvite.status == "pending"
     ).first()
     
