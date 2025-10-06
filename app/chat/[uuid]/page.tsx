@@ -90,6 +90,8 @@ export default function ChatWidgetPage() {
   const [language, setLanguage] = useState<'IT' | 'ENG'>('IT')
   const [isDarkMode, setIsDarkMode] = useState(false)
   const [isDownloadingPDF, setIsDownloadingPDF] = useState(false)
+  const [isSuspended, setIsSuspended] = useState(false)
+  const [suspensionMessage, setSuspensionMessage] = useState('')
   
   // Stati per WiFi e emergenza
   const [wifiInfo, setWifiInfo] = useState<{
@@ -215,6 +217,12 @@ export default function ChatWidgetPage() {
   const handleSuggestedMessage = async (suggestionKey: string) => {
     const fullMessage = fullMessages[language][suggestionKey as keyof typeof fullMessages[typeof language]]
     
+    // Verifica se la chat è sospesa
+    if (isSuspended) {
+      toast.error('La chat è temporaneamente sospesa. L\'host risponderà presto.')
+      return
+    }
+    
     // IMPORTANTE: Verifica che i dati guest siano presenti
     if (!guestData?.id) {
       console.error('❌ [ERROR] Dati guest mancanti, impossibile inviare messaggio suggerito')
@@ -262,6 +270,17 @@ export default function ChatWidgetPage() {
       }
 
       setMessages(prev => [...prev, assistantMessage])
+      
+      // Controlla se la conversazione è stata sospesa dopo l'invio del messaggio suggerito
+      try {
+        const statusResponse = await chat.getStatus(uuid, response.data.thread_id)
+        if (statusResponse.data.suspended) {
+          setIsSuspended(true)
+          setSuspensionMessage(statusResponse.data.message)
+        }
+      } catch (error) {
+        console.error('Errore nel controllo dello stato dopo invio messaggio suggerito:', error)
+      }
     } catch (error: any) {
       if (error.response?.status === 403) {
         const errorDetail = error.response?.data?.detail || ''
@@ -281,6 +300,12 @@ export default function ChatWidgetPage() {
         } else {
           toast.error(currentTexts.error)
         }
+      } else if (error.response?.status === 423) {
+        // Chat sospesa per alert Guardian
+        const errorDetail = error.response?.data?.detail || ''
+        setIsSuspended(true)
+        setSuspensionMessage(errorDetail)
+        toast.error(errorDetail)
       } else {
         toast.error(currentTexts.error)
       }
@@ -518,6 +543,28 @@ export default function ChatWidgetPage() {
     scrollToBottom()
   }, [messages])
 
+  // Controlla lo stato della chat (se è sospesa)
+  useEffect(() => {
+    const checkChatStatus = async () => {
+      if (threadId) {
+        try {
+          const response = await chat.getStatus(uuid, threadId)
+          if (response.data.suspended) {
+            setIsSuspended(true)
+            setSuspensionMessage(response.data.message)
+          } else {
+            setIsSuspended(false)
+            setSuspensionMessage('')
+          }
+        } catch (error) {
+          console.error('Errore nel controllo dello stato della chat:', error)
+        }
+      }
+    }
+
+    checkChatStatus()
+  }, [threadId, uuid])
+
   const loadExistingConversation = async (conversationId: number) => {
     try {
       console.log('🔄 [DEBUG] Caricando conversazione esistente:', conversationId)
@@ -568,6 +615,22 @@ export default function ChatWidgetPage() {
         // Non mostrare la schermata di identificazione se abbiamo messaggi
         if (formattedMessages.length > 0) {
           setShowWelcome(false)
+        }
+        
+        // Controlla se la conversazione è sospesa per alert Guardian
+        if (threadId) {
+          try {
+            const statusResponse = await chat.getStatus(uuid, threadId)
+            if (statusResponse.data.suspended) {
+              setIsSuspended(true)
+              setSuspensionMessage(statusResponse.data.message)
+            } else {
+              setIsSuspended(false)
+              setSuspensionMessage('')
+            }
+          } catch (error) {
+            console.error('Errore nel controllo dello stato della conversazione esistente:', error)
+          }
         }
       } else {
         console.error('Errore nel caricamento messaggi conversazione esistente')
@@ -646,6 +709,12 @@ export default function ChatWidgetPage() {
     
     if (!inputMessage.trim()) return
 
+    // Verifica se la chat è sospesa
+    if (isSuspended) {
+      toast.error('La chat è temporaneamente sospesa. L\'host risponderà presto.')
+      return
+    }
+
     // IMPORTANTE: Verifica che i dati guest siano presenti
     if (!guestData?.id) {
       console.error('❌ [ERROR] Dati guest mancanti, impossibile inviare messaggio')
@@ -693,9 +762,26 @@ export default function ChatWidgetPage() {
       }
 
       setMessages(prev => [...prev, assistantMessage])
+      
+      // Controlla se la conversazione è stata sospesa dopo l'invio del messaggio
+      try {
+        const statusResponse = await chat.getStatus(uuid, response.data.thread_id)
+        if (statusResponse.data.suspended) {
+          setIsSuspended(true)
+          setSuspensionMessage(statusResponse.data.message)
+        }
+      } catch (error) {
+        console.error('Errore nel controllo dello stato dopo invio messaggio:', error)
+      }
     } catch (error: any) {
       if (error.response?.status === 403) {
         setSubscriptionCancelled(true)
+      } else if (error.response?.status === 423) {
+        // Chat sospesa per alert Guardian
+        const errorDetail = error.response?.data?.detail || ''
+        setIsSuspended(true)
+        setSuspensionMessage(errorDetail)
+        toast.error(errorDetail)
       } else {
         toast.error(currentTexts.error)
       }
@@ -1584,6 +1670,23 @@ export default function ChatWidgetPage() {
           {(!showWelcome || messages.length > 0) && !subscriptionCancelled && !freeTrialLimitReached && !freeTrialExpired && (
             <>
               <div className="flex-1 overflow-y-auto chat-scrollbar p-2 md:p-6 space-y-4">
+                {/* Messaggio di sospensione */}
+                {isSuspended && suspensionMessage && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="flex justify-center"
+                  >
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 max-w-md text-center">
+                      <div className="flex items-center justify-center mb-2">
+                        <AlertCircle className="w-5 h-5 text-yellow-600 mr-2" />
+                        <span className="text-yellow-800 font-medium">Chat Sospesa</span>
+                      </div>
+                      <p className="text-yellow-700 text-sm">{suspensionMessage}</p>
+                    </div>
+                  </motion.div>
+                )}
+                
                 {messages.map((message, index) => (
                   <motion.div
                     key={message.id}
@@ -1704,14 +1807,14 @@ export default function ChatWidgetPage() {
                     <Wifi className="w-4 h-4 text-white" />
                   </button>
                   
-                  {currentTexts.suggestedMessages.map((message: string, index: number) => (
+                  {!isSuspended && currentTexts.suggestedMessages.map((message: string, index: number) => (
                     <motion.button
                       key={index}
                       initial={{ opacity: 0, scale: 0.9 }}
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ delay: index * 0.1 }}
-                      onClick={() => !isLoading && handleSuggestedMessage(message)}
-                      disabled={isLoading}
+                      onClick={() => !isLoading && !isSuspended && handleSuggestedMessage(message)}
+                      disabled={isLoading || isSuspended}
                       className={`px-3 py-2 md:px-4 md:py-2 rounded-full text-xs md:text-sm font-medium transition-all duration-200 hover:scale-105 active:scale-95 whitespace-nowrap flex-shrink-0 ${
                         isLoading 
                           ? 'bg-gray-100 text-gray-400 border border-gray-200 cursor-not-allowed' 
@@ -1725,17 +1828,18 @@ export default function ChatWidgetPage() {
               </div>
 
               {/* Input Area - FISSA */}
-              <div className={`border-t p-3 md:p-4 pb-12 md:pb-2 mb-[2vh] md:mb-0 safe-bottom flex-shrink-0 transition-colors duration-300 ${
-                isDarkMode ? 'border-gray-700' : 'border-gray-200'
-              }`}>
+              {!isSuspended && (
+                <div className={`border-t p-3 md:p-4 pb-12 md:pb-2 mb-[2vh] md:mb-0 safe-bottom flex-shrink-0 transition-colors duration-300 ${
+                  isDarkMode ? 'border-gray-700' : 'border-gray-200'
+                }`}>
                 <form onSubmit={handleSendMessage} className="flex items-center gap-2 md:gap-3">
                   <input
                     ref={inputRef}
                     type="text"
                     value={inputMessage}
                     onChange={(e) => setInputMessage(e.target.value)}
-                    placeholder={currentTexts.placeholder}
-                    disabled={isLoading || isProcessingAudio}
+                    placeholder={isSuspended ? "Chat sospesa - l'host risponderà presto" : currentTexts.placeholder}
+                    disabled={isLoading || isProcessingAudio || isSuspended}
                     className={`flex-1 px-3 md:px-4 py-1.5 md:py-2.5 rounded-full border outline-none transition text-sm md:text-base ${
                       isDarkMode 
                         ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-primary focus:ring-2 focus:ring-primary/20' 
@@ -1747,7 +1851,7 @@ export default function ChatWidgetPage() {
                   <button
                     type="button"
                     onClick={isRecording ? stopRecording : startRecording}
-                    disabled={isLoading || isProcessingAudio}
+                    disabled={isLoading || isProcessingAudio || isSuspended}
                     className={`w-8 h-8 md:w-11 md:h-11 rounded-full flex items-center justify-center transition ${
                       isRecording 
                         ? 'bg-red-500 text-white animate-pulse' 
@@ -1764,7 +1868,7 @@ export default function ChatWidgetPage() {
                   
                   <button
                     type="submit"
-                    disabled={isLoading || isProcessingAudio || !inputMessage.trim()}
+                    disabled={isLoading || isProcessingAudio || !inputMessage.trim() || isSuspended}
                     className="w-8 h-8 md:w-11 md:h-11 bg-gradient-to-r from-primary to-secondary text-white rounded-full flex items-center justify-center hover:from-secondary hover:to-accent transition disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isProcessingAudio ? (
@@ -1774,7 +1878,8 @@ export default function ChatWidgetPage() {
                     )}
                   </button>
                 </form>
-              </div>
+                </div>
+              )}
             </>
           )}
         </div>

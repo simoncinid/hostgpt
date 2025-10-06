@@ -237,6 +237,9 @@ export const chat = {
   sendMessagePublic: (uuid: string, data: any) =>
     publicApi.post(`/chat/${uuid}/message`, data),
   
+  getStatus: (uuid: string, thread_id?: string) =>
+    publicApi.get(`/chat/${uuid}/status`, { params: { thread_id } }),
+  
   // Endpoint demo specifico (senza autenticazione e identificazione ospite)
   sendDemoMessage: (data: { content: string; thread_id?: string }) =>
     publicApi.post(`/demochat`, data),
@@ -382,8 +385,8 @@ export const guardian = {
   getAlerts: () =>
     api.get('/guardian/alerts'),
   
-  resolveAlert: (alertId: number) =>
-    api.post(`/guardian/alerts/${alertId}/resolve`),
+  resolveAlert: (alertId: number, hostResponse: string) =>
+    api.post(`/guardian/alerts/${alertId}/resolve`, { host_response: hostResponse }),
 }
 
 export const printOrders = {

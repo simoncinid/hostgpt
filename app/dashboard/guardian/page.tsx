@@ -73,6 +73,8 @@ function GuardianContent() {
   const [showCancelModal, setShowCancelModal] = useState(false)
   const [isCancellingSubscription, setIsCancellingSubscription] = useState(false)
   const [isCheckoutLoading, setIsCheckoutLoading] = useState(false)
+  const [resolvingAlertId, setResolvingAlertId] = useState<number | null>(null)
+  const [hostResponse, setHostResponse] = useState('')
   
   // Controlla se c'è un parametro di successo nell'URL
   useEffect(() => {
@@ -190,10 +192,10 @@ function GuardianContent() {
     }
   }
 
-  const handleResolveAlert = async (alertId: number) => {
+  const handleResolveAlert = async (alertId: number, hostResponse: string) => {
     try {
-      console.log('Risolvendo alert:', alertId)
-      await guardian.resolveAlert(alertId)
+      console.log('Risolvendo alert:', alertId, 'con risposta:', hostResponse)
+      await guardian.resolveAlert(alertId, hostResponse)
       
       // Remove alert from list immediately for better UX
       setAlerts(alerts.filter(alert => alert.id !== alertId))
@@ -207,6 +209,27 @@ function GuardianContent() {
       console.error('Error resolving alert:', error)
       toast.error(t.guardian.errors.alertResolutionError)
     }
+  }
+
+  const startResolvingAlert = (alertId: number) => {
+    setResolvingAlertId(alertId)
+    setHostResponse('')
+  }
+
+  const cancelResolvingAlert = () => {
+    setResolvingAlertId(null)
+    setHostResponse('')
+  }
+
+  const submitHostResponse = async () => {
+    if (!resolvingAlertId || !hostResponse.trim()) {
+      toast.error('Inserisci una risposta per l\'ospite')
+      return
+    }
+
+    await handleResolveAlert(resolvingAlertId, hostResponse.trim())
+    setResolvingAlertId(null)
+    setHostResponse('')
   }
 
   const handleCancelGuardian = async () => {
@@ -502,7 +525,7 @@ function GuardianContent() {
                                   <button
                                     onClick={(e) => {
                                       e.stopPropagation()
-                                      handleResolveAlert(alert.id)
+                                      startResolvingAlert(alert.id)
                                     }}
                                     className="px-4 py-2 bg-gradient-to-r from-secondary to-secondary/80 text-white rounded-full text-sm font-medium hover:from-secondary/80 hover:to-secondary/60 transition-all duration-200 shadow-sm hover:shadow-md transform hover:scale-105"
                                   >
@@ -545,6 +568,38 @@ function GuardianContent() {
                                     </div>
                                   </div>
                                 </div>
+                                
+                                {/* Form di risposta host */}
+                                {resolvingAlertId === alert.id && (
+                                  <div className="mt-4 p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border border-green-200">
+                                    <h5 className="text-sm font-semibold text-green-800 mb-3 flex items-center">
+                                      <MessageSquare className="w-4 h-4 mr-2" />
+                                      Scrivi la tua risposta per l'ospite
+                                    </h5>
+                                    <textarea
+                                      value={hostResponse}
+                                      onChange={(e) => setHostResponse(e.target.value)}
+                                      placeholder="Scrivi qui la tua risposta che verrà inviata all'ospite..."
+                                      className="w-full p-3 border border-green-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 resize-none"
+                                      rows={4}
+                                    />
+                                    <div className="flex justify-end space-x-2 mt-3">
+                                      <button
+                                        onClick={cancelResolvingAlert}
+                                        className="px-4 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                                      >
+                                        Annulla
+                                      </button>
+                                      <button
+                                        onClick={submitHostResponse}
+                                        disabled={!hostResponse.trim()}
+                                        className="px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg hover:from-green-600 hover:to-green-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                      >
+                                        Invia Risposta
+                                      </button>
+                                    </div>
+                                  </div>
+                                )}
                               </div>
                             )}
                           </div>
