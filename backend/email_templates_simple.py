@@ -1106,3 +1106,47 @@ def create_print_order_confirmation_email_simple(user_name: str, order_number: s
     """
     
     return get_simple_email_template(content, language)
+
+def create_collaborator_invite_email_simple(
+    inviter_name: str,
+    chatbot_name: str,
+    invite_url: str,
+    language: str = "it"
+):
+    """Crea email di invito collaboratore"""
+    
+    if language == "en":
+        title = "You're invited to collaborate!"
+        greeting = f"Hello! {inviter_name} has invited you to collaborate on the chatbot for {chatbot_name}."
+        description = "As a collaborator, you'll be able to manage and view this chatbot's conversations and settings."
+        cta_text = "Accept Invitation"
+        footer_note = "This invitation will expire in 7 days. If you don't have an account, you'll be able to create one after clicking the link."
+    else:  # it
+        title = "Sei stato invitato a collaborare!"
+        greeting = f"Ciao! {inviter_name} ti ha invitato a collaborare sul chatbot per {chatbot_name}."
+        description = "Come collaboratore, potrai gestire e visualizzare le conversazioni e le impostazioni di questo chatbot."
+        cta_text = "Accetta Invito"
+        footer_note = "Questo invito scadrà tra 7 giorni. Se non hai un account, potrai crearne uno dopo aver cliccato il link."
+    
+    content = f"""
+        <div class="header">
+            <h1>{title}</h1>
+        </div>
+        
+        <div class="message">
+            <p>{greeting}</p>
+            <p>{description}</p>
+        </div>
+        
+        <div class="cta-container">
+            <a href="{invite_url}" class="cta-button">
+                {cta_text}
+            </a>
+        </div>
+        
+        <div class="message">
+            <p class="small-text">{footer_note}</p>
+        </div>
+    """
+    
+    return get_simple_email_template(content, language)

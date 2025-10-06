@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { MessageSquare, Users, QrCode, ExternalLink, Edit, Trash2, Eye, ArrowLeft, Loader2 } from 'lucide-react'
+import { MessageSquare, Users, QrCode, ExternalLink, Edit, Trash2, Eye, ArrowLeft, Loader2, UserPlus } from 'lucide-react'
 import { useAuthStore, useChatbotStore } from '@/lib/store'
 import { useAuthInit } from '@/lib/useAuthInit'
 import { useLanguage } from '@/lib/languageContext'
@@ -12,6 +12,7 @@ import { chatbots as chatbotsApi, auth } from '@/lib/api'
 import toast from 'react-hot-toast'
 import Sidebar from '@/app/components/Sidebar'
 import ChatbotIcon from '@/app/components/ChatbotIcon'
+import CollaboratorInviteModal from '@/app/components/CollaboratorInviteModal'
 
 export default function ChatbotsListPage() {
   const router = useRouter()
@@ -22,6 +23,8 @@ export default function ChatbotsListPage() {
   const [showQRModal, setShowQRModal] = useState(false)
   const [currentQR, setCurrentQR] = useState<{ url: string; qr: string } | null>(null)
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
+  const [showCollaboratorModal, setShowCollaboratorModal] = useState(false)
+  const [selectedChatbotForInvite, setSelectedChatbotForInvite] = useState<{id: number, name: string} | null>(null)
   
   // Inizializza automaticamente l'autenticazione
   const { isHydrated } = useAuthInit()
@@ -83,6 +86,16 @@ export default function ChatbotsListPage() {
     router.push('/')
   }
 
+  const handleInviteCollaborators = (bot: any) => {
+    setSelectedChatbotForInvite({ id: bot.id, name: bot.name })
+    setShowCollaboratorModal(true)
+  }
+
+  const handleInviteSent = () => {
+    // Ricarica i chatbot per aggiornare eventuali informazioni sui collaboratori
+    loadChatbots()
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Sidebar currentPath="/dashboard/chatbots" onLogout={handleLogout} isSidebarCollapsed={isSidebarCollapsed} setIsSidebarCollapsed={setIsSidebarCollapsed} />
@@ -136,7 +149,14 @@ export default function ChatbotsListPage() {
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center space-x-3">
                         <ChatbotIcon chatbotId={bot.id} chatbotUuid={bot.uuid} hasIcon={bot.has_icon} size="sm" />
-                        <h3 className="font-semibold text-base md:text-lg">{bot.name}</h3>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-semibold text-base md:text-lg">{bot.name}</h3>
+                          {bot.user_role === 'collaborator' && (
+                            <span className="text-xs text-purple-600 bg-purple-50 px-2 py-1 rounded-full">
+                              Collaboratore
+                            </span>
+                          )}
+                        </div>
                       </div>
                       {bot.is_active ? (
                         <span className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full">{t.chatbots.active}</span>
@@ -175,6 +195,18 @@ export default function ChatbotsListPage() {
                       >
                         <QrCode className="w-4 h-4 md:w-5 md:h-5 text-gray-700" />
                       </button>
+                      {bot.is_owner && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleInviteCollaborators(bot)
+                          }}
+                          className="p-2 text-purple-600 hover:bg-purple-50 rounded-lg transition"
+                          title="Invita Collaboratori"
+                        >
+                          <UserPlus className="w-4 h-4 md:w-5 md:h-5" />
+                        </button>
+                      )}
                       <a
                         href={bot.chat_url}
                         target="_blank"
@@ -201,16 +233,18 @@ export default function ChatbotsListPage() {
                       >
                         <Edit className="w-4 h-4 md:w-5 md:h-5 text-gray-700" />
                       </Link>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handleDelete(bot.id)
-                        }}
-                        className="p-2 hover:bg-red-50 rounded-lg transition"
-                        title="Elimina"
-                      >
-                        <Trash2 className="w-4 h-4 md:w-5 md:h-5 text-red-600" />
-                      </button>
+                      {bot.is_owner && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleDelete(bot.id)
+                          }}
+                          className="p-2 hover:bg-red-50 rounded-lg transition"
+                          title="Elimina"
+                        >
+                          <Trash2 className="w-4 h-4 md:w-5 md:h-5 text-red-600" />
+                        </button>
+                      )}
                     </div>
                   </motion.div>
                 ))}
@@ -247,6 +281,20 @@ export default function ChatbotsListPage() {
               </div>
             </motion.div>
                       </div>
+          )}
+
+          {/* Collaborator Invite Modal */}
+          {showCollaboratorModal && selectedChatbotForInvite && (
+            <CollaboratorInviteModal
+              isOpen={showCollaboratorModal}
+              onClose={() => {
+                setShowCollaboratorModal(false)
+                setSelectedChatbotForInvite(null)
+              }}
+              chatbotId={selectedChatbotForInvite.id}
+              chatbotName={selectedChatbotForInvite.name}
+              onInviteSent={handleInviteSent}
+            />
           )}
         </div>
       </div>

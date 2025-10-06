@@ -24,6 +24,9 @@ function LoginContent() {
   const [isLoading, setIsLoading] = useState(false)
   const { setAuth } = useAuthStore()
   
+  // Gestione token di invito
+  const inviteToken = searchParams.get('invite_token')
+  
   const { register, handleSubmit, formState: { errors }, watch, setValue, getValues } = useForm<LoginForm>({
     mode: 'onChange',
     defaultValues: {
@@ -148,11 +151,36 @@ function LoginContent() {
             return
           }
         } else {
+          // Se c'è un token di invito, accettalo
+          if (inviteToken) {
+            try {
+              await api.post('/api/collaborators/accept-invite', {
+                invite_token: inviteToken
+              })
+              toast.success('Invito accettato! Ora puoi collaborare su questo chatbot.')
+            } catch (error: any) {
+              console.error('Error accepting invite:', error)
+              // Non bloccare il login se l'invito non può essere accettato
+              toast.error('Errore nell\'accettazione dell\'invito, ma il login è stato effettuato.')
+            }
+          }
+          
           toast.success('Accesso effettuato con successo!')
           router.push('/dashboard')
         }
       } catch {
-        // fallback sicuro
+        // fallback sicuro - accetta l'invito se presente
+        if (inviteToken) {
+          try {
+            await api.post('/api/collaborators/accept-invite', {
+              invite_token: inviteToken
+            })
+            toast.success('Invito accettato! Ora puoi collaborare su questo chatbot.')
+          } catch (error: any) {
+            console.error('Error accepting invite:', error)
+            toast.error('Errore nell\'accettazione dell\'invito, ma il login è stato effettuato.')
+          }
+        }
         router.push('/dashboard')
       }
     } catch (error: any) {

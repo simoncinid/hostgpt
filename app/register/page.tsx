@@ -47,6 +47,9 @@ function RegisterForm() {
     }
   }, [searchParams])
   
+  // Gestione token di invito
+  const inviteToken = searchParams?.get('invite_token')
+  
   // Usiamo useState invece di react-hook-form per evitare problemi
   const [formData, setFormData] = useState<RegisterForm>({
     email: '',
@@ -139,7 +142,12 @@ function RegisterForm() {
       // Dopo la registrazione, mandiamo l'utente alla pagina che spiega di verificare l'email
       const message = isFreeTrial ? t.success.freeTrial : t.success.paid
       toast.success(message)
-      router.push('/login?registered=1')
+      
+      // Includi il token di invito se presente
+      const loginUrl = inviteToken 
+        ? `/login?registered=1&invite_token=${inviteToken}`
+        : '/login?registered=1'
+      router.push(loginUrl)
     } catch (error: any) {
       toast.error(error.response?.data?.detail || 'Errore durante la registrazione')
     } finally {

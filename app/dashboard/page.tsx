@@ -17,7 +17,8 @@ import {
   Edit,
   Trash2,
   Eye,
-  FileText
+  FileText,
+  UserPlus
 } from 'lucide-react'
 import { useAuthStore, useChatbotStore } from '@/lib/store'
 import { useAuthInit } from '@/lib/useAuthInit'
@@ -26,6 +27,7 @@ import { chatbots as chatbotsApi, subscription, auth, chat } from '@/lib/api'
 import toast from 'react-hot-toast'
 import Sidebar from '@/app/components/Sidebar'
 import ChatbotIcon from '@/app/components/ChatbotIcon'
+import CollaboratorInviteModal from '@/app/components/CollaboratorInviteModal'
 
 function DashboardContent() {
   const router = useRouter()
@@ -39,6 +41,8 @@ function DashboardContent() {
   const [currentQR, setCurrentQR] = useState<{ url: string; qr: string } | null>(null)
   const [isStartingCheckout, setIsStartingCheckout] = useState(false)
   const [downloadingPDF, setDownloadingPDF] = useState<string | null>(null) // UUID del chatbot per cui si sta scaricando
+  const [showCollaboratorModal, setShowCollaboratorModal] = useState(false)
+  const [selectedChatbotForInvite, setSelectedChatbotForInvite] = useState<{id: number, name: string} | null>(null)
   
   // Inizializza automaticamente l'autenticazione
   const { isHydrated } = useAuthInit()
@@ -165,6 +169,16 @@ function DashboardContent() {
     } finally {
       setDownloadingPDF(null)
     }
+  }
+
+  const handleInviteCollaborators = (bot: any) => {
+    setSelectedChatbotForInvite({ id: bot.id, name: bot.property_name })
+    setShowCollaboratorModal(true)
+  }
+
+  const handleInviteSent = () => {
+    // Ricarica i chatbot per aggiornare eventuali informazioni sui collaboratori
+    loadChatbots()
   }
 
   // Calcola statistiche totali
@@ -333,7 +347,14 @@ function DashboardContent() {
                    <div className="flex items-center justify-between mb-2">
                      <div className="flex items-center space-x-3">
                        <ChatbotIcon chatbotId={bot.id} chatbotUuid={bot.uuid} hasIcon={bot.has_icon} size="sm" />
-                       <h3 className="font-semibold text-base md:text-lg">{bot.property_name}</h3>
+                       <div className="flex-1 min-w-0">
+                         <h3 className="font-semibold text-base md:text-lg">{bot.property_name}</h3>
+                         {bot.user_role === 'collaborator' && (
+                           <span className="text-xs text-purple-600 bg-purple-50 px-2 py-1 rounded-full">
+                             Collaboratore
+                           </span>
+                         )}
+                       </div>
                      </div>
                      {bot.is_active ? (
                        <span className="px-2 py-1 bg-green-100 text-secondary text-xs rounded-full">
@@ -391,6 +412,18 @@ function DashboardContent() {
                      >
                        <FileText className="w-4 h-4 md:w-5 md:h-5" />
                      </button>
+                     {bot.is_owner && (
+                       <button
+                         onClick={(e) => {
+                           e.stopPropagation()
+                           handleInviteCollaborators(bot)
+                         }}
+                         className="p-2 text-purple-600 hover:bg-purple-50 rounded-lg transition"
+                         title="Invita Collaboratori"
+                       >
+                         <UserPlus className="w-4 h-4 md:w-5 md:h-5" />
+                       </button>
+                     )}
                      <a
                        href={bot.chat_url}
                        target="_blank"
@@ -417,16 +450,18 @@ function DashboardContent() {
                      >
                        <Edit className="w-4 h-4 md:w-5 md:h-5" />
                      </Link>
-                     <button
-                       onClick={(e) => {
-                         e.stopPropagation()
-                         handleDeleteBot(bot.id)
-                       }}
-                       className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition"
-                       title="Elimina"
-                     >
-                       <Trash2 className="w-4 h-4 md:w-5 md:h-5" />
-                     </button>
+                     {bot.is_owner && (
+                       <button
+                         onClick={(e) => {
+                           e.stopPropagation()
+                           handleDeleteBot(bot.id)
+                         }}
+                         className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition"
+                         title="Elimina"
+                       >
+                         <Trash2 className="w-4 h-4 md:w-5 md:h-5" />
+                       </button>
+                     )}
                    </div>
                  </motion.div>
               ))}
@@ -544,6 +579,20 @@ function DashboardContent() {
             </div>
           </motion.div>
         </div>
+      )}
+
+      {/* Collaborator Invite Modal */}
+      {showCollaboratorModal && selectedChatbotForInvite && (
+        <CollaboratorInviteModal
+          isOpen={showCollaboratorModal}
+          onClose={() => {
+            setShowCollaboratorModal(false)
+            setSelectedChatbotForInvite(null)
+          }}
+          chatbotId={selectedChatbotForInvite.id}
+          chatbotName={selectedChatbotForInvite.name}
+          onInviteSent={handleInviteSent}
+        />
       )}
     </div>
   )

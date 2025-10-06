@@ -115,6 +115,8 @@ interface Chatbot {
   is_active: boolean
   created_at: string
   has_icon: boolean
+  user_role?: string
+  is_owner?: boolean
 }
 
 interface ChatbotLimits {

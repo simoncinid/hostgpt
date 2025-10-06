@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { ArrowLeft, MessageSquare, Users, ExternalLink, Edit, BarChart3, Loader2, Download } from 'lucide-react'
+import { ArrowLeft, MessageSquare, Users, ExternalLink, Edit, BarChart3, Loader2, Download, UserPlus } from 'lucide-react'
 import { chatbots as chatbotsApi } from '@/lib/api'
 import { useChatbotStore, useAuthStore } from '@/lib/store'
 import { useLanguage } from '@/lib/languageContext'
@@ -12,6 +12,7 @@ import toast from 'react-hot-toast'
 import Sidebar from '@/app/components/Sidebar'
 import ConversationItem from '@/app/components/ConversationItem'
 import ChatbotIcon from '@/app/components/ChatbotIcon'
+import CollaboratorInviteModal from '@/app/components/CollaboratorInviteModal'
 
 interface ConversationPreview {
   id: number
@@ -32,6 +33,7 @@ export default function ChatbotDetailPage() {
   const [conversations, setConversations] = useState<ConversationPreview[]>([])
   const [analytics, setAnalytics] = useState<any>(null)
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
+  const [showCollaboratorModal, setShowCollaboratorModal] = useState(false)
 
   useEffect(() => {
     if (!id) return
@@ -58,6 +60,31 @@ export default function ChatbotDetailPage() {
   const handleLogout = () => {
     logout()
     router.push('/')
+  }
+
+  const handleInviteCollaborators = () => {
+    setShowCollaboratorModal(true)
+  }
+
+  const handleInviteSent = () => {
+    // Ricarica i dati del chatbot per aggiornare eventuali informazioni sui collaboratori
+    if (id) {
+      const load = async () => {
+        try {
+          const [botRes, convRes, anRes] = await Promise.all([
+            chatbotsApi.get(id),
+            chatbotsApi.getConversations(id),
+            chatbotsApi.getAnalytics(id),
+          ])
+          setCurrentChatbot(botRes.data)
+          setConversations(convRes.data)
+          setAnalytics(anRes.data)
+        } catch (e: any) {
+          toast.error(e.response?.data?.detail || 'Errore nel caricamento')
+        }
+      }
+      load()
+    }
   }
 
   const handleDownloadQR = async () => {
@@ -171,6 +198,15 @@ export default function ChatbotDetailPage() {
                       <button className="p-2 hover:bg-gray-100 rounded-lg" onClick={() => window.open(chatUrl, '_blank')} title="Apri Chat">
                         <ExternalLink className="w-5 h-5" />
                       </button>
+                      {currentChatbot.is_owner && (
+                        <button 
+                          onClick={handleInviteCollaborators}
+                          className="p-2 text-purple-600 hover:bg-purple-50 rounded-lg transition" 
+                          title="Invita Collaboratori"
+                        >
+                          <UserPlus className="w-5 h-5" />
+                        </button>
+                      )}
                       <Link href={`/dashboard/chatbots/${currentChatbot.id}/edit`} className="p-2 hover:bg-gray-100 rounded-lg" title="Modifica">
                         <Edit className="w-5 h-5" />
                       </Link>
@@ -236,6 +272,17 @@ export default function ChatbotDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Collaborator Invite Modal */}
+      {showCollaboratorModal && currentChatbot && (
+        <CollaboratorInviteModal
+          isOpen={showCollaboratorModal}
+          onClose={() => setShowCollaboratorModal(false)}
+          chatbotId={currentChatbot.id}
+          chatbotName={currentChatbot.property_name}
+          onInviteSent={handleInviteSent}
+        />
+      )}
     </div>
   )
 }

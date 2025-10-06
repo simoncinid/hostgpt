@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func
 from typing import List, Optional, Tuple
 from datetime import datetime, timedelta
+import uuid
 import stripe
 import openai
 from jose import JWTError, jwt
@@ -43,7 +44,7 @@ import hashlib
 from cryptography.fernet import Fernet
 
 from database import get_db, engine
-from models import Base, User, Chatbot, Conversation, Message, KnowledgeBase, Analytics, GuardianAlert, GuardianAnalysis, ReferralCode, PrintOrder, PrintOrderItem, Guest, ChatbotGuest, HostawayMapping, HostawayApiKey
+from models import Base, User, Chatbot, Conversation, Message, KnowledgeBase, Analytics, GuardianAlert, GuardianAnalysis, ReferralCode, PrintOrder, PrintOrderItem, Guest, ChatbotGuest, HostawayMapping, HostawayApiKey, ChatbotCollaboratorInvite, ChatbotCollaborator
 from config import settings
 from sms_service import sms_service
 from email_templates_simple import (
@@ -65,7 +66,8 @@ from email_templates_simple import (
     create_monthly_report_email_simple,
     create_print_order_confirmation_email_simple,
     create_conversations_limit_warning_email_simple,
-    create_plan_upgrade_confirmation_email_simple
+    create_plan_upgrade_confirmation_email_simple,
+    create_collaborator_invite_email_simple
 )
 from email_templates import create_checkin_notification_email
 
@@ -4066,7 +4068,30 @@ async def get_chatbots(
             status_code=403,
             detail="Abbonamento non attivo. Sottoscrivi un abbonamento mensile a 19€ per accedere alle funzionalità."
         )
-    chatbots = db.query(Chatbot).filter(Chatbot.user_id == current_user.id).all()
+    
+    # Ottieni chatbot di proprietà dell'utente
+    owned_chatbots = db.query(Chatbot).filter(Chatbot.user_id == current_user.id).all()
+    
+    # Ottieni chatbot dove l'utente è collaboratore
+    collaborated_chatbots = db.query(Chatbot).join(
+        ChatbotCollaborator, Chatbot.id == ChatbotCollaborator.chatbot_id
+    ).filter(
+        ChatbotCollaborator.user_id == current_user.id
+    ).all()
+    
+    # Combina i chatbot (rimuovi duplicati se ce ne sono)
+    all_chatbot_ids = set()
+    chatbots = []
+    
+    for bot in owned_chatbots:
+        if bot.id not in all_chatbot_ids:
+            chatbots.append(bot)
+            all_chatbot_ids.add(bot.id)
+    
+    for bot in collaborated_chatbots:
+        if bot.id not in all_chatbot_ids:
+            chatbots.append(bot)
+            all_chatbot_ids.add(bot.id)
     
     # Calcola informazioni sui limiti
     current_count = len(chatbots)
@@ -4087,6 +4112,10 @@ async def get_chatbots(
             Message.role == "user"
         ).scalar()
         
+        # Determina se l'utente è proprietario o collaboratore
+        is_owner = bot.user_id == current_user.id
+        user_role = "owner" if is_owner else "collaborator"
+        
         result.append({
             "id": bot.id,
             "uuid": bot.uuid,
@@ -4099,7 +4128,9 @@ async def get_chatbots(
             "total_messages": total_messages,
             "is_active": bot.is_active,
             "created_at": bot.created_at,
-            "has_icon": bot.has_icon
+            "has_icon": bot.has_icon,
+            "user_role": user_role,
+            "is_owner": is_owner
         })
     
     return {
@@ -4335,13 +4366,25 @@ async def get_chatbot(
             status_code=403,
             detail="Abbonamento non attivo. Sottoscrivi un abbonamento mensile a 19€ per accedere alle funzionalità."
         )
-    chatbot = db.query(Chatbot).filter(
-        Chatbot.id == chatbot_id,
-        Chatbot.user_id == current_user.id
-    ).first()
+    
+    # Verifica se l'utente è proprietario o collaboratore del chatbot
+    chatbot = db.query(Chatbot).filter(Chatbot.id == chatbot_id).first()
     
     if not chatbot:
         raise HTTPException(status_code=404, detail="Chatbot non trovato")
+    
+    # Controlla se l'utente è proprietario
+    is_owner = chatbot.user_id == current_user.id
+    
+    # Se non è proprietario, controlla se è collaboratore
+    if not is_owner:
+        collaborator = db.query(ChatbotCollaborator).filter(
+            ChatbotCollaborator.chatbot_id == chatbot_id,
+            ChatbotCollaborator.user_id == current_user.id
+        ).first()
+        
+        if not collaborator:
+            raise HTTPException(status_code=403, detail="Non hai i permessi per accedere a questo chatbot")
     
     # Calcola statistiche reali dal database
     total_conversations = db.query(func.count(Conversation.id)).filter(
@@ -4413,13 +4456,25 @@ async def update_chatbot(
             status_code=403,
             detail="Abbonamento non attivo. Sottoscrivi un abbonamento mensile a 19€ per accedere alle funzionalità."
         )
-    chatbot = db.query(Chatbot).filter(
-        Chatbot.id == chatbot_id,
-        Chatbot.user_id == current_user.id
-    ).first()
+    
+    # Verifica se l'utente è proprietario o collaboratore del chatbot
+    chatbot = db.query(Chatbot).filter(Chatbot.id == chatbot_id).first()
     
     if not chatbot:
         raise HTTPException(status_code=404, detail="Chatbot non trovato")
+    
+    # Controlla se l'utente è proprietario
+    is_owner = chatbot.user_id == current_user.id
+    
+    # Se non è proprietario, controlla se è collaboratore
+    if not is_owner:
+        collaborator = db.query(ChatbotCollaborator).filter(
+            ChatbotCollaborator.chatbot_id == chatbot_id,
+            ChatbotCollaborator.user_id == current_user.id
+        ).first()
+        
+        if not collaborator:
+            raise HTTPException(status_code=403, detail="Non hai i permessi per modificare questo chatbot")
     
     # Aggiorna campi
     for field, value in update_data.dict(exclude_unset=True).items():
@@ -4504,6 +4559,228 @@ async def delete_chatbot(
     db.commit()
     
     return {"message": "Chatbot eliminato con successo"}
+
+# --- Collaborator Endpoints ---
+
+class CollaboratorInviteRequest(BaseModel):
+    chatbot_id: int
+    emails: List[str]
+
+class CollaboratorInviteResponse(BaseModel):
+    invited_count: int
+    message: str
+
+@app.post("/api/chatbots/collaborators/invite", response_model=CollaboratorInviteResponse)
+async def invite_collaborators(
+    request: CollaboratorInviteRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Invita collaboratori a un chatbot"""
+    # Verifica che l'utente sia il proprietario del chatbot
+    chatbot = db.query(Chatbot).filter(
+        Chatbot.id == request.chatbot_id,
+        Chatbot.user_id == current_user.id
+    ).first()
+    
+    if not chatbot:
+        raise HTTPException(status_code=404, detail="Chatbot non trovato")
+    
+    # Valida le email
+    valid_emails = []
+    for email in request.emails:
+        if email and email.strip() and "@" in email:
+            valid_emails.append(email.strip().lower())
+    
+    if not valid_emails:
+        raise HTTPException(status_code=400, detail="Nessuna email valida fornita")
+    
+    if len(valid_emails) > 3:
+        raise HTTPException(status_code=400, detail="Massimo 3 collaboratori per invito")
+    
+    invited_count = 0
+    
+    for email in valid_emails:
+        # Verifica se l'utente è già collaboratore
+        existing_collaborator = db.query(ChatbotCollaborator).filter(
+            ChatbotCollaborator.chatbot_id == request.chatbot_id,
+            ChatbotCollaborator.user_id == User.id,
+            User.email == email
+        ).join(User).first()
+        
+        if existing_collaborator:
+            continue
+        
+        # Verifica se c'è già un invito pendente
+        existing_invite = db.query(ChatbotCollaboratorInvite).filter(
+            ChatbotCollaboratorInvite.chatbot_id == request.chatbot_id,
+            ChatbotCollaboratorInvite.invited_email == email,
+            ChatbotCollaboratorInvite.status == "pending"
+        ).first()
+        
+        if existing_invite:
+            continue
+        
+        # Crea l'invito
+        invite_token = str(uuid.uuid4())
+        expires_at = datetime.utcnow() + timedelta(days=7)  # Invito valido per 7 giorni
+        
+        invite = ChatbotCollaboratorInvite(
+            chatbot_id=request.chatbot_id,
+            inviter_user_id=current_user.id,
+            invited_email=email,
+            invite_token=invite_token,
+            expires_at=expires_at
+        )
+        
+        db.add(invite)
+        db.commit()
+        
+        # Invia email di invito
+        try:
+            invite_url = f"{settings.FRONTEND_URL}/login?invite_token={invite_token}"
+            email_body = create_collaborator_invite_email_simple(
+                inviter_name=current_user.full_name or current_user.email,
+                chatbot_name=chatbot.property_name,
+                invite_url=invite_url,
+                language=current_user.language or "it"
+            )
+            
+            email_subject = f"Invito a collaborare su {chatbot.property_name}" if (current_user.language or "it") == "it" else f"Invitation to collaborate on {chatbot.property_name}"
+            
+            send_email_background(
+                to_email=email,
+                subject=email_subject,
+                body=email_body
+            )
+            
+            invited_count += 1
+            logger.info(f"Collaborator invite sent to {email} for chatbot {request.chatbot_id}")
+            
+        except Exception as e:
+            logger.error(f"Error sending invite email to {email}: {e}")
+            # Rimuovi l'invito se l'email non è stata inviata
+            db.delete(invite)
+            db.commit()
+    
+    return CollaboratorInviteResponse(
+        invited_count=invited_count,
+        message=f"Inviti inviati a {invited_count} collaboratori"
+    )
+
+@app.get("/api/chatbots/collaborators/{chatbot_id}")
+async def get_collaborators(
+    chatbot_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Ottieni la lista dei collaboratori di un chatbot"""
+    # Verifica che l'utente sia il proprietario del chatbot
+    chatbot = db.query(Chatbot).filter(
+        Chatbot.id == chatbot_id,
+        Chatbot.user_id == current_user.id
+    ).first()
+    
+    if not chatbot:
+        raise HTTPException(status_code=404, detail="Chatbot non trovato")
+    
+    # Ottieni i collaboratori
+    collaborators = db.query(ChatbotCollaborator, User).join(
+        User, ChatbotCollaborator.user_id == User.id
+    ).filter(
+        ChatbotCollaborator.chatbot_id == chatbot_id
+    ).all()
+    
+    result = []
+    for collaborator, user in collaborators:
+        result.append({
+            "id": collaborator.id,
+            "user_id": user.id,
+            "email": user.email,
+            "full_name": user.full_name,
+            "role": collaborator.role,
+            "joined_at": collaborator.joined_at.isoformat()
+        })
+    
+    return {"collaborators": result}
+
+@app.delete("/api/chatbots/collaborators/{collaborator_id}")
+async def remove_collaborator(
+    collaborator_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Rimuovi un collaboratore da un chatbot"""
+    # Verifica che l'utente sia il proprietario del chatbot
+    collaborator = db.query(ChatbotCollaborator).join(
+        Chatbot, ChatbotCollaborator.chatbot_id == Chatbot.id
+    ).filter(
+        ChatbotCollaborator.id == collaborator_id,
+        Chatbot.user_id == current_user.id
+    ).first()
+    
+    if not collaborator:
+        raise HTTPException(status_code=404, detail="Collaboratore non trovato")
+    
+    db.delete(collaborator)
+    db.commit()
+    
+    return {"message": "Collaboratore rimosso con successo"}
+
+@app.post("/api/collaborators/accept-invite")
+async def accept_collaborator_invite(
+    invite_token: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Accetta un invito a collaborare"""
+    # Trova l'invito
+    invite = db.query(ChatbotCollaboratorInvite).filter(
+        ChatbotCollaboratorInvite.invite_token == invite_token,
+        ChatbotCollaboratorInvite.status == "pending"
+    ).first()
+    
+    if not invite:
+        raise HTTPException(status_code=404, detail="Invito non trovato o già scaduto")
+    
+    # Verifica che l'email corrisponda
+    if invite.invited_email.lower() != current_user.email.lower():
+        raise HTTPException(status_code=400, detail="Questo invito non è per il tuo account")
+    
+    # Verifica che non sia scaduto
+    if datetime.utcnow() > invite.expires_at:
+        invite.status = "expired"
+        db.commit()
+        raise HTTPException(status_code=400, detail="Invito scaduto")
+    
+    # Verifica che non sia già collaboratore
+    existing_collaborator = db.query(ChatbotCollaborator).filter(
+        ChatbotCollaborator.chatbot_id == invite.chatbot_id,
+        ChatbotCollaborator.user_id == current_user.id
+    ).first()
+    
+    if existing_collaborator:
+        invite.status = "accepted"
+        invite.accepted_at = datetime.utcnow()
+        db.commit()
+        return {"message": "Sei già collaboratore di questo chatbot"}
+    
+    # Aggiungi come collaboratore
+    collaborator = ChatbotCollaborator(
+        chatbot_id=invite.chatbot_id,
+        user_id=current_user.id,
+        invited_by_user_id=invite.inviter_user_id
+    )
+    
+    db.add(collaborator)
+    
+    # Aggiorna l'invito
+    invite.status = "accepted"
+    invite.accepted_at = datetime.utcnow()
+    
+    db.commit()
+    
+    return {"message": "Invito accettato con successo"}
 
 # --- Chat Endpoints (per il widget pubblico) ---
 
@@ -5590,13 +5867,25 @@ async def get_conversations(
             status_code=403,
             detail="Abbonamento non attivo. Sottoscrivi un abbonamento mensile a 19€ per accedere alle funzionalità."
         )
-    chatbot = db.query(Chatbot).filter(
-        Chatbot.id == chatbot_id,
-        Chatbot.user_id == current_user.id
-    ).first()
+    
+    # Verifica se l'utente è proprietario o collaboratore del chatbot
+    chatbot = db.query(Chatbot).filter(Chatbot.id == chatbot_id).first()
     
     if not chatbot:
         raise HTTPException(status_code=404, detail="Chatbot non trovato")
+    
+    # Controlla se l'utente è proprietario
+    is_owner = chatbot.user_id == current_user.id
+    
+    # Se non è proprietario, controlla se è collaboratore
+    if not is_owner:
+        collaborator = db.query(ChatbotCollaborator).filter(
+            ChatbotCollaborator.chatbot_id == chatbot_id,
+            ChatbotCollaborator.user_id == current_user.id
+        ).first()
+        
+        if not collaborator:
+            raise HTTPException(status_code=403, detail="Non hai i permessi per accedere alle conversazioni di questo chatbot")
     
     conversations = db.query(Conversation).options(
         joinedload(Conversation.guest)
@@ -5654,13 +5943,24 @@ async def get_analytics(
     db: Session = Depends(get_db)
 ):
     """Ottieni statistiche del chatbot"""
-    chatbot = db.query(Chatbot).filter(
-        Chatbot.id == chatbot_id,
-        Chatbot.user_id == current_user.id
-    ).first()
+    # Verifica se l'utente è proprietario o collaboratore del chatbot
+    chatbot = db.query(Chatbot).filter(Chatbot.id == chatbot_id).first()
     
     if not chatbot:
         raise HTTPException(status_code=404, detail="Chatbot non trovato")
+    
+    # Controlla se l'utente è proprietario
+    is_owner = chatbot.user_id == current_user.id
+    
+    # Se non è proprietario, controlla se è collaboratore
+    if not is_owner:
+        collaborator = db.query(ChatbotCollaborator).filter(
+            ChatbotCollaborator.chatbot_id == chatbot_id,
+            ChatbotCollaborator.user_id == current_user.id
+        ).first()
+        
+        if not collaborator:
+            raise HTTPException(status_code=403, detail="Non hai i permessi per accedere alle analitiche di questo chatbot")
     
     # Calcola statistiche
     from sqlalchemy import func

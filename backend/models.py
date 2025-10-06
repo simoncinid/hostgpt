@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, JSON, ForeignKey, Float, LargeBinary
+from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, JSON, ForeignKey, Float, LargeBinary, UniqueConstraint
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from database import Base
@@ -139,6 +139,8 @@ class Chatbot(Base):
     owner = relationship("User", back_populates="chatbots")
     conversations = relationship("Conversation", back_populates="chatbot", cascade="all, delete-orphan")
     chatbot_guests = relationship("ChatbotGuest", back_populates="chatbot", cascade="all, delete-orphan")
+    collaborator_invites = relationship("ChatbotCollaboratorInvite", back_populates="chatbot", cascade="all, delete-orphan")
+    collaborators = relationship("ChatbotCollaborator", back_populates="chatbot", cascade="all, delete-orphan")
     
 class Guest(Base):
     __tablename__ = "guests"
@@ -453,3 +455,46 @@ class HostawayApiKey(Base):
     
     # Relationships
     user = relationship("User")
+
+# Tabella per gli inviti ai collaboratori
+class ChatbotCollaboratorInvite(Base):
+    __tablename__ = "chatbot_collaborator_invites"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    chatbot_id = Column(Integer, ForeignKey("chatbots.id"), nullable=False)
+    inviter_user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    invited_email = Column(String(255), nullable=False)
+    invite_token = Column(String(255), unique=True, nullable=False, index=True)
+    status = Column(String(50), default="pending")  # pending, accepted, expired, cancelled
+    invited_at = Column(DateTime, server_default=func.now())
+    accepted_at = Column(DateTime)
+    expires_at = Column(DateTime, nullable=False)
+    created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, onupdate=func.now())
+    
+    # Relationships
+    chatbot = relationship("Chatbot")
+    inviter = relationship("User", foreign_keys=[inviter_user_id])
+
+# Tabella per i collaboratori effettivi
+class ChatbotCollaborator(Base):
+    __tablename__ = "chatbot_collaborators"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    chatbot_id = Column(Integer, ForeignKey("chatbots.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    role = Column(String(50), default="collaborator")  # collaborator, admin
+    invited_by_user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    joined_at = Column(DateTime, server_default=func.now())
+    created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, onupdate=func.now())
+    
+    # Relationships
+    chatbot = relationship("Chatbot")
+    user = relationship("User", foreign_keys=[user_id])
+    invited_by = relationship("User", foreign_keys=[invited_by_user_id])
+    
+    # Unique constraint
+    __table_args__ = (
+        UniqueConstraint('chatbot_id', 'user_id', name='unique_chatbot_user'),
+    )
