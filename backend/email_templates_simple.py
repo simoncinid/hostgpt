@@ -238,21 +238,32 @@ def create_subscription_activation_email_simple(user_name: str, language: str = 
 def create_guardian_alert_email_simple(user_name: str, alert, conversation_summary: str, language: str = "it") -> str:
     """Template email per alert Guardian semplificato"""
     
+    # Determina il tipo di alert
+    is_insufficient_info = alert.alert_type == 'insufficient_info'
+    
     if language == "en":
-        greeting = "🚨 GUARDIAN ALERT: Unsatisfied guest detected"
-        message = f"Hi <strong>{user_name}</strong>, the Guardian system has detected a potentially unsatisfied guest who might leave a negative review."
+        if is_insufficient_info:
+            greeting = "⚠️ GUARDIAN ALERT: Chatbot lacks sufficient information"
+            message = f"Hi <strong>{user_name}</strong>, the Guardian system has detected that your chatbot responded with insufficient information to a guest's question."
+        else:
+            greeting = "🚨 GUARDIAN ALERT: Unsatisfied guest detected"
+            message = f"Hi <strong>{user_name}</strong>, the Guardian system has detected a potentially unsatisfied guest who might leave a negative review."
         cta_text = "Manage Alert in Guardian Dashboard"
-        action_text = "Act quickly! Contacting the guest within the next few hours can make the difference between a negative review and a positive resolved experience."
+        action_text = "Act quickly! Contacting the guest within the next few hours can make the difference between a negative review and a positive resolved experience." if not is_insufficient_info else "URGENT: Update your chatbot's information immediately to provide better assistance to guests."
         risk_score_text = "Risk Score:"
         severity_text = "Severity:"
         conversation_text = "Conversation:"
         detected_text = "Detected:"
         suggested_action_text = "Suggested Action:"
     else:  # it
-        greeting = "🚨 ALERT GUARDIAN: Ospite insoddisfatto rilevato"
-        message = f"Ciao <strong>{user_name}</strong>, il sistema Guardian ha rilevato un ospite potenzialmente insoddisfatto che potrebbe lasciare una recensione negativa."
+        if is_insufficient_info:
+            greeting = "⚠️ ALERT GUARDIAN: Chatbot senza informazioni sufficienti"
+            message = f"Ciao <strong>{user_name}</strong>, il sistema Guardian ha rilevato che il tuo chatbot ha risposto con informazioni insufficienti a una domanda dell'ospite."
+        else:
+            greeting = "🚨 ALERT GUARDIAN: Ospite insoddisfatto rilevato"
+            message = f"Ciao <strong>{user_name}</strong>, il sistema Guardian ha rilevato un ospite potenzialmente insoddisfatto che potrebbe lasciare una recensione negativa."
         cta_text = "Gestisci Alert nella Dashboard Guardian"
-        action_text = "Agisci rapidamente! Contattare l'ospite entro le prossime ore può fare la differenza tra una recensione negativa e un'esperienza positiva risolta."
+        action_text = "Agisci rapidamente! Contattare l'ospite entro le prossime ore può fare la differenza tra una recensione negativa e un'esperienza positiva risolta." if not is_insufficient_info else "URGENTE: Aggiorna immediatamente le informazioni del tuo chatbot per fornire un'assistenza migliore agli ospiti."
         risk_score_text = "Punteggio di Rischio:"
         severity_text = "Severità:"
         conversation_text = "Conversazione:"

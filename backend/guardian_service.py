@@ -61,6 +61,16 @@ class GuardianService:
             # Analizza con OpenAI
             analysis_result = self._analyze_with_openai(conversation_text)
             
+            # Gestisci insufficient_info
+            insufficient_info = analysis_result.get('insufficient_info', False)
+            if insufficient_info:
+                analysis_result['analysis_details']['insufficient_info_detected'] = True
+                if 'insufficient_info_reason' in analysis_result['analysis_details']:
+                    analysis_result['analysis_details']['key_issues'].append(f"Chatbot senza informazioni: {analysis_result['analysis_details']['insufficient_info_reason']}")
+                else:
+                    analysis_result['analysis_details']['key_issues'].append("Chatbot non ha abbastanza informazioni per rispondere")
+                logger.warning(f"⚠️ INSUFFICIENT INFO DETECTED: Conversazione {conversation.id} - Chatbot ha risposto con mancanza di informazioni")
+            
             # Salva l'analisi nel database
             guardian_analysis = GuardianAnalysis(
                 conversation_id=conversation.id,
@@ -78,10 +88,11 @@ class GuardianService:
             conversation.guardian_analyzed = True
             conversation.guardian_risk_score = analysis_result['risk_score']
             
-            # Controlla se generare un alert
-            if analysis_result['risk_score'] >= self.risk_threshold:
+            # Controlla se generare un alert (sia per rischio alto che per insufficient_info)
+            if analysis_result['risk_score'] >= self.risk_threshold or insufficient_info:
                 conversation.guardian_alert_triggered = True
-                logger.warning(f"🚨 ALERT GUARDIAN: Conversazione {conversation.id} ha rischio {analysis_result['risk_score']:.3f}")
+                alert_reason = "insufficient_info" if insufficient_info else "high_risk"
+                logger.warning(f"🚨 ALERT GUARDIAN: Conversazione {conversation.id} - {alert_reason} - Rischio: {analysis_result['risk_score']:.3f}")
             
             db.commit()
             
@@ -129,6 +140,7 @@ Analizza la seguente conversazione di un ospite con un chatbot di una struttura 
 1. Il rischio che l'ospite lasci una recensione negativa (0.0 - 1.0)
 2. Il sentiment generale dell'ospite (-1.0 a +1.0, dove -1 è molto negativo)
 3. La confidenza dell'analisi (0.0 - 1.0)
+4. Se il chatbot ha risposto con mancanza di informazioni (true/false)
 
 ⚠️ REGOLE CRITICHE - Sii ESTREMAMENTE sensibile ai segnali di insoddisfazione! ⚠️
 
@@ -157,6 +169,21 @@ ASSEGNA RISK_SCORE 0.0-0.5 SOLO per:
 - Linguaggio neutro o positivo
 - Richieste normali di assistenza
 
+🚨 NUOVO: RILEVAMENTO MANCANZA DI INFORMAZIONI DEL CHATBOT 🚨
+
+IMPORTANTE: Analizza anche le risposte del chatbot per rilevare se ha risposto con mancanza di informazioni.
+
+ASSEGNA insufficient_info = true se il chatbot:
+- Dice di "contattare l'host" per informazioni che dovrebbe avere
+- Risponde con "non ho informazioni", "non so rispondere", "non posso aiutare"
+- Dice "non sono sicuro", "non ho i dati", "informazioni insufficienti"
+- Suggerisce di "rivolgersi all'host" per domande normali
+- Non fornisce risposte specifiche e dettagliate
+- Risponde in modo generico senza informazioni concrete
+- Dice di "chiedere all'host" per cose che dovrebbe sapere
+
+Se insufficient_info = true, assegna ALMENO risk_score 0.85 (anche se l'ospite sembra soddisfatto)
+
 RICORDA: È meglio sovrastimare il rischio che sottostimarlo. Se c'è anche solo un dubbio, assegna un punteggio più alto!
 
 Conversazione:
@@ -167,10 +194,12 @@ Rispondi SOLO con un JSON valido nel seguente formato:
     "risk_score": 0.123,
     "sentiment_score": -0.456,
     "confidence_score": 0.789,
+    "insufficient_info": true/false,
     "analysis_details": {{
         "reasoning": "Spiegazione del punteggio di rischio",
         "key_issues": ["problema1", "problema2"],
-        "sentiment_factors": ["fattore1", "fattore2"]
+        "sentiment_factors": ["fattore1", "fattore2"],
+        "insufficient_info_reason": "Motivo per cui il chatbot non ha abbastanza informazioni (se applicabile)"
     }}
 }}
 """
@@ -178,7 +207,7 @@ Rispondi SOLO con un JSON valido nel seguente formato:
             response = openai.chat.completions.create(
                 model="gpt-4",
                 messages=[
-                    {"role": "system", "content": "Sei un esperto analista di rischio per il settore turistico. Il tuo compito è identificare ospiti che potrebbero lasciare recensioni negative. Sii ESTREMAMENTE sensibile ai segnali di insoddisfazione. Assegna IMMEDIATAMENTE punteggi di rischio elevati (0.95-1.0) quando rilevi minacce esplicite di recensioni negative, frustrazione estrema, rabbia, o problemi non risolti. È meglio sovrastimare il rischio che sottostimarlo. Se c'è anche solo un dubbio, assegna un punteggio più alto!"},
+                    {"role": "system", "content": "Sei un esperto analista di rischio per il settore turistico. Il tuo compito è identificare ospiti che potrebbero lasciare recensioni negative E rilevare quando il chatbot non ha abbastanza informazioni per rispondere. Sii ESTREMAMENTE sensibile ai segnali di insoddisfazione. Assegna IMMEDIATAMENTE punteggi di rischio elevati (0.95-1.0) quando rilevi minacce esplicite di recensioni negative, frustrazione estrema, rabbia, o problemi non risolti. Inoltre, rileva quando il chatbot risponde con mancanza di informazioni e assegna ALMENO 0.85 di rischio in questi casi. È meglio sovrastimare il rischio che sottostimarlo. Se c'è anche solo un dubbio, assegna un punteggio più alto!"},
                     {"role": "user", "content": prompt}
                 ],
                 temperature=0.1,
@@ -200,6 +229,12 @@ Rispondi SOLO con un JSON valido nel seguente formato:
             analysis_result['risk_score'] = max(0.0, min(1.0, float(analysis_result['risk_score'])))
             analysis_result['sentiment_score'] = max(-1.0, min(1.0, float(analysis_result['sentiment_score'])))
             analysis_result['confidence_score'] = max(0.0, min(1.0, float(analysis_result['confidence_score'])))
+            
+            # Gestisci il campo insufficient_info
+            insufficient_info = analysis_result.get('insufficient_info', False)
+            if insufficient_info and analysis_result['risk_score'] < 0.85:
+                analysis_result['risk_score'] = 0.85  # Forza almeno 0.85 se insufficient_info è true
+                logger.info(f"Rischio aumentato a 0.85 per insufficient_info rilevato")
             
             return analysis_result
             
@@ -251,11 +286,15 @@ Rispondi SOLO con un JSON valido nel seguente formato:
             suggested_action = self._create_suggested_action(analysis_result)
             conversation_summary = self._create_conversation_summary(conversation, db)
             
+            # Determina il tipo di alert
+            insufficient_info = analysis_result.get('insufficient_info', False)
+            alert_type = 'insufficient_info' if insufficient_info else 'negative_review_risk'
+            
             # Crea l'alert
             alert = GuardianAlert(
                 user_id=chatbot.user_id,
                 conversation_id=conversation.id,
-                alert_type='negative_review_risk',
+                alert_type=alert_type,
                 severity=severity,
                 risk_score=risk_score,
                 message=message,
@@ -279,6 +318,7 @@ Rispondi SOLO con un JSON valido nel seguente formato:
         """Crea il messaggio dell'alert"""
         risk_score = analysis_result['risk_score']
         sentiment_score = analysis_result['sentiment_score']
+        insufficient_info = analysis_result.get('insufficient_info', False)
         
         if risk_score >= 0.95:
             urgency = "CRITICO"
@@ -290,11 +330,19 @@ Rispondi SOLO con un JSON valido nel seguente formato:
             urgency = "MEDIO"
             emoji = "⚠️"
         
-        return f"{emoji} ALERT {urgency}: Ospite insoddisfatto rilevato nella conversazione #{conversation.id}. Rischio recensione negativa: {risk_score:.1%}. Sentiment: {sentiment_score:.2f}"
+        if insufficient_info:
+            return f"{emoji} ALERT {urgency}: Chatbot senza informazioni sufficienti nella conversazione #{conversation.id}. Rischio: {risk_score:.1%}. Il chatbot ha risposto con mancanza di informazioni."
+        else:
+            return f"{emoji} ALERT {urgency}: Ospite insoddisfatto rilevato nella conversazione #{conversation.id}. Rischio recensione negativa: {risk_score:.1%}. Sentiment: {sentiment_score:.2f}"
     
     def _create_suggested_action(self, analysis_result: Dict[str, Any]) -> str:
         """Crea l'azione suggerita basata sull'analisi"""
         key_issues = analysis_result.get('analysis_details', {}).get('key_issues', [])
+        insufficient_info = analysis_result.get('insufficient_info', False)
+        
+        # Se è stato rilevato che il chatbot non ha abbastanza informazioni
+        if insufficient_info:
+            return "URGENTE: Il chatbot non ha abbastanza informazioni per rispondere. Aggiorna immediatamente le informazioni del chatbot con i dettagli mancanti e contatta l'ospite per fornire assistenza diretta."
         
         if not key_issues:
             return "Contatta immediatamente l'ospite per verificare la soddisfazione e offrire assistenza."

@@ -1486,7 +1486,11 @@ Rispondi SOLO con un JSON valido:
             )
             
             # Invia l'email
-            email_subject = "🚨 GUARDIAN ALERT: Unsatisfied guest detected" if (user.language or "it") == "en" else "🚨 ALERT GUARDIAN: Ospite insoddisfatto rilevato"
+            is_insufficient_info = alert.alert_type == 'insufficient_info'
+            if (user.language or "it") == "en":
+                email_subject = "⚠️ GUARDIAN ALERT: Chatbot lacks sufficient information" if is_insufficient_info else "🚨 GUARDIAN ALERT: Unsatisfied guest detected"
+            else:
+                email_subject = "⚠️ ALERT GUARDIAN: Chatbot senza informazioni sufficienti" if is_insufficient_info else "🚨 ALERT GUARDIAN: Ospite insoddisfatto rilevato"
             send_email_background(
                 to_email=user.email,
                 subject=email_subject,
@@ -6735,11 +6739,13 @@ async def analyze_conversation_with_guardian(conversation_id: int, db: Session):
         # Analizza la conversazione
         analysis_result = guardian_service.analyze_conversation(conversation, db)
         
-        # Se il rischio è alto, crea un alert e invia email
-        if analysis_result['risk_score'] >= guardian_service.risk_threshold:
+        # Se il rischio è alto O se il chatbot non ha abbastanza informazioni, crea un alert e invia email
+        insufficient_info = analysis_result.get('insufficient_info', False)
+        if analysis_result['risk_score'] >= guardian_service.risk_threshold or insufficient_info:
             alert = guardian_service.create_alert(conversation, analysis_result, db)
             guardian_service.send_alert_email(alert, db)
-            logger.warning(f"🚨 ALERT GUARDIAN CREATO: Conversazione {conversation_id}, rischio {analysis_result['risk_score']:.3f}")
+            alert_type = "insufficient_info" if insufficient_info else "high_risk"
+            logger.warning(f"🚨 ALERT GUARDIAN CREATO: Conversazione {conversation_id}, tipo: {alert_type}, rischio: {analysis_result['risk_score']:.3f}")
         
     except Exception as e:
         logger.error(f"Errore nell'analisi Guardian della conversazione {conversation_id}: {e}")
