@@ -23,13 +23,13 @@ interface EmailInput {
 }
 
 interface Collaborator {
-  id: number
-  user: {
-    email: string
-    name: string
-  }
+  id: string | number
+  user_id?: number
+  email: string
+  full_name?: string
   role: string
   joined_at: string
+  status: 'accepted' | 'pending'
 }
 
 export default function CollaboratorInviteModal({
@@ -54,7 +54,7 @@ export default function CollaboratorInviteModal({
 
   const isExistingCollaborator = (email: string): boolean => {
     return Array.isArray(collaborators) && collaborators.some(collaborator => 
-      collaborator.user.email.toLowerCase() === email.toLowerCase()
+      collaborator.email.toLowerCase() === email.toLowerCase()
     )
   }
 
@@ -107,6 +107,36 @@ export default function CollaboratorInviteModal({
     return emails
       .filter(email => email.isValid && email.value.trim() !== '' && !email.isExistingCollaborator)
       .map(email => email.value.trim())
+  }
+
+  const getTotalCollaborators = (): number => {
+    return Array.isArray(collaborators) ? collaborators.length : 0
+  }
+
+  const canAddMoreCollaborators = (): boolean => {
+    return getTotalCollaborators() < 3
+  }
+
+  const handleRemoveCollaborator = async (collaborator: Collaborator) => {
+    try {
+      if (collaborator.status === 'pending') {
+        // Rimuovi invito
+        const inviteId = typeof collaborator.id === 'string' ? 
+          parseInt(collaborator.id.replace('invite_', '')) : collaborator.id
+        await chatbots.removeCollaboratorInvite(inviteId)
+      } else {
+        // Rimuovi collaboratore
+        await chatbots.removeCollaborator(collaborator.id as number)
+      }
+      
+      // Ricarica la lista
+      await loadCollaborators()
+      toast.success(language === 'ENG' ? 'Removed successfully' : 'Rimosso con successo')
+    } catch (error: any) {
+      console.error('Error removing collaborator:', error)
+      toast.error(error.response?.data?.detail || error.message || 
+        (language === 'ENG' ? 'Error removing collaborator' : 'Errore nella rimozione'))
+    }
   }
 
   const getInvalidEmails = (): EmailInput[] => {
@@ -211,22 +241,48 @@ export default function CollaboratorInviteModal({
             ) : Array.isArray(collaborators) && collaborators.length > 0 && (
               <div className="mb-6">
                 <h4 className="text-sm font-medium text-gray-700 mb-3">
-                  {language === 'ENG' ? 'Current Collaborators' : 'Collaboratori Attuali'}
+                  {language === 'ENG' ? 'Current Collaborators' : 'Collaboratori Attuali'} ({getTotalCollaborators()}/3)
                 </h4>
                 <div className="space-y-2">
                   {collaborators.map((collaborator) => (
-                    <div key={collaborator.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                        <User className="w-4 h-4 text-blue-600" />
+                    <div key={collaborator.id} className={`flex items-center gap-3 p-3 rounded-lg ${
+                      collaborator.status === 'pending' 
+                        ? 'bg-yellow-50 border border-yellow-200' 
+                        : 'bg-gray-50'
+                    }`}>
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                        collaborator.status === 'pending' 
+                          ? 'bg-yellow-100' 
+                          : 'bg-blue-100'
+                      }`}>
+                        <User className={`w-4 h-4 ${
+                          collaborator.status === 'pending' 
+                            ? 'text-yellow-600' 
+                            : 'text-blue-600'
+                        }`} />
                       </div>
                       <div className="flex-1">
                         <p className="text-sm font-medium text-gray-900">
-                          {collaborator.user.name || collaborator.user.email}
+                          {collaborator.full_name || collaborator.email}
                         </p>
-                        <p className="text-xs text-gray-500">{collaborator.user.email}</p>
+                        <p className="text-xs text-gray-500">{collaborator.email}</p>
+                        {collaborator.status === 'pending' && (
+                          <p className="text-xs text-yellow-600 font-medium">
+                            {language === 'ENG' ? 'Pending invitation' : 'Invito in sospeso'}
+                          </p>
+                        )}
                       </div>
-                      <div className="text-xs text-gray-500">
-                        {new Date(collaborator.joined_at).toLocaleDateString()}
+                      <div className="flex items-center gap-2">
+                        <div className="text-xs text-gray-500">
+                          {new Date(collaborator.joined_at).toLocaleDateString()}
+                        </div>
+                        <button
+                          onClick={() => handleRemoveCollaborator(collaborator)}
+                          className="p-1 text-red-500 hover:bg-red-50 rounded transition"
+                          title={language === 'ENG' ? 'Remove' : 'Rimuovi'}
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
                       </div>
                     </div>
                   ))}
@@ -286,13 +342,19 @@ export default function CollaboratorInviteModal({
                 </div>
               ))}
               
-              {emails.length < 3 && (
+              {emails.length < 3 && canAddMoreCollaborators() && (
                 <button
                   onClick={addEmailField}
                   className="w-full py-2 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 hover:border-blue-300 hover:text-blue-500 transition"
                 >
                   + {language === 'ENG' ? 'Add another collaborator' : 'Aggiungi altro collaboratore'}
                 </button>
+              )}
+              
+              {!canAddMoreCollaborators() && (
+                <div className="w-full py-2 text-center text-sm text-gray-500 bg-gray-50 rounded-lg">
+                  {language === 'ENG' ? 'Maximum 3 collaborators reached' : 'Raggiunto il massimo di 3 collaboratori'}
+                </div>
               )}
             </div>
 

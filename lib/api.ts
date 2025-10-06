@@ -201,6 +201,9 @@ export const chatbots = {
   removeCollaborator: (collaboratorId: number) =>
     api.delete(`/chatbots/collaborators/${collaboratorId}`),
   
+  removeCollaboratorInvite: (inviteId: number) =>
+    api.delete(`/chatbots/collaborators/invite/${inviteId}`),
+  
   acceptInvite: (inviteToken: string) =>
     api.post('/collaborators/accept-invite', {
       invite_token: inviteToken
