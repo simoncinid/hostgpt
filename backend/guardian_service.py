@@ -18,7 +18,11 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Configurazione OpenAI
-openai.api_key = settings.OPENAI_API_KEY
+def get_openai_client():
+    """Restituisce un client OpenAI configurato"""
+    return openai.OpenAI(
+        api_key=settings.OPENAI_API_KEY
+    )
 
 class GuardianService:
     """Servizio per l'analisi Guardian delle conversazioni"""
@@ -218,7 +222,8 @@ Rispondi SOLO con un JSON valido nel seguente formato:
 }}
 """
 
-            response = openai.chat.completions.create(
+            client = get_openai_client()
+            response = client.chat.completions.create(
                 model="gpt-4",
                 messages=[
                     {"role": "system", "content": "Sei un esperto analista di rischio per il settore turistico. Il tuo compito è identificare ospiti che potrebbero lasciare recensioni negative E rilevare quando il chatbot non ha abbastanza informazioni per rispondere. Analizza SOLO l'ultimo scambio di messaggi, non l'intera conversazione. Sii ESTREMAMENTE sensibile ai segnali di insoddisfazione. Assegna IMMEDIATAMENTE punteggi di rischio elevati (0.95-1.0) quando rilevi minacce esplicite di recensioni negative, frustrazione estrema, rabbia, o problemi non risolti. Inoltre, rileva quando il chatbot risponde con mancanza di informazioni e assegna ALMENO 0.85 di rischio in questi casi. È meglio sovrastimare il rischio che sottostimarlo. Se c'è anche solo un dubbio, assegna un punteggio più alto!"},

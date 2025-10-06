@@ -77,6 +77,7 @@ class Settings(BaseSettings):
     
     # Environment
     ENVIRONMENT: str = os.getenv("ENVIRONMENT", "development")
+    DEBUG: bool = os.getenv("DEBUG", "true").lower() == "true"
     
     class Config:
         env_file = ".env"

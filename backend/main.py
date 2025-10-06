@@ -398,11 +398,27 @@ app.add_middleware(
 @app.middleware("http")
 async def cors_debug_middleware(request: Request, call_next):
     origin = request.headers.get("origin")
-    print(f"🌐 CORS Debug - Origin: {origin}")
-    print(f"🌐 CORS Debug - Method: {request.method}")
-    print(f"🌐 CORS Debug - Path: {request.url.path}")
     
-    # Gestisci richieste OPTIONS (preflight)
+    # Debug CORS solo in modalità sviluppo e per richieste non comuni
+    if settings.DEBUG:
+        common_endpoints = [
+            "/api/guardian/alerts",
+            "/api/guardian/statistics", 
+            "/api/guardian/status",
+            "/api/auth/me"
+        ]
+        
+        should_debug = (
+            request.method != "OPTIONS" and 
+            not any(request.url.path.startswith(endpoint) for endpoint in common_endpoints)
+        )
+        
+        if should_debug:
+            print(f"🌐 CORS Debug - Origin: {origin}")
+            print(f"🌐 CORS Debug - Method: {request.method}")
+            print(f"🌐 CORS Debug - Path: {request.url.path}")
+    
+    # Gestisci richieste OPTIONS (preflight) senza debug spam
     if request.method == "OPTIONS":
         return JSONResponse(
             content={"message": "CORS preflight successful"},
