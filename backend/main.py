@@ -7125,17 +7125,27 @@ async def get_chat_status(
         if not thread_id:
             return {"suspended": False, "message": None}
         
-        # Cerca la conversazione per questo thread_id
-        conversation = db.query(Conversation).filter(
-            Conversation.thread_id == thread_id,
-            Conversation.chatbot_id == chatbot.id
-        ).first()
+        # Cerca la conversazione per questo thread_id o conversation_id
+        conversation = None
+        if thread_id.startswith('conv_'):
+            # Se è un conversation_id, estrai l'ID
+            conversation_id = int(thread_id.replace('conv_', ''))
+            conversation = db.query(Conversation).filter(
+                Conversation.id == conversation_id,
+                Conversation.chatbot_id == chatbot.id
+            ).first()
+        else:
+            # Se è un thread_id normale
+            conversation = db.query(Conversation).filter(
+                Conversation.thread_id == thread_id,
+                Conversation.chatbot_id == chatbot.id
+            ).first()
         
         if not conversation:
             return {"suspended": False, "message": None}
         
         # Verifica se è sospesa
-        if conversation.guardian_suspended and not conversation.guardian_resolved:
+        if conversation.guardian_suspended:
             return {
                 "suspended": True,
                 "message": "La conversazione è temporaneamente sospesa in attesa che l'host risponda di persona. Ti arriverà una mail quando lo farà. Nel frattempo puoi cliccare il pulsante refresh in alto per iniziare una nuova conversazione."

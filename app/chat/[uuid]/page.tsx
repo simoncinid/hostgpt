@@ -618,19 +618,19 @@ export default function ChatWidgetPage() {
         }
         
         // Controlla se la conversazione è sospesa per alert Guardian
-        if (threadId) {
-          try {
-            const statusResponse = await chat.getStatus(uuid, threadId)
-            if (statusResponse.data.suspended) {
-              setIsSuspended(true)
-              setSuspensionMessage(statusResponse.data.message)
-            } else {
-              setIsSuspended(false)
-              setSuspensionMessage('')
-            }
-          } catch (error) {
-            console.error('Errore nel controllo dello stato della conversazione esistente:', error)
+        // Usa threadId se disponibile, altrimenti usa conversationId
+        const statusThreadId = threadId || `conv_${conversationId}`
+        try {
+          const statusResponse = await chat.getStatus(uuid, statusThreadId)
+          if (statusResponse.data.suspended) {
+            setIsSuspended(true)
+            setSuspensionMessage(statusResponse.data.message)
+          } else {
+            setIsSuspended(false)
+            setSuspensionMessage('')
           }
+        } catch (error) {
+          console.error('Errore nel controllo dello stato della conversazione esistente:', error)
         }
       } else {
         console.error('Errore nel caricamento messaggi conversazione esistente')
