@@ -12,13 +12,15 @@ import { useAuthStore } from '@/lib/store'
 import api from '@/lib/api'
 import { useLanguage } from '@/lib/languageContext'
 import { translations } from '@/lib/translations'
+import CountrySelector from '@/app/components/CountrySelector'
 
 interface RegisterForm {
   email: string
   password: string
   confirmPassword: string
   full_name: string
-  phone: string  // Now required
+  phone: string  // Now required (solo numero senza prefisso)
+  phonePrefix: string  // Prefisso selezionato dal menu a tendina
   language: string
   terms: boolean
 }
@@ -52,6 +54,7 @@ function RegisterForm() {
     confirmPassword: '',
     full_name: '',
     phone: '',
+    phonePrefix: '+39', // Default Italia
     language: 'it',
     terms: false
   })
@@ -85,11 +88,11 @@ function RegisterForm() {
       errors.email = t.errors.emailInvalid
     }
     
-    // Phone validation - must include country code
+    // Phone validation - solo numero senza prefisso
     if (!formData.phone) {
       errors.phone = 'Il numero di telefono è obbligatorio'
-    } else if (!/^\+[1-9]\d{1,14}$/.test(formData.phone.replace(/\s/g, ''))) {
-      errors.phone = 'Inserisci un numero di telefono valido con prefisso internazionale (es. +39 123 456 7890)'
+    } else if (!/^\d{7,15}$/.test(formData.phone.replace(/\s/g, ''))) {
+      errors.phone = 'Inserisci un numero di telefono valido (es. 123 456 7890)'
     }
     
     if (!formData.password || formData.password.length < 8) {
@@ -120,11 +123,14 @@ function RegisterForm() {
 
     setIsLoading(true)
     try {
+      // Costruisci il numero completo con prefisso
+      const fullPhoneNumber = formData.phonePrefix + formData.phone.replace(/\s/g, '')
+      
       const response = await api.post('/auth/register', {
         email: formData.email,
         password: formData.password,
         full_name: formData.full_name,
-        phone: formData.phone,
+        phone: fullPhoneNumber,
         wants_free_trial: isFreeTrial,
         language: formData.language,
         desired_plan: desiredPlan
@@ -203,15 +209,25 @@ function RegisterForm() {
                   {/* Telefono - ROW 2 */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Numero di telefono *</label>
-                    <div className="relative">
-                      <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                      <input
-                        type="tel"
-                        value={formData.phone || ''}
-                        onChange={(e) => updateField('phone', e.target.value)}
-                        className="w-full px-4 py-2.5 pl-10 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary focus:ring-opacity-20 outline-none transition-all duration-200"
-                        placeholder="+39 123 456 7890"
-                      />
+                    <div className="flex gap-2">
+                      <div className="w-32">
+                        <CountrySelector
+                          value={formData.phonePrefix}
+                          onChange={(value) => updateField('phonePrefix', value)}
+                          className="h-10"
+                          language={language === 'IT' ? 'IT' : 'ENG'}
+                        />
+                      </div>
+                      <div className="relative flex-1">
+                        <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        <input
+                          type="tel"
+                          value={formData.phone || ''}
+                          onChange={(e) => updateField('phone', e.target.value)}
+                          className="w-full px-4 py-2.5 pl-10 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary focus:ring-opacity-20 outline-none transition-all duration-200"
+                          placeholder="123 456 7890"
+                        />
+                      </div>
                     </div>
                     {formErrors.phone && (
                       <p className="text-red-500 text-xs mt-1">{formErrors.phone}</p>
@@ -411,15 +427,25 @@ function RegisterForm() {
                   {/* Telefono */}
                   <div>
                     <label className="block text-xs font-medium text-gray-700 mb-0.5">Numero di telefono *</label>
-                    <div className="relative">
-                      <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-3 h-3 text-gray-400" />
-                      <input
-                        type="tel"
-                        value={formData.phone || ''}
-                        onChange={(e) => updateField('phone', e.target.value)}
-                        className="w-full px-3 py-2 pl-9 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary focus:ring-opacity-20 outline-none transition-all duration-200 text-sm"
-                        placeholder="+39 123 456 7890"
-                      />
+                    <div className="flex gap-2">
+                      <div className="w-24">
+                        <CountrySelector
+                          value={formData.phonePrefix}
+                          onChange={(value) => updateField('phonePrefix', value)}
+                          className="h-8 text-xs"
+                          language={language === 'IT' ? 'IT' : 'ENG'}
+                        />
+                      </div>
+                      <div className="relative flex-1">
+                        <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-3 h-3 text-gray-400" />
+                        <input
+                          type="tel"
+                          value={formData.phone || ''}
+                          onChange={(e) => updateField('phone', e.target.value)}
+                          className="w-full px-3 py-2 pl-9 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary focus:ring-opacity-20 outline-none transition-all duration-200 text-sm"
+                          placeholder="123 456 7890"
+                        />
+                      </div>
                     </div>
                     {formErrors.phone && (
                       <p className="text-red-500 text-xs mt-0.5">{formErrors.phone}</p>
