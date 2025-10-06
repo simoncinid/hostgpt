@@ -198,15 +198,6 @@ export default function ChatbotDetailPage() {
                       <button className="p-2 hover:bg-gray-100 rounded-lg" onClick={() => window.open(chatUrl, '_blank')} title="Apri Chat">
                         <ExternalLink className="w-5 h-5" />
                       </button>
-                      {currentChatbot.is_owner && (
-                        <button 
-                          onClick={handleInviteCollaborators}
-                          className="p-2 text-purple-600 hover:bg-purple-50 rounded-lg transition" 
-                          title="Invita Collaboratori"
-                        >
-                          <UserPlus className="w-5 h-5" />
-                        </button>
-                      )}
                       <Link href={`/dashboard/chatbots/${currentChatbot.id}/edit`} className="p-2 hover:bg-gray-100 rounded-lg" title="Modifica">
                         <Edit className="w-5 h-5" />
                       </Link>
@@ -220,6 +211,24 @@ export default function ChatbotDetailPage() {
                     </div>
                   </div>
                 </div>
+                
+                {/* Collaboratori Section */}
+                {currentChatbot.is_owner && (
+                  <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Users className="w-5 h-5 text-blue-600" />
+                        <span className="text-sm font-medium text-blue-900">Gestisci Collaboratori</span>
+                      </div>
+                      <button
+                        onClick={handleInviteCollaborators}
+                        className="px-3 py-1 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition"
+                      >
+                        Gestisci
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="bg-white rounded-2xl shadow p-6">
