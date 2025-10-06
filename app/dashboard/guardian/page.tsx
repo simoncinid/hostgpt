@@ -75,6 +75,7 @@ function GuardianContent() {
   const [isCheckoutLoading, setIsCheckoutLoading] = useState(false)
   const [resolvingAlertId, setResolvingAlertId] = useState<number | null>(null)
   const [hostResponse, setHostResponse] = useState('')
+  const [hostResponseRef, setHostResponseRef] = useState<HTMLTextAreaElement | null>(null)
   
   // Controlla se c'è un parametro di successo nell'URL
   useEffect(() => {
@@ -99,6 +100,16 @@ function GuardianContent() {
       fetchGuardianStatus()
     }
   }, [isHydrated, user])
+
+  // Focus automatico sul textarea quando si apre il modal di risoluzione
+  useEffect(() => {
+    if (resolvingAlertId && hostResponseRef) {
+      // Piccolo delay per assicurarsi che il modal sia completamente renderizzato
+      setTimeout(() => {
+        hostResponseRef.focus()
+      }, 100)
+    }
+  }, [resolvingAlertId, hostResponseRef])
 
   const fetchGuardianStatus = async () => {
     try {
@@ -577,6 +588,7 @@ function GuardianContent() {
                                       Scrivi la tua risposta per l'ospite
                                     </h5>
                                     <textarea
+                                      ref={setHostResponseRef}
                                       value={hostResponse}
                                       onChange={(e) => setHostResponse(e.target.value)}
                                       placeholder="Scrivi qui la tua risposta che verrà inviata all'ospite..."

@@ -5692,7 +5692,7 @@ async def send_message(
             logger.info(f"🚫 Conversazione {conversation.id} sospesa per alert Guardian")
             raise HTTPException(
                 status_code=423, 
-                detail="La conversazione è temporaneamente sospesa. L'host è stato notificato e risponderà presto. Puoi iniziare una nuova conversazione cliccando il pulsante refresh."
+                detail="La conversazione è temporaneamente sospesa in attesa che l'host risponda di persona. Ti arriverà una mail quando lo farà. Nel frattempo puoi cliccare il pulsante refresh in alto per iniziare una nuova conversazione."
             )
         
         # Esegui assistant
@@ -7377,34 +7377,37 @@ async def analyze_conversation_with_guardian(conversation_id: int, db: Session):
             logger.info(f"Utente {user.id if user else 'N/A'} non ha Guardian attivo, salto analisi")
             return
         
-        # Verifica che la conversazione non sia già stata analizzata E non abbia un alert attivo
-        if conversation.guardian_analyzed and conversation.guardian_alert_triggered:
-            logger.info(f"Conversazione {conversation_id} già analizzata da Guardian e ha alert attivo, salto")
-            return
-        
-        # Se è già stata analizzata ma non ha alert, ri-analizza (nuovi messaggi potrebbero aver cambiato la situazione)
-        if conversation.guardian_analyzed and not conversation.guardian_alert_triggered:
-            logger.info(f"Conversazione {conversation_id} già analizzata ma senza alert, ri-analizzo per nuovi messaggi")
+        # Analizza SEMPRE ogni nuovo messaggio, anche se c'è già un alert attivo
+        # Questo permette di rilevare:
+        # 1. Nuova insoddisfazione dell'ospite (nuovo messaggio dell'ospite)
+        # 2. Mancanza di informazioni del chatbot (nuova risposta del chatbot)
+        logger.info(f"Analizzando conversazione {conversation_id} - ogni messaggio viene analizzato individualmente")
         
         # Analizza la conversazione
         analysis_result = guardian_service.analyze_conversation(conversation, db)
         
-        # Se il rischio è alto O se il chatbot non ha abbastanza informazioni, crea un alert e sospendi la chat
+        # Se il rischio è alto O se il chatbot non ha abbastanza informazioni, gestisci l'alert
         insufficient_info = analysis_result.get('insufficient_info', False)
         if analysis_result['risk_score'] >= guardian_service.risk_threshold or insufficient_info:
-            # Crea l'alert
-            alert = guardian_service.create_alert(conversation, analysis_result, db)
-            
-            # Sospendi la conversazione
-            conversation.guardian_suspended = True
-            conversation.guardian_alert_triggered = True
-            db.commit()
-            
-            # Invia email di notifica all'host
-            guardian_service.send_alert_email(alert, db)
-            
-            alert_type = "insufficient_info" if insufficient_info else "high_risk"
-            logger.warning(f"🚨 ALERT GUARDIAN CREATO: Conversazione {conversation_id}, tipo: {alert_type}, rischio: {analysis_result['risk_score']:.3f} - CHAT SOSPESA")
+            # Se non c'è già un alert attivo, creane uno nuovo
+            if not conversation.guardian_alert_triggered:
+                # Crea l'alert
+                alert = guardian_service.create_alert(conversation, analysis_result, db)
+                
+                # Sospendi la conversazione
+                conversation.guardian_suspended = True
+                conversation.guardian_alert_triggered = True
+                db.commit()
+                
+                # Invia email di notifica all'host
+                guardian_service.send_alert_email(alert, db)
+                
+                alert_type = "insufficient_info" if insufficient_info else "high_risk"
+                logger.warning(f"🚨 NUOVO ALERT GUARDIAN: Conversazione {conversation_id} - {alert_type} - Rischio: {analysis_result['risk_score']:.3f}")
+            else:
+                # C'è già un alert attivo, logga solo il problema senza creare un nuovo alert
+                alert_type = "insufficient_info" if insufficient_info else "high_risk"
+                logger.warning(f"⚠️ PROBLEMA RILEVATO (alert già attivo): Conversazione {conversation_id} - {alert_type} - Rischio: {analysis_result['risk_score']:.3f}")
         
     except Exception as e:
         logger.error(f"Errore nell'analisi Guardian della conversazione {conversation_id}: {e}")

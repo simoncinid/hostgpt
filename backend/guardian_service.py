@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from typing import List, Dict, Any, Optional
 from datetime import datetime
 import json
-from models import Conversation, Message, GuardianAlert, GuardianAnalysis, User, Chatbot
+from models import Conversation, Message, GuardianAlert, GuardianAnalysis, User, Chatbot, Guest
 from config import settings
 from email_templates_simple import create_guardian_alert_email_simple
 
@@ -29,6 +29,7 @@ class GuardianService:
     def analyze_conversation(self, conversation: Conversation, db: Session) -> Dict[str, Any]:
         """
         Analizza una conversazione per determinare il rischio di recensione negativa
+        Analizza SOLO l'ultimo messaggio dell'utente e l'ultima risposta del chatbot
         
         Args:
             conversation: Oggetto Conversation da analizzare
@@ -40,13 +41,19 @@ class GuardianService:
         try:
             logger.info(f"Avvio analisi Guardian per conversazione {conversation.id}")
             
-            # Recupera tutti i messaggi dell'utente nella conversazione
-            user_messages = db.query(Message).filter(
+            # Recupera SOLO l'ultimo messaggio dell'utente
+            last_user_message = db.query(Message).filter(
                 Message.conversation_id == conversation.id,
                 Message.role == 'user'
-            ).order_by(Message.timestamp).all()
+            ).order_by(Message.timestamp.desc()).first()
             
-            if not user_messages:
+            # Recupera SOLO l'ultima risposta del chatbot
+            last_assistant_message = db.query(Message).filter(
+                Message.conversation_id == conversation.id,
+                Message.role == 'assistant'
+            ).order_by(Message.timestamp.desc()).first()
+            
+            if not last_user_message:
                 logger.info(f"Nessun messaggio utente trovato per conversazione {conversation.id}")
                 return {
                     'risk_score': 0.0,
@@ -55,8 +62,8 @@ class GuardianService:
                     'analysis_details': {'reason': 'Nessun messaggio utente da analizzare'}
                 }
             
-            # Prepara il testo per l'analisi
-            conversation_text = self._prepare_conversation_text(user_messages)
+            # Prepara il testo per l'analisi (solo ultimo messaggio utente e ultima risposta chatbot)
+            conversation_text = self._prepare_single_message_text(last_user_message, last_assistant_message)
             
             # Analizza con OpenAI
             analysis_result = self._analyze_with_openai(conversation_text)
@@ -78,7 +85,7 @@ class GuardianService:
                 sentiment_score=analysis_result['sentiment_score'],
                 confidence_score=analysis_result['confidence_score'],
                 analysis_details=analysis_result['analysis_details'],
-                user_messages_analyzed=len(user_messages),
+                user_messages_analyzed=1,  # Analizziamo solo l'ultimo messaggio
                 conversation_length=len(conversation_text)
             )
             
@@ -105,21 +112,27 @@ class GuardianService:
             db.rollback()
             raise
     
-    def _prepare_conversation_text(self, user_messages: List[Message]) -> str:
+    def _prepare_single_message_text(self, user_message: Message, assistant_message: Message = None) -> str:
         """
-        Prepara il testo della conversazione per l'analisi
+        Prepara il testo per l'analisi di un singolo scambio di messaggi
         
         Args:
-            user_messages: Lista dei messaggi dell'utente
+            user_message: Ultimo messaggio dell'utente
+            assistant_message: Ultima risposta del chatbot (opzionale)
             
         Returns:
             Testo formattato per l'analisi
         """
         conversation_lines = []
         
-        for i, message in enumerate(user_messages, 1):
-            timestamp = message.timestamp.strftime("%H:%M")
-            conversation_lines.append(f"Messaggio {i} ({timestamp}): {message.content}")
+        # Aggiungi il messaggio dell'utente
+        timestamp = user_message.timestamp.strftime("%H:%M")
+        conversation_lines.append(f"Ospite ({timestamp}): {user_message.content}")
+        
+        # Aggiungi la risposta del chatbot se disponibile
+        if assistant_message:
+            timestamp = assistant_message.timestamp.strftime("%H:%M")
+            conversation_lines.append(f"Chatbot ({timestamp}): {assistant_message.content}")
         
         return "\n\n".join(conversation_lines)
     
@@ -135,7 +148,7 @@ class GuardianService:
         """
         try:
             prompt = f"""
-Analizza la seguente conversazione di un ospite con un chatbot di una struttura ricettiva e determina:
+Analizza l'ultimo scambio di messaggi tra un ospite e un chatbot di una struttura ricettiva e determina:
 
 1. Il rischio che l'ospite lasci una recensione negativa (0.0 - 1.0)
 2. Il sentiment generale dell'ospite (-1.0 a +1.0, dove -1 è molto negativo)
@@ -143,6 +156,7 @@ Analizza la seguente conversazione di un ospite con un chatbot di una struttura 
 4. Se il chatbot ha risposto con mancanza di informazioni (true/false)
 
 ⚠️ REGOLE CRITICHE - Sii ESTREMAMENTE sensibile ai segnali di insoddisfazione! ⚠️
+⚠️ IMPORTANTE: Analizza SOLO l'ultimo scambio di messaggi, non l'intera conversazione! ⚠️
 
 ASSEGNA IMMEDIATAMENTE RISK_SCORE 0.95-1.0 per:
 - QUALSIASI menzione di "recensione negativa", "recensione brutta", "star negative", "1 stella"
@@ -186,7 +200,7 @@ Se insufficient_info = true, assegna ALMENO risk_score 0.85 (anche se l'ospite s
 
 RICORDA: È meglio sovrastimare il rischio che sottostimarlo. Se c'è anche solo un dubbio, assegna un punteggio più alto!
 
-Conversazione:
+Ultimo scambio di messaggi:
 {conversation_text}
 
 Rispondi SOLO con un JSON valido nel seguente formato:
@@ -207,7 +221,7 @@ Rispondi SOLO con un JSON valido nel seguente formato:
             response = openai.chat.completions.create(
                 model="gpt-4",
                 messages=[
-                    {"role": "system", "content": "Sei un esperto analista di rischio per il settore turistico. Il tuo compito è identificare ospiti che potrebbero lasciare recensioni negative E rilevare quando il chatbot non ha abbastanza informazioni per rispondere. Sii ESTREMAMENTE sensibile ai segnali di insoddisfazione. Assegna IMMEDIATAMENTE punteggi di rischio elevati (0.95-1.0) quando rilevi minacce esplicite di recensioni negative, frustrazione estrema, rabbia, o problemi non risolti. Inoltre, rileva quando il chatbot risponde con mancanza di informazioni e assegna ALMENO 0.85 di rischio in questi casi. È meglio sovrastimare il rischio che sottostimarlo. Se c'è anche solo un dubbio, assegna un punteggio più alto!"},
+                    {"role": "system", "content": "Sei un esperto analista di rischio per il settore turistico. Il tuo compito è identificare ospiti che potrebbero lasciare recensioni negative E rilevare quando il chatbot non ha abbastanza informazioni per rispondere. Analizza SOLO l'ultimo scambio di messaggi, non l'intera conversazione. Sii ESTREMAMENTE sensibile ai segnali di insoddisfazione. Assegna IMMEDIATAMENTE punteggi di rischio elevati (0.95-1.0) quando rilevi minacce esplicite di recensioni negative, frustrazione estrema, rabbia, o problemi non risolti. Inoltre, rileva quando il chatbot risponde con mancanza di informazioni e assegna ALMENO 0.85 di rischio in questi casi. È meglio sovrastimare il rischio che sottostimarlo. Se c'è anche solo un dubbio, assegna un punteggio più alto!"},
                     {"role": "user", "content": prompt}
                 ],
                 temperature=0.1,
@@ -357,20 +371,33 @@ Rispondi SOLO con un JSON valido nel seguente formato:
             return "Contatta immediatamente l'ospite per risolvere il problema e offrire una compensazione."
     
     def _create_conversation_summary(self, conversation: Conversation, db: Session) -> str:
-        """Crea un riassunto della conversazione"""
-        messages = db.query(Message).filter(
-            Message.conversation_id == conversation.id
-        ).order_by(Message.timestamp).limit(10).all()  # Ultimi 10 messaggi
+        """Crea un riassunto dell'ultimo scambio di messaggi"""
+        # Recupera solo l'ultimo messaggio dell'utente e l'ultima risposta del chatbot
+        last_user_message = db.query(Message).filter(
+            Message.conversation_id == conversation.id,
+            Message.role == 'user'
+        ).order_by(Message.timestamp.desc()).first()
         
-        if not messages:
+        last_assistant_message = db.query(Message).filter(
+            Message.conversation_id == conversation.id,
+            Message.role == 'assistant'
+        ).order_by(Message.timestamp.desc()).first()
+        
+        if not last_user_message:
             return "Nessun messaggio disponibile"
         
         summary_lines = []
-        for msg in messages:
-            role = "Ospite" if msg.role == 'user' else "Chatbot"
-            time = msg.timestamp.strftime("%H:%M")
-            content = msg.content[:100] + "..." if len(msg.content) > 100 else msg.content
-            summary_lines.append(f"[{time}] {role}: {content}")
+        
+        # Aggiungi l'ultimo messaggio dell'utente
+        time = last_user_message.timestamp.strftime("%H:%M")
+        content = last_user_message.content[:200] + "..." if len(last_user_message.content) > 200 else last_user_message.content
+        summary_lines.append(f"[{time}] Ospite: {content}")
+        
+        # Aggiungi l'ultima risposta del chatbot se disponibile
+        if last_assistant_message:
+            time = last_assistant_message.timestamp.strftime("%H:%M")
+            content = last_assistant_message.content[:200] + "..." if len(last_assistant_message.content) > 200 else last_assistant_message.content
+            summary_lines.append(f"[{time}] Chatbot: {content}")
         
         return "\n".join(summary_lines)
     
@@ -500,29 +527,75 @@ Rispondi SOLO con un JSON valido nel seguente formato:
             # Crea il link alla chat
             chat_link = f"https://hostgpt.it/chat/{chatbot.uuid}?thread_id={conversation.thread_id}"
             
-            # Crea l'email
-            subject = "La tua conversazione è stata aggiornata - HostGPT"
-            content = f"""
-Ciao {guest.first_name or 'Ospite'},
-
-L'host ha risposto alla tua conversazione e la chat è ora sbloccata.
-
-Conversazione completa:
-{conversation_text}
-
-Puoi continuare la conversazione cliccando qui: {chat_link}
-
-Grazie per aver utilizzato HostGPT!
-
-Il team di HostGPT
-            """
+            # Determina la lingua dell'ospite (per ora usiamo italiano come default)
+            # TODO: Aggiungere supporto per la lingua dell'ospite
+            language = "it"
+            
+            if language == "en":
+                subject = "Your conversation has been updated - HostGPT"
+                content = f"""
+<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+    <div style="text-align: center; margin-bottom: 30px;">
+        <h1 style="color: #2563eb; margin: 0;">🏠 HostGPT</h1>
+        <p style="color: #6b7280; margin: 5px 0 0 0;">Your AI-powered host assistant</p>
+    </div>
+    
+    <div style="background: #f0f9ff; border-left: 4px solid #2563eb; padding: 20px; margin-bottom: 30px;">
+        <h2 style="color: #1e40af; margin: 0 0 10px 0;">✅ Your conversation has been updated</h2>
+        <p style="color: #374151; margin: 0;">The host has responded to your conversation and the chat is now unlocked.</p>
+    </div>
+    
+    <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; margin-bottom: 30px;">
+        <h3 style="color: #374151; margin: 0 0 15px 0;">💬 Complete conversation:</h3>
+        <div style="background: white; border-radius: 6px; padding: 15px; font-family: monospace; font-size: 14px; line-height: 1.5; white-space: pre-wrap; color: #374151;">{conversation_text}</div>
+    </div>
+    
+    <div style="text-align: center; margin-bottom: 30px;">
+        <a href="{chat_link}" style="display: inline-block; background: #2563eb; color: white; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: 600; transition: background-color 0.2s;">Continue Conversation</a>
+    </div>
+    
+    <div style="text-align: center; color: #6b7280; font-size: 14px;">
+        <p>Thank you for using HostGPT!</p>
+        <p>The HostGPT Team</p>
+    </div>
+</div>
+                """
+            else:  # it
+                subject = "La tua conversazione è stata aggiornata - HostGPT"
+                content = f"""
+<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+    <div style="text-align: center; margin-bottom: 30px;">
+        <h1 style="color: #2563eb; margin: 0;">🏠 HostGPT</h1>
+        <p style="color: #6b7280; margin: 5px 0 0 0;">Il tuo assistente host potenziato dall'AI</p>
+    </div>
+    
+    <div style="background: #f0f9ff; border-left: 4px solid #2563eb; padding: 20px; margin-bottom: 30px;">
+        <h2 style="color: #1e40af; margin: 0 0 10px 0;">✅ La tua conversazione è stata aggiornata</h2>
+        <p style="color: #374151; margin: 0;">L'host ha risposto alla tua conversazione e la chat è ora sbloccata.</p>
+    </div>
+    
+    <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; margin-bottom: 30px;">
+        <h3 style="color: #374151; margin: 0 0 15px 0;">💬 Conversazione completa:</h3>
+        <div style="background: white; border-radius: 6px; padding: 15px; font-family: monospace; font-size: 14px; line-height: 1.5; white-space: pre-wrap; color: #374151;">{conversation_text}</div>
+    </div>
+    
+    <div style="text-align: center; margin-bottom: 30px;">
+        <a href="{chat_link}" style="display: inline-block; background: #2563eb; color: white; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: 600; transition: background-color 0.2s;">Continua la Conversazione</a>
+    </div>
+    
+    <div style="text-align: center; color: #6b7280; font-size: 14px;">
+        <p>Grazie per aver utilizzato HostGPT!</p>
+        <p>Il team di HostGPT</p>
+    </div>
+</div>
+                """
             
             # Invia l'email
-            from email_service import send_email
+            from main import send_email
             success = send_email(
                 to_email=guest.email,
                 subject=subject,
-                content=content
+                html_content=content
             )
             
             if success:

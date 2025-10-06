@@ -565,6 +565,40 @@ export default function ChatWidgetPage() {
     checkChatStatus()
   }, [threadId, uuid])
 
+  // Controllo periodico dello stato della chat quando è sospesa
+  useEffect(() => {
+    let intervalId: NodeJS.Timeout | null = null
+    
+    if (isSuspended && threadId) {
+      // Controlla ogni 10 secondi se la chat è stata sbloccata
+      intervalId = setInterval(async () => {
+        try {
+          const statusResponse = await chat.getStatus(uuid, threadId)
+          if (!statusResponse.data.suspended) {
+            // La chat è stata sbloccata!
+            setIsSuspended(false)
+            setSuspensionMessage('')
+            toast.success(language === 'IT' ? 'Chat sbloccata! Puoi continuare la conversazione.' : 'Chat unlocked! You can continue the conversation.')
+            
+            // Pulisci l'interval
+            if (intervalId) {
+              clearInterval(intervalId)
+            }
+          }
+        } catch (error) {
+          console.error('Errore nel controllo dello stato della chat:', error)
+        }
+      }, 10000) // Controlla ogni 10 secondi
+    }
+    
+    // Cleanup dell'interval quando il componente si smonta o la chat non è più sospesa
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId)
+      }
+    }
+  }, [isSuspended, threadId, uuid, language])
+
   const loadExistingConversation = async (conversationId: number) => {
     try {
       console.log('🔄 [DEBUG] Caricando conversazione esistente:', conversationId)
@@ -1813,7 +1847,7 @@ export default function ChatWidgetPage() {
                   {isSuspended && (
                     <div className="flex items-center bg-yellow-100 text-yellow-800 px-3 py-2 rounded-full text-xs font-medium">
                       <AlertCircle className="w-3 h-3 mr-1" />
-                      {language === 'IT' ? 'Chat sospesa' : 'Chat suspended'}
+                      {language === 'IT' ? 'In attesa della risposta dell\'host' : 'Waiting for host response'}
                     </div>
                   )}
                 </div>
@@ -1830,7 +1864,7 @@ export default function ChatWidgetPage() {
                     type="text"
                     value={inputMessage}
                     onChange={(e) => setInputMessage(e.target.value)}
-                    placeholder={isSuspended ? "Chat sospesa - l'host risponderà presto" : currentTexts.placeholder}
+                    placeholder={isSuspended ? (language === 'IT' ? "In attesa della risposta dell'host..." : "Waiting for host response...") : currentTexts.placeholder}
                     disabled={isLoading || isProcessingAudio || isSuspended}
                     className={`flex-1 px-3 md:px-4 py-1.5 md:py-2.5 rounded-full border outline-none transition text-sm md:text-base ${
                       isDarkMode 
