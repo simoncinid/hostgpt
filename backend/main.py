@@ -1601,10 +1601,9 @@ Rispondi SOLO con un JSON valido nel seguente formato:
                 Chatbot.user_id == user_id
             ).count()
             
-            # Conta le conversazioni ad alto rischio
-            high_risk_conversations = db.query(Conversation).join(Chatbot).filter(
-                Chatbot.user_id == user_id,
-                Conversation.guardian_risk_score >= self.risk_threshold
+            # Conta tutti gli alert creati per l'utente (conversazioni a rischio)
+            total_alerts = db.query(GuardianAlert).filter(
+                GuardianAlert.user_id == user_id
             ).count()
             
             # Conta gli alert risolti
@@ -1630,7 +1629,7 @@ Rispondi SOLO con un JSON valido nel seguente formato:
             
             return {
                 'total_guests': total_conversations,
-                'high_risk_guests': high_risk_conversations,
+                'high_risk_guests': total_alerts,
                 'resolved_issues': resolved_alerts,
                 'avg_satisfaction': round(avg_satisfaction, 1),
                 'negative_reviews_prevented': negative_reviews_prevented
