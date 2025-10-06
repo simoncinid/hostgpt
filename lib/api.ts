@@ -187,6 +187,24 @@ export const chatbots = {
   
   getIcon: (id: number) =>
     api.get(`/chatbots/${id}/icon`, { responseType: 'blob' }),
+  
+  // Collaborator endpoints
+  inviteCollaborators: (chatbotId: number, emails: string[]) =>
+    api.post('/chatbots/collaborators/invite', {
+      chatbot_id: chatbotId,
+      emails: emails
+    }),
+  
+  getCollaborators: (chatbotId: number) =>
+    api.get(`/chatbots/collaborators/${chatbotId}`),
+  
+  removeCollaborator: (collaboratorId: number) =>
+    api.delete(`/chatbots/collaborators/${collaboratorId}`),
+  
+  acceptInvite: (inviteToken: string) =>
+    api.post('/collaborators/accept-invite', {
+      invite_token: inviteToken
+    }),
 }
 
 export const conversations = {

@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Users, Mail, Send, Loader2 } from 'lucide-react'
 import { useLanguage } from '@/lib/languageContext'
+import { chatbots } from '@/lib/api'
 import toast from 'react-hot-toast'
 
 interface CollaboratorInviteModalProps {
@@ -75,31 +76,20 @@ export default function CollaboratorInviteModal({
 
     setIsLoading(true)
     try {
-      const response = await fetch('/api/chatbots/collaborators/invite', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          chatbot_id: chatbotId,
-          emails: validEmails
-        })
-      })
-
-      if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.detail || 'Errore nell\'invio degli inviti')
-      }
-
-      const result = await response.json()
-      toast.success(`Inviti inviati a ${result.invited_count} collaboratori`)
+      console.log('Inviting collaborators:', { chatbotId, validEmails })
+      const response = await chatbots.inviteCollaborators(chatbotId, validEmails)
+      console.log('Invite response:', response)
+      toast.success(`Inviti inviati a ${response.data.invited_count} collaboratori`)
       onInviteSent()
       onClose()
       
       // Reset form
       setEmails([{ id: '1', value: '', isValid: false }])
     } catch (error: any) {
-      toast.error(error.message || 'Errore nell\'invio degli inviti')
+      console.error('Error inviting collaborators:', error)
+      console.error('Error response:', error.response)
+      console.error('Error data:', error.response?.data)
+      toast.error(error.response?.data?.detail || error.message || 'Errore nell\'invio degli inviti')
     } finally {
       setIsLoading(false)
     }

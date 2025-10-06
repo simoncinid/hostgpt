@@ -9,7 +9,7 @@ import { useForm } from 'react-hook-form'
 import toast from 'react-hot-toast'
 import { useAuthStore } from '@/lib/store'
 import { useLanguage } from '@/lib/languageContext'
-import api, { subscription } from '@/lib/api'
+import api, { subscription, chatbots } from '@/lib/api'
 
 interface LoginForm {
   email: string
@@ -154,9 +154,7 @@ function LoginContent() {
           // Se c'è un token di invito, accettalo
           if (inviteToken) {
             try {
-              await api.post('/api/collaborators/accept-invite', {
-                invite_token: inviteToken
-              })
+              await chatbots.acceptInvite(inviteToken)
               toast.success('Invito accettato! Ora puoi collaborare su questo chatbot.')
             } catch (error: any) {
               console.error('Error accepting invite:', error)
@@ -172,9 +170,7 @@ function LoginContent() {
         // fallback sicuro - accetta l'invito se presente
         if (inviteToken) {
           try {
-            await api.post('/api/collaborators/accept-invite', {
-              invite_token: inviteToken
-            })
+            await chatbots.acceptInvite(inviteToken)
             toast.success('Invito accettato! Ora puoi collaborare su questo chatbot.')
           } catch (error: any) {
             console.error('Error accepting invite:', error)
