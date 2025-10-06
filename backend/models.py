@@ -187,6 +187,8 @@ class Conversation(Base):
     guardian_analyzed = Column(Boolean, default=False)  # Se la conversazione è già stata analizzata
     guardian_risk_score = Column(Float, default=0.0)  # Punteggio di rischio (0.0 - 1.0)
     guardian_alert_triggered = Column(Boolean, default=False)  # Se è stato generato un alert
+    guardian_suspended = Column(Boolean, default=False)  # Se la chat è sospesa per alert
+    guardian_resolved = Column(Boolean, default=False)  # Se l'alert è stato risolto dall'host
     
     # Relationships
     chatbot = relationship("Chatbot", back_populates="conversations")

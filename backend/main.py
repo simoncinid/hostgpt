@@ -5687,6 +5687,14 @@ async def send_message(
             logger.error(f"❌ Conversazione {conversation.id} non ha thread_id valido")
             raise HTTPException(status_code=500, detail="Errore interno: thread_id mancante")
         
+        # Verifica se la conversazione è sospesa per alert Guardian
+        if conversation.guardian_suspended and not conversation.guardian_resolved:
+            logger.info(f"🚫 Conversazione {conversation.id} sospesa per alert Guardian")
+            raise HTTPException(
+                status_code=423, 
+                detail="La conversazione è temporaneamente sospesa. L'host è stato notificato e risponderà presto. Puoi iniziare una nuova conversazione cliccando il pulsante refresh."
+            )
+        
         # Esegui assistant
         run = client.beta.threads.runs.create(
             thread_id=conversation.thread_id,
@@ -7100,6 +7108,47 @@ async def test_monthly_report(
 
 # ============= Guardian Analytics APIs =============
 
+@app.get("/api/chat/{uuid}/status")
+async def get_chat_status(
+    uuid: str,
+    thread_id: Optional[str] = None,
+    db: Session = Depends(get_db)
+):
+    """Ottieni lo stato della chat (se è sospesa per alert Guardian)"""
+    try:
+        chatbot = db.query(Chatbot).filter(Chatbot.uuid == uuid).first()
+        
+        if not chatbot or not chatbot.is_active:
+            raise HTTPException(status_code=404, detail="Chatbot non trovato")
+        
+        # Se non c'è thread_id, la chat non è sospesa
+        if not thread_id:
+            return {"suspended": False, "message": None}
+        
+        # Cerca la conversazione per questo thread_id
+        conversation = db.query(Conversation).filter(
+            Conversation.thread_id == thread_id,
+            Conversation.chatbot_id == chatbot.id
+        ).first()
+        
+        if not conversation:
+            return {"suspended": False, "message": None}
+        
+        # Verifica se è sospesa
+        if conversation.guardian_suspended and not conversation.guardian_resolved:
+            return {
+                "suspended": True,
+                "message": "La conversazione è temporaneamente sospesa in attesa che l'host risponda di persona. Ti arriverà una mail quando lo farà. Nel frattempo puoi cliccare il pulsante refresh in alto per iniziare una nuova conversazione."
+            }
+        
+        return {"suspended": False, "message": None}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Errore nel recupero dello stato della chat: {e}")
+        raise HTTPException(status_code=500, detail="Errore interno del server")
+
 @app.get("/api/guardian/statistics")
 async def get_guardian_statistics(
     current_user: User = Depends(get_current_user),
@@ -7197,6 +7246,7 @@ async def get_guardian_alerts(
 @app.post("/api/guardian/alerts/{alert_id}/resolve")
 async def resolve_guardian_alert(
     alert_id: int,
+    response_data: dict,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -7221,6 +7271,36 @@ async def resolve_guardian_alert(
                 detail="Alert non trovato"
             )
         
+        # Estrai la risposta dell'host
+        host_response = response_data.get('host_response', '').strip()
+        if not host_response:
+            raise HTTPException(
+                status_code=400,
+                detail="Risposta dell'host richiesta"
+            )
+        
+        # Recupera la conversazione associata all'alert
+        conversation = db.query(Conversation).filter(
+            Conversation.id == alert.conversation_id
+        ).first()
+        
+        if not conversation:
+            raise HTTPException(
+                status_code=404,
+                detail="Conversazione non trovata"
+            )
+        
+        # Salva la risposta dell'host come messaggio chatbot
+        host_message = Message(
+            conversation_id=conversation.id,
+            role="assistant",
+            content=host_response
+        )
+        db.add(host_message)
+        
+        # Aggiorna il contatore messaggi
+        conversation.message_count += 1
+        
         # Risolve l'alert
         success = guardian_service.resolve_alert(alert_id, current_user.email, db)
         
@@ -7229,6 +7309,14 @@ async def resolve_guardian_alert(
                 status_code=500,
                 detail="Errore nella risoluzione dell'alert"
             )
+        
+        # Sblocca la conversazione
+        conversation.guardian_resolved = True
+        conversation.guardian_suspended = False
+        db.commit()
+        
+        # Invia email al guest con la conversazione completa
+        guardian_service.send_guest_resolution_email(conversation, host_response, db)
         
         # Verifica che l'alert sia stato effettivamente risolto
         resolved_alert = db.query(GuardianAlert).filter(
@@ -7289,13 +7377,22 @@ async def analyze_conversation_with_guardian(conversation_id: int, db: Session):
         # Analizza la conversazione
         analysis_result = guardian_service.analyze_conversation(conversation, db)
         
-        # Se il rischio è alto O se il chatbot non ha abbastanza informazioni, crea un alert e invia email
+        # Se il rischio è alto O se il chatbot non ha abbastanza informazioni, crea un alert e sospendi la chat
         insufficient_info = analysis_result.get('insufficient_info', False)
         if analysis_result['risk_score'] >= guardian_service.risk_threshold or insufficient_info:
+            # Crea l'alert
             alert = guardian_service.create_alert(conversation, analysis_result, db)
+            
+            # Sospendi la conversazione
+            conversation.guardian_suspended = True
+            conversation.guardian_alert_triggered = True
+            db.commit()
+            
+            # Invia email di notifica all'host
             guardian_service.send_alert_email(alert, db)
+            
             alert_type = "insufficient_info" if insufficient_info else "high_risk"
-            logger.warning(f"🚨 ALERT GUARDIAN CREATO: Conversazione {conversation_id}, tipo: {alert_type}, rischio: {analysis_result['risk_score']:.3f}")
+            logger.warning(f"🚨 ALERT GUARDIAN CREATO: Conversazione {conversation_id}, tipo: {alert_type}, rischio: {analysis_result['risk_score']:.3f} - CHAT SOSPESA")
         
     except Exception as e:
         logger.error(f"Errore nell'analisi Guardian della conversazione {conversation_id}: {e}")

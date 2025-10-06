@@ -458,6 +458,84 @@ Rispondi SOLO con un JSON valido nel seguente formato:
             db.rollback()
             return False
     
+    def send_guest_resolution_email(self, conversation: Conversation, host_response: str, db: Session) -> bool:
+        """
+        Invia email al guest con la conversazione completa e la risposta dell'host
+        
+        Args:
+            conversation: Conversazione risolta
+            host_response: Risposta dell'host
+            db: Sessione del database
+            
+        Returns:
+            True se l'email è stata inviata con successo
+        """
+        try:
+            # Recupera il guest
+            guest = db.query(Guest).filter(Guest.id == conversation.guest_id).first()
+            if not guest or not guest.email:
+                logger.warning(f"Guest non trovato o senza email per conversazione {conversation.id}")
+                return False
+            
+            # Recupera tutti i messaggi della conversazione
+            messages = db.query(Message).filter(
+                Message.conversation_id == conversation.id
+            ).order_by(Message.timestamp).all()
+            
+            # Recupera il chatbot per ottenere il link
+            chatbot = db.query(Chatbot).filter(Chatbot.id == conversation.chatbot_id).first()
+            if not chatbot:
+                logger.error(f"Chatbot non trovato per conversazione {conversation.id}")
+                return False
+            
+            # Crea il contenuto della conversazione
+            conversation_text = ""
+            for msg in messages:
+                role_label = "Ospite" if msg.role == "user" else "Assistente"
+                conversation_text += f"{role_label}: {msg.content}\n\n"
+            
+            # Aggiungi la risposta dell'host
+            conversation_text += f"Host: {host_response}\n\n"
+            
+            # Crea il link alla chat
+            chat_link = f"https://hostgpt.it/chat/{chatbot.uuid}?thread_id={conversation.thread_id}"
+            
+            # Crea l'email
+            subject = "La tua conversazione è stata aggiornata - HostGPT"
+            content = f"""
+Ciao {guest.first_name or 'Ospite'},
+
+L'host ha risposto alla tua conversazione e la chat è ora sbloccata.
+
+Conversazione completa:
+{conversation_text}
+
+Puoi continuare la conversazione cliccando qui: {chat_link}
+
+Grazie per aver utilizzato HostGPT!
+
+Il team di HostGPT
+            """
+            
+            # Invia l'email
+            from email_service import send_email
+            success = send_email(
+                to_email=guest.email,
+                subject=subject,
+                content=content
+            )
+            
+            if success:
+                logger.info(f"Email di risoluzione inviata a {guest.email} per conversazione {conversation.id}")
+            else:
+                logger.error(f"Errore nell'invio dell'email di risoluzione a {guest.email}")
+            
+            return success
+            
+        except Exception as e:
+            logger.error(f"Errore nell'invio dell'email di risoluzione: {e}")
+            return False
+    
     def get_guardian_statistics(self, user_id: int, db: Session) -> Dict[str, Any]:
         """
         Ottiene le statistiche Guardian per un utente
