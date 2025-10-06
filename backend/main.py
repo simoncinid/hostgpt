@@ -624,7 +624,8 @@ def get_latest_guest_conversation(chatbot_id: int, guest_id: int, db: Session) -
         Conversation.guest_id == guest_id
     ).order_by(Conversation.started_at.desc()).first()
     
-    logger.info(f"🔍 [DEBUG] get_latest_guest_conversation per chatbot {chatbot_id} e guest_id {guest_id}: {conversation.id if conversation else 'None'}")
+    if settings.DEBUG:
+        logger.debug(f"🔍 [DEBUG] get_latest_guest_conversation per chatbot {chatbot_id} e guest_id {guest_id}: {conversation.id if conversation else 'None'}")
     return conversation
 
 def is_guest_first_time(guest: Guest, chatbot_id: int, db: Session) -> bool:
@@ -969,8 +970,9 @@ async def get_valid_hostaway_token(user_id: int, db: Session) -> str:
     return new_access_token
 
 async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
-    logger.info(f"🔍 BACKEND: get_current_user chiamato")
-    logger.info(f"🔍 BACKEND: Token ricevuto: {token[:20]}..." if token else "Nessun token")
+    # Debug solo in modalità sviluppo e solo per errori
+    if settings.DEBUG:
+        logger.debug(f"🔍 BACKEND: get_current_user chiamato")
     
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -978,10 +980,8 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = De
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
-        logger.info(f"🔍 BACKEND: Decodificando JWT...")
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         email: str = payload.get("sub")
-        logger.info(f"🔍 BACKEND: Email dal token: {email}")
         if email is None:
             logger.error(f"❌ BACKEND: Email non trovata nel token")
             raise credentials_exception
@@ -989,13 +989,15 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = De
         logger.error(f"❌ BACKEND: Errore JWT: {e}")
         raise credentials_exception
     
-    logger.info(f"🔍 BACKEND: Cercando utente nel database...")
     user = db.query(User).filter(User.email == email).first()
     if user is None:
         logger.error(f"❌ BACKEND: Utente non trovato per email: {email}")
         raise credentials_exception
     
-    logger.info(f"🔍 BACKEND: Utente trovato: {user.id} - {user.email}")
+    # Debug solo in modalità sviluppo
+    if settings.DEBUG:
+        logger.debug(f"🔍 BACKEND: Utente autenticato: {user.id} - {user.email}")
+    
     return user
 
 async def send_email(to_email: str, subject: str, body: str, attachments: Optional[list[tuple[str, bytes, str]]] = None):
@@ -1189,17 +1191,24 @@ class GuardianService:
     def analyze_conversation(self, conversation: Conversation, db: Session) -> dict:
         """
         Analizza una conversazione per determinare il rischio di recensione negativa
+        Analizza SOLO l'ultimo messaggio dell'utente e l'ultima risposta del chatbot
         """
         try:
             logger.info(f"Avvio analisi Guardian per conversazione {conversation.id}")
             
-            # Recupera tutti i messaggi dell'utente nella conversazione
-            user_messages = db.query(Message).filter(
+            # Recupera SOLO l'ultimo messaggio dell'utente
+            last_user_message = db.query(Message).filter(
                 Message.conversation_id == conversation.id,
                 Message.role == 'user'
-            ).order_by(Message.timestamp).all()
+            ).order_by(Message.timestamp.desc()).first()
             
-            if not user_messages:
+            # Recupera SOLO l'ultima risposta del chatbot
+            last_assistant_message = db.query(Message).filter(
+                Message.conversation_id == conversation.id,
+                Message.role == 'assistant'
+            ).order_by(Message.timestamp.desc()).first()
+            
+            if not last_user_message:
                 logger.info(f"Nessun messaggio utente trovato per conversazione {conversation.id}")
                 return {
                     'risk_score': 0.0,
@@ -1208,8 +1217,8 @@ class GuardianService:
                     'analysis_details': {'reason': 'Nessun messaggio utente da analizzare'}
                 }
             
-            # Prepara il testo per l'analisi
-            conversation_text = self._prepare_conversation_text(user_messages)
+            # Prepara il testo per l'analisi (solo ultimo messaggio utente e ultima risposta chatbot)
+            conversation_text = self._prepare_single_message_text(last_user_message, last_assistant_message)
             
             # Analizza con OpenAI
             analysis_result = self._analyze_with_openai(conversation_text)
@@ -1231,7 +1240,7 @@ class GuardianService:
                 sentiment_score=analysis_result['sentiment_score'],
                 confidence_score=analysis_result['confidence_score'],
                 analysis_details=analysis_result['analysis_details'],
-                user_messages_analyzed=len(user_messages),
+                user_messages_analyzed=1,  # Analizziamo solo l'ultimo messaggio
                 conversation_length=len(conversation_text)
             )
             
@@ -1262,13 +1271,27 @@ class GuardianService:
             db.rollback()
             raise
     
-    def _prepare_conversation_text(self, user_messages: list) -> str:
-        """Prepara il testo della conversazione per l'analisi"""
+    def _prepare_single_message_text(self, user_message: Message, assistant_message: Message = None) -> str:
+        """
+        Prepara il testo per l'analisi di un singolo scambio di messaggi
+        
+        Args:
+            user_message: Ultimo messaggio dell'utente
+            assistant_message: Ultima risposta del chatbot (opzionale)
+            
+        Returns:
+            Testo formattato per l'analisi
+        """
         conversation_lines = []
         
-        for i, message in enumerate(user_messages, 1):
-            timestamp = message.timestamp.strftime("%H:%M")
-            conversation_lines.append(f"Messaggio {i} ({timestamp}): {message.content}")
+        # Aggiungi il messaggio dell'utente
+        timestamp = user_message.timestamp.strftime("%H:%M")
+        conversation_lines.append(f"Ospite ({timestamp}): {user_message.content}")
+        
+        # Aggiungi la risposta del chatbot se disponibile
+        if assistant_message:
+            timestamp = assistant_message.timestamp.strftime("%H:%M")
+            conversation_lines.append(f"Chatbot ({timestamp}): {assistant_message.content}")
         
         return "\n\n".join(conversation_lines)
     
@@ -1276,7 +1299,7 @@ class GuardianService:
         """Analizza il testo della conversazione con OpenAI"""
         try:
             prompt = f"""
-Analizza la seguente conversazione di un ospite con un chatbot di una struttura ricettiva e determina:
+Analizza l'ultimo scambio di messaggi tra un ospite e un chatbot di una struttura ricettiva e determina:
 
 1. Il rischio che l'ospite lasci una recensione negativa (0.0 - 1.0)
 2. Il sentiment generale dell'ospite (-1.0 a +1.0, dove -1 è molto negativo)
@@ -1284,6 +1307,7 @@ Analizza la seguente conversazione di un ospite con un chatbot di una struttura 
 4. Se il chatbot ha risposto con mancanza di informazioni (true/false)
 
 ⚠️ REGOLE CRITICHE - Sii ESTREMAMENTE sensibile ai segnali di insoddisfazione! ⚠️
+⚠️ IMPORTANTE: Analizza SOLO l'ultimo scambio di messaggi, non l'intera conversazione! ⚠️
 
 ASSEGNA IMMEDIATAMENTE RISK_SCORE 0.95-1.0 per:
 - QUALSIASI menzione di "recensione negativa", "recensione brutta", "star negative", "1 stella"
@@ -1323,13 +1347,16 @@ ASSEGNA insufficient_info = true se il chatbot:
 - Risponde in modo generico senza informazioni concrete
 - Dice di "chiedere all'host" per cose che dovrebbe sapere
 - Dice "Mi dispiace, non ho informazioni specifiche" per domande normali
+- Dice "non ho informazioni specifiche su" per attività/negozi nella zona
+- Suggerisce di "cercare online" o "visitare il negozio" per informazioni di base
 - Suggerisce di "contattare Tommaso" o altri host per informazioni di base
+- Dice "Ti consiglio di cercare online" per informazioni che dovrebbe avere
 
 Se insufficient_info = true, assegna ALMENO risk_score 0.85 (anche se l'ospite sembra soddisfatto)
 
 RICORDA: È meglio sovrastimare il rischio che sottostimarlo. Se c'è anche solo un dubbio, assegna un punteggio più alto!
 
-Conversazione:
+Ultimo scambio di messaggi:
 {conversation_text}
 
 Rispondi SOLO con un JSON valido nel seguente formato:
@@ -1350,7 +1377,7 @@ Rispondi SOLO con un JSON valido nel seguente formato:
             response = openai.chat.completions.create(
                 model="gpt-4",
                 messages=[
-                    {"role": "system", "content": "Sei un esperto analista di rischio per il settore turistico. Il tuo compito è identificare ospiti che potrebbero lasciare recensioni negative E rilevare quando il chatbot non ha abbastanza informazioni per rispondere. Sii ESTREMAMENTE sensibile ai segnali di insoddisfazione. Assegna IMMEDIATAMENTE punteggi di rischio elevati (0.95-1.0) quando rilevi minacce esplicite di recensioni negative, frustrazione estrema, rabbia, o problemi non risolti. Inoltre, rileva quando il chatbot risponde con mancanza di informazioni e assegna ALMENO 0.85 di rischio in questi casi. È meglio sovrastimare il rischio che sottostimarlo. Se c'è anche solo un dubbio, assegna un punteggio più alto!"},
+                    {"role": "system", "content": "Sei un esperto analista di rischio per il settore turistico. Il tuo compito è identificare ospiti che potrebbero lasciare recensioni negative E rilevare quando il chatbot non ha abbastanza informazioni per rispondere. Analizza SOLO l'ultimo scambio di messaggi, non l'intera conversazione. Sii ESTREMAMENTE sensibile ai segnali di insoddisfazione. Assegna IMMEDIATAMENTE punteggi di rischio elevati (0.95-1.0) quando rilevi minacce esplicite di recensioni negative, frustrazione estrema, rabbia, o problemi non risolti. Inoltre, rileva quando il chatbot risponde con mancanza di informazioni e assegna ALMENO 0.85 di rischio in questi casi. È meglio sovrastimare il rischio che sottostimarlo. Se c'è anche solo un dubbio, assegna un punteggio più alto!"},
                     {"role": "user", "content": prompt}
                 ],
                 temperature=0.1,
