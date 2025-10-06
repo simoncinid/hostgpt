@@ -272,6 +272,7 @@ export const chat = {
     api.get('/country-codes'),
   
   sendVoiceMessage: async (uuid: string, audioBlob: Blob, threadId?: string, guestName?: string, guestData?: {
+    guest_id?: number
     phone?: string
     email?: string
     first_name?: string
@@ -289,6 +290,7 @@ export const chat = {
     
     // Nuovi parametri per identificazione ospite
     if (guestData) {
+      if (guestData.guest_id) formData.append('guest_id', guestData.guest_id.toString())
       if (guestData.phone) formData.append('phone', guestData.phone)
       if (guestData.email) formData.append('email', guestData.email)
       if (guestData.first_name) formData.append('first_name', guestData.first_name)
