@@ -215,6 +215,13 @@ export default function ChatWidgetPage() {
   const handleSuggestedMessage = async (suggestionKey: string) => {
     const fullMessage = fullMessages[language][suggestionKey as keyof typeof fullMessages[typeof language]]
     
+    // IMPORTANTE: Verifica che i dati guest siano presenti
+    if (!guestData?.id) {
+      console.error('❌ [ERROR] Dati guest mancanti, impossibile inviare messaggio suggerito')
+      toast.error(language === 'IT' ? 'Errore: dati ospite non trovati. Ricarica la pagina.' : 'Error: guest data not found. Please refresh the page.')
+      return
+    }
+    
     // Invia direttamente il messaggio
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -519,6 +526,29 @@ export default function ChatWidgetPage() {
       const response = await chat.getInfo(uuid)
       setChatInfo(response.data)
       
+      // IMPORTANTE: Carica i dati guest dal localStorage
+      const savedGuestId = localStorage.getItem(`guest_id_${uuid}`)
+      const savedGuestPhone = localStorage.getItem(`guest_phone_${uuid}`)
+      const savedGuestEmail = localStorage.getItem(`guest_email_${uuid}`)
+      const savedGuestFirstName = localStorage.getItem(`guest_first_name_${uuid}`)
+      const savedGuestLastName = localStorage.getItem(`guest_last_name_${uuid}`)
+      
+      if (savedGuestId) {
+        setGuestData({
+          id: parseInt(savedGuestId),
+          phone: savedGuestPhone || undefined,
+          email: savedGuestEmail || undefined,
+          first_name: savedGuestFirstName || undefined,
+          last_name: savedGuestLastName || undefined,
+          is_first_time_guest: false
+        })
+        console.log('🔄 [DEBUG] Dati guest caricati dal localStorage:', {
+          id: savedGuestId,
+          phone: savedGuestPhone,
+          email: savedGuestEmail
+        })
+      }
+      
       // Carica i messaggi della conversazione esistente
       const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
       const messagesResponse = await fetch(`${API_URL}/api/chat/${uuid}/conversation/${conversationId}/messages`)
@@ -615,6 +645,13 @@ export default function ChatWidgetPage() {
     e.preventDefault()
     
     if (!inputMessage.trim()) return
+
+    // IMPORTANTE: Verifica che i dati guest siano presenti
+    if (!guestData?.id) {
+      console.error('❌ [ERROR] Dati guest mancanti, impossibile inviare messaggio')
+      toast.error(language === 'IT' ? 'Errore: dati ospite non trovati. Ricarica la pagina.' : 'Error: guest data not found. Please refresh the page.')
+      return
+    }
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -828,10 +865,19 @@ export default function ChatWidgetPage() {
   const sendVoiceMessage = async (audioBlob: Blob) => {
     setIsProcessingAudio(true)
     
+    // IMPORTANTE: Verifica che i dati guest siano presenti
+    if (!guestData?.id) {
+      console.error('❌ [ERROR] Dati guest mancanti, impossibile inviare messaggio vocale')
+      toast.error(language === 'IT' ? 'Errore: dati ospite non trovati. Ricarica la pagina.' : 'Error: guest data not found. Please refresh the page.')
+      setIsProcessingAudio(false)
+      return
+    }
+    
     try {
       console.log('🎤 Inizio invio messaggio vocale...')
       
       const response = await chat.sendVoiceMessage(uuid, audioBlob, threadId || undefined, guestName || undefined, {
+        guest_id: guestData.id,
         phone: guestData?.phone,
         email: guestData?.email,
         first_name: guestData?.first_name,
@@ -912,9 +958,13 @@ export default function ChatWidgetPage() {
         is_first_time_guest: guestInfo.is_first_time_guest
       })
       
-      // NUOVO: Salva il guest_id nel localStorage per i refresh futuri
-      console.log('💾 [DEBUG] Salvando guest_id nel localStorage:', guestInfo.guest_id, 'key:', `guest_id_${uuid}`)
+      // IMPORTANTE: Salva tutti i dati guest nel localStorage per i refresh futuri
+      console.log('💾 [DEBUG] Salvando dati guest nel localStorage:', guestInfo.guest_id, 'key:', `guest_id_${uuid}`)
       localStorage.setItem(`guest_id_${uuid}`, guestInfo.guest_id.toString())
+      localStorage.setItem(`guest_phone_${uuid}`, fullPhoneNumber)
+      localStorage.setItem(`guest_email_${uuid}`, guestInfo.email || '')
+      localStorage.setItem(`guest_first_name_${uuid}`, guestInfo.first_name || '')
+      localStorage.setItem(`guest_last_name_${uuid}`, guestInfo.last_name || '')
       console.log('💾 [DEBUG] Verifico salvataggio localStorage:', localStorage.getItem(`guest_id_${uuid}`))
       
       // Controlla se esiste una conversazione esistente
