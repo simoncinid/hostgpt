@@ -4797,6 +4797,12 @@ async def get_collaborators(
         ChatbotCollaborator.chatbot_id == chatbot_id
     ).all()
     
+    # Ottieni gli inviti pending
+    pending_invites = db.query(ChatbotCollaboratorInvite).filter(
+        ChatbotCollaboratorInvite.chatbot_id == chatbot_id,
+        ChatbotCollaboratorInvite.status == "pending"
+    ).all()
+    
     result = []
     for collaborator, user in collaborators:
         result.append({
@@ -4805,7 +4811,19 @@ async def get_collaborators(
             "email": user.email,
             "full_name": user.full_name,
             "role": collaborator.role,
-            "joined_at": collaborator.joined_at.isoformat()
+            "joined_at": collaborator.joined_at.isoformat(),
+            "status": "accepted"
+        })
+    
+    for invite in pending_invites:
+        result.append({
+            "id": f"invite_{invite.id}",
+            "user_id": None,
+            "email": invite.invited_email,
+            "full_name": None,
+            "role": "collaborator",
+            "joined_at": invite.invited_at.isoformat(),
+            "status": "pending"
         })
     
     return {"collaborators": result}
@@ -4832,6 +4850,37 @@ async def remove_collaborator(
     db.commit()
     
     return {"message": "Collaboratore rimosso con successo"}
+
+@app.delete("/api/chatbots/collaborators/invite/{invite_id}")
+async def remove_collaborator_invite(
+    invite_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Rimuovi un invito collaboratore"""
+    # Trova l'invito
+    invite = db.query(ChatbotCollaboratorInvite).filter(
+        ChatbotCollaboratorInvite.id == invite_id,
+        ChatbotCollaboratorInvite.status == "pending"
+    ).first()
+    
+    if not invite:
+        raise HTTPException(status_code=404, detail="Invito non trovato")
+    
+    # Verifica che l'utente sia il proprietario del chatbot
+    chatbot = db.query(Chatbot).filter(
+        Chatbot.id == invite.chatbot_id,
+        Chatbot.user_id == current_user.id
+    ).first()
+    
+    if not chatbot:
+        raise HTTPException(status_code=404, detail="Chatbot non trovato")
+    
+    # Rimuovi l'invito
+    db.delete(invite)
+    db.commit()
+    
+    return {"message": "Invito rimosso con successo"}
 
 @app.post("/api/collaborators/accept-invite")
 async def accept_collaborator_invite(
