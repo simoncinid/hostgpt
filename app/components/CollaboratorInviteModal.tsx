@@ -62,7 +62,8 @@ export default function CollaboratorInviteModal({
     setIsLoadingCollaborators(true)
     try {
       const response = await chatbots.getCollaborators(chatbotId)
-      setCollaborators(Array.isArray(response.data) ? response.data : [])
+      console.log('Collaborators response:', response.data)
+      setCollaborators(Array.isArray(response.data.collaborators) ? response.data.collaborators : [])
     } catch (error) {
       console.error('Error loading collaborators:', error)
       setCollaborators([])
