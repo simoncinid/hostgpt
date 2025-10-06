@@ -1670,22 +1670,6 @@ export default function ChatWidgetPage() {
           {(!showWelcome || messages.length > 0) && !subscriptionCancelled && !freeTrialLimitReached && !freeTrialExpired && (
             <>
               <div className="flex-1 overflow-y-auto chat-scrollbar p-2 md:p-6 space-y-4">
-                {/* Messaggio di sospensione */}
-                {isSuspended && suspensionMessage && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="flex justify-center"
-                  >
-                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 max-w-md text-center">
-                      <div className="flex items-center justify-center mb-2">
-                        <AlertCircle className="w-5 h-5 text-yellow-600 mr-2" />
-                        <span className="text-yellow-800 font-medium">Chat Sospesa</span>
-                      </div>
-                      <p className="text-yellow-700 text-sm">{suspensionMessage}</p>
-                    </div>
-                  </motion.div>
-                )}
                 
                 {messages.map((message, index) => (
                   <motion.div
@@ -1824,6 +1808,14 @@ export default function ChatWidgetPage() {
                       {message}
                     </motion.button>
                   ))}
+                  
+                  {/* Messaggio di sospensione */}
+                  {isSuspended && (
+                    <div className="flex items-center bg-yellow-100 text-yellow-800 px-3 py-2 rounded-full text-xs font-medium">
+                      <AlertCircle className="w-3 h-3 mr-1" />
+                      {language === 'IT' ? 'Chat sospesa' : 'Chat suspended'}
+                    </div>
+                  )}
                 </div>
               </div>
 

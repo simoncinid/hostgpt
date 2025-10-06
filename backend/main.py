@@ -7310,9 +7310,11 @@ async def resolve_guardian_alert(
                 detail="Errore nella risoluzione dell'alert"
             )
         
-        # Sblocca la conversazione
+        # Sblocca la conversazione e resetta i flag Guardian
         conversation.guardian_resolved = True
         conversation.guardian_suspended = False
+        conversation.guardian_alert_triggered = False  # Reset per permettere nuove analisi
+        conversation.guardian_analyzed = False  # Reset per permettere nuove analisi
         db.commit()
         
         # Invia email al guest con la conversazione completa
