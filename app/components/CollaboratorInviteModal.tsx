@@ -246,11 +246,18 @@ export default function CollaboratorInviteModal({
                 </h4>
                 <div className="space-y-2">
                   {collaborators.map((collaborator) => (
-                    <div key={collaborator.id} className={`flex items-center gap-3 p-3 rounded-lg ${
+                    <div key={collaborator.id} className={`flex items-center gap-3 p-3 rounded-lg relative ${
                       collaborator.status === 'pending' 
                         ? 'bg-yellow-50 border border-yellow-200' 
                         : 'bg-gray-50'
                     }`}>
+                      {collaborator.status === 'pending' && (
+                        <div className="absolute top-2 right-2">
+                          <span className="text-xs text-yellow-600 font-medium bg-yellow-100 px-2 py-1 rounded">
+                            {language === 'ENG' ? 'Pending invitation' : 'Invito in sospeso'}
+                          </span>
+                        </div>
+                      )}
                       <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
                         collaborator.status === 'pending' 
                           ? 'bg-yellow-100' 
@@ -266,11 +273,8 @@ export default function CollaboratorInviteModal({
                         <p className="text-sm font-medium text-gray-900">
                           {collaborator.full_name || collaborator.email}
                         </p>
-                        <p className="text-xs text-gray-500">{collaborator.email}</p>
-                        {collaborator.status === 'pending' && (
-                          <p className="text-xs text-yellow-600 font-medium">
-                            {language === 'ENG' ? 'Pending invitation' : 'Invito in sospeso'}
-                          </p>
+                        {collaborator.status === 'accepted' && (
+                          <p className="text-xs text-gray-500">{collaborator.email}</p>
                         )}
                       </div>
                       <div className="flex items-center gap-2">
