@@ -1700,11 +1700,18 @@ Rispondi SOLO con un JSON valido nel seguente formato:
             True se l'email è stata inviata con successo
         """
         try:
+            logger.info(f"📧 [DEBUG] Inizio invio email di risoluzione per conversazione {conversation.id}")
+            
             # Recupera il guest
             guest = db.query(Guest).filter(Guest.id == conversation.guest_id).first()
-            if not guest or not guest.email:
-                logger.warning(f"Guest non trovato o senza email per conversazione {conversation.id}")
+            if not guest:
+                logger.error(f"📧 [ERROR] Guest non trovato per conversazione {conversation.id}")
                 return False
+            if not guest.email:
+                logger.error(f"📧 [ERROR] Guest {guest.id} non ha email per conversazione {conversation.id}")
+                return False
+            
+            logger.info(f"📧 [DEBUG] Guest trovato: {guest.id}, email: {guest.email}")
             
             # Recupera tutti i messaggi della conversazione
             messages = db.query(Message).filter(
@@ -1714,8 +1721,10 @@ Rispondi SOLO con un JSON valido nel seguente formato:
             # Recupera il chatbot per ottenere il link
             chatbot = db.query(Chatbot).filter(Chatbot.id == conversation.chatbot_id).first()
             if not chatbot:
-                logger.error(f"Chatbot non trovato per conversazione {conversation.id}")
+                logger.error(f"📧 [ERROR] Chatbot non trovato per conversazione {conversation.id}")
                 return False
+            
+            logger.info(f"📧 [DEBUG] Chatbot trovato: {chatbot.id}, UUID: {chatbot.uuid}")
             
             # Crea il contenuto della conversazione
             conversation_text = ""
@@ -1770,11 +1779,13 @@ Rispondi SOLO con un JSON valido nel seguente formato:
 """
             
             # Invia l'email
-            success = send_email(
+            logger.info(f"📧 [DEBUG] Invio email a {guest.email} con subject: {subject}")
+            logger.info(f"📧 [DEBUG] Contenuto email (primi 200 caratteri): {content[:200]}...")
+            
+            success = send_email_background(
                 to_email=guest.email,
                 subject=subject,
-                content=content,
-                is_html=True
+                body=content
             )
             
             if success:
@@ -7513,7 +7524,12 @@ async def resolve_guardian_alert(
         db.commit()
         
         # Invia email al guest con la conversazione completa
-        guardian_service.send_guest_resolution_email(conversation, host_response, db)
+        logger.info(f"📧 Invio email di risoluzione al guest per conversazione {conversation.id}")
+        email_success = guardian_service.send_guest_resolution_email(conversation, host_response, db)
+        if email_success:
+            logger.info(f"📧 Email di risoluzione inviata con successo per conversazione {conversation.id}")
+        else:
+            logger.error(f"📧 Errore nell'invio dell'email di risoluzione per conversazione {conversation.id}")
         
         # Invalida la cache per questo utente
         invalidate_user_cache(current_user.id)
