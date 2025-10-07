@@ -1093,7 +1093,7 @@ export default function ChatWidgetPage() {
       
       setGuestData({
         id: guestInfo.guest_id,
-        phone: fullPhoneNumber,
+        phone: guestInfo.phone,
         email: guestInfo.email,
         first_name: guestInfo.first_name,
         last_name: guestInfo.last_name,
@@ -1103,7 +1103,7 @@ export default function ChatWidgetPage() {
       // IMPORTANTE: Salva tutti i dati guest nel localStorage per i refresh futuri
       console.log('💾 [DEBUG] Salvando dati guest nel localStorage:', guestInfo.guest_id, 'key:', `guest_id_${uuid}`)
       localStorage.setItem(`guest_id_${uuid}`, guestInfo.guest_id.toString())
-      localStorage.setItem(`guest_phone_${uuid}`, fullPhoneNumber)
+      localStorage.setItem(`guest_phone_${uuid}`, guestInfo.phone || '')
       localStorage.setItem(`guest_email_${uuid}`, guestInfo.email || '')
       localStorage.setItem(`guest_first_name_${uuid}`, guestInfo.first_name || '')
       localStorage.setItem(`guest_last_name_${uuid}`, guestInfo.last_name || '')
