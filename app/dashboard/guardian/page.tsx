@@ -246,6 +246,8 @@ function GuardianContent() {
   const startResolvingAlert = (alertId: number) => {
     setResolvingAlertId(alertId)
     setHostResponse('')
+    // Apri automaticamente la conversazione se è collassata
+    setExpandedAlert(alertId)
   }
 
   const cancelResolvingAlert = () => {
@@ -574,10 +576,7 @@ function GuardianContent() {
                                   </div>
                                   <div className="flex-1 min-w-0">
                                     <div className="flex items-center space-x-3 mb-2">
-                                      <h3 className="font-semibold text-gray-900">{t.guardian.alerts.guest} #{alert.guest_id}</h3>
-                                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${getSeverityColor(alert.severity)}`}>
-                                        {alert.severity.toUpperCase()}
-                                      </span>
+                                      <h3 className="font-semibold text-gray-900">{t.guardian.alerts.guest} {alert.guest_id}</h3>
                                     </div>
                                     <p className="text-gray-700 leading-relaxed">{alert.message}</p>
                                     <div className="mt-2 flex items-center space-x-4 text-xs text-gray-500">
@@ -622,15 +621,6 @@ function GuardianContent() {
                                       </div>
                                     </div>
                                   ))}
-                                </div>
-                                <div className="mt-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200">
-                                  <div className="flex items-start space-x-3">
-                                    <Lightbulb className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
-                                    <div>
-                                      <p className="text-sm font-semibold text-blue-800 mb-1">{t.guardian.alerts.resolutionSuggestion}</p>
-                                      <p className="text-sm text-blue-700 leading-relaxed">{alert.suggested_action}</p>
-                                    </div>
-                                  </div>
                                 </div>
                                 
                                 {/* Form di risposta host */}

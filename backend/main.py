@@ -4680,7 +4680,8 @@ async def get_chatbot(
         "is_active": chatbot.is_active,
         "created_at": chatbot.created_at,
         "updated_at": chatbot.updated_at,
-        "has_icon": chatbot.has_icon
+        "has_icon": chatbot.has_icon,
+        "is_owner": is_owner
     }
     
     return response_data
@@ -7429,12 +7430,27 @@ async def get_guardian_alerts(
                     'timestamp': msg.timestamp.isoformat()
                 })
             
+            # Recupera il numero di telefono del guest
+            conversation = db.query(Conversation).filter(Conversation.id == alert.conversation_id).first()
+            guest_phone = "N/A"
+            if conversation:
+                guest = db.query(Guest).filter(Guest.id == conversation.guest_id).first()
+                if guest and guest.phone:
+                    guest_phone = guest.phone
+            
+            # Accorcia il messaggio dell'alert
+            short_message = alert.message
+            if "insufficient_info" in alert.alert_type:
+                short_message = "Mancanza di informazioni."
+            elif "negative_review_risk" in alert.alert_type:
+                short_message = "Rischio recensione negativa."
+            
             formatted_alerts.append({
                 'id': alert.id,
-                'guest_id': f"#{alert.conversation_id}",
+                'guest_id': guest_phone,
                 'alert_type': alert.alert_type,
                 'severity': alert.severity,
-                'message': alert.message,
+                'message': short_message,
                 'suggested_action': alert.suggested_action,
                 'created_at': alert.created_at.isoformat(),
                 'conversation': conversation_data

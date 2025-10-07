@@ -63,7 +63,9 @@ export default function ChatbotDetailPage() {
   }
 
   const handleInviteCollaborators = () => {
-    setShowCollaboratorModal(true)
+    if (currentChatbot?.is_owner) {
+      setShowCollaboratorModal(true)
+    }
   }
 
   const handleInviteSent = () => {
@@ -212,21 +214,23 @@ export default function ChatbotDetailPage() {
                   </div>
                 </div>
                 
-                {/* Collaboratori Section */}
-                <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Users className="w-5 h-5 text-blue-600" />
-                      <span className="text-sm font-medium text-blue-900">Gestisci Collaboratori</span>
+                {/* Collaboratori Section - Solo per owner */}
+                {currentChatbot.is_owner && (
+                  <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Users className="w-5 h-5 text-blue-600" />
+                        <span className="text-sm font-medium text-blue-900">Gestisci Collaboratori</span>
+                      </div>
+                      <button
+                        onClick={handleInviteCollaborators}
+                        className="px-3 py-1 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition"
+                      >
+                        Gestisci
+                      </button>
                     </div>
-                    <button
-                      onClick={handleInviteCollaborators}
-                      className="px-3 py-1 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition"
-                    >
-                      Gestisci
-                    </button>
                   </div>
-                </div>
+                )}
               </div>
 
               <div className="bg-white rounded-2xl shadow p-6">
@@ -280,8 +284,8 @@ export default function ChatbotDetailPage() {
         </div>
       </div>
 
-      {/* Collaborator Invite Modal */}
-      {showCollaboratorModal && currentChatbot && (
+      {/* Collaborator Invite Modal - Solo per owner */}
+      {showCollaboratorModal && currentChatbot && currentChatbot.is_owner && (
         <CollaboratorInviteModal
           isOpen={showCollaboratorModal}
           onClose={() => setShowCollaboratorModal(false)}
