@@ -110,6 +110,7 @@ export default function ChatWidgetPage() {
   const [checkinFiles, setCheckinFiles] = useState<File[]>([])
   const [checkinConsent, setCheckinConsent] = useState(false)
   const [isSubmittingCheckin, setIsSubmittingCheckin] = useState(false)
+  const [checkinDocumentsSent, setCheckinDocumentsSent] = useState(false)
   
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -155,7 +156,8 @@ export default function ChatWidgetPage() {
       checkinSubmit: "Invia Documenti",
       checkinSuccess: "Documenti inviati con successo!",
       checkinError: "Errore nell'invio dei documenti",
-      checkinMaxFiles: "Massimo 10 file consentiti"
+      checkinMaxFiles: "Massimo 10 file consentiti",
+      checkinDocumentsSent: "Documenti inviati ✓"
     },
     ENG: {
       assistant: 'Virtual Assistant',
@@ -196,7 +198,8 @@ export default function ChatWidgetPage() {
       checkinSubmit: "Send Documents",
       checkinSuccess: "Documents sent successfully!",
       checkinError: "Error sending documents",
-      checkinMaxFiles: "Maximum 10 files allowed"
+      checkinMaxFiles: "Maximum 10 files allowed",
+      checkinDocumentsSent: "Documents sent ✓"
     }
   }
 
@@ -513,6 +516,7 @@ export default function ChatWidgetPage() {
     setGuestEmail('')
     setPhoneNumber('')
     setSelectedCountryCode('+39')
+    setCheckinDocumentsSent(false)
     
     // Controlla se c'è una conversazione esistente salvata
     const savedGuestId = localStorage.getItem(`guest_id_${uuid}`)
@@ -1249,6 +1253,7 @@ export default function ChatWidgetPage() {
     setPhoneNumber('')
     setSelectedCountryCode('+39')
     setShowWelcome(true)
+    setCheckinDocumentsSent(false)
     
     // Pulisci il localStorage per forzare la creazione di una nuova conversazione
     localStorage.removeItem(`conversation_id_${uuid}`)
@@ -1360,6 +1365,7 @@ export default function ChatWidgetPage() {
       setShowCheckinPopup(false)
       setCheckinFiles([])
       setCheckinConsent(false)
+      setCheckinDocumentsSent(true)
     } catch (error) {
       console.error('Errore invio check-in:', error)
       toast.error(currentTexts.checkinError)
@@ -1784,13 +1790,23 @@ export default function ChatWidgetPage() {
                          index === 0 && 
                          guestData?.is_first_time_guest && (
                           <div className="mt-3 pt-3 border-t border-gray-200">
-                            <button
-                              onClick={() => setShowCheckinPopup(true)}
-                              className="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white text-sm rounded-lg transition-colors duration-200"
-                            >
-                              <Upload className="w-4 h-4" />
-                              {currentTexts.checkinButton}
-                            </button>
+                            {checkinDocumentsSent ? (
+                              <button
+                                disabled
+                                className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white text-sm rounded-lg cursor-not-allowed opacity-90"
+                              >
+                                <Check className="w-4 h-4" />
+                                {currentTexts.checkinDocumentsSent}
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => setShowCheckinPopup(true)}
+                                className="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white text-sm rounded-lg transition-colors duration-200"
+                              >
+                                <Upload className="w-4 h-4" />
+                                {currentTexts.checkinButton}
+                              </button>
+                            )}
                           </div>
                         )}
                       </div>
