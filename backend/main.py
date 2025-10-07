@@ -1741,12 +1741,15 @@ Rispondi SOLO con un JSON valido nel seguente formato:
             # Determina la lingua dell'ospite (per ora usiamo italiano come default)
             language = "it"
             
+            # Costruisci il nome completo del guest
+            guest_name = f"{guest.first_name or ''} {guest.last_name or ''}".strip() or 'Guest'
+            
             if language == "en":
                 subject = "Your conversation has been updated - HostGPT"
                 content = f"""
 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
     <h2 style="color: #2c3e50;">Your conversation has been updated</h2>
-    <p>Hello {guest.name or 'Guest'},</p>
+    <p>Hello {guest_name},</p>
     <p>Your host has responded to your conversation. Here's the complete conversation:</p>
     
     <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
@@ -1764,7 +1767,7 @@ Rispondi SOLO con un JSON valido nel seguente formato:
                 content = f"""
 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
     <h2 style="color: #2c3e50;">La tua conversazione è stata aggiornata</h2>
-    <p>Ciao {guest.name or 'Ospite'},</p>
+    <p>Ciao {guest_name},</p>
     <p>Il tuo host ha risposto alla tua conversazione. Ecco la conversazione completa:</p>
     
     <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
