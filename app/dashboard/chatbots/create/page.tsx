@@ -826,6 +826,14 @@ export default function CreateChatbotPage() {
           hasErrors = true
         }
         
+        // Validazione lunghezza reviews_link
+        if (currentData.reviews_link && currentData.reviews_link.length > 1000) {
+          newErrors.reviews_link = language === 'IT' 
+            ? 'Il link delle recensioni è troppo lungo. Massimo 1000 caratteri consentiti.'
+            : 'Reviews link is too long. Maximum 1000 characters allowed.'
+          hasErrors = true
+        }
+        
         // Verifica che ci sia almeno un contatto di emergenza con nome e numero
         const validContacts = currentData.emergency_contacts?.filter(contact => 
           contact.name?.trim() && contact.number?.trim()
@@ -1600,17 +1608,48 @@ export default function CreateChatbotPage() {
             <div>
               <label className="label">{language === 'IT' ? 'Link per recensioni (opzionale)' : 'Reviews Link (optional)'}</label>
               <input
-                {...register('reviews_link')}
-                className="input-field"
+                {...register('reviews_link', {
+                  validate: (value) => {
+                    if (value && value.length > 1000) {
+                      return language === 'IT' 
+                        ? 'Il link è troppo lungo. Massimo 1000 caratteri consentiti.'
+                        : 'Link is too long. Maximum 1000 characters allowed.'
+                    }
+                    return true
+                  }
+                })}
+                className={`input-field ${formErrors.reviews_link ? 'border-red-500' : ''}`}
                 placeholder={language === 'IT' ? "Es. https://www.google.com/maps/place/..." : "E.g. https://www.google.com/maps/place/..."}
                 type="url"
+                onChange={(e) => {
+                  register('reviews_link').onChange(e)
+                  clearFieldError('reviews_link')
+                  
+                  // Validazione in tempo reale
+                  if (e.target.value.length > 1000) {
+                    setFormErrors(prev => ({
+                      ...prev,
+                      reviews_link: language === 'IT' 
+                        ? 'Il link è troppo lungo. Massimo 1000 caratteri consentiti.'
+                        : 'Link is too long. Maximum 1000 characters allowed.'
+                    }))
+                  }
+                }}
               />
-              <p className="text-sm text-gray-600 mt-1">
-                {language === 'IT' 
-                  ? 'Link dove gli ospiti possono lasciare recensioni (Google Maps, TripAdvisor, ecc.)'
-                  : 'Link where guests can leave reviews (Google Maps, TripAdvisor, etc.)'
-                }
-              </p>
+              <div className="flex justify-between items-center mt-1">
+                <p className="text-sm text-gray-600">
+                  {language === 'IT' 
+                    ? 'Link dove gli ospiti possono lasciare recensioni (Google Maps, TripAdvisor, ecc.)'
+                    : 'Link where guests can leave reviews (Google Maps, TripAdvisor, etc.)'
+                  }
+                </p>
+                <p className={`text-xs ${watch('reviews_link')?.length > 1000 ? 'text-red-500' : 'text-gray-400'}`}>
+                  {watch('reviews_link')?.length || 0}/1000
+                </p>
+              </div>
+              {(errors.reviews_link || formErrors.reviews_link) && (
+                <p className="error-text">{errors.reviews_link?.message || formErrors.reviews_link}</p>
+              )}
             </div>
 
 

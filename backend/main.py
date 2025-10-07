@@ -4052,6 +4052,13 @@ async def create_chatbot(
     # Genera automaticamente il nome del chatbot
     name = f"Assistente {property_name}"
     
+    # Validazione lunghezza reviews_link
+    if reviews_link and len(reviews_link) > 1000:
+        raise HTTPException(
+            status_code=400, 
+            detail="Il link delle recensioni è troppo lungo. Massimo 1000 caratteri consentiti."
+        )
+    
     # Debug: stampa i dati ricevuti
     print(f"🚀 Backend: Ricevuti dati per creazione chatbot:")
     print(f"  name: {name} (generato automaticamente)")
