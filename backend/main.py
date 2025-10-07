@@ -1686,6 +1686,107 @@ Rispondi SOLO con un JSON valido nel seguente formato:
                 'avg_satisfaction': 5.0,
                 'negative_reviews_prevented': 0
             }
+    
+    def send_guest_resolution_email(self, conversation: Conversation, host_response: str, db: Session) -> bool:
+        """
+        Invia email al guest con la conversazione completa e la risposta dell'host
+        
+        Args:
+            conversation: Conversazione risolta
+            host_response: Risposta dell'host
+            db: Sessione del database
+            
+        Returns:
+            True se l'email è stata inviata con successo
+        """
+        try:
+            # Recupera il guest
+            guest = db.query(Guest).filter(Guest.id == conversation.guest_id).first()
+            if not guest or not guest.email:
+                logger.warning(f"Guest non trovato o senza email per conversazione {conversation.id}")
+                return False
+            
+            # Recupera tutti i messaggi della conversazione
+            messages = db.query(Message).filter(
+                Message.conversation_id == conversation.id
+            ).order_by(Message.timestamp).all()
+            
+            # Recupera il chatbot per ottenere il link
+            chatbot = db.query(Chatbot).filter(Chatbot.id == conversation.chatbot_id).first()
+            if not chatbot:
+                logger.error(f"Chatbot non trovato per conversazione {conversation.id}")
+                return False
+            
+            # Crea il contenuto della conversazione
+            conversation_text = ""
+            for msg in messages:
+                role_label = "Ospite" if msg.role == "user" else "Assistente"
+                conversation_text += f"{role_label}: {msg.content}\n\n"
+            
+            # Aggiungi la risposta dell'host
+            conversation_text += f"Host: {host_response}\n\n"
+            
+            # Crea il link alla chat
+            chat_link = f"https://hostgpt.it/chat/{chatbot.uuid}?thread_id={conversation.thread_id}"
+            
+            # Determina la lingua dell'ospite (per ora usiamo italiano come default)
+            language = "it"
+            
+            if language == "en":
+                subject = "Your conversation has been updated - HostGPT"
+                content = f"""
+<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+    <h2 style="color: #2c3e50;">Your conversation has been updated</h2>
+    <p>Hello {guest.name or 'Guest'},</p>
+    <p>Your host has responded to your conversation. Here's the complete conversation:</p>
+    
+    <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
+        <pre style="white-space: pre-wrap; font-family: Arial, sans-serif;">{conversation_text}</pre>
+    </div>
+    
+    <p>You can continue the conversation by clicking the link below:</p>
+    <a href="{chat_link}" style="background-color: #3498db; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">Continue Conversation</a>
+    
+    <p>Best regards,<br>The HostGPT Team</p>
+</div>
+"""
+            else:  # Italiano
+                subject = "La tua conversazione è stata aggiornata - HostGPT"
+                content = f"""
+<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+    <h2 style="color: #2c3e50;">La tua conversazione è stata aggiornata</h2>
+    <p>Ciao {guest.name or 'Ospite'},</p>
+    <p>Il tuo host ha risposto alla tua conversazione. Ecco la conversazione completa:</p>
+    
+    <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
+        <pre style="white-space: pre-wrap; font-family: Arial, sans-serif;">{conversation_text}</pre>
+    </div>
+    
+    <p>Puoi continuare la conversazione cliccando il link qui sotto:</p>
+    <a href="{chat_link}" style="background-color: #3498db; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">Continua Conversazione</a>
+    
+    <p>Cordiali saluti,<br>Il Team HostGPT</p>
+</div>
+"""
+            
+            # Invia l'email
+            success = send_email(
+                to_email=guest.email,
+                subject=subject,
+                content=content,
+                is_html=True
+            )
+            
+            if success:
+                logger.info(f"Email di risoluzione inviata al guest {guest.email} per conversazione {conversation.id}")
+            else:
+                logger.error(f"Errore nell'invio dell'email di risoluzione al guest {guest.email} per conversazione {conversation.id}")
+            
+            return success
+            
+        except Exception as e:
+            logger.error(f"Errore nell'invio dell'email di risoluzione per conversazione {conversation.id}: {e}")
+            return False
 
 # Istanza globale del servizio Guardian
 guardian_service = GuardianService()
