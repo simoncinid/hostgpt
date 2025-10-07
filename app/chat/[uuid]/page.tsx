@@ -580,6 +580,28 @@ export default function ChatWidgetPage() {
             setSuspensionMessage('')
             toast.success(language === 'IT' ? 'Chat sbloccata! Puoi continuare la conversazione.' : 'Chat unlocked! You can continue the conversation.')
             
+            // Ricarica i messaggi per mostrare la risposta dell'host
+            if (conversationId) {
+              try {
+                console.log('🔄 [DEBUG] Ricaricando messaggi dopo sblocco chat...')
+                const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+                const messagesResponse = await fetch(`${API_URL}/api/chat/${uuid}/conversation/${conversationId}/messages`)
+                
+                if (messagesResponse.ok) {
+                  const messagesData = await messagesResponse.json()
+                  const formattedMessages = messagesData.messages?.map((msg: any) => ({
+                    id: msg.id,
+                    role: msg.role,
+                    content: msg.content || ''
+                  })) || []
+                  setMessages(formattedMessages)
+                  console.log('🔄 [DEBUG] Messaggi ricaricati dopo sblocco:', formattedMessages.length)
+                }
+              } catch (error) {
+                console.error('Errore nel ricaricamento messaggi dopo sblocco:', error)
+              }
+            }
+            
             // Pulisci l'interval
             if (intervalId) {
               clearInterval(intervalId)
