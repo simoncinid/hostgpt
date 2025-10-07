@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func, text
 from typing import List, Optional, Tuple
 from datetime import datetime, timedelta
+import time
 import uuid
 import stripe
 import openai
@@ -1690,6 +1691,36 @@ Rispondi SOLO con un JSON valido nel seguente formato:
 
 # Istanza globale del servizio Guardian
 guardian_service = GuardianService()
+
+# Cache in memoria per ridurre le query al database
+guardian_cache = {}
+CACHE_DURATION = 30  # 30 secondi di cache
+
+def get_cached_data(cache_key: str):
+    """Recupera dati dalla cache se validi"""
+    if cache_key in guardian_cache:
+        data, timestamp = guardian_cache[cache_key]
+        if time.time() - timestamp < CACHE_DURATION:
+            return data
+        else:
+            # Cache scaduta, rimuovi
+            del guardian_cache[cache_key]
+    return None
+
+def set_cached_data(cache_key: str, data):
+    """Salva dati nella cache"""
+    guardian_cache[cache_key] = (data, time.time())
+
+def invalidate_user_cache(user_id: int):
+    """Invalida la cache per un utente specifico"""
+    cache_keys_to_remove = []
+    for key in guardian_cache.keys():
+        if f"_{user_id}" in key:
+            cache_keys_to_remove.append(key)
+    
+    for key in cache_keys_to_remove:
+        del guardian_cache[key]
+        logger.info(f"Cache invalidata per utente {user_id}: {key}")
 
 def generate_qr_code(url: str, icon_data: bytes = None) -> str:
     """Genera QR code e ritorna come base64"""
@@ -7216,8 +7247,20 @@ async def get_guardian_statistics(
                 detail="Abbonamento Guardian richiesto per accedere alle statistiche"
             )
         
-        # Ottieni le statistiche
+        # Controlla la cache prima di fare query al database
+        cache_key = f"guardian_stats_{current_user.id}"
+        cached_stats = get_cached_data(cache_key)
+        
+        if cached_stats is not None:
+            logger.info(f"Cache hit per statistiche Guardian utente {current_user.id}")
+            return cached_stats
+        
+        # Ottieni le statistiche dal database
         stats = guardian_service.get_guardian_statistics(current_user.id, db)
+        
+        # Salva nella cache
+        set_cached_data(cache_key, stats)
+        logger.info(f"Statistiche Guardian salvate in cache per utente {current_user.id}")
         
         return stats
         
@@ -7241,6 +7284,14 @@ async def get_guardian_alerts(
                 detail="Abbonamento Guardian richiesto per accedere agli alert"
             )
         
+        # Controlla la cache prima di fare query al database
+        cache_key = f"guardian_alerts_{current_user.id}"
+        cached_alerts = get_cached_data(cache_key)
+        
+        if cached_alerts is not None:
+            logger.info(f"Cache hit per alert Guardian utente {current_user.id}")
+            return cached_alerts
+        
         # Ottieni gli alert non risolti
         alerts = db.query(GuardianAlert).filter(
             GuardianAlert.user_id == current_user.id,
@@ -7248,18 +7299,6 @@ async def get_guardian_alerts(
         ).order_by(GuardianAlert.created_at.desc()).all()
         
         logger.info(f"User {current_user.id}: trovati {len(alerts)} alert attivi (non risolti)")
-        
-        # Debug: mostra tutti gli alert dell'utente
-        all_alerts = db.query(GuardianAlert).filter(
-            GuardianAlert.user_id == current_user.id
-        ).all()
-        logger.info(f"User {current_user.id}: totale alert nel DB: {len(all_alerts)}")
-        for alert in all_alerts:
-            logger.info(f"Alert {alert.id}: is_resolved={alert.is_resolved}, created_at={alert.created_at}")
-        
-        # Debug aggiuntivo: verifica il tipo di dati di is_resolved
-        for alert in all_alerts:
-            logger.info(f"Alert {alert.id}: is_resolved type={type(alert.is_resolved)}, value={alert.is_resolved}, bool conversion={bool(alert.is_resolved)}")
         
         # Formatta gli alert per il frontend
         formatted_alerts = []
@@ -7287,6 +7326,10 @@ async def get_guardian_alerts(
                 'created_at': alert.created_at.isoformat(),
                 'conversation': conversation_data
             })
+        
+        # Salva nella cache
+        set_cached_data(cache_key, formatted_alerts)
+        logger.info(f"Alert Guardian salvati in cache per utente {current_user.id}")
         
         return formatted_alerts
         
@@ -7372,6 +7415,9 @@ async def resolve_guardian_alert(
         
         # Invia email al guest con la conversazione completa
         guardian_service.send_guest_resolution_email(conversation, host_response, db)
+        
+        # Invalida la cache per questo utente
+        invalidate_user_cache(current_user.id)
         
         # Verifica che l'alert sia stato effettivamente risolto
         resolved_alert = db.query(GuardianAlert).filter(

@@ -76,6 +76,8 @@ function GuardianContent() {
   const [resolvingAlertId, setResolvingAlertId] = useState<number | null>(null)
   const [hostResponse, setHostResponse] = useState('')
   const [hostResponseRef, setHostResponseRef] = useState<HTMLTextAreaElement | null>(null)
+  const [lastFetchTime, setLastFetchTime] = useState<number>(0)
+  const [isRefreshing, setIsRefreshing] = useState(false)
   
   // Controlla se c'è un parametro di successo nell'URL
   useEffect(() => {
@@ -97,9 +99,15 @@ function GuardianContent() {
 
   useEffect(() => {
     if (isHydrated && user) {
-      fetchGuardianStatus()
+      // Evita chiamate multiple se i dati sono stati caricati di recente (entro 30 secondi)
+      const now = Date.now()
+      if (now - lastFetchTime > 30000) { // 30 secondi di cache
+        fetchGuardianStatus()
+      } else {
+        setLoading(false)
+      }
     }
-  }, [isHydrated, user])
+  }, [isHydrated, user, lastFetchTime])
 
   // Focus automatico sul textarea quando si apre il modal di risoluzione
   useEffect(() => {
@@ -113,26 +121,32 @@ function GuardianContent() {
 
   const fetchGuardianStatus = async () => {
     try {
+      setIsRefreshing(true)
       const response = await guardian.getStatus()
       const status = response.data
       setGuardianStatus(status)
       
-      // Aggiorna completamente lo stato utente dal server
-      try {
-        const auth = (await import('@/lib/api')).auth
-        const me = await auth.me()
-        setUser(me.data)
-      } catch (error) {
-        console.error('Error updating user data:', error)
+      // Aggiorna lo stato utente solo se necessario (evita chiamata /api/auth/me)
+      if (user && user.guardian_subscription_status !== status.guardian_subscription_status) {
+        try {
+          const auth = (await import('@/lib/api')).auth
+          const me = await auth.me()
+          setUser(me.data)
+        } catch (error) {
+          console.error('Error updating user data:', error)
+        }
       }
       
       if (status.is_active) {
-        fetchGuardianData()
+        await fetchGuardianData()
       }
+      
+      setLastFetchTime(Date.now())
     } catch (error) {
       console.error('Error fetching guardian status:', error)
     } finally {
       setLoading(false)
+      setIsRefreshing(false)
     }
   }
 
@@ -140,15 +154,15 @@ function GuardianContent() {
     try {
       console.log('Fetching guardian data...')
       
-      // Fetch statistics
-      const statsResponse = await guardian.getStatistics()
+      // Fetch statistics e alerts in parallelo per ridurre il tempo di risposta
+      const [statsResponse, alertsResponse] = await Promise.all([
+        guardian.getStatistics(),
+        guardian.getAlerts()
+      ])
+      
       setGuardianStats(statsResponse.data)
-      console.log('Stats aggiornate:', statsResponse.data)
-
-      // Fetch alerts
-      const alertsResponse = await guardian.getAlerts()
-      console.log('Alert ricevuti dal server:', alertsResponse.data)
       setAlerts(alertsResponse.data)
+      console.log('Stats e alerts aggiornati:', statsResponse.data, alertsResponse.data)
     } catch (error) {
       console.error('Error fetching guardian data:', error)
     }
@@ -159,7 +173,8 @@ function GuardianContent() {
       // Rimuovi i parametri dall'URL
       window.history.replaceState({}, document.title, window.location.pathname)
       
-      // Ricarica i dati Guardian
+      // Ricarica i dati Guardian forzando il refresh
+      setLastFetchTime(0) // Reset cache
       await fetchGuardianStatus()
       
       // Mostra messaggio di successo
@@ -167,6 +182,12 @@ function GuardianContent() {
     } catch (error) {
       console.error('Error confirming guardian subscription:', error)
     }
+  }
+
+  // Funzione per refresh manuale
+  const handleManualRefresh = async () => {
+    setLastFetchTime(0) // Reset cache per forzare il refresh
+    await fetchGuardianStatus()
   }
 
   const handleSubscribe = async () => {
@@ -322,9 +343,41 @@ function GuardianContent() {
                   <Shield className="w-5 h-5 text-white" />
                 </div>
                 <h1 className="text-xl font-semibold">{t.guardian.title}</h1>
+                {/* Pulsante refresh */}
+                <button
+                  onClick={handleManualRefresh}
+                  disabled={isRefreshing}
+                  className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
+                  title="Aggiorna dati"
+                >
+                  {isRefreshing ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                  )}
+                </button>
               </div>
               {/* Su mobile mostra solo il titolo senza scudo */}
-              <h1 className="text-xl font-semibold md:hidden">{t.guardian.title}</h1>
+              <div className="flex items-center space-x-3 md:hidden">
+                <h1 className="text-xl font-semibold">{t.guardian.title}</h1>
+                {/* Pulsante refresh mobile */}
+                <button
+                  onClick={handleManualRefresh}
+                  disabled={isRefreshing}
+                  className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
+                  title="Aggiorna dati"
+                >
+                  {isRefreshing ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
         </div>
