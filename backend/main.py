@@ -1251,14 +1251,12 @@ class GuardianService:
             conversation.guardian_analyzed = True
             conversation.guardian_risk_score = analysis_result['risk_score']
             
-            # Controlla se generare un alert (sia per rischio alto che per insufficient_info)
+            # Log del risultato dell'analisi (la creazione degli alert è gestita da analyze_conversation_with_guardian)
             if analysis_result['risk_score'] >= self.risk_threshold or insufficient_info:
-                conversation.guardian_alert_triggered = True
                 alert_reason = "insufficient_info" if insufficient_info else "high_risk"
+                logger.warning(f"⚠️ INSUFFICIENT INFO DETECTED: Conversazione {conversation.id} - Chatbot ha risposto con mancanza di informazioni")
                 logger.warning(f"🚨 ALERT GUARDIAN: Conversazione {conversation.id} - {alert_reason} - Rischio: {analysis_result['risk_score']:.3f}")
             else:
-                # Se il rischio è basso, rimuovi il flag di alert (nel caso di ri-analisi)
-                conversation.guardian_alert_triggered = False
                 logger.info(f"✅ Rischio basso per conversazione {conversation.id}: {analysis_result['risk_score']:.3f}")
             
             db.commit()
