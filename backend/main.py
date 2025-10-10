@@ -2698,7 +2698,6 @@ async def handle_subscription_updated(event, db: Session):
                     email_subject = f"Plan upgraded to {new_plan} - OspiterAI" if (user.language or "it") == "en" else f"Piano aggiornato a {new_plan} - OspiterAI"
                     
                     # Invia email in background
-                    from email_service import send_email_background
                     send_email_background(
                         to_email=user.email,
                         subject=email_subject,
