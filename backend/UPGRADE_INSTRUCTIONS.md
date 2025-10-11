@@ -55,7 +55,11 @@ STRIPE_SECRET_KEY=sk_live_xxxxx
 STRIPE_PUBLISHABLE_KEY=pk_live_xxxxx
 STRIPE_WEBHOOK_SECRET=whsec_xxxxx
 STRIPE_PRICE_ID=price_xxxxx  # DEVE essere il price ID per 29€/mese!
-STRIPE_GUARDIAN_PRICE_ID=price_1S7fDjCez9NYe6irthMTRaXg  # Guardian: 9€/mese
+# Guardian Price IDs per i diversi livelli
+STRIPE_STANDARD_GUARDIAN_PRICE_ID=price_standard_guardian_9eur  # Guardian Standard: 9€/mese
+STRIPE_PREMIUM_GUARDIAN_PRICE_ID=price_premium_guardian_18eur  # Guardian Premium: 18€/mese
+STRIPE_PRO_GUARDIAN_PRICE_ID=price_pro_guardian_36eur  # Guardian Pro: 36€/mese
+STRIPE_ENTERPRISE_GUARDIAN_PRICE_ID=price_enterprise_guardian_89eur  # Guardian Enterprise: 89€/mese
 ```
 
 ### 5. Riavvia il Backend

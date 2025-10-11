@@ -46,8 +46,14 @@ class Settings(BaseSettings):
     STRIPE_ANNUAL_PRO_PRICE_ID: str = os.getenv("STRIPE_ANNUAL_PRO_PRICE_ID", "price_your-annual-790eur-price-id")  # Pro: 790€/anno
     STRIPE_ANNUAL_ENTERPRISE_PRICE_ID: str = os.getenv("STRIPE_ANNUAL_ENTERPRISE_PRICE_ID", "price_your-annual-1990eur-price-id")  # Enterprise: 1990€/anno
     
-    # Guardian Price ID
-    STRIPE_GUARDIAN_PRICE_ID: str = os.getenv("STRIPE_GUARDIAN_PRICE_ID", "price_1S7fDjCez9NYe6irthMTRaXg")  # Guardian: 9€/mese
+    # Guardian Price IDs per i diversi livelli
+    STRIPE_STANDARD_GUARDIAN_PRICE_ID: str = os.getenv("STRIPE_STANDARD_GUARDIAN_PRICE_ID", "price_standard_guardian_9eur")  # Guardian Standard: 9€/mese
+    STRIPE_PREMIUM_GUARDIAN_PRICE_ID: str = os.getenv("STRIPE_PREMIUM_GUARDIAN_PRICE_ID", "price_premium_guardian_18eur")  # Guardian Premium: 18€/mese
+    STRIPE_PRO_GUARDIAN_PRICE_ID: str = os.getenv("STRIPE_PRO_GUARDIAN_PRICE_ID", "price_pro_guardian_36eur")  # Guardian Pro: 36€/mese
+    STRIPE_ENTERPRISE_GUARDIAN_PRICE_ID: str = os.getenv("STRIPE_ENTERPRISE_GUARDIAN_PRICE_ID", "price_enterprise_guardian_89eur")  # Guardian Enterprise: 89€/mese
+    
+    # Legacy Guardian Price ID (mantenuto per compatibilità con webhook esistenti)
+    STRIPE_GUARDIAN_PRICE_ID: str = os.getenv("STRIPE_GUARDIAN_PRICE_ID", "price_1S7fDjCez9NYe6irthMTRaXg")  # Guardian: 9€/mese (LEGACY - da rimuovere in futuro)
     
     # Printful - Servizio di stampa on-demand
     PRINTFUL_API_KEY: str = os.getenv("PRINTFUL_API_KEY", "your-printful-api-key")

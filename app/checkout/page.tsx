@@ -324,6 +324,26 @@ function CheckoutForm({ clientSecret, onSuccess, selectedPlan, t }: { clientSecr
   )
 }
 
+// Funzioni helper per i prezzi Guardian
+function getGuardianPrice(planName: string): number {
+  switch (planName) {
+    case 'Enterprise': return 89
+    case 'Pro': return 36
+    case 'Premium': return 18
+    case 'Standard':
+    default: return 9
+  }
+}
+
+function getTotalPrice(selectedPlan: any, guardianParam: string | null): number {
+  if (!selectedPlan) return 19
+  
+  const ospiteraiPrice = parseInt(selectedPlan.price.replace('€', ''))
+  const guardianPrice = guardianParam ? getGuardianPrice(selectedPlan.name) : 0
+  
+  return ospiteraiPrice + guardianPrice
+}
+
 // Componente separato che utilizza useSearchParams
 function CheckoutContent() {
   const router = useRouter()
@@ -336,6 +356,7 @@ function CheckoutContent() {
   const [clientSecret, setClientSecret] = useState<string>('')
   const [paymentIntentId, setPaymentIntentId] = useState<string>('')
   const [selectedPlan, setSelectedPlan] = useState<any>(null)
+  const [guardianParam, setGuardianParam] = useState<string | null>(null)
 
   useEffect(() => {
     const cancelled = searchParams.get('subscription') === 'cancelled'
@@ -350,6 +371,10 @@ function CheckoutContent() {
     // Leggi i parametri del piano dall'URL
     const planParam = searchParams.get('plan')
     const billingParam = searchParams.get('billing')
+    const guardianParamFromUrl = searchParams.get('guardian')
+    
+    // Imposta il guardianParam nello stato
+    setGuardianParam(guardianParamFromUrl)
 
     const ensureTokenAndCheckout = async () => {
       try {
@@ -463,7 +488,18 @@ function CheckoutContent() {
           priceIdToSend = userDesiredPlan
         }
         
-        const resp = await subscription.createCheckout(priceIdToSend, billingParam || 'monthly')
+        let resp
+        if (guardianParamFromUrl) {
+          // Caso 3: Checkout combinato OspiterAI + Guardian
+          resp = await api.post('/subscription/create-combined-checkout', {
+            plan_price_id: priceIdToSend,
+            guardian_price_id: guardianParamFromUrl,
+            billing: billingParam || 'monthly'
+          })
+        } else {
+          // Caso normale: solo OspiterAI
+          resp = await subscription.createCheckout(priceIdToSend, billingParam || 'monthly')
+        }
         
         // Controlla se l'abbonamento è stato riattivato
         if (resp.data.status === 'reactivated') {
@@ -673,6 +709,15 @@ function CheckoutContent() {
                     <span className="text-gray-600">OspiterAI {selectedPlan?.name || 'Standard'}</span>
                     <span className="font-semibold">{selectedPlan?.price || '19€'}{selectedPlan?.period || '/mese'}</span>
                   </div>
+                  {guardianParam && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-600 flex items-center">
+                        <Shield className="w-4 h-4 mr-1" />
+                        Guardian
+                      </span>
+                      <span className="font-semibold">{getGuardianPrice(selectedPlan?.name || 'Standard')}€{selectedPlan?.period || '/mese'}</span>
+                    </div>
+                  )}
                   <div className="flex items-center justify-between">
                     <span className="text-gray-600">{t.checkout.monthly.billing}</span>
                     <span className="text-sm text-gray-500">{selectedPlan?.period === '/anno' ? 'Annuale' : 'Mensile'}</span>
@@ -682,7 +727,7 @@ function CheckoutContent() {
                 <div className="border-t pt-4 mt-4">
                   <div className="flex items-center justify-between text-lg font-semibold">
                     <span>{t.checkout.monthly.total}</span>
-                    <span>{selectedPlan?.price || '19€'}{selectedPlan?.period || '/mese'}</span>
+                    <span>{getTotalPrice(selectedPlan, guardianParam)}€{selectedPlan?.period || '/mese'}</span>
                   </div>
                 </div>
               </div>
@@ -706,6 +751,12 @@ function CheckoutContent() {
                     <Star className="w-5 h-5 text-primary" />
                     <span className="text-gray-700">{t.checkout.monthly.features.support}</span>
                   </div>
+                  {guardianParam && (
+                    <div className="flex items-center space-x-3">
+                      <Shield className="w-5 h-5 text-primary" />
+                      <span className="text-gray-700">Guardian incluso</span>
+                    </div>
+                  )}
                 </div>
               </div>
             </motion.div>

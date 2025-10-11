@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { ArrowLeft, CreditCard, Mail, User, Loader2, LogOut, AlertTriangle, ChevronDown, Check, Settings, ExternalLink, Link as LinkIcon } from 'lucide-react'
 import { auth, subscription } from '@/lib/api'
+import api from '@/lib/api'
 import { useAuthStore } from '@/lib/store'
 import { useLanguage } from '@/lib/languageContext'
 import toast from 'react-hot-toast'
@@ -26,6 +27,7 @@ export default function SettingsPage() {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false)
   const [selectedPlan, setSelectedPlan] = useState('')
   const [isUpgrading, setIsUpgrading] = useState(false)
+  const [hasGuardianActive, setHasGuardianActive] = useState(false)
   
   // Stati per l'integrazione API Hostaway
   const [hostawayAccountId, setHostawayAccountId] = useState('')
@@ -44,6 +46,7 @@ export default function SettingsPage() {
       try {
         const me = await auth.me()
         setUser(me.data)
+        setHasGuardianActive(me.data?.guardian_subscription_status === 'active')
       } catch {
         router.replace('/login')
       } finally {
@@ -156,6 +159,17 @@ export default function SettingsPage() {
     }
   }
 
+  // Funzione helper per ottenere il prezzo Guardian
+  const getGuardianPrice = (planId: string): number => {
+    switch (planId) {
+      case 'ENTERPRISE': return 89
+      case 'PRO': return 36
+      case 'PREMIUM': return 18
+      case 'STANDARD':
+      default: return 9
+    }
+  }
+
   // Piani disponibili per l'upgrade
   const availablePlans = [
     {
@@ -223,26 +237,52 @@ export default function SettingsPage() {
         throw new Error('Piano non valido')
       }
 
-      const res = await subscription.createCheckout(priceId, 'monthly')
-      
-      // Controlla se è un upgrade di abbonamento esistente
-      if (res.data.status === 'upgraded') {
-        toast.success(
-          `Abbonamento aggiornato con successo! Nuovo limite: ${res.data.new_limit} conversazioni/mese`,
-          { duration: 5000 }
-        )
-        // Ricarica i dati utente per aggiornare lo stato
-        const me = await auth.me()
-        setUser(me.data)
-        return
-      }
-      
-      if (res.data.client_secret) {
-        router.push('/checkout')
-      } else if (res.data.checkout_url) {
-        window.location.href = res.data.checkout_url
+      // Se l'utente ha Guardian attivo, gestisci anche il cambio del piano Guardian
+      if (hasGuardianActive) {
+        const guardianPriceIdMap: { [key: string]: string } = {
+          'STANDARD': 'STANDARD_GUARDIAN_PRICE_ID',
+          'PREMIUM': 'PREMIUM_GUARDIAN_PRICE_ID', 
+          'PRO': 'PRO_GUARDIAN_PRICE_ID',
+          'ENTERPRISE': 'ENTERPRISE_GUARDIAN_PRICE_ID'
+        }
+        
+        const guardianPriceId = guardianPriceIdMap[selectedPlan]
+        
+        // Crea checkout combinato per aggiornare sia OspiterAI che Guardian
+        const res = await api.post('/subscription/create-combined-checkout', {
+          plan_price_id: priceId,
+          guardian_price_id: guardianPriceId,
+          billing: 'monthly'
+        })
+        
+        if (res.data.checkout_url) {
+          window.location.href = res.data.checkout_url
+        } else {
+          throw new Error('URL di checkout non ricevuto')
+        }
       } else {
-        throw new Error('URL di checkout non ricevuto')
+        // Upgrade normale solo per OspiterAI
+        const res = await subscription.createCheckout(priceId, 'monthly')
+        
+        // Controlla se è un upgrade di abbonamento esistente
+        if (res.data.status === 'upgraded') {
+          toast.success(
+            `Abbonamento aggiornato con successo! Nuovo limite: ${res.data.new_limit} conversazioni/mese`,
+            { duration: 5000 }
+          )
+          // Ricarica i dati utente per aggiornare lo stato
+          const me = await auth.me()
+          setUser(me.data)
+          return
+        }
+        
+        if (res.data.client_secret) {
+          router.push('/checkout')
+        } else if (res.data.checkout_url) {
+          window.location.href = res.data.checkout_url
+        } else {
+          throw new Error('URL di checkout non ricevuto')
+        }
       }
     } catch (e: any) {
       toast.error(e.response?.data?.detail || 'Errore nell\'avvio dell\'upgrade')
@@ -899,6 +939,13 @@ export default function SettingsPage() {
                           <p className="text-sm text-gray-600 mt-1">
                             {plan.conversations} conversazioni al mese
                           </p>
+                          {hasGuardianActive && (
+                            <div className="mt-2 p-2 bg-blue-50 rounded-lg border border-blue-200">
+                              <p className="text-sm text-blue-800">
+                                <strong>Guardian:</strong> Il tuo abbonamento Guardian cambierà da {getGuardianPrice(currentPlan?.id || 'STANDARD')}€ a {getGuardianPrice(plan.id)}€/mese
+                              </p>
+                            </div>
+                          )}
                           <ul className="mt-2 space-y-1">
                             {plan.features.map((feature, index) => (
                               <li key={index} className="flex items-center text-sm text-gray-600">
@@ -948,7 +995,15 @@ export default function SettingsPage() {
                       Elaborazione...
                     </>
                   ) : (
-                    'Procedi al Pagamento'
+                    <>
+                      {hasGuardianActive && selectedPlan ? (
+                        <>
+                          Procedi al Pagamento - {parseInt(availablePlans.find(p => p.id === selectedPlan)?.price.replace('€', '') || '0') + getGuardianPrice(selectedPlan)}€/mese
+                        </>
+                      ) : (
+                        'Procedi al Pagamento'
+                      )}
+                    </>
                   )}
                 </button>
               </div>

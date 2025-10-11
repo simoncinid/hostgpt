@@ -3332,9 +3332,24 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
                     for sub in subscriptions.data:
                         if sub.items.data and len(sub.items.data) > 0:
                             price_id = sub.items.data[0].price.id
-                            if price_id == settings.STRIPE_PRICE_ID or price_id == settings.STRIPE_ANNUAL_PRICE_ID:
+                            # Controlla se è un abbonamento OspiterAI
+                            if (price_id == settings.STRIPE_PRICE_ID or 
+                                price_id == settings.STRIPE_ANNUAL_PRICE_ID or
+                                price_id == settings.STRIPE_STANDARD_PRICE_ID or
+                                price_id == settings.STRIPE_PREMIUM_PRICE_ID or
+                                price_id == settings.STRIPE_PRO_PRICE_ID or
+                                price_id == settings.STRIPE_ENTERPRISE_PRICE_ID or
+                                price_id == settings.STRIPE_ANNUAL_STANDARD_PRICE_ID or
+                                price_id == settings.STRIPE_ANNUAL_PREMIUM_PRICE_ID or
+                                price_id == settings.STRIPE_ANNUAL_PRO_PRICE_ID or
+                                price_id == settings.STRIPE_ANNUAL_ENTERPRISE_PRICE_ID):
                                 hostgpt_subscription = sub
-                            elif price_id == settings.STRIPE_GUARDIAN_PRICE_ID:
+                            # Controlla se è un abbonamento Guardian
+                            elif (price_id == settings.STRIPE_GUARDIAN_PRICE_ID or  # Legacy
+                                  price_id == settings.STRIPE_STANDARD_GUARDIAN_PRICE_ID or
+                                  price_id == settings.STRIPE_PREMIUM_GUARDIAN_PRICE_ID or
+                                  price_id == settings.STRIPE_PRO_GUARDIAN_PRICE_ID or
+                                  price_id == settings.STRIPE_ENTERPRISE_GUARDIAN_PRICE_ID):
                                 guardian_subscription = sub
                     
                     # Aggiorna HostGPT subscription
@@ -3385,11 +3400,24 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
                             logger.warning(f"current_period_end non trovato per subscription {session['subscription']}")
                         logger.info(f"User {user.id} Guardian subscription updated with new subscription_id: {session['subscription']}")
                         
+                        # Determina il prezzo Guardian basato sul price ID
+                        guardian_price = "9€"  # Default
+                        if subscription.items.data and len(subscription.items.data) > 0:
+                            price_id = subscription.items.data[0].price.id
+                            if price_id == settings.STRIPE_ENTERPRISE_GUARDIAN_PRICE_ID:
+                                guardian_price = "89€"
+                            elif price_id == settings.STRIPE_PRO_GUARDIAN_PRICE_ID:
+                                guardian_price = "36€"
+                            elif price_id == settings.STRIPE_PREMIUM_GUARDIAN_PRICE_ID:
+                                guardian_price = "18€"
+                            elif price_id == settings.STRIPE_STANDARD_GUARDIAN_PRICE_ID or price_id == settings.STRIPE_GUARDIAN_PRICE_ID:
+                                guardian_price = "9€"
+                        
                         # Invia email di conferma acquisto Guardian
                         email_body = create_purchase_confirmation_email_simple(
                             user_name=user.full_name or user.email,
                             subscription_type="guardian",
-                            amount="9€",
+                            amount=guardian_price,
                             language=user.language or "it"
                         )
                         email_subject = "Purchase completed successfully - OspiterAI" if (user.language or "it") == "en" else "Acquisto completato con successo - OspiterAI"
@@ -6498,6 +6526,34 @@ async def subscribe_guardian(
     # Per ora non fa nulla come richiesto
     return {"message": "Funzionalità in sviluppo"}
 
+def get_guardian_price_id_for_user(user: User) -> str:
+    """Ottiene il price ID Guardian corretto basato sull'abbonamento dell'utente"""
+    # Usa conversations_limit se disponibile, altrimenti conversation_limit
+    limit = user.conversations_limit or user.conversation_limit or 20
+    
+    if limit >= 500:  # Enterprise
+        return settings.STRIPE_ENTERPRISE_GUARDIAN_PRICE_ID
+    elif limit >= 150:  # Pro
+        return settings.STRIPE_PRO_GUARDIAN_PRICE_ID
+    elif limit >= 50:  # Premium
+        return settings.STRIPE_PREMIUM_GUARDIAN_PRICE_ID
+    else:  # Standard (default)
+        return settings.STRIPE_STANDARD_GUARDIAN_PRICE_ID
+
+def get_guardian_price_for_user(user: User) -> int:
+    """Ottiene il prezzo Guardian in euro basato sull'abbonamento dell'utente"""
+    # Usa conversations_limit se disponibile, altrimenti conversation_limit
+    limit = user.conversations_limit or user.conversation_limit or 20
+    
+    if limit >= 500:  # Enterprise
+        return 89
+    elif limit >= 150:  # Pro
+        return 36
+    elif limit >= 50:  # Premium
+        return 18
+    else:  # Standard (default)
+        return 9
+
 @app.post("/api/guardian/create-checkout")
 async def create_guardian_checkout_session(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     """Crea sessione di checkout Stripe per Guardian - 9€/mese"""
@@ -6569,11 +6625,14 @@ async def create_guardian_checkout_session(current_user: User = Depends(get_curr
             current_user.stripe_customer_id = customer.id
             db.commit()
         
-        # Crea Checkout Session per Guardian - 9€/mese
+        # Crea Checkout Session per Guardian con prezzo basato sull'abbonamento
         logger.info(f"Creating Guardian checkout session for user {current_user.id}")
         
-        # Price ID per Guardian - 9€/mese
-        guardian_price_id = settings.STRIPE_GUARDIAN_PRICE_ID
+        # Price ID per Guardian basato sull'abbonamento dell'utente
+        guardian_price_id = get_guardian_price_id_for_user(current_user)
+        guardian_price = get_guardian_price_for_user(current_user)
+        
+        logger.info(f"User {current_user.id} will pay {guardian_price}€/mese for Guardian (limit: {current_user.conversations_limit or current_user.conversation_limit or 20})")
         
         checkout_session = stripe.checkout.Session.create(
             customer=current_user.stripe_customer_id,
@@ -6602,9 +6661,38 @@ async def create_guardian_checkout_session(current_user: User = Depends(get_curr
         raise HTTPException(status_code=400, detail=str(e))
 
 async def create_combined_checkout_session(current_user: User, db: Session):
-    """Crea sessione di checkout Stripe combinata per OspiterAI + Guardian per utenti in free trial"""
+    """Reindirizza utenti in free trial alla pagina di selezione combinata OspiterAI + Guardian"""
     try:
-        logger.info(f"Creating combined checkout session for free trial user {current_user.id}")
+        logger.info(f"Free trial user {current_user.id} requesting Guardian - redirecting to combined selection page")
+        
+        # Reindirizza alla pagina di selezione combinata
+        return {
+            "redirect_url": f"{settings.FRONTEND_URL}/select-service-ospiteraiandguardian",
+            "is_combined": True
+        }
+        
+    except Exception as e:
+        logger.error(f"Combined checkout redirect error: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.post("/api/subscription/create-combined-checkout")
+async def create_combined_subscription_checkout(
+    plan_price_id: str,
+    guardian_price_id: str,
+    billing: str = "monthly",
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Crea checkout combinato per OspiterAI + Guardian"""
+    try:
+        logger.info(f"Creating combined checkout for user {current_user.id}: plan={plan_price_id}, guardian={guardian_price_id}, billing={billing}")
+        
+        # Verifica che l'utente sia in free trial
+        if current_user.subscription_status != 'free_trial':
+            raise HTTPException(
+                status_code=400,
+                detail="Questa funzionalità è disponibile solo per utenti in free trial"
+            )
         
         # Crea o recupera customer Stripe
         if not current_user.stripe_customer_id:
@@ -6615,9 +6703,27 @@ async def create_combined_checkout_session(current_user: User, db: Session):
             current_user.stripe_customer_id = customer.id
             db.commit()
         
-        # Price IDs per HostGPT e Guardian
-        hostgpt_price_id = settings.STRIPE_PRICE_ID  # 19€/mese
-        guardian_price_id = settings.STRIPE_GUARDIAN_PRICE_ID  # 9€/mese
+        # Ottieni i price ID reali dalle impostazioni
+        plan_price_id_mapping = {
+            'STANDARD_PRICE_ID': settings.STRIPE_STANDARD_PRICE_ID,
+            'PREMIUM_PRICE_ID': settings.STRIPE_PREMIUM_PRICE_ID,
+            'PRO_PRICE_ID': settings.STRIPE_PRO_PRICE_ID,
+            'ENTERPRISE_PRICE_ID': settings.STRIPE_ENTERPRISE_PRICE_ID,
+            'ANNUAL_STANDARD_PRICE_ID': settings.STRIPE_ANNUAL_STANDARD_PRICE_ID,
+            'ANNUAL_PREMIUM_PRICE_ID': settings.STRIPE_ANNUAL_PREMIUM_PRICE_ID,
+            'ANNUAL_PRO_PRICE_ID': settings.STRIPE_ANNUAL_PRO_PRICE_ID,
+            'ANNUAL_ENTERPRISE_PRICE_ID': settings.STRIPE_ANNUAL_ENTERPRISE_PRICE_ID,
+        }
+        
+        guardian_price_id_mapping = {
+            'STANDARD_GUARDIAN_PRICE_ID': settings.STRIPE_STANDARD_GUARDIAN_PRICE_ID,
+            'PREMIUM_GUARDIAN_PRICE_ID': settings.STRIPE_PREMIUM_GUARDIAN_PRICE_ID,
+            'PRO_GUARDIAN_PRICE_ID': settings.STRIPE_PRO_GUARDIAN_PRICE_ID,
+            'ENTERPRISE_GUARDIAN_PRICE_ID': settings.STRIPE_ENTERPRISE_GUARDIAN_PRICE_ID,
+        }
+        
+        real_plan_price_id = plan_price_id_mapping.get(plan_price_id, settings.STRIPE_STANDARD_PRICE_ID)
+        real_guardian_price_id = guardian_price_id_mapping.get(guardian_price_id, settings.STRIPE_STANDARD_GUARDIAN_PRICE_ID)
         
         # Crea sessione checkout con entrambi i prodotti
         checkout_session = stripe.checkout.Session.create(
@@ -6625,47 +6731,30 @@ async def create_combined_checkout_session(current_user: User, db: Session):
             payment_method_types=['card'],
             line_items=[
                 {
-                    'price': hostgpt_price_id,
+                    'price': real_plan_price_id,
                     'quantity': 1,
                 },
                 {
-                    'price': guardian_price_id,
+                    'price': real_guardian_price_id,
                     'quantity': 1,
                 }
             ],
             mode='subscription',
             success_url=f"{settings.FRONTEND_URL}/dashboard/guardian?subscription=success&session_id={{CHECKOUT_SESSION_ID}}",
-            cancel_url=f"{settings.FRONTEND_URL}/dashboard/guardian?subscription=cancelled",
-            metadata={
-                'user_id': str(current_user.id),
-                'subscription_type': 'combined',
-                'free_trial_conversion': 'true'
-            }
-        )
-        
-        logger.info(f"Combined checkout session created successfully: {checkout_session.id}")
-        # Per il checkout combinato, creiamo un Payment Intent personalizzato
-        payment_intent = stripe.PaymentIntent.create(
-            amount=3800,  # 38€ in centesimi
-            currency='eur',
-            customer=current_user.stripe_customer_id,
+            cancel_url=f"{settings.FRONTEND_URL}/select-service-ospiteraiandguardian?subscription=cancelled",
             metadata={
                 'user_id': str(current_user.id),
                 'subscription_type': 'combined',
                 'free_trial_conversion': 'true',
-                'hostgpt_price_id': settings.STRIPE_PRICE_ID,
-                'guardian_price_id': guardian_price_id
-            },
-            automatic_payment_methods={
-                'enabled': True,
-            },
+                'plan_price_id': real_plan_price_id,
+                'guardian_price_id': real_guardian_price_id
+            }
         )
         
-        logger.info(f"Combined payment intent created successfully: {payment_intent.id}")
+        logger.info(f"Combined checkout session created successfully: {checkout_session.id}")
         return {
-            "client_secret": payment_intent.client_secret,
-            "payment_intent_id": payment_intent.id,
-            "is_combined": True
+            "checkout_url": checkout_session.url,
+            "session_id": checkout_session.id
         }
         
     except Exception as e:
@@ -6720,7 +6809,11 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
                         price_id = sub.items.data[0].price.id
                         if price_id == settings.STRIPE_PRICE_ID or price_id == settings.STRIPE_ANNUAL_PRICE_ID:
                             hostgpt_subscription = sub
-                        elif price_id == settings.STRIPE_GUARDIAN_PRICE_ID:
+                        elif (price_id == settings.STRIPE_GUARDIAN_PRICE_ID or  # Legacy
+                              price_id == settings.STRIPE_STANDARD_GUARDIAN_PRICE_ID or
+                              price_id == settings.STRIPE_PREMIUM_GUARDIAN_PRICE_ID or
+                              price_id == settings.STRIPE_PRO_GUARDIAN_PRICE_ID or
+                              price_id == settings.STRIPE_ENTERPRISE_GUARDIAN_PRICE_ID):
                             guardian_subscription = sub
                 
                 # Aggiorna HostGPT subscription

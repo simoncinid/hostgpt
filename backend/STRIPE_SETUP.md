@@ -37,14 +37,21 @@ STRIPE_SECRET_KEY=sk_live_tuachiave
 STRIPE_PUBLISHABLE_KEY=pk_live_tuachiave
 STRIPE_WEBHOOK_SECRET=whsec_tuosecret
 STRIPE_PRICE_ID=price_iddelprezzo29euro
-STRIPE_GUARDIAN_PRICE_ID=price_1S7fDjCez9NYe6irthMTRaXg
+# Guardian Price IDs per i diversi livelli
+STRIPE_STANDARD_GUARDIAN_PRICE_ID=price_standard_guardian_9eur
+STRIPE_PREMIUM_GUARDIAN_PRICE_ID=price_premium_guardian_18eur
+STRIPE_PRO_GUARDIAN_PRICE_ID=price_pro_guardian_36eur
+STRIPE_ENTERPRISE_GUARDIAN_PRICE_ID=price_enterprise_guardian_89eur
 
 # Per TEST usa le chiavi test
 # STRIPE_SECRET_KEY=sk_test_tuachiave
 # STRIPE_PUBLISHABLE_KEY=pk_test_tuachiave
 # STRIPE_WEBHOOK_SECRET=whsec_tuosecrettest
 # STRIPE_PRICE_ID=price_iddelprezzo29eurotest
-# STRIPE_GUARDIAN_PRICE_ID=price_test_guardian_price_id
+# STRIPE_STANDARD_GUARDIAN_PRICE_ID=price_test_standard_guardian
+# STRIPE_PREMIUM_GUARDIAN_PRICE_ID=price_test_premium_guardian
+# STRIPE_PRO_GUARDIAN_PRICE_ID=price_test_pro_guardian
+# STRIPE_ENTERPRISE_GUARDIAN_PRICE_ID=price_test_enterprise_guardian
 ```
 
 ### 4. Verifica Configurazione

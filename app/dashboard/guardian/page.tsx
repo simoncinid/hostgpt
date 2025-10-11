@@ -202,10 +202,14 @@ function GuardianContent() {
         return
       }
       
-      // Se è un checkout combinato, reindirizza al checkout combinato personalizzato
+      // Se è un checkout combinato, reindirizza alla pagina di selezione combinata
       if (response.data.is_combined) {
-        toast.success('Reindirizzamento al checkout per OspiterAI + Guardian...')
-        router.push('/checkout/combined')
+        if (response.data.redirect_url) {
+          window.location.href = response.data.redirect_url
+        } else {
+          toast.success('Reindirizzamento al checkout per OspiterAI + Guardian...')
+          router.push('/select-service-ospiteraiandguardian')
+        }
         return
       }
       
