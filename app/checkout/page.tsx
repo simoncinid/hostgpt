@@ -335,11 +335,23 @@ function getGuardianPrice(planName: string): number {
   }
 }
 
-function getTotalPrice(selectedPlan: any, guardianParam: string | null): number {
+function getTotalPrice(selectedPlan: any, guardianParam: string | null, guardianBillingParam?: string | null, billingParam?: string | null): number {
   if (!selectedPlan) return 19
   
   const ospiteraiPrice = parseInt(selectedPlan.price.replace('€', ''))
-  const guardianPrice = guardianParam ? getGuardianPrice(selectedPlan.name) : 0
+  
+  // Per Guardian: se è billing misto (annuale OspiterAI + mensile Guardian), 
+  // includiamo solo il primo mese di Guardian nel totale
+  let guardianPrice = 0
+  if (guardianParam) {
+    guardianPrice = getGuardianPrice(selectedPlan.name)
+    // Se è billing misto, includiamo solo il primo mese
+    if (billingParam === 'annual' && guardianBillingParam === 'monthly') {
+      // Il prezzo è già corretto (solo primo mese)
+    } else {
+      // Billing normale, includiamo il prezzo completo
+    }
+  }
   
   return ospiteraiPrice + guardianPrice
 }
@@ -357,6 +369,8 @@ function CheckoutContent() {
   const [paymentIntentId, setPaymentIntentId] = useState<string>('')
   const [selectedPlan, setSelectedPlan] = useState<any>(null)
   const [guardianParam, setGuardianParam] = useState<string | null>(null)
+  const [guardianBillingParam, setGuardianBillingParam] = useState<string | null>(null)
+  const [billingParam, setBillingParam] = useState<string | null>(null)
 
   useEffect(() => {
     const cancelled = searchParams.get('subscription') === 'cancelled'
@@ -372,6 +386,7 @@ function CheckoutContent() {
     const planParam = searchParams.get('plan')
     const billingParam = searchParams.get('billing')
     const guardianParamFromUrl = searchParams.get('guardian')
+    const guardianBillingParam = searchParams.get('guardian_billing')
     
     // Imposta il guardianParam nello stato
     setGuardianParam(guardianParamFromUrl)
@@ -494,7 +509,8 @@ function CheckoutContent() {
           resp = await api.post('/subscription/create-combined-checkout', {
             plan_price_id: priceIdToSend,
             guardian_price_id: guardianParamFromUrl,
-            billing: billingParam || 'monthly'
+            billing: billingParam || 'monthly',
+            guardian_billing: guardianBillingParam || 'monthly'
           })
         } else {
           // Caso normale: solo OspiterAI
@@ -715,7 +731,15 @@ function CheckoutContent() {
                         <Shield className="w-4 h-4 mr-1" />
                         Guardian
                       </span>
-                      <span className="font-semibold">{getGuardianPrice(selectedPlan?.name || 'Standard')}€{selectedPlan?.period || '/mese'}</span>
+                      <span className="font-semibold">{getGuardianPrice(selectedPlan?.name || 'Standard')}€/mese</span>
+                    </div>
+                  )}
+                  {guardianParam && guardianBillingParam === 'monthly' && billingParam === 'annual' && (
+                    <div className="mt-2 p-2 bg-blue-50 rounded-lg border border-blue-200">
+                      <p className="text-xs text-blue-800">
+                        <strong>Nota:</strong> Il totale include solo il primo mese di Guardian. 
+                        Pagherai {getGuardianPrice(selectedPlan?.name || 'Standard')}€/mese per Guardian nei mesi successivi.
+                      </p>
                     </div>
                   )}
                   <div className="flex items-center justify-between">
@@ -727,7 +751,7 @@ function CheckoutContent() {
                 <div className="border-t pt-4 mt-4">
                   <div className="flex items-center justify-between text-lg font-semibold">
                     <span>{t.checkout.monthly.total}</span>
-                    <span>{getTotalPrice(selectedPlan, guardianParam)}€{selectedPlan?.period || '/mese'}</span>
+                    <span>{getTotalPrice(selectedPlan, guardianParam, guardianBillingParam, billingParam)}€{selectedPlan?.period || '/mese'}</span>
                   </div>
                 </div>
               </div>
@@ -755,6 +779,12 @@ function CheckoutContent() {
                     <div className="flex items-center space-x-3">
                       <Shield className="w-5 h-5 text-primary" />
                       <span className="text-gray-700">Guardian incluso</span>
+                    </div>
+                  )}
+                  {guardianParam && guardianBillingParam === 'monthly' && billingParam === 'annual' && (
+                    <div className="flex items-center space-x-3">
+                      <div className="w-5 h-5 text-blue-500">ℹ️</div>
+                      <span className="text-gray-700 text-sm">Guardian: primo mese incluso, poi {getGuardianPrice(selectedPlan?.name || 'Standard')}€/mese</span>
                     </div>
                   )}
                 </div>

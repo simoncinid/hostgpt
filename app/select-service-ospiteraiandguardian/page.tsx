@@ -56,26 +56,29 @@ function SelectServiceCombinedContent() {
     const monthlyPrice = parseInt(plan.price.replace('€', ''))
     const annualPrice = monthlyPrice * 10
     
-    // Calcola il prezzo Guardian basato sul piano
+    // Calcola il prezzo Guardian basato sul piano (sempre mensile)
     let guardianPrice = 9 // Standard
     if (monthlyPrice >= 199) guardianPrice = 89 // Enterprise
     else if (monthlyPrice >= 79) guardianPrice = 36 // Pro
     else if (monthlyPrice >= 39) guardianPrice = 18 // Premium
     
-    const totalMonthlyPrice = monthlyPrice + guardianPrice
-    const totalAnnualPrice = annualPrice + (guardianPrice * 10)
+    // Per il totale: se annuale = prezzo annuale OspiterAI + primo mese Guardian
+    // Se mensile = prezzo mensile OspiterAI + prezzo mensile Guardian
+    const totalPrice = isAnnualBilling ? annualPrice + guardianPrice : monthlyPrice + guardianPrice
     
     return {
       name: plan.name,
-      price: isAnnualBilling ? `€${totalAnnualPrice}` : `€${totalMonthlyPrice}`,
+      price: `€${totalPrice}`,
       period: isAnnualBilling ? "/anno" : "/mese",
       ospiteraiPrice: isAnnualBilling ? `€${annualPrice}` : plan.price,
-      guardianPrice: isAnnualBilling ? `€${guardianPrice * 10}` : `€${guardianPrice}`,
+      guardianPrice: `€${guardianPrice}`, // Sempre mensile
+      guardianPriceMonthly: guardianPrice, // Per i calcoli
       features: plan.features,
       hasFreeTrial: true,
       ctaButton: plan.ctaButton,
       priceId: plan.priceId,
-      guardianPriceId: getGuardianPriceId(monthlyPrice)
+      guardianPriceId: getGuardianPriceId(monthlyPrice),
+      isAnnualBilling: isAnnualBilling
     }
   })
 
@@ -87,7 +90,16 @@ function SelectServiceCombinedContent() {
   }
 
   const handlePlanSelection = (priceId: string, guardianPriceId: string) => {
-    router.push(`/checkout?plan=${priceId}&guardian=${guardianPriceId}&billing=${isAnnualBilling ? 'annual' : 'monthly'}`)
+    // Per il billing annuale, dobbiamo gestire diversamente:
+    // - OspiterAI: annuale
+    // - Guardian: sempre mensile
+    if (isAnnualBilling) {
+      // Per il billing annuale, passiamo un flag speciale
+      router.push(`/checkout?plan=${priceId}&guardian=${guardianPriceId}&billing=annual&guardian_billing=monthly`)
+    } else {
+      // Per il billing mensile, tutto normale
+      router.push(`/checkout?plan=${priceId}&guardian=${guardianPriceId}&billing=monthly`)
+    }
   }
 
   if (isLoading) {
@@ -248,8 +260,16 @@ function SelectServiceCombinedContent() {
                             <Shield className="w-3 h-3 mr-1" />
                             Guardian:
                           </span>
-                          <span className="font-medium">{plan.guardianPrice}{isAnnualBilling ? '/anno' : '/mese'}</span>
+                          <span className="font-medium">{plan.guardianPrice}/mese</span>
                         </div>
+                        {isAnnualBilling && (
+                          <div className="mt-2 pt-2 border-t border-gray-200">
+                            <p className="text-xs text-gray-500">
+                              <strong>Nota:</strong> Il totale include solo il primo mese di Guardian. 
+                              Pagherai {plan.guardianPriceMonthly}€/mese per Guardian nei mesi successivi.
+                            </p>
+                          </div>
+                        )}
                       </div>
                     </div>
                     

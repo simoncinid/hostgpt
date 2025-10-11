@@ -252,7 +252,8 @@ export default function SettingsPage() {
         const res = await api.post('/subscription/create-combined-checkout', {
           plan_price_id: priceId,
           guardian_price_id: guardianPriceId,
-          billing: 'monthly'
+          billing: 'monthly',
+          guardian_billing: 'monthly'
         })
         
         if (res.data.checkout_url) {

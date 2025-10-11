@@ -6680,6 +6680,7 @@ async def create_combined_subscription_checkout(
     plan_price_id: str,
     guardian_price_id: str,
     billing: str = "monthly",
+    guardian_billing: str = "monthly",
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -6722,7 +6723,16 @@ async def create_combined_subscription_checkout(
             'ENTERPRISE_GUARDIAN_PRICE_ID': settings.STRIPE_ENTERPRISE_GUARDIAN_PRICE_ID,
         }
         
-        real_plan_price_id = plan_price_id_mapping.get(plan_price_id, settings.STRIPE_STANDARD_PRICE_ID)
+        # Determina il price ID corretto per OspiterAI basato sul billing
+        if billing == 'annual':
+            # Se è annuale, usa il price ID annuale
+            annual_plan_price_id = f"ANNUAL_{plan_price_id}"
+            real_plan_price_id = plan_price_id_mapping.get(annual_plan_price_id, settings.STRIPE_ANNUAL_STANDARD_PRICE_ID)
+        else:
+            # Se è mensile, usa il price ID mensile
+            real_plan_price_id = plan_price_id_mapping.get(plan_price_id, settings.STRIPE_STANDARD_PRICE_ID)
+        
+        # Guardian è sempre mensile
         real_guardian_price_id = guardian_price_id_mapping.get(guardian_price_id, settings.STRIPE_STANDARD_GUARDIAN_PRICE_ID)
         
         # Crea sessione checkout con entrambi i prodotti
