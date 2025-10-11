@@ -48,7 +48,7 @@ function SelectServiceCombinedContent() {
     }
 
     checkUser()
-  }, [isAuthenticated, router])
+  }, [isAuthenticated, router, user])
 
   // Genera i piani di pricing con i costi Guardian inclusi
   const pricingPlans = t.pricing.plans.map((plan: any, index: number) => {
