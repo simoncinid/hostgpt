@@ -16,7 +16,7 @@ import {
 } from 'lucide-react'
 import { useAuthStore, useChatbotStore } from '@/lib/store'
 import { useLanguage } from '@/lib/languageContext'
-import { chatbots as chatbotsApi } from '@/lib/api'
+import { chatbots as chatbotsApi, printOrders } from '@/lib/api'
 import toast from 'react-hot-toast'
 import Sidebar from '@/app/components/Sidebar'
 
@@ -136,6 +136,11 @@ function StampeContent() {
       return
     }
     
+    if (!selectedChatbot.id || isNaN(Number(selectedChatbot.id))) {
+      toast.error('Errore: ID chatbot non valido')
+      return
+    }
+    
     if (getTotalItems() === 0) {
       toast.error('Seleziona almeno un prodotto')
       return
@@ -144,29 +149,48 @@ function StampeContent() {
     setIsSending(true)
     
     try {
-      const response = await fetch('/api/print-orders/request', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({
-          chatbot_id: selectedChatbot.id,
-          plastic_supports: plasticSupports,
-          stickers: stickerQuantities
-        })
+      // Assicuriamoci che tutti i valori siano numeri validi
+      const cleanedStickers: { [key: string]: number } = {}
+      Object.keys(stickerQuantities).forEach(key => {
+        const value = stickerQuantities[key]
+        cleanedStickers[key] = typeof value === 'number' ? value : 0
       })
-
-      if (response.ok) {
-        setRequestSent(true)
-        toast.success(t.stampe.simplified.requestSent)
-      } else {
-        const error = await response.json()
-        toast.error(error.detail || 'Errore nell\'invio della richiesta')
+      
+      const requestData = {
+        chatbot_id: Number(selectedChatbot.id),
+        plastic_supports: Number(plasticSupports),
+        stickers: cleanedStickers
       }
-    } catch (error) {
+      
+      console.log('Sending request data:', requestData)
+      console.log('Request data JSON:', JSON.stringify(requestData))
+      
+      const response = await printOrders.sendRequest(requestData)
+      
+      console.log('Success response:', response.data)
+      setRequestSent(true)
+      toast.success(t.stampe.simplified.requestSent)
+      
+    } catch (error: any) {
       console.error('Error sending request:', error)
-      toast.error('Errore nell\'invio della richiesta')
+      
+      let errorMessage = 'Errore nell\'invio della richiesta'
+      
+      if (error.response) {
+        // Errore dal server
+        console.log('Error response:', error.response)
+        errorMessage = error.response.data?.detail || `Errore del server (${error.response.status})`
+      } else if (error.request) {
+        // Errore di rete
+        console.log('Network error:', error.request)
+        errorMessage = 'Errore di connessione. Verifica la tua connessione internet.'
+      } else {
+        // Altri errori
+        console.log('Other error:', error.message)
+        errorMessage = error.message || errorMessage
+      }
+      
+      toast.error(errorMessage)
     } finally {
       setIsSending(false)
     }
@@ -292,7 +316,7 @@ function StampeContent() {
                     className="flex items-center space-x-2 px-3 py-2 text-sm text-gray-600 hover:text-primary disabled:text-gray-300 disabled:cursor-not-allowed transition"
                   >
                     <ChevronLeft className="w-4 h-4" />
-                    <span>Precedente</span>
+                    <span>Prec</span>
                   </button>
                   
                   <div className="flex space-x-1">
@@ -319,7 +343,7 @@ function StampeContent() {
                     disabled={currentChatbotPage === totalChatbotPages - 1}
                     className="flex items-center space-x-2 px-3 py-2 text-sm text-gray-600 hover:text-primary disabled:text-gray-300 disabled:cursor-not-allowed transition"
                   >
-                    <span>Successivo</span>
+                    <span>Succ</span>
                     <ChevronRight className="w-4 h-4" />
                   </button>
                 </div>

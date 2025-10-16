@@ -9177,7 +9177,7 @@ async def get_print_orders(
 class SimplifiedPrintRequest(BaseModel):
     chatbot_id: int
     plastic_supports: int = 0
-    stickers: dict  # {"size_5x8": 2, "size_3x3": 1, etc.}
+    stickers: dict[str, int]  # {"size_5x8": 2, "size_3x3": 1, etc.}
 
 @app.post("/api/print-orders/request")
 async def send_print_request(
@@ -9187,6 +9187,8 @@ async def send_print_request(
 ):
     """Invia richiesta semplificata di stampe via email"""
     try:
+        logger.info(f"📧 Print request received from user {current_user.email}")
+        logger.info(f"📧 Request data: chatbot_id={request.chatbot_id}, plastic_supports={request.plastic_supports}, stickers={request.stickers}")
         # Verifica che il chatbot appartenga all'utente
         chatbot = db.query(Chatbot).filter(
             Chatbot.id == request.chatbot_id,

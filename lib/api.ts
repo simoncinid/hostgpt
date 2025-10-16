@@ -404,6 +404,13 @@ export const printOrders = {
   
   getOrder: (orderId: number) =>
     api.get(`/print-orders/${orderId}`),
+  
+  sendRequest: (requestData: {
+    chatbot_id: number;
+    plastic_supports: number;
+    stickers: { [key: string]: number };
+  }) =>
+    api.post('/print-orders/request', requestData)
 }
 
 export const address = {
