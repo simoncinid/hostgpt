@@ -9173,6 +9173,101 @@ async def get_print_orders(
     
     return result
 
+# Modelli per la richiesta semplificata di stampe
+class SimplifiedPrintRequest(BaseModel):
+    chatbot_id: int
+    plastic_supports: int = 0
+    stickers: dict  # {"size_5x8": 2, "size_3x3": 1, etc.}
+
+@app.post("/api/print-orders/request")
+async def send_print_request(
+    request: SimplifiedPrintRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Invia richiesta semplificata di stampe via email"""
+    try:
+        # Verifica che il chatbot appartenga all'utente
+        chatbot = db.query(Chatbot).filter(
+            Chatbot.id == request.chatbot_id,
+            Chatbot.user_id == current_user.id
+        ).first()
+        
+        if not chatbot:
+            raise HTTPException(status_code=404, detail="Chatbot non trovato")
+        
+        # Prepara i dettagli dell'ordine
+        order_details = []
+        
+        # Aggiungi supporti di plastica se richiesti
+        if request.plastic_supports > 0:
+            order_details.append(f"Supporti di Plastica: {request.plastic_supports}")
+        
+        # Aggiungi adesivi per ogni dimensione
+        sticker_sizes_map = {
+            "size_5x8": "5.83″×8.27″ (14.8×21 cm)",
+            "size_3x3": "3″×3″ (7.6×7.6 cm)", 
+            "size_4x4": "4″×4″ (10.2×10.2 cm)",
+            "size_5x5": "5.5″×5.5″ (14×14 cm)"
+        }
+        
+        for size_id, quantity in request.stickers.items():
+            if quantity > 0:
+                size_name = sticker_sizes_map.get(size_id, size_id)
+                order_details.append(f"Adesivi {size_name}: {quantity}")
+        
+        if not order_details:
+            raise HTTPException(status_code=400, detail="Nessun prodotto selezionato")
+        
+        # Crea il contenuto dell'email
+        email_subject = "🖨️ Nuova Richiesta Stampe QR-Code - OspiterAI"
+        
+        email_body = f"""
+        <h2>Nuova Richiesta Stampe QR-Code</h2>
+        
+        <h3>Dettagli Cliente:</h3>
+        <ul>
+            <li><strong>Nome:</strong> {current_user.full_name or 'Non specificato'}</li>
+            <li><strong>Email:</strong> {current_user.email}</li>
+            <li><strong>Telefono:</strong> {current_user.phone or 'Non specificato'}</li>
+        </ul>
+        
+        <h3>Dettagli Chatbot:</h3>
+        <ul>
+            <li><strong>Nome Proprietà:</strong> {chatbot.property_name}</li>
+            <li><strong>Città:</strong> {chatbot.property_city or 'Non specificata'}</li>
+            <li><strong>ID Chatbot:</strong> {chatbot.id}</li>
+        </ul>
+        
+        <h3>Prodotti Richiesti:</h3>
+        <ul>
+        """ + "".join([f"<li>{detail}</li>" for detail in order_details]) + """
+        </ul>
+        
+        <h3>QR-Code:</h3>
+        <p>Il QR-Code da stampare è allegato al chatbot con ID {chatbot.id}</p>
+        
+        <p><em>Richiesta inviata automaticamente dal sistema OspiterAI</em></p>
+        """
+        
+        # Invia l'email
+        await send_email(
+            to_email="ospiterai@gmail.com",
+            subject=email_subject,
+            body=email_body
+        )
+        
+        logger.info(f"Print request sent for user {current_user.email}, chatbot {chatbot.id}")
+        
+        return {
+            "success": True,
+            "message": "Richiesta inviata correttamente"
+        }
+        
+    except Exception as e:
+        logger.error(f"Error sending print request: {e}")
+        raise HTTPException(status_code=500, detail=f"Errore nell'invio della richiesta: {str(e)}")
+
 @app.get("/api/print-orders/{order_id}")
 async def get_print_order(
     order_id: int,

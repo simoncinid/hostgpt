@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, Suspense } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import {
@@ -9,11 +9,8 @@ import {
   ArrowLeft,
   Plus,
   Minus,
-  ShoppingCart,
+  Send,
   Check,
-  Star,
-  Truck,
-  Clock,
   ChevronLeft,
   ChevronRight
 } from 'lucide-react'
@@ -28,29 +25,6 @@ interface StickerSize {
   name: string
   dimensions: string
   dimensionsCm: string
-  price: number
-  productId: string
-  variantId: string
-}
-
-interface Product {
-  id: string
-  name: string
-  description: string
-  price: number
-  image: string
-  features: string[]
-  type: 'sticker'
-  sizes?: StickerSize[]
-}
-
-interface OrderProduct {
-  id: string
-  name: string
-  type: string
-  quantity: number
-  price: number
-  selectedSize?: StickerSize
 }
 
 const stickerSizes: StickerSize[] = [
@@ -58,76 +32,45 @@ const stickerSizes: StickerSize[] = [
     id: 'size_5x8',
     name: '5.83″×8.27″',
     dimensions: '5.83″×8.27″',
-    dimensionsCm: '(14.8×21 cm)',
-    price: 5.99,
-    productId: '68c2e22b28db94',
-    variantId: '10163'
+    dimensionsCm: '(14.8×21 cm)'
   },
   {
     id: 'size_3x3',
     name: '3″×3″',
     dimensions: '3″×3″',
-    dimensionsCm: '(7.6×7.6 cm)',
-    price: 3.99,
-    productId: '68c2e22b28dc08',
-    variantId: '10164'
+    dimensionsCm: '(7.6×7.6 cm)'
   },
   {
     id: 'size_4x4',
     name: '4″×4″',
     dimensions: '4″×4″',
-    dimensionsCm: '(10.2×10.2 cm)',
-    price: 4.49,
-    productId: '68c2e22b28dc67',
-    variantId: '10165'
+    dimensionsCm: '(10.2×10.2 cm)'
   },
   {
     id: 'size_5x5',
     name: '5.5″×5.5″',
     dimensions: '5.5″×5.5″',
-    dimensionsCm: '(14×14 cm)',
-    price: 4.49,
-    productId: '68c2e22b28dc67',
-    variantId: '10165'
-  }
-]
-
-const products: Product[] = [
-  {
-    id: 'sticker',
-    name: 'Adesivi QR-Code', // This will be replaced by t.stampe.products.sticker.name in the component
-    description: 'Adesivi resistenti all\'acqua e ai raggi UV, perfetti per interni ed esterni', // This will be replaced by t.stampe.products.sticker.description in the component
-    price: 5.99,
-    image: '/icons/sticker-placeholder.png',
-    features: [
-      'Resistenti all\'acqua',
-      'Adesivi ai raggi UV',
-      'Spedizione worldwide €4.99'
-    ], // This will be replaced by t.stampe.products.sticker.features in the component
-    type: 'sticker',
-    sizes: stickerSizes
+    dimensionsCm: '(14×14 cm)'
   }
 ]
 
 function StampeContent() {
   const router = useRouter()
-  const searchParams = useSearchParams()
   const { user, isAuthenticated } = useAuthStore()
   const { chatbots } = useChatbotStore()
   const { t } = useLanguage()
   
   const [selectedChatbot, setSelectedChatbot] = useState<any>(null)
+  const [plasticSupports, setPlasticSupports] = useState(0)
   const [stickerQuantities, setStickerQuantities] = useState<{[key: string]: number}>({
     size_5x8: 0,
     size_3x3: 0,
     size_4x4: 0,
     size_5x5: 0
   })
-  const [quantities, setQuantities] = useState<{[key: string]: number}>({
-    sticker: 0,
-    desk_plate: 0
-  })
   const [isLoading, setIsLoading] = useState(true)
+  const [isSending, setIsSending] = useState(false)
+  const [requestSent, setRequestSent] = useState(false)
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
   const [currentChatbotPage, setCurrentChatbotPage] = useState(0)
 
@@ -150,16 +93,9 @@ function StampeContent() {
       const response = await chatbotsApi.list()
       setIsLoading(false)
     } catch (error) {
-      toast.error(t.stampe.toasts.errorLoadingChatbots)
+      toast.error('Errore nel caricamento dei chatbot')
       setIsLoading(false)
     }
-  }
-
-  const handleQuantityChange = (productId: string, change: number) => {
-    setQuantities(prev => ({
-      ...prev,
-      [productId]: Math.max(0, prev[productId] + change)
-    }))
   }
 
   const handleStickerQuantityChange = (sizeId: string, change: number) => {
@@ -169,33 +105,9 @@ function StampeContent() {
     }))
   }
 
-  const getTotalPrice = () => {
-    let total = 0
-    
-    // Calcola il totale per gli adesivi
-    stickerSizes.forEach(size => {
-      total += size.price * stickerQuantities[size.id]
-    })
-    
-    // Aggiungi altri prodotti se presenti
-    products.forEach(product => {
-      if (product.id !== 'sticker') {
-        total += product.price * quantities[product.id]
-      }
-    })
-    
-    return total
-  }
-
   const getTotalItems = () => {
-    let total = 0
-    
-    // Conta gli adesivi
+    let total = plasticSupports
     Object.values(stickerQuantities).forEach(qty => total += qty)
-    
-    // Conta altri prodotti
-    Object.values(quantities).forEach(qty => total += qty)
-    
     return total
   }
 
@@ -207,65 +119,57 @@ function StampeContent() {
   const goToNextChatbot = () => {
     if (currentChatbotPage < totalChatbotPages - 1) {
       setCurrentChatbotPage(currentChatbotPage + 1)
-      setSelectedChatbot(null) // Reset selezione quando si cambia pagina
+      setSelectedChatbot(null)
     }
   }
 
   const goToPrevChatbot = () => {
     if (currentChatbotPage > 0) {
       setCurrentChatbotPage(currentChatbotPage - 1)
-      setSelectedChatbot(null) // Reset selezione quando si cambia pagina
+      setSelectedChatbot(null)
     }
   }
 
-  const handleProceedToCheckout = () => {
+  const handleSendRequest = async () => {
     if (!selectedChatbot) {
-      toast.error(t.stampe.toasts.selectChatbot)
+      toast.error('Seleziona un chatbot')
       return
     }
     
     if (getTotalItems() === 0) {
-      toast.error(t.stampe.toasts.selectProduct)
+      toast.error('Seleziona almeno un prodotto')
       return
     }
 
-    // Prepara i prodotti per l'ordine
-    const orderProducts: OrderProduct[] = []
+    setIsSending(true)
     
-    // Aggiungi gli adesivi con quantità > 0
-    stickerSizes.forEach(size => {
-      if (stickerQuantities[size.id] > 0) {
-        orderProducts.push({
-          id: 'sticker',
-          name: 'Adesivi QR-Code',
-          type: 'sticker',
-          quantity: stickerQuantities[size.id],
-          price: size.price,
-          selectedSize: size
+    try {
+      const response = await fetch('/api/print-orders/request', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+          chatbot_id: selectedChatbot.id,
+          plastic_supports: plasticSupports,
+          stickers: stickerQuantities
         })
-      }
-    })
-    
-    // Aggiungi altri prodotti se presenti
-    products.forEach(product => {
-      if (product.id !== 'sticker' && quantities[product.id] > 0) {
-        orderProducts.push({
-          ...product,
-          quantity: quantities[product.id]
-        })
-      }
-    })
+      })
 
-    // Salva i dati dell'ordine nel localStorage per il checkout
-    const orderData = {
-      chatbot: selectedChatbot,
-      products: orderProducts,
-      totalPrice: getTotalPrice(),
-      totalItems: getTotalItems()
+      if (response.ok) {
+        setRequestSent(true)
+        toast.success(t.stampe.simplified.requestSent)
+      } else {
+        const error = await response.json()
+        toast.error(error.detail || 'Errore nell\'invio della richiesta')
+      }
+    } catch (error) {
+      console.error('Error sending request:', error)
+      toast.error('Errore nell\'invio della richiesta')
+    } finally {
+      setIsSending(false)
     }
-    
-    localStorage.setItem('printOrder', JSON.stringify(orderData))
-    router.push('/stampe/checkout')
   }
 
   if (isLoading) {
@@ -297,6 +201,30 @@ function StampeContent() {
     )
   }
 
+  if (requestSent) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Sidebar currentPath="/stampe" onLogout={() => {}} isSidebarCollapsed={isSidebarCollapsed} setIsSidebarCollapsed={setIsSidebarCollapsed} />
+        <div className={`transition-all duration-200 ${isSidebarCollapsed ? 'md:ml-16' : 'md:ml-64'} p-4 md:p-8`}>
+          <div className="text-center py-12">
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6"
+            >
+              <Check className="w-10 h-10 text-green-600" />
+            </motion.div>
+            <h2 className="text-3xl font-bold text-gray-800 mb-4">{t.stampe.simplified.requestSent}</h2>
+            <p className="text-gray-600 mb-8 max-w-md mx-auto">{t.stampe.simplified.requestSentMessage}</p>
+            <Link href="/dashboard" className="btn-primary">
+              {t.stampe.simplified.backToDashboard}
+            </Link>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Sidebar currentPath="/stampe" onLogout={() => {}} isSidebarCollapsed={isSidebarCollapsed} setIsSidebarCollapsed={setIsSidebarCollapsed} />
@@ -312,136 +240,142 @@ function StampeContent() {
             {t.stampe.backToDashboard}
           </Link>
           <h1 className="text-3xl font-bold text-dark mb-2">
-            {t.stampe.title}
+            {t.stampe.simplified.title}
           </h1>
-          <p className="text-gray-600 lg:hidden">
-            {t.stampe.subtitle}
+          <p className="text-gray-600">
+            {t.stampe.simplified.subtitle}
           </p>
         </div>
 
-        {/* Layout Mobile - Invariato */}
-        <div className="block lg:hidden">
-          <div className="grid grid-cols-1 gap-8">
+        <div className="max-w-4xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Selezione Chatbot */}
-            <div>
-              <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xl font-bold text-dark">{t.stampe.selectChatbot}</h2>
-                  {totalChatbotPages > 1 && (
-                    <div className="flex items-center space-x-2">
-                      <span className="text-sm text-gray-500">
-                        {currentChatbotPage + 1} / {totalChatbotPages}
-                      </span>
-                    </div>
-                  )}
-                </div>
-                
-                {currentChatbot && (
-                  <motion.div
-                    key={currentChatbot.id}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    className={`border rounded-lg p-4 cursor-pointer transition ${
+            <div className="bg-white rounded-2xl shadow-lg p-6">
+              <h2 className="text-xl font-bold text-dark mb-4">{t.stampe.selectChatbot}</h2>
+              
+              {currentChatbot && (
+                <motion.div
+                  key={currentChatbot.id}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className={`border rounded-lg p-4 cursor-pointer transition mb-4 ${
+                    selectedChatbot?.id === currentChatbot.id 
+                      ? 'border-primary bg-primary/5' 
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                  onClick={() => setSelectedChatbot(currentChatbot)}
+                >
+                  <div className="flex items-center space-x-3">
+                    <div className={`w-4 h-4 rounded-full border-2 ${
                       selectedChatbot?.id === currentChatbot.id 
-                        ? 'border-primary bg-primary/5' 
-                        : 'border-gray-200 hover:border-gray-300'
-                    }`}
-                    onClick={() => setSelectedChatbot(currentChatbot)}
-                  >
-                    <div className="flex items-center space-x-3">
-                      <div className={`w-4 h-4 rounded-full border-2 ${
-                        selectedChatbot?.id === currentChatbot.id 
-                          ? 'border-primary bg-primary' 
-                          : 'border-gray-300'
-                      }`}>
-                        {selectedChatbot?.id === currentChatbot.id && (
-                          <Check className="w-3 h-3 text-white" />
-                        )}
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="font-semibold">{currentChatbot.property_name}</h3>
-                        <p className="text-sm text-gray-500">{currentChatbot.property_city}</p>
-                      </div>
+                        ? 'border-primary bg-primary' 
+                        : 'border-gray-300'
+                    }`}>
+                      {selectedChatbot?.id === currentChatbot.id && (
+                        <Check className="w-3 h-3 text-white" />
+                      )}
                     </div>
-                  </motion.div>
-                )}
-
-                {/* Navigazione paginazione */}
-                {totalChatbotPages > 1 && (
-                  <div className="flex items-center justify-between mt-4">
-                    <button
-                      onClick={goToPrevChatbot}
-                      disabled={currentChatbotPage === 0}
-                      className="flex items-center space-x-2 px-3 py-2 text-sm text-gray-600 hover:text-primary disabled:text-gray-300 disabled:cursor-not-allowed transition"
-                    >
-                      <ChevronLeft className="w-4 h-4" />
-                      <span>Precedente</span>
-                    </button>
-                    
-                    <div className="flex space-x-1">
-                      {Array.from({ length: totalChatbotPages }, (_, i) => (
-                        <button
-                          key={i}
-                          onClick={() => {
-                            setCurrentChatbotPage(i)
-                            setSelectedChatbot(null)
-                          }}
-                          className={`w-8 h-8 rounded-full text-sm font-medium transition ${
-                            i === currentChatbotPage
-                              ? 'bg-primary text-white'
-                              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                          }`}
-                        >
-                          {i + 1}
-                        </button>
-                      ))}
+                    <div className="flex-1">
+                      <h3 className="font-semibold">{currentChatbot.property_name}</h3>
+                      <p className="text-sm text-gray-500">{currentChatbot.property_city}</p>
                     </div>
-                    
-                    <button
-                      onClick={goToNextChatbot}
-                      disabled={currentChatbotPage === totalChatbotPages - 1}
-                      className="flex items-center space-x-2 px-3 py-2 text-sm text-gray-600 hover:text-primary disabled:text-gray-300 disabled:cursor-not-allowed transition"
-                    >
-                      <span>Successivo</span>
-                      <ChevronRight className="w-4 h-4" />
-                    </button>
                   </div>
-                )}
-              </div>
+                </motion.div>
+              )}
+
+              {/* Navigazione paginazione */}
+              {totalChatbotPages > 1 && (
+                <div className="flex items-center justify-between mb-4">
+                  <button
+                    onClick={goToPrevChatbot}
+                    disabled={currentChatbotPage === 0}
+                    className="flex items-center space-x-2 px-3 py-2 text-sm text-gray-600 hover:text-primary disabled:text-gray-300 disabled:cursor-not-allowed transition"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                    <span>Precedente</span>
+                  </button>
+                  
+                  <div className="flex space-x-1">
+                    {Array.from({ length: totalChatbotPages }, (_, i) => (
+                      <button
+                        key={i}
+                        onClick={() => {
+                          setCurrentChatbotPage(i)
+                          setSelectedChatbot(null)
+                        }}
+                        className={`w-8 h-8 rounded-full text-sm font-medium transition ${
+                          i === currentChatbotPage
+                            ? 'bg-primary text-white'
+                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        }`}
+                      >
+                        {i + 1}
+                      </button>
+                    ))}
+                  </div>
+                  
+                  <button
+                    onClick={goToNextChatbot}
+                    disabled={currentChatbotPage === totalChatbotPages - 1}
+                    className="flex items-center space-x-2 px-3 py-2 text-sm text-gray-600 hover:text-primary disabled:text-gray-300 disabled:cursor-not-allowed transition"
+                  >
+                    <span>Successivo</span>
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
 
               {/* Anteprima QR-Code */}
               {selectedChatbot && (
-                <div className="bg-white rounded-2xl shadow-lg p-6">
-                  <h3 className="text-lg font-bold text-dark mb-4">{t.stampe.qrPreview}</h3>
-                  <div className="bg-gray-100 p-4 rounded-lg text-center">
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h3 className="text-sm font-bold text-dark mb-3">{t.stampe.qrPreview}</h3>
+                  <div className="bg-white p-3 rounded text-center">
                     <img
                       src={`data:image/png;base64,${selectedChatbot.qr_code}`}
                       alt="QR Code"
-                      className="w-32 h-32 mx-auto mb-3"
+                      className="w-24 h-24 mx-auto mb-2"
                     />
-                    <p className="text-sm text-gray-600">{selectedChatbot.property_name}</p>
+                    <p className="text-xs text-gray-600">{selectedChatbot.property_name}</p>
                   </div>
                 </div>
               )}
             </div>
 
-            {/* Prodotti */}
-            <div>
-              <div className="bg-white rounded-2xl shadow-lg p-6 mb-8 max-w-md mx-auto">
-                <div className="text-center mb-6">
-                      <div className="w-20 h-20 bg-gray-100 rounded-lg mx-auto mb-3 flex items-center justify-center overflow-hidden">
-                        <img 
-                          src="/icons/sticker.webp" 
-                          alt="QR-Code Stickers" 
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                      <h3 className="text-xl font-bold text-dark">{t.stampe.products.sticker.name}</h3>
-                      <p className="text-gray-600 text-sm mt-2">{t.stampe.products.sticker.description}</p>
-                    </div>
+            {/* Selezione Prodotti */}
+            <div className="bg-white rounded-2xl shadow-lg p-6">
+              <h2 className="text-xl font-bold text-dark mb-6">Prodotti</h2>
+              
+              {/* Supporti di Plastica */}
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold text-dark mb-3">{t.stampe.simplified.plasticSupports}</h3>
+                <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+                  <div className="flex-1">
+                    <div className="font-medium text-dark">{t.stampe.products.plasticSupport.name}</div>
+                    <div className="text-sm text-gray-600">{t.stampe.products.plasticSupport.description}</div>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <button
+                      onClick={() => setPlasticSupports(Math.max(0, plasticSupports - 1))}
+                      className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center"
+                      disabled={plasticSupports === 0}
+                    >
+                      <Minus className="w-4 h-4" />
+                    </button>
+                    <span className="w-8 text-center font-semibold">{plasticSupports}</span>
+                    <button
+                      onClick={() => setPlasticSupports(plasticSupports + 1)}
+                      className="w-8 h-8 rounded-full bg-primary text-white hover:bg-primary/90 flex items-center justify-center"
+                    >
+                      <Plus className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
 
-                {/* Righe per ogni dimensione */}
-                <div className="space-y-4">
+              {/* Adesivi */}
+              <div>
+                <h3 className="text-lg font-semibold text-dark mb-3">{t.stampe.simplified.stickers}</h3>
+                <div className="space-y-3">
                   {stickerSizes.map((size, index) => (
                     <motion.div
                       key={size.id}
@@ -451,10 +385,9 @@ function StampeContent() {
                       className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:border-gray-300 transition"
                     >
                       <div className="flex-1">
-                        <div className="font-semibold text-dark">{size.dimensions}</div>
+                        <div className="font-medium text-dark">{size.dimensions}</div>
                         <div className="text-sm text-gray-600">{size.dimensionsCm}</div>
-                        <div className="text-lg font-bold text-primary">€{size.price.toFixed(2)}</div>
-                    </div>
+                      </div>
                       <div className="flex items-center space-x-3">
                         <button
                           onClick={() => handleStickerQuantityChange(size.id, -1)}
@@ -470,301 +403,41 @@ function StampeContent() {
                         >
                           <Plus className="w-4 h-4" />
                         </button>
-                    </div>
-                  </motion.div>
-                ))}
+                      </div>
+                    </motion.div>
+                  ))}
                 </div>
               </div>
+            </div>
+          </div>
 
-              {/* Riepilogo Ordine */}
-              {getTotalItems() > 0 && (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="bg-white rounded-2xl shadow-lg p-6 mb-6"
-                >
-                  <h3 className="text-lg font-bold text-dark mb-4">{t.stampe.orderSummary}</h3>
-                  <div className="space-y-3">
-                    {stickerSizes.map(size => {
-                      if (stickerQuantities[size.id] === 0) return null
-                      return (
-                        <div key={size.id} className="flex justify-between items-center">
-                          <span className="text-gray-600">
-                            Adesivi QR-Code ({size.dimensions}) x{stickerQuantities[size.id]}
-                          </span>
-                          <span className="font-semibold">
-                            €{(size.price * stickerQuantities[size.id]).toFixed(2)}
-                          </span>
-                        </div>
-                      )
-                    })}
-                    {products.map(product => {
-                      if (product.id === 'sticker' || quantities[product.id] === 0) return null
-                      return (
-                        <div key={product.id} className="flex justify-between items-center">
-                          <span className="text-gray-600">
-                            {product.name} x{quantities[product.id]}
-                          </span>
-                          <span className="font-semibold">
-                            €{(product.price * quantities[product.id]).toFixed(2)}
-                          </span>
-                        </div>
-                      )
-                    })}
-                    <div className="border-t pt-3">
-                      <div className="flex justify-between items-center">
-                        <span className="text-lg font-bold text-dark">{t.stampe.total}</span>
-                        <span className="text-xl font-bold text-primary">€{getTotalPrice().toFixed(2)}</span>
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
+          {/* Bottone Invio Richiesta */}
+          <div className="mt-8 text-center">
+            <motion.button
+              onClick={handleSendRequest}
+              disabled={!selectedChatbot || getTotalItems() === 0 || isSending}
+              className="bg-primary hover:bg-primary/90 disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-8 py-4 rounded-xl font-semibold text-lg transition flex items-center justify-center space-x-3 mx-auto"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              {isSending ? (
+                <>
+                  <div className="loading-spinner w-5 h-5"></div>
+                  <span>Invio in corso...</span>
+                </>
+              ) : (
+                <>
+                  <Send className="w-5 h-5" />
+                  <span>{t.stampe.simplified.sendRequest}</span>
+                </>
               )}
-
-              {/* Bottone Checkout */}
-              <motion.button
-                onClick={handleProceedToCheckout}
-                disabled={!selectedChatbot || getTotalItems() === 0}
-                className="w-full bg-primary hover:bg-primary/90 disabled:bg-gray-300 disabled:cursor-not-allowed text-white py-4 rounded-xl font-semibold text-lg transition flex items-center justify-center space-x-2"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <ShoppingCart className="w-5 h-5" />
-                <span>{t.stampe.proceedToCheckout} - €{getTotalPrice().toFixed(2)}</span>
-              </motion.button>
-            </div>
-          </div>
-        </div>
-
-        {/* Layout Desktop - Compattato per 75vh */}
-        <div className="hidden lg:block">
-          <div className="bg-white rounded-2xl shadow-lg p-6" style={{ height: '75vh', overflow: 'hidden' }}>
-            <div className="h-full flex flex-col">
-              {/* Header con titoli */}
-              <div className="flex items-center justify-between mb-4 pb-4 border-b">
-                <div className="flex items-center space-x-3">
-                  <QrCode className="w-5 h-5 text-primary" />
-                  <h2 className="text-lg font-bold text-dark">{t.stampe.selectChatbot}</h2>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <ShoppingCart className="w-5 h-5 text-primary" />
-                  <h2 className="text-lg font-bold text-dark">{t.stampe.products.sticker.name}</h2>
-                </div>
-              </div>
-
-              {/* Contenuto principale in 3 colonne */}
-              <div className="flex-1 grid grid-cols-3 gap-6 overflow-hidden">
-                {/* Colonna 1: Selezione Chatbot */}
-                <div className="flex flex-col">
-                  <div className="flex-1 overflow-y-auto">
-                    <div className="space-y-3">
-                      {currentChatbot && (
-                        <motion.div
-                          key={currentChatbot.id}
-                          initial={{ opacity: 0, x: -20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          className={`border rounded-lg p-3 cursor-pointer transition ${
-                            selectedChatbot?.id === currentChatbot.id 
-                              ? 'border-primary bg-primary/5' 
-                              : 'border-gray-200 hover:border-gray-300'
-                          }`}
-                          onClick={() => setSelectedChatbot(currentChatbot)}
-                        >
-                          <div className="flex items-center space-x-2">
-                            <div className={`w-3 h-3 rounded-full border-2 ${
-                              selectedChatbot?.id === currentChatbot.id 
-                                ? 'border-primary bg-primary' 
-                                : 'border-gray-300'
-                            }`}>
-                              {selectedChatbot?.id === currentChatbot.id && (
-                                <Check className="w-2 h-2 text-white" />
-                              )}
-                            </div>
-                            <div className="flex-1">
-                              <h3 className="text-sm font-semibold">{currentChatbot.property_name}</h3>
-                              <p className="text-xs text-gray-500">{currentChatbot.property_city}</p>
-                            </div>
-                          </div>
-                        </motion.div>
-                      )}
-
-                      {/* Navigazione paginazione */}
-                      {totalChatbotPages > 1 && (
-                        <div className="flex items-center justify-between">
-                          <button
-                            onClick={goToPrevChatbot}
-                            disabled={currentChatbotPage === 0}
-                            className="flex items-center space-x-1 px-2 py-1 text-xs text-gray-600 hover:text-primary disabled:text-gray-300 disabled:cursor-not-allowed transition"
-                          >
-                            <ChevronLeft className="w-3 h-3" />
-                            <span>Prec</span>
-                          </button>
-                          
-                          <div className="flex space-x-1">
-                            {Array.from({ length: totalChatbotPages }, (_, i) => (
-                              <button
-                                key={i}
-                                onClick={() => {
-                                  setCurrentChatbotPage(i)
-                                  setSelectedChatbot(null)
-                                }}
-                                className={`w-6 h-6 rounded-full text-xs font-medium transition ${
-                                  i === currentChatbotPage
-                                    ? 'bg-primary text-white'
-                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                }`}
-                              >
-                                {i + 1}
-                              </button>
-                            ))}
-                          </div>
-                          
-                          <button
-                            onClick={goToNextChatbot}
-                            disabled={currentChatbotPage === totalChatbotPages - 1}
-                            className="flex items-center space-x-1 px-2 py-1 text-xs text-gray-600 hover:text-primary disabled:text-gray-300 disabled:cursor-not-allowed transition"
-                          >
-                            <span>Succ</span>
-                            <ChevronRight className="w-3 h-3" />
-                          </button>
-                        </div>
-                      )}
-
-                      {/* Anteprima QR-Code */}
-                      {selectedChatbot && (
-                        <div className="bg-gray-50 rounded-lg p-3">
-                          <h3 className="text-sm font-bold text-dark mb-2">{t.stampe.qrPreview}</h3>
-                          <div className="bg-white p-2 rounded text-center">
-                            <img
-                              src={`data:image/png;base64,${selectedChatbot.qr_code}`}
-                              alt="QR Code"
-                              className="w-16 h-16 mx-auto mb-1"
-                            />
-                            <p className="text-xs text-gray-600">{selectedChatbot.property_name}</p>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Colonna 2: Prodotti */}
-                <div className="flex flex-col">
-                  <div className="flex-1 overflow-y-auto">
-                    <div className="bg-gray-50 rounded-lg p-3">
-                          <div className="text-center mb-3">
-                            <div className="w-12 h-12 bg-gray-100 rounded-lg mx-auto mb-2 flex items-center justify-center overflow-hidden">
-                              <img 
-                                src="/icons/sticker.webp" 
-                                alt="QR-Code Stickers" 
-                                className="w-full h-full object-cover"
-                              />
-                            </div>
-                            <h3 className="text-sm font-bold text-dark">{t.stampe.products.sticker.name}</h3>
-                            <p className="text-gray-600 text-xs mt-1 lg:hidden">{t.stampe.products.sticker.description}</p>
-                          </div>
-
-                      {/* Righe per ogni dimensione - Desktop */}
-                      <div className="space-y-2">
-                        {stickerSizes.map((size, index) => (
-                          <motion.div
-                            key={size.id}
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: index * 0.05 }}
-                            className="flex items-center justify-between p-2 border border-gray-200 rounded hover:border-gray-300 transition"
-                          >
-                            <div className="flex-1">
-                              <div className="text-xs font-semibold text-dark">{size.dimensions} {size.dimensionsCm}</div>
-                              <div className="text-sm font-bold text-primary">€{size.price.toFixed(2)}</div>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <button
-                                onClick={() => handleStickerQuantityChange(size.id, -1)}
-                                className="w-5 h-5 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center"
-                                disabled={stickerQuantities[size.id] === 0}
-                              >
-                                <Minus className="w-3 h-3" />
-                              </button>
-                              <span className="w-5 text-center font-semibold text-xs">{stickerQuantities[size.id]}</span>
-                              <button
-                                onClick={() => handleStickerQuantityChange(size.id, 1)}
-                                className="w-5 h-5 rounded-full bg-primary text-white hover:bg-primary/90 flex items-center justify-center"
-                              >
-                                <Plus className="w-3 h-3" />
-                              </button>
-                          </div>
-                        </motion.div>
-                      ))}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Colonna 3: Riepilogo e Checkout */}
-                <div className="flex flex-col">
-                  <div className="flex-1 overflow-y-auto">
-                    {/* Riepilogo Ordine */}
-                    {getTotalItems() > 0 && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="bg-gray-50 rounded-lg p-3 mb-4"
-                      >
-                        <h3 className="text-sm font-bold text-dark mb-3">{t.stampe.orderSummary}</h3>
-                        <div className="space-y-2">
-                          {stickerSizes.map(size => {
-                            if (stickerQuantities[size.id] === 0) return null
-                            return (
-                              <div key={size.id} className="flex justify-between items-center text-xs">
-                                <span className="text-gray-600">
-                                  Adesivi ({size.dimensions}) x{stickerQuantities[size.id]}
-                                </span>
-                                <span className="font-semibold">
-                                  €{(size.price * stickerQuantities[size.id]).toFixed(2)}
-                                </span>
-                              </div>
-                            )
-                          })}
-                          {products.map(product => {
-                            if (product.id === 'sticker' || quantities[product.id] === 0) return null
-                            return (
-                              <div key={product.id} className="flex justify-between items-center text-xs">
-                                <span className="text-gray-600">
-                                  {product.name} x{quantities[product.id]}
-                                </span>
-                                <span className="font-semibold">
-                                  €{(product.price * quantities[product.id]).toFixed(2)}
-                                </span>
-                              </div>
-                            )
-                          })}
-                          <div className="border-t pt-2">
-                            <div className="flex justify-between items-center">
-                              <span className="text-sm font-bold text-dark">{t.stampe.total}</span>
-                              <span className="text-lg font-bold text-primary">€{getTotalPrice().toFixed(2)}</span>
-                            </div>
-                          </div>
-                        </div>
-                      </motion.div>
-                    )}
-
-                    {/* Bottone Checkout */}
-                    <motion.button
-                      onClick={handleProceedToCheckout}
-                      disabled={!selectedChatbot || getTotalItems() === 0}
-                      className="w-full bg-primary hover:bg-primary/90 disabled:bg-gray-300 disabled:cursor-not-allowed text-white py-3 rounded-lg font-semibold text-sm transition flex items-center justify-center space-x-2"
-                      style={{ marginTop: '2vh' }}
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                    >
-                      <ShoppingCart className="w-4 h-4" />
-                      <span>{t.stampe.proceedToCheckout} - €{getTotalPrice().toFixed(2)}</span>
-                    </motion.button>
-                  </div>
-                </div>
-              </div>
-            </div>
+            </motion.button>
+            
+            {getTotalItems() > 0 && (
+              <p className="text-sm text-gray-600 mt-3">
+                Totale prodotti selezionati: {getTotalItems()}
+              </p>
+            )}
           </div>
         </div>
       </div>

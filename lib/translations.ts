@@ -260,12 +260,30 @@ export interface Translations {
         description: string
         features: string[]
       }
+      plasticSupport: {
+        name: string
+        description: string
+      }
     }
     
     // Order summary
     orderSummary: string
     total: string
     proceedToCheckout: string
+    
+    // Simplified interface
+    simplified: {
+      title: string
+      subtitle: string
+      plasticSupports: string
+      stickers: string
+      stickerSizes: string
+      quantity: string
+      sendRequest: string
+      requestSent: string
+      requestSentMessage: string
+      backToDashboard: string
+    }
     
     // Benefits
     benefits: {
@@ -2343,6 +2361,10 @@ export const translations: Record<Language, Translations> = {
             "Dimensioni 5.83″×8.27″",
             "Spedizione worldwide €4.99"
           ]
+        },
+        plasticSupport: {
+          name: "Supporti di Plastica",
+          description: "Supporti rigidi in plastica per QR-Code"
         }
       },
       
@@ -2350,6 +2372,20 @@ export const translations: Record<Language, Translations> = {
       orderSummary: "Riepilogo Ordine",
       total: "Totale",
       proceedToCheckout: "Procedi al Checkout",
+      
+      // Simplified interface
+      simplified: {
+        title: "Richiesta Stampe QR-Code",
+        subtitle: "Seleziona la quantità di supporti e adesivi desiderati",
+        plasticSupports: "Supporti di Plastica",
+        stickers: "Adesivi",
+        stickerSizes: "Dimensioni Adesivi",
+        quantity: "Quantità",
+        sendRequest: "Invia Richiesta",
+        requestSent: "Richiesta Inviata!",
+        requestSentMessage: "La tua richiesta è stata inviata correttamente. Verrai ricontattato a breve per i dettagli dell'ordine e il pagamento.",
+        backToDashboard: "Torna alla Dashboard"
+      },
       
       // Benefits
       benefits: {
@@ -3633,6 +3669,10 @@ export const translations: Record<Language, Translations> = {
             "Size 5.83″×8.27″",
             "Worldwide shipping €4.99"
           ]
+        },
+        plasticSupport: {
+          name: "Plastic Supports",
+          description: "Rigid plastic supports for QR-Codes"
         }
       },
       
@@ -3640,6 +3680,20 @@ export const translations: Record<Language, Translations> = {
       orderSummary: "Order Summary",
       total: "Total",
       proceedToCheckout: "Proceed to Checkout",
+      
+      // Simplified interface
+      simplified: {
+        title: "QR-Code Print Request",
+        subtitle: "Select the quantity of supports and stickers you need",
+        plasticSupports: "Plastic Supports",
+        stickers: "Stickers",
+        stickerSizes: "Sticker Sizes",
+        quantity: "Quantity",
+        sendRequest: "Send Request",
+        requestSent: "Request Sent!",
+        requestSentMessage: "Your request has been sent successfully. You will be contacted shortly for order details and payment.",
+        backToDashboard: "Back to Dashboard"
+      },
       
       // Benefits
       benefits: {
