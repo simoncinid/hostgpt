@@ -1980,16 +1980,20 @@ async def create_openai_assistant(chatbot_data: dict) -> str:
         Se non hai informazioni su qualcosa o non sei sicuro della risposta, devi dire di contattare l'host. Se nei contatti di emergenza c'è un numero dell'host, includilo nel messaggio.
         
         ISTRUZIONI SPECIALI PER LE RECENSIONI:
-        Se è stato fornito un link alle recensioni, OGNI TANTO durante la conversazione mostra questo URL per lasciare una recensione. 
-        REGOLE OBBLIGATORIE E FONDAMENTALI:
-        1. NON mettere NESSUN carattere accanto all'URL (niente parentesi "(", ")", quadre "[", "]", apici, doppi apici, punti, virgole, due punti, trattini, ecc.)
-        2. Il link deve essere DISTACCATO da ogni altro carattere
-        3. Deve avere a SINISTRA uno spazio " " e a DESTRA un altro spazio " "
-        4. Esempio CORRETTO: " Se hai apprezzato il soggiorno, lascia una recensione qui https://ospiterai.it grazie!"
-        5. Esempio SBAGLIATO: "Lascia una recensione qui:(https://ospiterai.it) grazie!"
-        6. Esempio SBAGLIATO: "Lascia una recensione qui: https://ospiterai.it, grazie!"
-        7. Esempio SBAGLIATO: "Lascia una recensione qui:https://ospiterai.it grazie!"
-        QUESTO È FONDAMENTALE E OBBLIGATORIO. RISPETTA SEMPRE QUESTE REGOLE.
+        Se è stato fornito un link alle recensioni, includi SEMPRE in fondo a ogni messaggio il link per lasciare una recensione.
+        
+        FORMATO OBBLIGATORIO:
+        - Includi sempre in fondo al messaggio: "Clicca qui per lasciarci una recensione" dove "qui" è un link cliccabile
+        - Il link deve essere formattato come: [qui](URL_RECENSIONI)
+        - Esempio: "Clicca [qui](https://ospiterai.it) per lasciarci una recensione"
+        - Questo deve apparire in fondo a OGNI risposta, senza eccezioni
+        
+        REGOLE FONDAMENTALI:
+        1. Il link deve essere sempre in fondo al messaggio
+        2. Usa sempre il formato [qui](URL) per rendere il link cliccabile
+        3. Non aggiungere altri caratteri intorno al link
+        4. Se non c'è link recensioni fornito, non includere nulla
+        QUESTO È OBBLIGATORIO E DEVE ESSERE INCLUSO IN OGNI RISPOSTA.
         """
         
         # Crea l'assistant (Assistants v2)
@@ -2061,16 +2065,20 @@ def build_assistant_instructions_from_model(chatbot: Chatbot) -> str:
         Se non hai informazioni su qualcosa o non sei sicuro della risposta, devi dire di contattare l'host. Se nei contatti di emergenza c'è un numero dell'host, includilo nel messaggio.
         
         ISTRUZIONI SPECIALI PER LE RECENSIONI:
-        Se è stato fornito un link alle recensioni, OGNI TANTO durante la conversazione mostra questo URL per lasciare una recensione. 
-        REGOLE OBBLIGATORIE E FONDAMENTALI:
-        1. NON mettere NESSUN carattere accanto all'URL (niente parentesi "(", ")", quadre "[", "]", apici, doppi apici, punti, virgole, due punti, trattini, ecc.)
-        2. Il link deve essere DISTACCATO da ogni altro carattere
-        3. Deve avere a SINISTRA uno spazio " " e a DESTRA un altro spazio " "
-        4. Esempio CORRETTO: " Se hai apprezzato il soggiorno, lascia una recensione qui https://ospiterai.it grazie!"
-        5. Esempio SBAGLIATO: "Lascia una recensione qui:(https://ospiterai.it) grazie!"
-        6. Esempio SBAGLIATO: "Lascia una recensione qui: https://ospiterai.it, grazie!"
-        7. Esempio SBAGLIATO: "Lascia una recensione qui:https://ospiterai.it grazie!"
-        QUESTO È FONDAMENTALE E OBBLIGATORIO. RISPETTA SEMPRE QUESTE REGOLE.
+        Se è stato fornito un link alle recensioni, includi SEMPRE in fondo a ogni messaggio il link per lasciare una recensione.
+        
+        FORMATO OBBLIGATORIO:
+        - Includi sempre in fondo al messaggio: "Clicca qui per lasciarci una recensione" dove "qui" è un link cliccabile
+        - Il link deve essere formattato come: [qui](URL_RECENSIONI)
+        - Esempio: "Clicca [qui](https://ospiterai.it) per lasciarci una recensione"
+        - Questo deve apparire in fondo a OGNI risposta, senza eccezioni
+        
+        REGOLE FONDAMENTALI:
+        1. Il link deve essere sempre in fondo al messaggio
+        2. Usa sempre il formato [qui](URL) per rendere il link cliccabile
+        3. Non aggiungere altri caratteri intorno al link
+        4. Se non c'è link recensioni fornito, non includere nulla
+        QUESTO È OBBLIGATORIO E DEVE ESSERE INCLUSO IN OGNI RISPOSTA.
         """
     except Exception as e:
         logger.error(f"Error building instructions: {e}")
@@ -8383,7 +8391,7 @@ IMPORTANTE:
             if not response_text:
                 raise HTTPException(
                     status_code=500, 
-                    detail="Nessuna risposta da gpt-4o"
+                    detail="Nessuna risposta da gpt-4o-mini"
                 )
             
             # Prova a parsare il JSON
@@ -8399,7 +8407,7 @@ IMPORTANTE:
                     except json.JSONDecodeError:
                         raise HTTPException(
                             status_code=500, 
-                            detail="Impossibile parsare la risposta JSON da gpt-4o"
+                            detail="Impossibile parsare la risposta JSON da gpt-4o-mini"
                         )
                 else:
                     raise HTTPException(
@@ -8423,7 +8431,7 @@ IMPORTANTE:
             logger.error(f"OpenAI API error for user {current_user.id}: {e}")
             raise HTTPException(
                 status_code=500, 
-                detail=f"Errore nell'analisi con gpt-4o: {str(e)}"
+                detail=f"Errore nell'analisi con gpt-4o-mini: {str(e)}"
             )
         
     except HTTPException:
@@ -8787,7 +8795,7 @@ IMPORTANTE:
                     except json.JSONDecodeError:
                         raise HTTPException(
                             status_code=500, 
-                            detail="Impossibile parsare la risposta JSON da gpt-4o"
+                            detail="Impossibile parsare la risposta JSON da gpt-4o-mini"
                         )
                 else:
                     raise HTTPException(
@@ -8819,7 +8827,7 @@ IMPORTANTE:
                 logger.error(f"Body: {e.body}")
             raise HTTPException(
                 status_code=500, 
-                detail=f"Errore nell'analisi con gpt-4o: {str(e)}"
+                detail=f"Errore nell'analisi con gpt-4o-mini: {str(e)}"
             )
         
     except HTTPException:
