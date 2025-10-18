@@ -8297,7 +8297,7 @@ Contenuto della pagina:
 - Concentrati SOLO sulle informazioni positive e neutre della proprietà
 - Estrai solo informazioni utili per ospiti futuri (descrizioni, servizi, regole, etc.)
 
-⚠️ IMPORTANTE: NON includere informazioni sull'indirizzo nel JSON. L'indirizzo sarà inserito separatamente dall'host tramite validazione Google API.
+⚠️ IMPORTANTE: Se trovi informazioni sull'indirizzo nella pagina, includile nel JSON. L'indirizzo verrà validato successivamente tramite Google API.
 
 Estrai le informazioni e restituisci SOLO un JSON valido con questa struttura esatta:
 
@@ -8343,7 +8343,13 @@ Estrai le informazioni e restituisci SOLO un JSON valido con questa struttura es
   "wifi_info": {{
     "network": "Nome rete WiFi",
     "password": "Password WiFi"
-  }}
+  }},
+  "property_address": "Via/Nome della strada (se trovato)",
+  "property_street_number": "Numero civico (se trovato)",
+  "property_city": "Città (se trovato)",
+  "property_state": "Provincia/Stato (se trovato)",
+  "property_postal_code": "CAP/Codice postale (se trovato)",
+  "property_country": "Paese (se trovato, default: IT)"
 }}
 
 IMPORTANTE:
@@ -8675,8 +8681,9 @@ Estrai le informazioni dal testo sopra e includi:
 - Contatti di emergenza (almeno uno dell'host)
 - FAQ
 - Informazioni WiFi (nome rete e password)
+- Indirizzo completo della proprietà (se disponibile)
 
-⚠️ IMPORTANTE: NON includere informazioni sull'indirizzo nel JSON. L'indirizzo sarà inserito separatamente dall'host tramite validazione Google API.
+⚠️ IMPORTANTE: Se trovi informazioni sull'indirizzo nella pagina, includile nel JSON. L'indirizzo verrà validato successivamente tramite Google API.
 
 Estrai le informazioni e restituisci SOLO un JSON valido con questa struttura esatta:
 
@@ -8722,7 +8729,13 @@ Estrai le informazioni e restituisci SOLO un JSON valido con questa struttura es
   "wifi_info": {{
     "network": "Nome rete WiFi",
     "password": "Password WiFi"
-  }}
+  }},
+  "property_address": "Via/Nome della strada (se trovato)",
+  "property_street_number": "Numero civico (se trovato)",
+  "property_city": "Città (se trovato)",
+  "property_state": "Provincia/Stato (se trovato)",
+  "property_postal_code": "CAP/Codice postale (se trovato)",
+  "property_country": "Paese (se trovato, default: IT)"
 }}
 
 IMPORTANTE:

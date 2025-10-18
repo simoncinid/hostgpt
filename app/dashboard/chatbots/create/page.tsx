@@ -480,13 +480,13 @@ export default function CreateChatbotPage() {
         const mappedType = propertyTypeMap[data.property_type] || data.property_type
         setValue('property_type', mappedType)
       }
-      // Indirizzo NON auto-compilato - deve essere inserito dall'host tramite Google API
-      // if (data.property_address) setValue('property_address', data.property_address)
-      // if (data.property_street_number) setValue('property_street_number', data.property_street_number)
-      // if (data.property_city) setValue('property_city', data.property_city)
-      // if (data.property_state) setValue('property_state', data.property_state)
-      // if (data.property_postal_code) setValue('property_postal_code', data.property_postal_code)
-      // if (data.property_country) setValue('property_country', data.property_country)
+      // Auto-compila l'indirizzo se trovato dall'IA
+      if (data.property_address) setValue('property_address', data.property_address)
+      if (data.property_street_number) setValue('property_street_number', data.property_street_number)
+      if (data.property_city) setValue('property_city', data.property_city)
+      if (data.property_state) setValue('property_state', data.property_state)
+      if (data.property_postal_code) setValue('property_postal_code', data.property_postal_code)
+      if (data.property_country) setValue('property_country', data.property_country)
       if (data.property_description) setValue('property_description', data.property_description)
       if (data.check_in_time) setValue('check_in_time', data.check_in_time)
       if (data.check_out_time) setValue('check_out_time', data.check_out_time)
@@ -597,10 +597,17 @@ export default function CreateChatbotPage() {
 
       console.log('✅ FRONTEND: Auto-fill completato con successo!')
       const filledFields = Object.keys(data).filter(key => data[key] && data[key] !== '').length
+      
+      // Controlla se l'indirizzo è stato trovato
+      const hasAddress = data.property_address || data.property_city
+      const addressMessage = hasAddress 
+        ? (language === 'IT' ? ' Incluso l\'indirizzo!' : ' Including address!')
+        : ''
+      
       toast.success(
         language === 'IT' 
-          ? `Analisi completata! ${filledFields} campi compilati automaticamente. Puoi modificare le informazioni se necessario.`
-          : `Analysis completed! ${filledFields} fields filled automatically. You can modify the information if needed.`
+          ? `Analisi completata! ${filledFields} campi compilati automaticamente.${addressMessage} Puoi modificare le informazioni se necessario.`
+          : `Analysis completed! ${filledFields} fields filled automatically.${addressMessage} You can modify the information if needed.`
       )
     } catch (error) {
       console.error('❌ FRONTEND: Auto-fill error completo:', error)
