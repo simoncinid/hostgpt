@@ -480,13 +480,20 @@ export default function CreateChatbotPage() {
         const mappedType = propertyTypeMap[data.property_type] || data.property_type
         setValue('property_type', mappedType)
       }
-      // Auto-compila l'indirizzo se trovato dall'IA
-      if (data.property_address) setValue('property_address', data.property_address)
-      if (data.property_street_number) setValue('property_street_number', data.property_street_number)
-      if (data.property_city) setValue('property_city', data.property_city)
-      if (data.property_state) setValue('property_state', data.property_state)
-      if (data.property_postal_code) setValue('property_postal_code', data.property_postal_code)
-      if (data.property_country) setValue('property_country', data.property_country)
+      // Auto-compila il campo di ricerca dell'indirizzo se trovato dall'IA
+      // Costruisce l'indirizzo completo per il campo di ricerca
+      if (data.property_address || data.property_city) {
+        const addressParts = []
+        if (data.property_address) addressParts.push(data.property_address)
+        if (data.property_street_number) addressParts.push(data.property_street_number)
+        if (data.property_city) addressParts.push(data.property_city)
+        if (data.property_state) addressParts.push(data.property_state)
+        if (data.property_postal_code) addressParts.push(data.property_postal_code)
+        if (data.property_country) addressParts.push(data.property_country)
+        
+        const fullAddress = addressParts.join(', ')
+        setAddressInputValue(fullAddress)
+      }
       if (data.property_description) setValue('property_description', data.property_description)
       if (data.check_in_time) setValue('check_in_time', data.check_in_time)
       if (data.check_out_time) setValue('check_out_time', data.check_out_time)
@@ -601,7 +608,7 @@ export default function CreateChatbotPage() {
       // Controlla se l'indirizzo è stato trovato
       const hasAddress = data.property_address || data.property_city
       const addressMessage = hasAddress 
-        ? (language === 'IT' ? ' Incluso l\'indirizzo!' : ' Including address!')
+        ? (language === 'IT' ? ' Indirizzo inserito nel campo di ricerca - clicca per attivare le Google APIs!' : ' Address inserted in search field - click to activate Google APIs!')
         : ''
       
       toast.success(
