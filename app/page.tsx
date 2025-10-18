@@ -3538,7 +3538,7 @@ export default function LandingPage() {
                   />
                   
                   <Link
-                    href="https://api.whatsapp.com/message/BVWGHR65VXRDL1?autoload=1&app_absent=0"
+                    href="https://wa.me/393759826407?text=Ciao! Vorrei saperne di più sui vostri servizi."
                     target="_blank"
                     rel="noopener noreferrer"
                     className="relative inline-flex items-center gap-2 md:gap-4 px-8 py-3 md:px-12 md:py-6 text-sm md:text-xl font-black text-white bg-gradient-to-r from-green-500 via-green-600 to-green-700 rounded-2xl md:rounded-3xl shadow-2xl transition-all duration-300 group-hover:shadow-green-500/30 overflow-hidden"
