@@ -121,6 +121,20 @@ export default function RootLayout({
             })
           }}
         />
+        {/* Google Analytics */}
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-90CCJYLNEK"></script>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', 'G-90CCJYLNEK');
+            `
+          }}
+        />
+        {/* End Google Analytics */}
+        
         {/* Meta Pixel Code */}
         <script
           dangerouslySetInnerHTML={{
