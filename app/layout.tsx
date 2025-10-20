@@ -121,32 +121,6 @@ export default function RootLayout({
             })
           }}
         />
-      </head>
-      <body className="font-sans">
-        <LanguageProvider>
-          {children}
-        </LanguageProvider>
-        <Toaster 
-          position="top-right"
-          toastOptions={{
-            duration: 4000,
-            style: {
-              background: '#363636',
-              color: '#fff',
-            },
-            success: {
-              style: {
-                background: '#10B981',
-              },
-            },
-            error: {
-              style: {
-                background: '#EF4444',
-              },
-            },
-          }}
-        />
-        <Analytics />
         {/* Meta Pixel Code */}
         <script
           dangerouslySetInnerHTML={{
@@ -174,6 +148,32 @@ export default function RootLayout({
           />
         </noscript>
         {/* End Meta Pixel Code */}
+      </head>
+      <body className="font-sans">
+        <LanguageProvider>
+          {children}
+        </LanguageProvider>
+        <Toaster 
+          position="top-right"
+          toastOptions={{
+            duration: 4000,
+            style: {
+              background: '#363636',
+              color: '#fff',
+            },
+            success: {
+              style: {
+                background: '#10B981',
+              },
+            },
+            error: {
+              style: {
+                background: '#EF4444',
+              },
+            },
+          }}
+        />
+        <Analytics />
         {/* Start cookieyes banner */}
         <script id="cookieyes" type="text/javascript" src="https://cdn-cookieyes.com/client_data/65fd15cbd6f7bed8d5de4f08/script.js"></script>
         {/* End cookieyes banner */}
