@@ -2643,7 +2643,7 @@ export const translations: Record<Language, Translations> = {
     },
     pricing: {
       title: "Choose the Perfect Plan",
-      subtitle: "4 tiers designed for every need, from single hosts to large properties",
+      subtitle: "4 tiers designed for every need, from single hosts to large properties.",
       freeTrialButton: "14 days free",
       plans: [
         {
