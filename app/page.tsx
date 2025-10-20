@@ -2272,14 +2272,15 @@ export default function LandingPage() {
             </motion.p>
           </motion.div>
 
-          {/* Toggle Mensile/Annuale */}
+          {/* Toggle Mensile/Annuale e Pulsante Free Trial */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.8 }}
             viewport={{ once: true }}
-            className="flex justify-center mb-12"
+            className="flex flex-col md:flex-row justify-center items-center gap-4 mb-12"
           >
+            {/* Toggle Mensile/Annuale */}
             <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-2 shadow-lg border border-gray-200/50">
               <div className="flex items-center space-x-4">
                 <span className={`text-sm font-medium transition-colors ${!isAnnualBilling ? 'text-gray-900' : 'text-gray-500'}`}>
@@ -2307,6 +2308,19 @@ export default function LandingPage() {
                 )}
               </div>
             </div>
+
+            {/* Pulsante 14 giorni gratis */}
+            <Link
+              href="/register?free_trial=true"
+              className="group relative overflow-hidden"
+            >
+              <div className="bg-gradient-to-r from-green-500 via-emerald-500 to-green-600 text-white px-6 py-3 rounded-2xl font-bold text-sm shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
+                <div className="absolute inset-0 bg-gradient-to-r from-green-400 to-emerald-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <span className="relative z-10 flex items-center gap-2">
+                  🎉 {t.pricing.freeTrialButton}
+                </span>
+              </div>
+            </Link>
           </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
