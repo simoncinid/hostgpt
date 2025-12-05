@@ -9413,7 +9413,7 @@ async def send_print_request(
         
         # Invia l'email
         await send_email(
-            to_email="ospiterai@gmail.com",
+            to_email="infoospiterai@gmail.com",
             subject=email_subject,
             body=email_body
         )
