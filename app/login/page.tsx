@@ -127,6 +127,8 @@ function LoginContent() {
         const subscriptionStatus = me.data?.subscription_status
         const isVerified = me.data?.is_verified
         const wantsFreeTrial = me.data?.wants_free_trial
+        const isFreeTrialActive = me.data?.is_free_trial_active
+        const freeTrialEndDate = me.data?.free_trial_end_date
         const userLanguage = me.data?.language
         
         // Imposta la lingua corretta se disponibile
@@ -146,9 +148,17 @@ function LoginContent() {
             toast('Completa il pagamento per continuare', { icon: '💳' })
             router.push('/checkout')
           } else {
-            // Se ha scelto il free trial ma non è attivo, c'è un problema
-            toast.error('Errore nell\'avvio del periodo di prova. Contatta il supporto.')
-            return
+            // Se ha scelto il free trial ma non è attivo, verifica se è scaduto
+            // Se il free trial è scaduto, reindirizza al checkout
+            if (freeTrialEndDate && new Date(freeTrialEndDate) < new Date()) {
+              // Free trial scaduto - reindirizza al checkout
+              toast('Il periodo di prova è terminato. Completa il pagamento per continuare', { icon: '💳' })
+              router.push('/checkout')
+            } else {
+              // Se ha scelto il free trial ma non è attivo e non è scaduto, c'è un problema
+              toast.error('Errore nell\'avvio del periodo di prova. Contatta il supporto.')
+              return
+            }
           }
         } else {
           // Se c'è un token di invito, accettalo
