@@ -143,17 +143,17 @@ function LoginContent() {
         }
         
         if (!['active', 'cancelling', 'free_trial'].includes(subscriptionStatus)) {
-          // Se l'utente non ha scelto il free trial, va al checkout
+          // Se l'utente non ha scelto il free trial, va alla selezione del piano
           if (!wantsFreeTrial) {
             toast('Completa il pagamento per continuare', { icon: '💳' })
-            router.push('/checkout')
+            router.push('/select-service')
           } else {
             // Se ha scelto il free trial ma non è attivo, verifica se è scaduto
-            // Se il free trial è scaduto, reindirizza al checkout
+            // Se il free trial è scaduto, reindirizza alla selezione del piano
             if (freeTrialEndDate && new Date(freeTrialEndDate) < new Date()) {
-              // Free trial scaduto - reindirizza al checkout
-              toast('Il periodo di prova è terminato. Completa il pagamento per continuare', { icon: '💳' })
-              router.push('/checkout')
+              // Free trial scaduto - reindirizza alla selezione del piano
+              toast('Il periodo di prova è terminato. Scegli il tuo piano per continuare', { icon: '💳' })
+              router.push('/select-service')
             } else {
               // Se ha scelto il free trial ma non è attivo e non è scaduto, c'è un problema
               toast.error('Errore nell\'avvio del periodo di prova. Contatta il supporto.')

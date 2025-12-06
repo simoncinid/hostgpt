@@ -33,9 +33,14 @@ function SelectServiceContent() {
         const me = await api.get('/auth/me')
         const subscriptionStatus = me.data?.subscription_status
         
-        // Solo utenti in free trial possono accedere a questa pagina
-        if (subscriptionStatus !== 'free_trial') {
-          router.push('/dashboard')
+        // Permetti accesso a utenti in free trial o con subscription inactive (free trial scaduto)
+        if (!['free_trial', 'inactive'].includes(subscriptionStatus)) {
+          // Se ha già un abbonamento attivo, vai alla dashboard
+          if (['active', 'cancelling'].includes(subscriptionStatus)) {
+            router.push('/dashboard')
+          } else {
+            router.push('/login')
+          }
           return
         }
         
