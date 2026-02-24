@@ -6263,9 +6263,11 @@ async def send_message(
                 kwargs["tools"] = tools
 
             async with async_client.responses.stream(**kwargs) as stream:
-                async for text in stream.text_stream:
-                    full_response += text
-                    yield f"data: {json.dumps({'delta': text})}\n\n"
+                async for event in stream:
+                    if getattr(event, 'type', None) == 'response.output_text.delta':
+                        text = event.delta
+                        full_response += text
+                        yield f"data: {json.dumps({'delta': text})}\n\n"
                 final = await stream.get_final_response()
                 response_id = final.id
 
