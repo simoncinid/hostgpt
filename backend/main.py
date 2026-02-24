@@ -12,6 +12,7 @@ import time
 import uuid
 import stripe
 import openai
+from openai import AsyncOpenAI
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 import json
@@ -487,12 +488,15 @@ def get_free_trial_messages_remaining(user: User) -> int:
     
     return max(0, user.free_trial_messages_limit - user.free_trial_messages_used)
 
+RESPONSE_API_MODEL = "gpt-4.5"
+
 def get_openai_client():
-    """Restituisce un client OpenAI configurato per Assistants v2."""
-    return openai.OpenAI(
-        api_key=settings.OPENAI_API_KEY,
-        default_headers={"OpenAI-Beta": "assistants=v2"}
-    )
+    """Restituisce un client OpenAI sync."""
+    return openai.OpenAI(api_key=settings.OPENAI_API_KEY)
+
+def get_async_openai_client() -> AsyncOpenAI:
+    """Restituisce un client OpenAI async (per streaming Response API)."""
+    return AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
 
 # ============= Funzioni per gestione ospiti =============
 
@@ -2221,6 +2225,205 @@ When information is missing, the assistant should recommend contacting the host.
     except Exception as e:
         logger.error(f"Error building instructions: {e}")
         return ""
+
+
+def build_property_txt(chatbot_data: dict) -> str:
+    """Genera il contenuto TXT della proprietà a partire dal dict di creazione chatbot."""
+    amenities = chatbot_data.get("amenities") or []
+    wifi_info = chatbot_data.get("wifi_info") or {}
+    emergency_contacts = chatbot_data.get("emergency_contacts") or []
+    nearby_attractions = chatbot_data.get("nearby_attractions") or []
+    restaurants_bars = chatbot_data.get("restaurants_bars") or []
+    faq = chatbot_data.get("faq") or []
+    reviews_link = chatbot_data.get("reviews_link") or ""
+
+    return f"""PROPERTY INFORMATION
+
+Name: {chatbot_data.get('property_name', '')}
+Type: {chatbot_data.get('property_type', '')}
+Address: {chatbot_data.get('property_address', '')}, {chatbot_data.get('property_city', '')}
+Description: {chatbot_data.get('property_description', '')}
+Check-in: {chatbot_data.get('check_in_time', '')}
+Check-out: {chatbot_data.get('check_out_time', '')}
+House rules: {chatbot_data.get('house_rules', '')}
+Amenities: {', '.join(amenities)}
+
+AREA INFORMATION
+
+Neighborhood: {chatbot_data.get('neighborhood_description', '')}
+Transportation: {chatbot_data.get('transportation_info', '')}
+Shopping: {chatbot_data.get('shopping_info', '')}
+Parking: {chatbot_data.get('parking_info', '')}
+
+PRACTICAL INFORMATION
+
+Wi-Fi: {json.dumps(wifi_info, ensure_ascii=False)}
+Special instructions: {chatbot_data.get('special_instructions', '')}
+Emergency contacts: {json.dumps(emergency_contacts, ensure_ascii=False)}
+
+NEARBY ATTRACTIONS
+
+{json.dumps(nearby_attractions, ensure_ascii=False)}
+
+RESTAURANTS & BARS
+
+{json.dumps(restaurants_bars, ensure_ascii=False)}
+
+FAQ
+
+{json.dumps(faq, ensure_ascii=False)}
+
+WELCOME MESSAGE
+
+{chatbot_data.get('welcome_message', '')}
+
+REVIEWS LINK
+
+{reviews_link if reviews_link else 'No reviews link provided'}
+"""
+
+
+def build_property_txt_from_model(chatbot: Chatbot) -> str:
+    """Genera il contenuto TXT della proprietà a partire dal modello Chatbot."""
+    amenities = chatbot.amenities or []
+    wifi_info = chatbot.wifi_info or {}
+    emergency_contacts = chatbot.emergency_contacts or []
+    nearby_attractions = chatbot.nearby_attractions or []
+    restaurants_bars = chatbot.restaurants_bars or []
+    faq = chatbot.faq or []
+
+    return f"""PROPERTY INFORMATION
+
+Name: {chatbot.property_name}
+Type: {chatbot.property_type}
+Address: {chatbot.property_address}, {chatbot.property_city}
+Description: {chatbot.property_description}
+Check-in: {chatbot.check_in_time}
+Check-out: {chatbot.check_out_time}
+House rules: {chatbot.house_rules}
+Amenities: {', '.join(amenities)}
+
+AREA INFORMATION
+
+Neighborhood: {chatbot.neighborhood_description}
+Transportation: {chatbot.transportation_info}
+Shopping: {chatbot.shopping_info}
+Parking: {chatbot.parking_info}
+
+PRACTICAL INFORMATION
+
+Wi-Fi: {json.dumps(wifi_info, ensure_ascii=False)}
+Special instructions: {chatbot.special_instructions}
+Emergency contacts: {json.dumps(emergency_contacts, ensure_ascii=False)}
+
+NEARBY ATTRACTIONS
+
+{json.dumps(nearby_attractions, ensure_ascii=False)}
+
+RESTAURANTS & BARS
+
+{json.dumps(restaurants_bars, ensure_ascii=False)}
+
+FAQ
+
+{json.dumps(faq, ensure_ascii=False)}
+
+WELCOME MESSAGE
+
+{chatbot.welcome_message}
+
+REVIEWS LINK
+
+{chatbot.reviews_link if chatbot.reviews_link else 'No reviews link provided'}
+"""
+
+
+def build_response_instructions(chatbot: Chatbot) -> str:
+    """Istruzioni comportamentali compatte per la Response API (quando si usa il vector store)."""
+    reviews_rule = ""
+    if chatbot.reviews_link:
+        reviews_rule = f"""
+5. **Reviews link**: Always end every message with exactly this line (no punctuation after):
+   Click [here]({chatbot.reviews_link}) to leave us a review.
+"""
+    return f"""You are the virtual assistant for {chatbot.property_name}. Use the file_search tool to find information about the property and answer guest questions accurately.
+
+OPERATIONAL GUIDELINES:
+
+1. **Language**: Always reply in the same language used by the guest.
+
+2. **Scope**: Provide information only. For bookings, rates, or availability, direct the guest to contact the host directly.
+
+3. **Tone**: Be polite, warm, and professional. Never invent details not found in the property information. When information is missing, suggest contacting the host.
+
+4. **Time awareness**: Always use the current year. If unsure of a specific day/date, suggest the guest verify the calendar directly.
+{reviews_rule}"""
+
+
+async def create_vector_store_for_chatbot(chatbot_data: dict) -> str:
+    """Crea un Vector Store OpenAI con il TXT della proprietà. Restituisce il vector_store_id."""
+    try:
+        client = get_openai_client()
+        txt_content = build_property_txt(chatbot_data)
+        file_bytes = txt_content.encode("utf-8")
+        safe_name = (chatbot_data.get("property_name") or "property").replace(" ", "_")[:40]
+
+        uploaded_file = client.files.create(
+            file=(f"{safe_name}.txt", io.BytesIO(file_bytes), "text/plain"),
+            purpose="assistants",
+        )
+
+        vector_store = client.vector_stores.create(
+            name=f"VS_{safe_name}",
+            file_ids=[uploaded_file.id],
+        )
+
+        logger.info(f"✅ Vector store creato: {vector_store.id} per proprietà '{chatbot_data.get('property_name')}'")
+        return vector_store.id
+
+    except Exception as e:
+        logger.error(f"Error creating vector store: {e}")
+        raise HTTPException(status_code=500, detail="Failed to create vector store")
+
+
+async def update_vector_store_for_chatbot(chatbot: Chatbot) -> str:
+    """Ricrea il Vector Store OpenAI aggiornato. Restituisce il nuovo vector_store_id."""
+    try:
+        client = get_openai_client()
+
+        if chatbot.vector_store_id:
+            try:
+                vs_files = client.vector_stores.files.list(chatbot.vector_store_id)
+                for vs_file in vs_files.data:
+                    try:
+                        client.files.delete(vs_file.id)
+                    except Exception:
+                        pass
+                client.vector_stores.delete(chatbot.vector_store_id)
+            except Exception as e:
+                logger.warning(f"Impossibile eliminare vecchio vector store {chatbot.vector_store_id}: {e}")
+
+        txt_content = build_property_txt_from_model(chatbot)
+        file_bytes = txt_content.encode("utf-8")
+        safe_name = (chatbot.property_name or "property").replace(" ", "_")[:40]
+
+        uploaded_file = client.files.create(
+            file=(f"{safe_name}.txt", io.BytesIO(file_bytes), "text/plain"),
+            purpose="assistants",
+        )
+
+        vector_store = client.vector_stores.create(
+            name=f"VS_{safe_name}",
+            file_ids=[uploaded_file.id],
+        )
+
+        logger.info(f"✅ Vector store aggiornato: {vector_store.id} per chatbot {chatbot.id}")
+        return vector_store.id
+
+    except Exception as e:
+        logger.error(f"Error updating vector store: {e}")
+        raise HTTPException(status_code=500, detail="Failed to update vector store")
+
 
 # ============= API Endpoints =============
 
@@ -4357,13 +4560,14 @@ async def create_chatbot(
         "reviews_link": reviews_link if reviews_link else ""
     }
     
-    # Crea assistant OpenAI
-    assistant_id = await create_openai_assistant(chatbot_data)
+    # Crea Vector Store OpenAI con il TXT della proprietà
+    vector_store_id = await create_vector_store_for_chatbot(chatbot_data)
     
     # Salva chatbot nel database
     db_chatbot = Chatbot(
         user_id=current_user.id,
-        assistant_id=assistant_id,
+        assistant_id=None,
+        vector_store_id=vector_store_id,
         name=name,
         property_name=property_name,
         property_type=property_type,
@@ -4454,7 +4658,7 @@ async def create_chatbot(
         "name": db_chatbot.name,
         "chat_url": chat_url,
         "qr_code": qr_code,
-        "assistant_id": assistant_id
+        "vector_store_id": vector_store_id
     }
 
 @app.get("/api/subscription/status")
@@ -4827,6 +5031,7 @@ async def get_chatbot(
         "id": chatbot.id,
         "user_id": chatbot.user_id,
         "assistant_id": chatbot.assistant_id,
+        "vector_store_id": chatbot.vector_store_id,
         "uuid": chatbot.uuid,
         "name": chatbot.name,
         "property_name": chatbot.property_name,
@@ -4943,21 +5148,15 @@ async def update_chatbot(
             # Non bloccare l'aggiornamento se il QR code WiFi fallisce
     
     db.commit()
-    
-    # Aggiorna anche l'assistant OpenAI
+
+    # Ricrea il Vector Store OpenAI con le informazioni aggiornate
     try:
-        client = get_openai_client()
-        # Ricostruisci le istruzioni con i dati aggiornati del chatbot
-        new_instructions = build_assistant_instructions_from_model(chatbot)
-        client.beta.assistants.update(
-            chatbot.assistant_id,
-            name=chatbot.name,
-            instructions=new_instructions,
-            extra_headers={"OpenAI-Beta": "assistants=v2"}
-        )
+        new_vs_id = await update_vector_store_for_chatbot(chatbot)
+        chatbot.vector_store_id = new_vs_id
+        db.commit()
     except Exception as e:
-        logger.error(f"Error updating OpenAI assistant: {e}")
-    
+        logger.error(f"Error updating vector store for chatbot {chatbot.id}: {e}")
+
     return {"message": "Chatbot aggiornato con successo"}
 
 @app.delete("/api/chatbots/{chatbot_id}")
@@ -5011,12 +5210,19 @@ async def delete_chatbot(
         db.rollback()
         # Continua comunque con l'eliminazione del chatbot
     
-    # Elimina assistant OpenAI
+    # Elimina Vector Store OpenAI
     try:
-        client = get_openai_client()
-        client.beta.assistants.delete(chatbot.assistant_id, extra_headers={"OpenAI-Beta": "assistants=v2"})
+        if chatbot.vector_store_id:
+            client = get_openai_client()
+            vs_files = client.vector_stores.files.list(chatbot.vector_store_id)
+            for vs_file in vs_files.data:
+                try:
+                    client.files.delete(vs_file.id)
+                except Exception:
+                    pass
+            client.vector_stores.delete(chatbot.vector_store_id)
     except Exception as e:
-        logger.error(f"Error deleting OpenAI assistant: {e}")
+        logger.error(f"Error deleting vector store: {e}")
     
     # Prova a eliminare il chatbot con gestione degli errori di foreign key
     try:
@@ -5939,247 +6145,207 @@ async def send_message(
     request: Request,
     db: Session = Depends(get_db)
 ):
-    """Invia messaggio al chatbot"""
+    """Invia messaggio al chatbot con streaming SSE via Response API."""
+    import asyncio as _asyncio
+    import traceback as _traceback
+
     chatbot = db.query(Chatbot).filter(Chatbot.uuid == uuid).first()
-    
     if not chatbot or not chatbot.is_active:
         raise HTTPException(status_code=404, detail="Chatbot non trovato")
-    
-    # Ottieni il proprietario del chatbot
+
     owner = db.query(User).filter(User.id == chatbot.user_id).first()
-    
     if not owner:
         raise HTTPException(status_code=404, detail="Proprietario del chatbot non trovato")
-    
-    # Verifica abbonamento attivo
+
     if not is_subscription_active(owner.subscription_status):
         raise HTTPException(
-            status_code=403, 
+            status_code=403,
             detail="Il proprietario di questo chatbot non ha un abbonamento attivo. Il servizio è temporaneamente non disponibile."
         )
-    
-    # Gestione free trial
+
     if owner.subscription_status == 'free_trial':
-        # Verifica se il free trial è ancora attivo
         if not is_free_trial_active(owner):
             raise HTTPException(
                 status_code=403,
                 detail="Il periodo di prova gratuito è scaduto. Sottoscrivi un abbonamento per continuare a utilizzare il servizio."
             )
-        
-        # Verifica limite messaggi free trial
         if owner.free_trial_messages_used >= owner.free_trial_messages_limit:
             raise HTTPException(
                 status_code=429,
                 detail="Hai raggiunto il limite di 20 messaggi del periodo di prova gratuito. Sottoscrivi un abbonamento per continuare."
             )
     else:
-        # Gestione abbonamento normale
-        # Controlla se deve essere resettato il conteggio mensile
         if owner.messages_reset_date:
             if datetime.utcnow() > owner.messages_reset_date + timedelta(days=30):
                 owner.messages_used = 0
                 owner.messages_reset_date = datetime.utcnow()
                 db.commit()
-        
-        # Verifica limite messaggi
         if owner.messages_used >= owner.messages_limit:
             raise HTTPException(
-                status_code=429, 
+                status_code=429,
                 detail=f"Limite mensile di {owner.messages_limit} messaggi raggiunto. Il limite si resetta il {(owner.messages_reset_date + timedelta(days=30)).strftime('%d/%m/%Y')} se la data è definita."
             )
-    
-    try:
-        client = get_openai_client()
-        
-        # ============= GESTIONE OSPITI - IDENTIFICAZIONE OBBLIGATORIA =============
-        
-        # L'identificazione è sempre obbligatoria
-        guest = None
-        
-        # Prima controlla se è già stato fornito guest_id
-        if message.guest_id:
-            guest = db.query(Guest).filter(Guest.id == message.guest_id).first()
-            if not guest:
-                raise HTTPException(status_code=400, detail="Guest ID non valido")
-            logger.info(f"🔍 [DEBUG] Guest identificato tramite guest_id: {guest.id}")
-        
-        # Se non c'è guest_id, prova con phone/email
-        elif message.phone or message.email:
-            try:
-                guest = find_or_create_guest(
-                    phone=message.phone,
-                    email=message.email,
-                    chatbot_id=chatbot.id,
-                    first_name=message.first_name,
-                    last_name=message.last_name,
-                    db=db
-                )
-                logger.info(f"🔍 [DEBUG] Guest identificato tramite phone/email: {guest.id}")
-            except ValueError as e:
-                raise HTTPException(status_code=400, detail=str(e))
-        else:
-            # Non sono permessi messaggi anonimi
-            raise HTTPException(
-                status_code=400, 
-                detail="Identificazione richiesta: fornire guest_id, email o numero di telefono"
-            )
-        
-        # ============= LOGICA SEMPLIFICATA - GUEST SEMPRE PRESENTE =============
-        
-        logger.info(f"🔍 [DEBUG] Guest: {guest.id}, force_new_conversation: {message.force_new_conversation}")
-        
-        # STEP 1: Determina se usare conversazione esistente o crearne una nuova
-        conversation = None
-        
-        if not message.force_new_conversation:
-            # Cerca conversazione esistente per questo guest
-            existing_conversation = get_latest_guest_conversation(chatbot.id, guest.id, db)
-            if existing_conversation:
-                # Verifica che la conversazione esistente sia valida
-                if existing_conversation.id and existing_conversation.chatbot_id == chatbot.id:
-                    # CARICA conversazione esistente
-                    conversation = carica_conversazione_esistente(existing_conversation, message, chatbot, owner, client, db, request)
-                else:
-                    logger.warning(f"⚠️ Conversazione esistente {existing_conversation.id} non valida, creando nuova conversazione")
-                    conversation = crea_nuova_conversazione(guest, message, chatbot, owner, client, db, request)
-            else:
-                # CREA nuova conversazione (prima conversazione per questo guest-chatbot)
-                conversation = crea_nuova_conversazione(guest, message, chatbot, owner, client, db, request)
-        else:
-            # CREA sempre nuova conversazione quando force_new_conversation=True
-            conversation = crea_nuova_conversazione(guest, message, chatbot, owner, client, db, request)
-        
-        # Verifica che la conversazione abbia un thread_id valido
-        if not conversation.thread_id:
-            logger.error(f"❌ Conversazione {conversation.id} non ha thread_id valido")
-            raise HTTPException(status_code=500, detail="Errore interno: thread_id mancante")
-        
-        # Verifica se la conversazione è sospesa per alert Guardian
-        if conversation.guardian_suspended and not conversation.guardian_resolved:
-            logger.info(f"🚫 Conversazione {conversation.id} sospesa per alert Guardian")
-            raise HTTPException(
-                status_code=423, 
-                detail="La conversazione è temporaneamente sospesa in attesa che l'host risponda di persona. Ti arriverà una mail quando lo farà. Nel frattempo puoi cliccare il pulsante refresh in alto per iniziare una nuova conversazione."
-            )
-        
-        # Esegui assistant
-        run = client.beta.threads.runs.create(
-            thread_id=conversation.thread_id,
-            assistant_id=chatbot.assistant_id,
-            extra_headers={"OpenAI-Beta": "assistants=v2"}
-        )
-        
-        # Attendi risposta
-        import time
-        max_wait_time = 30  # Massimo 30 secondi di attesa
-        wait_time = 0
-        
-        while run.status in ["queued", "in_progress"] and wait_time < max_wait_time:
-            time.sleep(1)
-            wait_time += 1
-            run = client.beta.threads.runs.retrieve(
-                thread_id=conversation.thread_id,
-                run_id=run.id,
-                extra_headers={"OpenAI-Beta": "assistants=v2"}
-            )
-        
-        # Verifica se il run è completato con successo
-        if run.status != "completed":
-            logger.error(f"❌ Run OpenAI fallito con status: {run.status}")
-            if hasattr(run, 'last_error') and run.last_error:
-                logger.error(f"❌ Errore OpenAI: {run.last_error}")
-            raise HTTPException(status_code=500, detail="Errore nel processare la richiesta con OpenAI")
-        
-        # Ottieni risposta
-        messages = client.beta.threads.messages.list(thread_id=conversation.thread_id, extra_headers={"OpenAI-Beta": "assistants=v2"})
-        
-        if not messages.data or not messages.data[0].content:
-            logger.error("❌ Nessun messaggio ricevuto da OpenAI")
-            raise HTTPException(status_code=500, detail="Nessuna risposta ricevuta dal chatbot")
-        
-        assistant_message = messages.data[0].content[0].text.value
-        
-        # Salva messaggi nel DB
-        user_msg = Message(
-            conversation_id=conversation.id,
-            role="user",
-            content=message.content
-        )
-        assistant_msg = Message(
-            conversation_id=conversation.id,
-            role="assistant",
-            content=assistant_message
-        )
-        db.add(user_msg)
-        db.add(assistant_msg)
-        
-        # Aggiorna statistiche
-        conversation.message_count += 2
-        chatbot.total_messages += 2
-        
-        # Incrementa il contatore messaggi dell'utente
-        if owner.subscription_status == 'free_trial':
-            owner.free_trial_messages_used += 1
-        else:
-            owner.messages_used += 1  # Contiamo solo i messaggi inviati dagli ospiti
-        
-        db.commit()
-        
-        # Analizza la conversazione con Guardian (in background)
-        import asyncio
-        asyncio.create_task(analyze_conversation_with_guardian(conversation.id, db))
-        
-        # Calcola messaggi rimanenti
-        if owner.subscription_status == 'free_trial':
-            messages_remaining = owner.free_trial_messages_limit - owner.free_trial_messages_used
-        else:
-            messages_remaining = owner.messages_limit - owner.messages_used
-        
-        # Se è una conversazione esistente, includi tutti i messaggi esistenti
-        response = {
-            "thread_id": conversation.thread_id,
-            "message": assistant_message,
-            "messages_remaining": messages_remaining,
-            "id": assistant_msg.id,
-            "role": "assistant",
-            "content": assistant_message,
-            "timestamp": assistant_msg.timestamp.isoformat() if assistant_msg.timestamp else datetime.now().isoformat()
-        }
-        
-        # IMPORTANTE: Se è una conversazione esistente, includi i messaggi esistenti
-        if getattr(conversation, 'is_existing_conversation', False):
-            existing_messages = db.query(Message).filter(
-                Message.conversation_id == conversation.id
-            ).order_by(Message.timestamp.asc()).all()
-            
-            response["existing_messages"] = [
-                {
-                    "id": msg.id,
-                    "role": msg.role,
-                    "content": msg.content,
-                    "timestamp": msg.timestamp.isoformat() if msg.timestamp else None
-                }
-                for msg in existing_messages[:-2]  # Esclude gli ultimi 2 messaggi (appena aggiunti)
-            ]
-            response["is_existing_conversation"] = True
-            logger.info(f"🔄 Inclusi {len(response['existing_messages'])} messaggi esistenti nella risposta")
-        
-        return response
-        
-    except Exception as e:
-        logger.error(f"Error in chat: {e}")
-        # Assicurati che il database venga rollback in caso di errore
+
+    # ===== Identificazione guest =====
+    guest = None
+    if message.guest_id:
+        guest = db.query(Guest).filter(Guest.id == message.guest_id).first()
+        if not guest:
+            raise HTTPException(status_code=400, detail="Guest ID non valido")
+        logger.info(f"🔍 Guest identificato tramite guest_id: {guest.id}")
+    elif message.phone or message.email:
         try:
-            db.rollback()
-        except Exception as rollback_error:
-            logger.error(f"Errore durante rollback: {rollback_error}")
-        
-        # Log dell'errore completo per debug
-        import traceback
-        logger.error(f"Traceback completo: {traceback.format_exc()}")
-        
-        raise HTTPException(status_code=500, detail="Errore nel processare il messaggio")
+            guest = find_or_create_guest(
+                phone=message.phone,
+                email=message.email,
+                chatbot_id=chatbot.id,
+                first_name=message.first_name,
+                last_name=message.last_name,
+                db=db
+            )
+            logger.info(f"🔍 Guest identificato tramite phone/email: {guest.id}")
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+    else:
+        raise HTTPException(
+            status_code=400,
+            detail="Identificazione richiesta: fornire guest_id, email o numero di telefono"
+        )
+
+    # ===== Conversazione =====
+    logger.info(f"🔍 Guest: {guest.id}, force_new_conversation: {message.force_new_conversation}")
+    conversation = None
+    if not message.force_new_conversation:
+        existing_conversation = get_latest_guest_conversation(chatbot.id, guest.id, db)
+        if existing_conversation and existing_conversation.id and existing_conversation.chatbot_id == chatbot.id:
+            conversation = carica_conversazione_esistente(existing_conversation, message, chatbot, owner, db, request)
+        else:
+            if existing_conversation:
+                logger.warning(f"⚠️ Conversazione esistente {existing_conversation.id} non valida, creando nuova")
+            conversation = crea_nuova_conversazione(guest, message, chatbot, owner, db, request)
+    else:
+        conversation = crea_nuova_conversazione(guest, message, chatbot, owner, db, request)
+
+    # ===== Controllo Guardian =====
+    if conversation.guardian_suspended and not conversation.guardian_resolved:
+        logger.info(f"🚫 Conversazione {conversation.id} sospesa per alert Guardian")
+        raise HTTPException(
+            status_code=423,
+            detail="La conversazione è temporaneamente sospesa in attesa che l'host risponda di persona. Ti arriverà una mail quando lo farà. Nel frattempo puoi cliccare il pulsante refresh in alto per iniziare una nuova conversazione."
+        )
+
+    # ===== Preparazione Response API =====
+    if chatbot.vector_store_id:
+        instructions = build_response_instructions(chatbot)
+        tools = [{"type": "file_search", "vector_store_ids": [chatbot.vector_store_id]}]
+    else:
+        instructions = build_assistant_instructions_from_model(chatbot)
+        tools = []
+
+    previous_response_id = conversation.last_response_id
+    is_existing = getattr(conversation, 'is_existing_conversation', False)
+    conversation_id = conversation.id
+    chatbot_id_ref = chatbot.id
+
+    async def generate():
+        full_response = ""
+        response_id = None
+        try:
+            async_client = get_async_openai_client()
+            kwargs = {
+                "model": RESPONSE_API_MODEL,
+                "input": [{"role": "user", "content": message.content}],
+                "instructions": instructions,
+            }
+            if previous_response_id:
+                kwargs["previous_response_id"] = previous_response_id
+            if tools:
+                kwargs["tools"] = tools
+
+            async with async_client.responses.stream(**kwargs) as stream:
+                async for text in stream.text_stream:
+                    full_response += text
+                    yield f"data: {json.dumps({'delta': text})}\n\n"
+                final = await stream.get_final_response()
+                response_id = final.id
+
+        except Exception as e:
+            logger.error(f"❌ Errore streaming Response API: {e}\n{_traceback.format_exc()}")
+            yield f"data: {json.dumps({'error': str(e)})}\n\n"
+            return
+
+        # ===== Salva nel DB =====
+        try:
+            conv = db.query(Conversation).filter(Conversation.id == conversation_id).first()
+            cb = db.query(Chatbot).filter(Chatbot.id == chatbot_id_ref).first()
+            o = db.query(User).filter(User.id == cb.user_id).first() if cb else None
+
+            user_msg = Message(conversation_id=conversation_id, role="user", content=message.content)
+            assistant_msg = Message(conversation_id=conversation_id, role="assistant", content=full_response)
+            db.add(user_msg)
+            db.add(assistant_msg)
+
+            if conv:
+                conv.message_count = (conv.message_count or 0) + 2
+                conv.last_response_id = response_id
+            if cb:
+                cb.total_messages = (cb.total_messages or 0) + 2
+            if o:
+                if o.subscription_status == 'free_trial':
+                    o.free_trial_messages_used = (o.free_trial_messages_used or 0) + 1
+                else:
+                    o.messages_used = (o.messages_used or 0) + 1
+
+            db.commit()
+            db.refresh(assistant_msg)
+
+            _asyncio.create_task(analyze_conversation_with_guardian(conversation_id, db))
+
+            if o:
+                if o.subscription_status == 'free_trial':
+                    messages_remaining = (o.free_trial_messages_limit or 0) - (o.free_trial_messages_used or 0)
+                else:
+                    messages_remaining = (o.messages_limit or 0) - (o.messages_used or 0)
+            else:
+                messages_remaining = 0
+
+            done_data = {
+                "done": True,
+                "message": full_response,
+                "messages_remaining": messages_remaining,
+                "id": assistant_msg.id,
+                "role": "assistant",
+                "content": full_response,
+                "timestamp": assistant_msg.timestamp.isoformat() if assistant_msg.timestamp else datetime.now().isoformat(),
+            }
+
+            if is_existing:
+                existing_messages = db.query(Message).filter(
+                    Message.conversation_id == conversation_id
+                ).order_by(Message.timestamp.asc()).all()
+                done_data["existing_messages"] = [
+                    {
+                        "id": msg.id,
+                        "role": msg.role,
+                        "content": msg.content,
+                        "timestamp": msg.timestamp.isoformat() if msg.timestamp else None,
+                    }
+                    for msg in existing_messages[:-2]
+                ]
+                done_data["is_existing_conversation"] = True
+                logger.info(f"🔄 Inclusi {len(done_data['existing_messages'])} messaggi esistenti nella risposta")
+
+            yield f"data: {json.dumps(done_data)}\n\n"
+
+        except Exception as e:
+            logger.error(f"❌ Errore salvataggio DB post-streaming: {e}\n{_traceback.format_exc()}")
+            try:
+                db.rollback()
+            except Exception:
+                pass
+            yield f"data: {json.dumps({'error': 'Errore interno durante il salvataggio della risposta'})}\n\n"
+
+    return StreamingResponse(generate(), media_type="text/event-stream")
 
 @app.post("/api/chat/{uuid}/voice-message")
 async def send_voice_message(
@@ -6321,7 +6487,6 @@ async def send_voice_message(
             existing_conversation = get_latest_guest_conversation(chatbot.id, guest.id, db)
             if existing_conversation:
                 conversation = existing_conversation
-                thread_id = existing_conversation.thread_id
                 is_new_conversation = False
                 logger.info(f"🎤🔄 Riprendendo conversazione esistente per ospite {guest.id}")
         
@@ -6347,21 +6512,16 @@ async def send_voice_message(
                         detail=error_message
                     )
             
-            # Guest è sempre richiesto per creare conversazioni
             if not guest:
                 raise HTTPException(status_code=400, detail="Identificazione guest richiesta per inviare messaggi vocali")
-            
-            # Crea nuova conversazione
-            thread = client.beta.threads.create(extra_headers={"OpenAI-Beta": "assistants=v2"})
-            thread_id = thread.id
-            
-            # Crea nuova conversazione nel DB usando sempre guest_id
+
             conversation = Conversation(
                 chatbot_id=chatbot.id,
-                guest_id=guest.id,  # Sempre il guest_id vero
-                thread_id=thread_id,
+                guest_id=guest.id,
+                thread_id=None,
+                last_response_id=None,
                 guest_name=f"{guest.first_name} {guest.last_name}".strip() if (guest.first_name or guest.last_name) else None,
-                guest_identifier=None,  # Non usiamo più questo campo per guest identificati
+                guest_identifier=None,
                 is_forced_new=force_new_conversation
             )
             db.add(conversation)
@@ -6369,110 +6529,75 @@ async def send_voice_message(
             db.refresh(conversation)
             is_new_conversation = True
             logger.info(f"🎤🆕 Creata nuova conversazione per ospite {guest.id}")
-            
-            # Incrementa il contatore delle conversazioni
+
             if owner.subscription_status == 'free_trial':
-                owner.free_trial_conversations_used += 1
-                logger.info(f"🔄 [DEBUG] Incrementato free_trial_conversations_used: {owner.free_trial_conversations_used}")
+                owner.free_trial_conversations_used = (owner.free_trial_conversations_used or 0) + 1
             else:
-                owner.conversations_used += 1
-                logger.info(f"🔄 [DEBUG] Incrementato conversations_used: {owner.conversations_used}")
+                owner.conversations_used = (owner.conversations_used or 0) + 1
             db.commit()
-            logger.info(f"🔄 [DEBUG] Dopo commit - conversations_used: {owner.conversations_used}, free_trial_conversations_used: {owner.free_trial_conversations_used}")
             
-            # Controlla e invia avviso se rimangono meno del 10% delle conversazioni
             check_and_send_conversations_limit_warning(owner, db)
-        
-        # ============= FINE NUOVA LOGICA =============
-        
-        # Se la conversazione non ha ancora un thread_id, crealo ora
-        if not conversation.thread_id:
-            thread = client.beta.threads.create(extra_headers={"OpenAI-Beta": "assistants=v2"})
-            thread_id = thread.id
-            conversation.thread_id = thread_id
-            db.commit()
-            logger.info(f"🎤🆕 Creato thread OpenAI per conversazione esistente: {thread_id}")
-        
-        # Invia messaggio trascritto a OpenAI
-        client.beta.threads.messages.create(
-            thread_id=thread_id,
-            role="user",
-            content=transcribed_text,
-            extra_headers={"OpenAI-Beta": "assistants=v2"}
-        )
-        
-        # Esegui assistant
-        run = client.beta.threads.runs.create(
-            thread_id=thread_id,
-            assistant_id=chatbot.assistant_id,
-            extra_headers={"OpenAI-Beta": "assistants=v2"}
-        )
-        
-        # Attendi risposta
-        import time
-        while run.status in ["queued", "in_progress"]:
-            time.sleep(1)
-            run = client.beta.threads.runs.retrieve(
-                thread_id=thread_id,
-                run_id=run.id,
-                extra_headers={"OpenAI-Beta": "assistants=v2"}
-            )
-        
-        # Ottieni risposta
-        messages = client.beta.threads.messages.list(thread_id=thread_id, extra_headers={"OpenAI-Beta": "assistants=v2"})
-        assistant_message = messages.data[0].content[0].text.value
-        
+
+        # ===== Chiama Response API (sync) per il messaggio vocale =====
+        if chatbot.vector_store_id:
+            instructions = build_response_instructions(chatbot)
+            tools = [{"type": "file_search", "vector_store_ids": [chatbot.vector_store_id]}]
+        else:
+            instructions = build_assistant_instructions_from_model(chatbot)
+            tools = []
+
+        resp_kwargs = {
+            "model": RESPONSE_API_MODEL,
+            "input": [{"role": "user", "content": transcribed_text}],
+            "instructions": instructions,
+        }
+        if conversation.last_response_id:
+            resp_kwargs["previous_response_id"] = conversation.last_response_id
+        if tools:
+            resp_kwargs["tools"] = tools
+
+        response_obj = client.responses.create(**resp_kwargs)
+        assistant_message = response_obj.output_text
+        response_id = response_obj.id
+
         # Salva messaggi nel DB
-        user_msg = Message(
-            conversation_id=conversation.id,
-            role="user",
-            content=transcribed_text
-        )
-        assistant_msg = Message(
-            conversation_id=conversation.id,
-            role="assistant",
-            content=assistant_message
-        )
+        user_msg = Message(conversation_id=conversation.id, role="user", content=transcribed_text)
+        assistant_msg = Message(conversation_id=conversation.id, role="assistant", content=assistant_message)
         db.add(user_msg)
         db.add(assistant_msg)
-        
-        # Aggiorna statistiche
-        conversation.message_count += 2
-        chatbot.total_messages += 2
-        
+
+        conversation.message_count = (conversation.message_count or 0) + 2
+        conversation.last_response_id = response_id
+        chatbot.total_messages = (chatbot.total_messages or 0) + 2
+
         if is_new_conversation:
-            chatbot.total_conversations += 1
-        
-        # Incrementa il contatore messaggi dell'utente
+            chatbot.total_conversations = (chatbot.total_conversations or 0) + 1
+
         if owner.subscription_status == 'free_trial':
-            owner.free_trial_messages_used += 1
+            owner.free_trial_messages_used = (owner.free_trial_messages_used or 0) + 1
         else:
-            owner.messages_used += 1
-        
+            owner.messages_used = (owner.messages_used or 0) + 1
+
         db.commit()
-        
-        # Analizza la conversazione con Guardian (in background)
-        import asyncio
-        asyncio.create_task(analyze_conversation_with_guardian(conversation.id, db))
-        
-        # Calcola messaggi rimanenti
+
+        import asyncio as _asyncio
+        _asyncio.create_task(analyze_conversation_with_guardian(conversation.id, db))
+
         if owner.subscription_status == 'free_trial':
-            messages_remaining = owner.free_trial_messages_limit - owner.free_trial_messages_used
+            messages_remaining = (owner.free_trial_messages_limit or 0) - (owner.free_trial_messages_used or 0)
         else:
-            messages_remaining = owner.messages_limit - owner.messages_used
-        
+            messages_remaining = (owner.messages_limit or 0) - (owner.messages_used or 0)
+
         logger.info("🎤 Messaggio vocale processato con successo!")
-        logger.info(f"🎤 Thread ID: {thread_id}")
         logger.info(f"🎤 Testo trascritto: {transcribed_text[:50]}...")
         logger.info(f"🎤 Risposta assistente: {assistant_message[:50]}...")
-        
+
         return {
-            "thread_id": thread_id,
             "transcribed_text": transcribed_text,
             "message": assistant_message,
-            "messages_remaining": messages_remaining
+            "messages_remaining": messages_remaining,
         }
-        
+
     except Exception as e:
         logger.error(f"Error in voice message: {e}")
         raise HTTPException(status_code=500, detail="Errore nel processare il messaggio vocale")
@@ -8118,14 +8243,20 @@ async def delete_profile(
         # 2. Elimina tutti i chatbot dell'utente (cascade eliminerà conversazioni, messaggi, knowledge base)
         chatbots = db.query(Chatbot).filter(Chatbot.user_id == current_user.id).all()
         for chatbot in chatbots:
-            # Elimina l'assistant da OpenAI se esiste
-            if chatbot.assistant_id:
+            # Elimina il Vector Store da OpenAI se esiste
+            if chatbot.vector_store_id:
                 try:
                     client = get_openai_client()
-                    client.beta.assistants.delete(chatbot.assistant_id)
-                    logger.info(f"Deleted OpenAI assistant {chatbot.assistant_id}")
+                    vs_files = client.vector_stores.files.list(chatbot.vector_store_id)
+                    for vs_file in vs_files.data:
+                        try:
+                            client.files.delete(vs_file.id)
+                        except Exception:
+                            pass
+                    client.vector_stores.delete(chatbot.vector_store_id)
+                    logger.info(f"Deleted vector store {chatbot.vector_store_id}")
                 except Exception as e:
-                    logger.error(f"Error deleting OpenAI assistant {chatbot.assistant_id}: {e}")
+                    logger.error(f"Error deleting vector store {chatbot.vector_store_id}: {e}")
         
         # 3. I referral codes non sono legati direttamente all'utente, 
         # ma sono utilizzati da più utenti, quindi non li eliminiamo
@@ -9896,47 +10027,20 @@ async def validate_phone(phone: str):
 
 # ============= FUNZIONI HELPER PER CONVERSAZIONI =============
 
-def carica_conversazione_esistente(conversation: Conversation, message: MessageCreate, chatbot: Chatbot, owner: User, client, db: Session, request):
-    """Carica e continua una conversazione esistente - SOLO caricamento messaggi"""
-    logger.info(f"✅ CARICANDO conversazione esistente {conversation.id} per guest {conversation.guest_id}")
-    
-    # Se la conversazione non ha thread_id, crealo
-    if not conversation.thread_id:
-        try:
-            thread = client.beta.threads.create(extra_headers={"OpenAI-Beta": "assistants=v2"})
-            conversation.thread_id = thread.id
-            db.commit()
-            logger.info(f"🆕 Creato thread OpenAI per conversazione esistente: {conversation.thread_id}")
-        except Exception as e:
-            logger.error(f"❌ Errore nella creazione del thread OpenAI: {e}")
-            raise HTTPException(status_code=500, detail="Errore nella creazione del thread OpenAI")
-    
-    # Invia il messaggio a OpenAI
-    try:
-        client.beta.threads.messages.create(
-            thread_id=conversation.thread_id,
-            role="user",
-            content=message.content,
-            extra_headers={"OpenAI-Beta": "assistants=v2"}
-        )
-    except Exception as e:
-        logger.error(f"❌ Errore nell'invio del messaggio a OpenAI: {e}")
-        raise HTTPException(status_code=500, detail="Errore nell'invio del messaggio a OpenAI")
-    
-    # IMPORTANTE: Marca che questa è una conversazione esistente usando un attributo dinamico
+def carica_conversazione_esistente(conversation: Conversation, message: MessageCreate, chatbot: Chatbot, owner: User, db: Session, request):
+    """Carica una conversazione esistente per continuarla con la Response API."""
+    logger.info(f"✅ Caricando conversazione esistente {conversation.id} per guest {conversation.guest_id}")
     setattr(conversation, 'is_existing_conversation', True)
-    
     return conversation
 
-def crea_nuova_conversazione(guest: Guest, message: MessageCreate, chatbot: Chatbot, owner: User, client, db: Session, request):
-    """Crea una nuova conversazione per un guest - SOLO creazione"""
-    # Guest è sempre richiesto poiché l'identificazione è obbligatoria
+
+def crea_nuova_conversazione(guest: Guest, message: MessageCreate, chatbot: Chatbot, owner: User, db: Session, request):
+    """Crea una nuova conversazione per un guest (senza thread OpenAI — usa Response API)."""
     if not guest:
         raise HTTPException(status_code=400, detail="Identificazione guest richiesta per creare una conversazione")
-    
-    logger.info(f"🆕 CREANDO nuova conversazione per guest {guest.id}")
-    
-    # Verifica limiti conversazioni prima di crearne una nuova
+
+    logger.info(f"🆕 Creando nuova conversazione per guest {guest.id}")
+
     if owner.subscription_status == 'free_trial':
         if owner.free_trial_conversations_used >= owner.free_trial_conversations_limit:
             raise HTTPException(
@@ -9950,52 +10054,37 @@ def crea_nuova_conversazione(guest: Guest, message: MessageCreate, chatbot: Chat
             else:
                 error_message = f"Limite mensile di {owner.conversations_limit} conversazioni raggiunto. Il limite si resetta automaticamente al rinnovo dell'abbonamento. Per assistenza contatta il numero: {owner.phone}"
             raise HTTPException(status_code=429, detail=error_message)
-    
-    # Crea nuovo thread OpenAI
-    thread = client.beta.threads.create(extra_headers={"OpenAI-Beta": "assistants=v2"})
-    
-    # Crea nuova conversazione nel DB usando sempre guest_id
+
     conversation = Conversation(
         chatbot_id=chatbot.id,
-        guest_id=guest.id,  # Sempre il guest_id vero
-        thread_id=thread.id,
+        guest_id=guest.id,
+        thread_id=None,
+        last_response_id=None,
         guest_name=f"{guest.first_name} {guest.last_name}".strip() if (guest.first_name or guest.last_name) else None,
-        guest_identifier=None,  # Non usiamo più questo campo per guest identificati
+        guest_identifier=None,
         is_forced_new=message.force_new_conversation
     )
     db.add(conversation)
     db.commit()
     db.refresh(conversation)
-    
-    # Incrementa contatore conversazioni
+
     if owner.subscription_status == 'free_trial':
         owner.free_trial_conversations_used += 1
     else:
         owner.conversations_used += 1
     db.commit()
-    
-    # Controlla e invia avviso se rimangono meno del 10% delle conversazioni
+
     check_and_send_conversations_limit_warning(owner, db)
-    
-    # Invia messaggio a OpenAI
-    client.beta.threads.messages.create(
-        thread_id=conversation.thread_id,
-        role="user",
-        content=message.content,
-        extra_headers={"OpenAI-Beta": "assistants=v2"}
+
+    welcome_message = Message(
+        conversation_id=conversation.id,
+        role="assistant",
+        content=chatbot.welcome_message or "Ciao! Sono qui per aiutarti con qualsiasi domanda sulla casa e sulla zona. Come posso esserti utile?",
+        timestamp=func.now()
     )
-    
-    # Se è una nuova conversazione per un guest identificato, salva messaggio di benvenuto
-    if guest:
-        welcome_message = Message(
-            conversation_id=conversation.id,
-            role="assistant",
-            content=chatbot.welcome_message or "Ciao! Sono qui per aiutarti con qualsiasi domanda sulla casa e sulla zona. Come posso esserti utile?",
-            timestamp=func.now()
-        )
-        db.add(welcome_message)
-        db.commit()
-    
+    db.add(welcome_message)
+    db.commit()
+
     return conversation
 
 # ============= NUOVI ENDPOINT PER GESTIONE OSPITI =============
@@ -10274,44 +10363,32 @@ async def create_new_conversation(
             )
     
     try:
-        client = get_openai_client()
-        
-        # Crea nuovo thread
-        thread = client.beta.threads.create(extra_headers={"OpenAI-Beta": "assistants=v2"})
-        thread_id = thread.id
-        
-        # Crea nuova conversazione nel DB usando sempre guest_id
         conversation = Conversation(
             chatbot_id=chatbot.id,
-            guest_id=guest.id,  # Sempre il guest_id vero
-            thread_id=thread_id,
+            guest_id=guest.id,
+            thread_id=None,
+            last_response_id=None,
             guest_name=f"{guest.first_name} {guest.last_name}".strip() if guest.first_name or guest.last_name else None,
-            guest_identifier=None,  # Non usiamo più questo campo per guest identificati
-            is_forced_new=True  # Marca come nuova conversazione forzata
+            guest_identifier=None,
+            is_forced_new=True
         )
         db.add(conversation)
         db.commit()
         db.refresh(conversation)
-        
-        # Incrementa il contatore delle conversazioni
+
         if owner.subscription_status == 'free_trial':
-            owner.free_trial_conversations_used += 1
-            logger.info(f"🔄 [DEBUG] Incrementato free_trial_conversations_used: {owner.free_trial_conversations_used}")
+            owner.free_trial_conversations_used = (owner.free_trial_conversations_used or 0) + 1
         else:
-            owner.conversations_used += 1
-            logger.info(f"🔄 [DEBUG] Incrementato conversations_used: {owner.conversations_used}")
+            owner.conversations_used = (owner.conversations_used or 0) + 1
         db.commit()
-        logger.info(f"🔄 [DEBUG] Dopo commit - conversations_used: {owner.conversations_used}, free_trial_conversations_used: {owner.free_trial_conversations_used}")
-        
-        # Controlla e invia avviso se rimangono meno del 10% delle conversazioni
+
         check_and_send_conversations_limit_warning(owner, db)
-        
+
         return {
             "conversation_id": conversation.id,
-            "thread_id": thread_id,
-            "message": "Nuova conversazione creata con successo"
+            "message": "Nuova conversazione creata con successo",
         }
-        
+
     except Exception as e:
         logger.error(f"Error creating new conversation: {e}")
         raise HTTPException(status_code=500, detail="Errore nella creazione della conversazione")

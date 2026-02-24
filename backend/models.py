@@ -81,7 +81,8 @@ class Chatbot(Base):
     
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    assistant_id = Column(String(255), unique=True)  # OpenAI Assistant ID
+    assistant_id = Column(String(255), unique=True)  # OpenAI Assistant ID (legacy)
+    vector_store_id = Column(String(255), nullable=True)  # OpenAI Vector Store ID (Response API)
     uuid = Column(String(100), default=lambda: str(uuid.uuid4()), unique=True, index=True)
     name = Column(String(255), nullable=False)
     
@@ -175,7 +176,8 @@ class Conversation(Base):
     id = Column(Integer, primary_key=True, index=True)
     chatbot_id = Column(Integer, ForeignKey("chatbots.id"), nullable=False)
     guest_id = Column(Integer, ForeignKey("guests.id"), nullable=True)  # Riferimento all'ospite
-    thread_id = Column(String(255))  # OpenAI Thread ID
+    thread_id = Column(String(255))  # OpenAI Thread ID (legacy)
+    last_response_id = Column(String(255), nullable=True)  # OpenAI Response API last response ID
     guest_name = Column(String(255))  # Mantenuto per compatibilità
     guest_identifier = Column(String(255))  # IP o session ID - mantenuto per compatibilità
     started_at = Column(DateTime, server_default=func.now())
