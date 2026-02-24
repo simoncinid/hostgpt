@@ -64,6 +64,7 @@ export default function ChatWidgetPage() {
   const [messages, setMessages] = useState<Message[]>([])
   const [inputMessage, setInputMessage] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [streamingMessageId, setStreamingMessageId] = useState<string | null>(null)
   const [chatInfo, setChatInfo] = useState<ChatInfo | null>(null)
   const [conversationId, setConversationId] = useState<number | null>(null)
   const [threadId, setThreadId] = useState<string | null>(null)
@@ -244,6 +245,10 @@ export default function ChatWidgetPage() {
     setMessages(prev => [...prev, userMessage])
     setIsLoading(true)
 
+    const streamId = (Date.now() + 1).toString()
+    setStreamingMessageId(streamId)
+    setMessages(prev => [...prev, { id: streamId, role: 'assistant', content: '', timestamp: new Date() }])
+
     try {
       const response = await chat.sendMessage(uuid, {
         content: fullMessage,
@@ -256,24 +261,12 @@ export default function ChatWidgetPage() {
         first_name: guestData?.first_name,
         last_name: guestData?.last_name,
         force_new_conversation: false
+      }, (delta) => {
+        setMessages(prev => prev.map(msg =>
+          msg.id === streamId ? { ...msg, content: msg.content + delta } : msg
+        ))
       })
 
-      // Se non abbiamo ancora un thread_id, lo salviamo
-      if (!threadId) {
-        setThreadId(response.data.thread_id)
-        // Salva il threadId nel localStorage
-        localStorage.setItem(`thread_id_${uuid}`, response.data.thread_id)
-      }
-
-      const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: response.data.message,
-        timestamp: new Date()
-      }
-
-      setMessages(prev => [...prev, assistantMessage])
-      
       // Controlla se la conversazione è stata sospesa dopo l'invio del messaggio suggerito
       try {
         const statusResponse = await chat.getStatus(uuid, response.data.thread_id)
@@ -285,6 +278,7 @@ export default function ChatWidgetPage() {
         console.error('Errore nel controllo dello stato dopo invio messaggio suggerito:', error)
       }
     } catch (error: any) {
+      setMessages(prev => prev.filter(msg => !(msg.id === streamId && msg.content === '')))
       if (error.response?.status === 403) {
         const errorDetail = error.response?.data?.detail || ''
         if (errorDetail.includes('free trial') || errorDetail.includes('periodo di prova')) {
@@ -314,6 +308,7 @@ export default function ChatWidgetPage() {
       }
     } finally {
       setIsLoading(false)
+      setStreamingMessageId(null)
     }
   }
 
@@ -341,8 +336,12 @@ export default function ChatWidgetPage() {
     setMessages(prev => [...prev, userMessage])
     setIsLoading(true)
 
+    const streamId = (Date.now() + 1).toString()
+    setStreamingMessageId(streamId)
+    setMessages(prev => [...prev, { id: streamId, role: 'assistant', content: '', timestamp: new Date() }])
+
     try {
-      const response = await chat.sendMessage(uuid, {
+      await chat.sendMessage(uuid, {
         content: emergencyMessage,
         thread_id: threadId,
         guest_name: guestName || undefined,
@@ -352,21 +351,13 @@ export default function ChatWidgetPage() {
         first_name: guestData?.first_name,
         last_name: guestData?.last_name,
         force_new_conversation: false
+      }, (delta) => {
+        setMessages(prev => prev.map(msg =>
+          msg.id === streamId ? { ...msg, content: msg.content + delta } : msg
+        ))
       })
-
-      if (!threadId) {
-        setThreadId(response.data.thread_id)
-      }
-
-      const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: response.data.message,
-        timestamp: new Date()
-      }
-
-      setMessages(prev => [...prev, assistantMessage])
     } catch (error: any) {
+      setMessages(prev => prev.filter(msg => !(msg.id === streamId && msg.content === '')))
       if (error.response?.status === 403) {
         const errorDetail = error.response?.data?.detail || ''
         if (errorDetail.includes('free trial') || errorDetail.includes('periodo di prova')) {
@@ -390,6 +381,7 @@ export default function ChatWidgetPage() {
       }
     } finally {
       setIsLoading(false)
+      setStreamingMessageId(null)
     }
   }
 
@@ -793,6 +785,10 @@ export default function ChatWidgetPage() {
     setInputMessage('')
     setIsLoading(true)
 
+    const streamId = (Date.now() + 1).toString()
+    setStreamingMessageId(streamId)
+    setMessages(prev => [...prev, { id: streamId, role: 'assistant', content: '', timestamp: new Date() }])
+
     try {
       const response = await chat.sendMessage(uuid, {
         content: inputMessage,
@@ -805,24 +801,12 @@ export default function ChatWidgetPage() {
         first_name: guestData?.first_name,
         last_name: guestData?.last_name,
         force_new_conversation: false
+      }, (delta) => {
+        setMessages(prev => prev.map(msg =>
+          msg.id === streamId ? { ...msg, content: msg.content + delta } : msg
+        ))
       })
 
-      // Se non abbiamo ancora un thread_id, lo salviamo
-      if (!threadId) {
-        setThreadId(response.data.thread_id)
-        // Salva il threadId nel localStorage
-        localStorage.setItem(`thread_id_${uuid}`, response.data.thread_id)
-      }
-
-      const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: response.data.message,
-        timestamp: new Date()
-      }
-
-      setMessages(prev => [...prev, assistantMessage])
-      
       // Controlla se la conversazione è stata sospesa dopo l'invio del messaggio
       try {
         const statusResponse = await chat.getStatus(uuid, response.data.thread_id)
@@ -834,6 +818,7 @@ export default function ChatWidgetPage() {
         console.error('Errore nel controllo dello stato dopo invio messaggio:', error)
       }
     } catch (error: any) {
+      setMessages(prev => prev.filter(msg => !(msg.id === streamId && msg.content === '')))
       if (error.response?.status === 403) {
         setSubscriptionCancelled(true)
       } else if (error.response?.status === 423) {
@@ -847,6 +832,7 @@ export default function ChatWidgetPage() {
       }
     } finally {
       setIsLoading(false)
+      setStreamingMessageId(null)
     }
   }
 
@@ -1814,7 +1800,7 @@ export default function ChatWidgetPage() {
                   </motion.div>
                 ))}
                 
-                {isLoading && (
+                {isLoading && streamingMessageId === null && (
                   <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}

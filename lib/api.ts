@@ -227,7 +227,7 @@ export const chat = {
   getInfo: (uuid: string) =>
     api.get(`/chat/${uuid}/info`),
   
-  sendMessage: async (uuid: string, data: any): Promise<{ data: any }> => {
+  sendMessage: async (uuid: string, data: any, onDelta?: (text: string) => void): Promise<{ data: any }> => {
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
     const response = await fetch(`${API_URL}/api/chat/${uuid}/message`, {
       method: 'POST',
@@ -268,6 +268,9 @@ export const chat = {
               err.response = { status: 500, data: { detail: parsed.error } }
               throw err
             }
+            if (parsed.delta && onDelta) {
+              onDelta(parsed.delta)
+            }
             if (parsed.done) doneData = parsed
           } catch (e: any) {
             if (e.response) throw e
@@ -283,7 +286,7 @@ export const chat = {
   getInfoPublic: (uuid: string) =>
     publicApi.get(`/chat/${uuid}/info`),
 
-  sendMessagePublic: async (uuid: string, data: any): Promise<{ data: any }> => {
+  sendMessagePublic: async (uuid: string, data: any, onDelta?: (text: string) => void): Promise<{ data: any }> => {
     const response = await fetch(`${API_URL}/api/chat/${uuid}/message`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -319,6 +322,9 @@ export const chat = {
               const err: any = new Error(parsed.error)
               err.response = { status: 500, data: { detail: parsed.error } }
               throw err
+            }
+            if (parsed.delta && onDelta) {
+              onDelta(parsed.delta)
             }
             if (parsed.done) doneData = parsed
           } catch (e: any) {
