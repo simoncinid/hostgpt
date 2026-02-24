@@ -807,15 +807,22 @@ export default function ChatWidgetPage() {
         ))
       })
 
-      // Controlla se la conversazione è stata sospesa dopo l'invio del messaggio
-      try {
-        const statusResponse = await chat.getStatus(uuid, response.data.thread_id)
-        if (statusResponse.data.suspended) {
-          setIsSuspended(true)
-          setSuspensionMessage(statusResponse.data.message)
+      // Controlla se la conversazione è stata sospesa dopo l'invio del messaggio.
+      // Il backend include guardian_suspended direttamente nel done_data quando Guardian scatta.
+      if (response.data.guardian_suspended) {
+        setIsSuspended(true)
+        setSuspensionMessage(response.data.suspension_message || '')
+      } else {
+        // Fallback: polling endpoint (usa threadId dallo stato, non da response.data)
+        try {
+          const statusResponse = await chat.getStatus(uuid, threadId || undefined)
+          if (statusResponse.data.suspended) {
+            setIsSuspended(true)
+            setSuspensionMessage(statusResponse.data.message)
+          }
+        } catch (error) {
+          console.error('Errore nel controllo dello stato dopo invio messaggio:', error)
         }
-      } catch (error) {
-        console.error('Errore nel controllo dello stato dopo invio messaggio:', error)
       }
     } catch (error: any) {
       setMessages(prev => prev.filter(msg => !(msg.id === streamId && msg.content === '')))

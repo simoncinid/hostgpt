@@ -6361,6 +6361,8 @@ async def send_message(
             db.refresh(assistant_msg)
 
             # ===== Guardian: esegui l'alert se il modello ha chiamato la funzione =====
+            guardian_just_suspended = False
+            suspension_message_text = ""
             if guardian_triggered and conv and not conv.guardian_suspended and not conv.guardian_alert_triggered:
                 try:
                     reason = guardian_triggered.get('reason', 'negative_review_risk')
@@ -6380,8 +6382,14 @@ async def send_message(
                     alert = guardian_service.create_alert(conv, analysis_result, db)
                     conv.guardian_suspended = True
                     conv.guardian_alert_triggered = True
+                    # Reset last_response_id: the current response contains a pending function call.
+                    # If we keep it, OpenAI will reject the next message with a 400 error
+                    # ("No tool output found for function call"). Resetting forces a fresh context.
+                    conv.last_response_id = None
                     db.commit()
                     guardian_service.send_alert_email(alert, db)
+                    guardian_just_suspended = True
+                    suspension_message_text = "La conversazione è temporaneamente sospesa in attesa che l'host risponda di persona. Ti arriverà una mail quando lo farà. Nel frattempo puoi cliccare il pulsante refresh in alto per iniziare una nuova conversazione."
                     logger.warning(f"🚨 GUARDIAN ALERT via function call: {reason} — {details}")
                 except Exception as ge:
                     logger.error(f"❌ Errore esecuzione guardian function call: {ge}")
@@ -6402,6 +6410,8 @@ async def send_message(
                 "role": "assistant",
                 "content": full_response,
                 "timestamp": assistant_msg.timestamp.isoformat() if assistant_msg.timestamp else datetime.now().isoformat(),
+                "guardian_suspended": guardian_just_suspended,
+                "suspension_message": suspension_message_text,
             }
 
             if is_existing:
@@ -8042,8 +8052,11 @@ async def resolve_guardian_alert(
         # Sblocca la conversazione e resetta i flag Guardian
         conversation.guardian_resolved = True
         conversation.guardian_suspended = False
-        conversation.guardian_alert_triggered = False  # Reset per permettere nuove analisi
-        conversation.guardian_analyzed = False  # Reset per permettere nuove analisi
+        conversation.guardian_alert_triggered = False
+        conversation.guardian_analyzed = False
+        # Reset last_response_id: the response that triggered Guardian contained a pending
+        # function call, so chaining from it would cause a 400 error on the next message.
+        conversation.last_response_id = None
         db.commit()
         
         # Invia email al guest con la conversazione completa
