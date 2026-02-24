@@ -227,15 +227,109 @@ export const chat = {
   getInfo: (uuid: string) =>
     api.get(`/chat/${uuid}/info`),
   
-  sendMessage: (uuid: string, data: any) =>
-    api.post(`/chat/${uuid}/message`, data),
-  
+  sendMessage: async (uuid: string, data: any): Promise<{ data: any }> => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
+    const response = await fetch(`${API_URL}/api/chat/${uuid}/message`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify(data),
+    })
+
+    if (!response.ok) {
+      let errorData: any = {}
+      try { errorData = await response.json() } catch {}
+      const err: any = new Error(errorData.detail || 'Error sending message')
+      err.response = { status: response.status, data: errorData }
+      throw err
+    }
+
+    const reader = response.body!.getReader()
+    const decoder = new TextDecoder()
+    let doneData: any = null
+    let buffer = ''
+
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+      buffer += decoder.decode(value, { stream: true })
+      const lines = buffer.split('\n')
+      buffer = lines.pop() ?? ''
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          const jsonStr = line.slice(6).trim()
+          if (!jsonStr) continue
+          try {
+            const parsed = JSON.parse(jsonStr)
+            if (parsed.error) {
+              const err: any = new Error(parsed.error)
+              err.response = { status: 500, data: { detail: parsed.error } }
+              throw err
+            }
+            if (parsed.done) doneData = parsed
+          } catch (e: any) {
+            if (e.response) throw e
+          }
+        }
+      }
+    }
+
+    return { data: doneData ?? {} }
+  },
+
   // Versioni pubbliche per demo (senza autenticazione)
   getInfoPublic: (uuid: string) =>
     publicApi.get(`/chat/${uuid}/info`),
-  
-  sendMessagePublic: (uuid: string, data: any) =>
-    publicApi.post(`/chat/${uuid}/message`, data),
+
+  sendMessagePublic: async (uuid: string, data: any): Promise<{ data: any }> => {
+    const response = await fetch(`${API_URL}/api/chat/${uuid}/message`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    })
+
+    if (!response.ok) {
+      let errorData: any = {}
+      try { errorData = await response.json() } catch {}
+      const err: any = new Error(errorData.detail || 'Error sending message')
+      err.response = { status: response.status, data: errorData }
+      throw err
+    }
+
+    const reader = response.body!.getReader()
+    const decoder = new TextDecoder()
+    let doneData: any = null
+    let buffer = ''
+
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+      buffer += decoder.decode(value, { stream: true })
+      const lines = buffer.split('\n')
+      buffer = lines.pop() ?? ''
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          const jsonStr = line.slice(6).trim()
+          if (!jsonStr) continue
+          try {
+            const parsed = JSON.parse(jsonStr)
+            if (parsed.error) {
+              const err: any = new Error(parsed.error)
+              err.response = { status: 500, data: { detail: parsed.error } }
+              throw err
+            }
+            if (parsed.done) doneData = parsed
+          } catch (e: any) {
+            if (e.response) throw e
+          }
+        }
+      }
+    }
+
+    return { data: doneData ?? {} }
+  },
   
   getStatus: (uuid: string, thread_id?: string) =>
     publicApi.get(`/chat/${uuid}/status`, { params: { thread_id } }),
