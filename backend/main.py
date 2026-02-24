@@ -488,7 +488,7 @@ def get_free_trial_messages_remaining(user: User) -> int:
     
     return max(0, user.free_trial_messages_limit - user.free_trial_messages_used)
 
-RESPONSE_API_MODEL = "gpt-4.5"
+RESPONSE_API_MODEL = "gpt-5.2"
 
 def get_openai_client():
     """Restituisce un client OpenAI sync."""
