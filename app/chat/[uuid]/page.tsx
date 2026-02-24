@@ -810,6 +810,10 @@ export default function ChatWidgetPage() {
       // Controlla se la conversazione è stata sospesa dopo l'invio del messaggio.
       // Il backend include guardian_suspended direttamente nel done_data quando Guardian scatta.
       if (response.data.guardian_suspended) {
+        // If the model only called the function without generating text, remove the empty bubble
+        if (!response.data.message) {
+          setMessages(prev => prev.filter(msg => msg.id !== streamId))
+        }
         setIsSuspended(true)
         setSuspensionMessage(response.data.suspension_message || '')
       } else {

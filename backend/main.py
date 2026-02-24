@@ -6342,15 +6342,21 @@ async def send_message(
             o = db.query(User).filter(User.id == cb.user_id).first() if cb else None
 
             user_msg = Message(conversation_id=conversation_id, role="user", content=message.content)
-            assistant_msg = Message(conversation_id=conversation_id, role="assistant", content=full_response)
             db.add(user_msg)
-            db.add(assistant_msg)
 
+            # Only save the assistant message if the model actually generated text.
+            # When it only calls trigger_guardian_alert with no text, full_response is empty.
+            assistant_msg = None
+            if full_response:
+                assistant_msg = Message(conversation_id=conversation_id, role="assistant", content=full_response)
+                db.add(assistant_msg)
+
+            msg_increment = 2 if full_response else 1
             if conv:
-                conv.message_count = (conv.message_count or 0) + 2
+                conv.message_count = (conv.message_count or 0) + msg_increment
                 conv.last_response_id = response_id
             if cb:
-                cb.total_messages = (cb.total_messages or 0) + 2
+                cb.total_messages = (cb.total_messages or 0) + msg_increment
             if o:
                 if o.subscription_status == 'free_trial':
                     o.free_trial_messages_used = (o.free_trial_messages_used or 0) + 1
@@ -6358,7 +6364,8 @@ async def send_message(
                     o.messages_used = (o.messages_used or 0) + 1
 
             db.commit()
-            db.refresh(assistant_msg)
+            if assistant_msg:
+                db.refresh(assistant_msg)
 
             # ===== Guardian: esegui l'alert se il modello ha chiamato la funzione =====
             guardian_just_suspended = False
@@ -6406,10 +6413,10 @@ async def send_message(
                 "done": True,
                 "message": full_response,
                 "messages_remaining": messages_remaining,
-                "id": assistant_msg.id,
+                "id": assistant_msg.id if assistant_msg else None,
                 "role": "assistant",
                 "content": full_response,
-                "timestamp": assistant_msg.timestamp.isoformat() if assistant_msg.timestamp else datetime.now().isoformat(),
+                "timestamp": assistant_msg.timestamp.isoformat() if assistant_msg and assistant_msg.timestamp else datetime.now().isoformat(),
                 "guardian_suspended": guardian_just_suspended,
                 "suspension_message": suspension_message_text,
             }
