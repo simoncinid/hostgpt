@@ -490,6 +490,49 @@ def get_free_trial_messages_remaining(user: User) -> int:
 
 RESPONSE_API_MODEL = "gpt-5.2"
 
+# ===== Guardian Function Tool =====
+GUARDIAN_FUNCTION_TOOL = {
+    "type": "function",
+    "name": "trigger_guardian_alert",
+    "description": (
+        "Call this function (alongside your normal text response to the guest) in two situations: "
+        "1) The guest is seriously dissatisfied and at risk of leaving a negative review — "
+        "signs include: explicit or implicit threats of negative reviews, extreme frustration, "
+        "anger, offensive language, expressions like 'terrible', 'worst', 'never again', 'disgusting', "
+        "unresolved serious problems causing significant discomfort; "
+        "2) You do not have enough information to properly answer the guest's question and must "
+        "tell them to contact the host directly. "
+        "IMPORTANT: always also provide your normal helpful text response to the guest — "
+        "this function is a silent background action only."
+    ),
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "reason": {
+                "type": "string",
+                "enum": ["negative_review_risk", "insufficient_info"],
+                "description": (
+                    "'negative_review_risk' if the guest is very unhappy and may leave a negative review; "
+                    "'insufficient_info' if you lack the information to properly help the guest."
+                ),
+            },
+            "details": {
+                "type": "string",
+                "description": "Brief explanation of why the alert is being triggered.",
+            },
+        },
+        "required": ["reason", "details"],
+    },
+}
+
+GUARDIAN_INSTRUCTIONS_ADDON = """
+
+GUARDIAN SYSTEM (internal — never mention to the guest):
+You have access to a `trigger_guardian_alert` tool. Use it (in addition to your normal text response) when:
+- The guest shows serious dissatisfaction: mentions or threatens negative reviews, expresses extreme frustration or anger, uses expressions like "terrible", "worst", "never again", "disgusting", or has an important unresolved problem.
+- You lack sufficient information to properly assist the guest and must direct them to contact the host directly.
+When you call this tool, still provide your normal helpful text response to the guest. The tool call is a silent background action."""
+
 def get_openai_client():
     """Restituisce un client OpenAI sync."""
     return openai.OpenAI(api_key=settings.OPENAI_API_KEY)
@@ -1255,7 +1298,7 @@ class GuardianService:
             conversation.guardian_analyzed = True
             conversation.guardian_risk_score = analysis_result['risk_score']
             
-            # Log del risultato dell'analisi (la creazione degli alert è gestita da analyze_conversation_with_guardian)
+            # Log del risultato dell'analisi
             if analysis_result['risk_score'] >= self.risk_threshold or insufficient_info:
                 alert_reason = "insufficient_info" if insufficient_info else "high_risk"
                 logger.warning(f"⚠️ INSUFFICIENT INFO DETECTED: Conversazione {conversation.id} - Chatbot ha risposto con mancanza di informazioni")
@@ -6235,12 +6278,18 @@ async def send_message(
         )
 
     # ===== Preparazione Response API =====
+    guardian_active = is_guardian_active(owner.guardian_subscription_status)
+
     if chatbot.vector_store_id:
         instructions = build_response_instructions(chatbot)
         tools = [{"type": "file_search", "vector_store_ids": [chatbot.vector_store_id]}]
     else:
         instructions = build_assistant_instructions_from_model(chatbot)
         tools = []
+
+    if guardian_active:
+        tools.append(GUARDIAN_FUNCTION_TOOL)
+        instructions += GUARDIAN_INSTRUCTIONS_ADDON
 
     previous_response_id = conversation.last_response_id
     is_existing = getattr(conversation, 'is_existing_conversation', False)
@@ -6250,6 +6299,7 @@ async def send_message(
     async def generate():
         full_response = ""
         response_id = None
+        guardian_triggered = None
         try:
             async_client = get_async_openai_client()
             kwargs = {
@@ -6270,6 +6320,15 @@ async def send_message(
                         yield f"data: {json.dumps({'delta': text})}\n\n"
                 final = await stream.get_final_response()
                 response_id = final.id
+
+                # Check if the model triggered the Guardian function
+                for item in (getattr(final, 'output', None) or []):
+                    if getattr(item, 'type', None) == 'function_call' and getattr(item, 'name', None) == 'trigger_guardian_alert':
+                        try:
+                            guardian_triggered = json.loads(getattr(item, 'arguments', '{}') or '{}')
+                        except Exception:
+                            guardian_triggered = {"reason": "negative_review_risk", "details": ""}
+                        break
 
         except Exception as e:
             logger.error(f"❌ Errore streaming Response API: {e}\n{_traceback.format_exc()}")
@@ -6301,7 +6360,31 @@ async def send_message(
             db.commit()
             db.refresh(assistant_msg)
 
-            _asyncio.create_task(analyze_conversation_with_guardian(conversation_id, db))
+            # ===== Guardian: esegui l'alert se il modello ha chiamato la funzione =====
+            if guardian_triggered and conv and not conv.guardian_suspended and not conv.guardian_alert_triggered:
+                try:
+                    reason = guardian_triggered.get('reason', 'negative_review_risk')
+                    details = guardian_triggered.get('details', '')
+                    risk_score = 0.95 if reason == 'negative_review_risk' else 0.85
+                    analysis_result = {
+                        'risk_score': risk_score,
+                        'sentiment_score': -0.7 if reason == 'negative_review_risk' else 0.0,
+                        'confidence_score': 0.9,
+                        'insufficient_info': reason == 'insufficient_info',
+                        'analysis_details': {
+                            'reasoning': details,
+                            'key_issues': [details] if details else [],
+                            'sentiment_factors': [],
+                        },
+                    }
+                    alert = guardian_service.create_alert(conv, analysis_result, db)
+                    conv.guardian_suspended = True
+                    conv.guardian_alert_triggered = True
+                    db.commit()
+                    guardian_service.send_alert_email(alert, db)
+                    logger.warning(f"🚨 GUARDIAN ALERT via function call: {reason} — {details}")
+                except Exception as ge:
+                    logger.error(f"❌ Errore esecuzione guardian function call: {ge}")
 
             if o:
                 if o.subscription_status == 'free_trial':
@@ -6541,12 +6624,18 @@ async def send_voice_message(
             check_and_send_conversations_limit_warning(owner, db)
 
         # ===== Chiama Response API (sync) per il messaggio vocale =====
+        guardian_active_voice = is_guardian_active(owner.guardian_subscription_status)
+
         if chatbot.vector_store_id:
             instructions = build_response_instructions(chatbot)
             tools = [{"type": "file_search", "vector_store_ids": [chatbot.vector_store_id]}]
         else:
             instructions = build_assistant_instructions_from_model(chatbot)
             tools = []
+
+        if guardian_active_voice:
+            tools.append(GUARDIAN_FUNCTION_TOOL)
+            instructions += GUARDIAN_INSTRUCTIONS_ADDON
 
         resp_kwargs = {
             "model": RESPONSE_API_MODEL,
@@ -6561,6 +6650,16 @@ async def send_voice_message(
         response_obj = client.responses.create(**resp_kwargs)
         assistant_message = response_obj.output_text
         response_id = response_obj.id
+
+        # Check if the model triggered the Guardian function
+        voice_guardian_triggered = None
+        for item in (getattr(response_obj, 'output', None) or []):
+            if getattr(item, 'type', None) == 'function_call' and getattr(item, 'name', None) == 'trigger_guardian_alert':
+                try:
+                    voice_guardian_triggered = json.loads(getattr(item, 'arguments', '{}') or '{}')
+                except Exception:
+                    voice_guardian_triggered = {"reason": "negative_review_risk", "details": ""}
+                break
 
         # Salva messaggi nel DB
         user_msg = Message(conversation_id=conversation.id, role="user", content=transcribed_text)
@@ -6582,8 +6681,31 @@ async def send_voice_message(
 
         db.commit()
 
-        import asyncio as _asyncio
-        _asyncio.create_task(analyze_conversation_with_guardian(conversation.id, db))
+        # ===== Guardian: esegui l'alert se il modello ha chiamato la funzione =====
+        if voice_guardian_triggered and not conversation.guardian_suspended and not conversation.guardian_alert_triggered:
+            try:
+                reason = voice_guardian_triggered.get('reason', 'negative_review_risk')
+                details = voice_guardian_triggered.get('details', '')
+                risk_score = 0.95 if reason == 'negative_review_risk' else 0.85
+                analysis_result = {
+                    'risk_score': risk_score,
+                    'sentiment_score': -0.7 if reason == 'negative_review_risk' else 0.0,
+                    'confidence_score': 0.9,
+                    'insufficient_info': reason == 'insufficient_info',
+                    'analysis_details': {
+                        'reasoning': details,
+                        'key_issues': [details] if details else [],
+                        'sentiment_factors': [],
+                    },
+                }
+                alert = guardian_service.create_alert(conversation, analysis_result, db)
+                conversation.guardian_suspended = True
+                conversation.guardian_alert_triggered = True
+                db.commit()
+                guardian_service.send_alert_email(alert, db)
+                logger.warning(f"🚨 GUARDIAN ALERT (voice) via function call: {reason} — {details}")
+            except Exception as ge:
+                logger.error(f"❌ Errore esecuzione guardian function call (voice): {ge}")
 
         if owner.subscription_status == 'free_trial':
             messages_remaining = (owner.free_trial_messages_limit or 0) - (owner.free_trial_messages_used or 0)
@@ -7957,65 +8079,6 @@ async def resolve_guardian_alert(
         logger.error(f"Error resolving Guardian alert: {e}")
         raise HTTPException(status_code=500, detail="Errore nella risoluzione dell'alert")
 
-# ============= Guardian Analysis Integration =============
-
-async def analyze_conversation_with_guardian(conversation_id: int, db: Session):
-    """
-    Funzione per analizzare una conversazione con Guardian
-    Viene chiamata automaticamente quando viene aggiunto un nuovo messaggio
-    """
-    try:
-        # Recupera la conversazione
-        conversation = db.query(Conversation).filter(Conversation.id == conversation_id).first()
-        if not conversation:
-            logger.error(f"Conversazione {conversation_id} non trovata per analisi Guardian")
-            return
-        
-        # Verifica che il proprietario del chatbot abbia Guardian attivo
-        chatbot = db.query(Chatbot).filter(Chatbot.id == conversation.chatbot_id).first()
-        if not chatbot:
-            logger.error(f"Chatbot non trovato per conversazione {conversation_id}")
-            return
-        
-        user = db.query(User).filter(User.id == chatbot.user_id).first()
-        if not user or not is_guardian_active(user.guardian_subscription_status):
-            logger.info(f"Utente {user.id if user else 'N/A'} non ha Guardian attivo, salto analisi")
-            return
-        
-        # Analizza SEMPRE ogni nuovo messaggio, anche se c'è già un alert attivo
-        # Questo permette di rilevare:
-        # 1. Nuova insoddisfazione dell'ospite (nuovo messaggio dell'ospite)
-        # 2. Mancanza di informazioni del chatbot (nuova risposta del chatbot)
-        logger.info(f"Analizzando conversazione {conversation_id} - ogni messaggio viene analizzato individualmente")
-        
-        # Analizza la conversazione
-        analysis_result = guardian_service.analyze_conversation(conversation, db)
-        
-        # Se il rischio è alto O se il chatbot non ha abbastanza informazioni, gestisci l'alert
-        insufficient_info = analysis_result.get('insufficient_info', False)
-        if analysis_result['risk_score'] >= guardian_service.risk_threshold or insufficient_info:
-            # Se non c'è già un alert attivo, creane uno nuovo
-            if not conversation.guardian_alert_triggered:
-                # Crea l'alert
-                alert = guardian_service.create_alert(conversation, analysis_result, db)
-                
-                # Sospendi la conversazione
-                conversation.guardian_suspended = True
-                conversation.guardian_alert_triggered = True
-                db.commit()
-                
-                # Invia email di notifica all'host
-                guardian_service.send_alert_email(alert, db)
-                
-                alert_type = "insufficient_info" if insufficient_info else "high_risk"
-                logger.warning(f"🚨 NUOVO ALERT GUARDIAN: Conversazione {conversation_id} - {alert_type} - Rischio: {analysis_result['risk_score']:.3f}")
-            else:
-                # C'è già un alert attivo, logga solo il problema senza creare un nuovo alert
-                alert_type = "insufficient_info" if insufficient_info else "high_risk"
-                logger.warning(f"⚠️ PROBLEMA RILEVATO (alert già attivo): Conversazione {conversation_id} - {alert_type} - Rischio: {analysis_result['risk_score']:.3f}")
-        
-    except Exception as e:
-        logger.error(f"Errore nell'analisi Guardian della conversazione {conversation_id}: {e}")
 
 # --- Free Trial Management ---
 
